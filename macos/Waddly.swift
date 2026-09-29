@@ -46,11 +46,39 @@ private enum TypingMotion: Int, CaseIterable {
     }
 }
 
+private struct PetFrames {
+    let idle: NSImage
+    let blink: NSImage
+    let typingPreparation: NSImage
+    let typingSlow: NSImage
+    let typingAlternate: NSImage
+    let typingFast: NSImage
+    let drowsy: NSImage
+    let sleep: NSImage
+    let typingSequence: [NSImage]
+    let enterSequence: [NSImage]
+
+    static func bundled(from images: [NSImage]) -> PetFrames? {
+        guard images.count == 16 else { return nil }
+        return PetFrames(
+            idle: images[0],
+            blink: images[1],
+            typingPreparation: images[4],
+            typingSlow: images[5],
+            typingAlternate: images[7],
+            typingFast: images[6],
+            drowsy: images[12],
+            sleep: images[13],
+            typingSequence: [images[5], images[6], images[5], images[8], images[7], images[6], images[9], images[5], images[11], images[6], images[8], images[5]],
+            enterSequence: [images[10], images[14], images[15], images[14], images[10]]
+        )
+    }
+}
+
 private enum PetSpriteSheetImporter {
     static let maximumFileSize = 20 * 1_024 * 1_024
-    static let cellForFrame = [0, 1, 2, 2, 2, 3, 5, 4, 5, 4, 6, 4, 7, 8, 6, 6]
 
-    static func frames(from data: Data) -> [NSImage]? {
+    static func frames(from data: Data) -> PetFrames? {
         guard data.count <= maximumFileSize,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let sourceType = CGImageSourceGetType(source),
@@ -85,10 +113,21 @@ private enum PetSpriteSheetImporter {
                 cells.append(NSImage(cgImage: cell, size: NSSize(width: pointSize, height: pointSize)))
             }
         }
-        return cellForFrame.map { cells[$0] }
+        return PetFrames(
+            idle: cells[0],
+            blink: cells[1],
+            typingPreparation: cells[2],
+            typingSlow: cells[3],
+            typingAlternate: cells[4],
+            typingFast: cells[5],
+            drowsy: cells[7],
+            sleep: cells[8],
+            typingSequence: [cells[3], cells[5], cells[3], cells[5], cells[4], cells[5], cells[4], cells[3], cells[4], cells[5], cells[5], cells[3]],
+            enterSequence: [cells[6]]
+        )
     }
 
-    static func load(from url: URL) -> [NSImage]? {
+    static func load(from url: URL) -> PetFrames? {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= maximumFileSize,
@@ -257,16 +296,21 @@ private final class KeyboardMonitor: @unchecked Sendable {
 private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let defaults = UserDefaults.standard
     private let monitor = KeyboardMonitor()
-    private lazy var bundledFrames = (1...16).compactMap { index -> NSImage? in
+    private lazy var bundledImages = (1...16).compactMap { index -> NSImage? in
         let name = String(format: "%02d", index)
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("Frames/\(name)-\(Self.frameSlugs[index - 1]).png") else {
             return nil
         }
         return NSImage(contentsOf: url)
     }
-    private var importedFrames: [NSImage]?
-    private var frames: [NSImage] { importedFrames ?? bundledFrames }
-    private let typingFrames = [5, 6, 5, 8, 7, 6, 9, 5, 11, 6, 8, 5]
+    private lazy var bundledFrames: PetFrames = {
+        guard let frames = PetFrames.bundled(from: bundledImages) else {
+            fatalError("Waddly frame assets are incomplete")
+        }
+        return frames
+    }()
+    private var importedFrames: PetFrames?
+    private var frames: PetFrames { importedFrames ?? bundledFrames }
     private var panel: PetWindow!
     private var petView: DraggableImageView!
     private var statusItem: NSStatusItem!
@@ -277,7 +321,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var idleBlinkTimer: Timer?
     private var enterReactionTimer: Timer?
     private var enterReactionFrameIndex = 0
-    private let enterReactionFrames = [10, 14, 15, 14, 10]
     private var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
     private var lastTypingFrameTime: TimeInterval = 0
     private var typingFrameIndex = 0
@@ -349,7 +392,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         panel.delegate = self
 
         petView = DraggableImageView(frame: panel.contentView?.bounds ?? .zero)
-        petView.image = frames.first
+        petView.image = frames.idle
         petView.imageScaling = .scaleProportionallyUpOrDown
         petView.wantsLayer = true
         petView.autoresizingMask = [.width, .height]
@@ -431,7 +474,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             showPetImageImportError()
             return
         }
-        guard confirmPetImageImport(data, cellSize: Int(newFrames[0].size.width)) else { return }
+        guard confirmPetImageImport(data, cellSize: Int(newFrames.idle.size.width)) else { return }
 
         do {
             try PetSpriteSheetImporter.save(data, to: destination)
@@ -518,6 +561,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     private func receivedKeyDown(isEnter: Bool) {
         guard !isPaused else { return }
+        let startsTyping = currentPhase != .typing
         let interruptedEnterReaction = enterReactionTimer != nil
         stopEnterReaction()
         lastInputTime = ProcessInfo.processInfo.systemUptime
@@ -530,8 +574,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
         if isEnter {
             playEnterReaction()
+        } else if startsTyping {
+            show(frames.typingPreparation)
+            lastTypingFrameTime = lastInputTime
+            bounce()
         } else if interruptedEnterReaction || lastInputTime - lastTypingFrameTime >= 0.075 {
-            showFrame(typingFrames[typingFrameIndex % typingFrames.count])
+            show(frames.typingSequence[typingFrameIndex % frames.typingSequence.count])
             typingFrameIndex += 1
             lastTypingFrameTime = lastInputTime
             bounce()
@@ -550,20 +598,20 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 break
             case .idle:
                 petView.layer?.removeAllAnimations()
-                showFrame(0)
+                show(frames.idle)
                 breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
                 scheduleIdleBlink()
             case .sleeping:
                 idleBlinkTimer?.invalidate()
                 idleBlinkTimer = nil
                 petView.layer?.removeAllAnimations()
-                showFrame(12)
+                show(frames.drowsy)
                 breathe()
             case .frozen:
                 idleBlinkTimer?.invalidate()
                 idleBlinkTimer = nil
                 petView.layer?.removeAllAnimations()
-                showFrame(13)
+                show(frames.sleep)
             }
         }
 
@@ -580,9 +628,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
     }
 
-    private func showFrame(_ index: Int) {
-        guard frames.indices.contains(index) else { return }
-        petView.image = frames[index]
+    private func show(_ image: NSImage) {
+        petView.image = image
     }
 
     private func makeStatusIcon() -> NSImage {
@@ -618,9 +665,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     }
 
     private func playEnterReaction() {
-        let sequence = importedFrames == nil ? enterReactionFrames : [14]
+        let sequence = frames.enterSequence
         enterReactionFrameIndex = 0
-        showFrame(sequence[enterReactionFrameIndex])
+        show(sequence[enterReactionFrameIndex])
         enterReactionFrameIndex += 1
 
         if let layer = petView.layer {
@@ -642,10 +689,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             layer.add(impact, forKey: "enter-impact")
         }
 
-        let isCustomPet = importedFrames != nil
         enterReactionTimer = Timer.scheduledTimer(
-            withTimeInterval: isCustomPet ? 0.58 : 0.12,
-            repeats: !isCustomPet
+            withTimeInterval: sequence.count > 1 ? 0.12 : 0.58,
+            repeats: sequence.count > 1
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -657,10 +703,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 guard self.enterReactionFrameIndex < sequence.count else {
                     self.enterReactionTimer?.invalidate()
                     self.enterReactionTimer = nil
-                    self.showFrame(0)
+                    self.show(self.frames.idle)
                     return
                 }
-                self.showFrame(sequence[self.enterReactionFrameIndex])
+                self.show(sequence[self.enterReactionFrameIndex])
                 self.enterReactionFrameIndex += 1
             }
         }
@@ -690,11 +736,11 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         idleBlinkTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 4...8), repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.currentPhase == .idle, !self.isPaused else { return }
-                self.showFrame(1)
+                self.show(self.frames.blink)
                 self.idleBlinkTimer = Timer.scheduledTimer(withTimeInterval: 0.16, repeats: false) { [weak self] _ in
                     MainActor.assumeIsolated {
                         guard let self, self.currentPhase == .idle, !self.isPaused else { return }
-                        self.showFrame(0)
+                        self.show(self.frames.idle)
                         self.scheduleIdleBlink()
                     }
                 }
@@ -780,7 +826,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
 if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sprite-sheet" {
     guard let data = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[2])),
-          let frames = PetSpriteSheetImporter.frames(from: data), frames.count == 16 else {
+          let frames = PetSpriteSheetImporter.frames(from: data),
+          frames.typingSequence.count == 12, frames.enterSequence.count == 1 else {
         fatalError("3×3 transparent PNG import failed")
     }
     let savedFile = FileManager.default.temporaryDirectory
@@ -791,7 +838,8 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sp
     } catch {
         fatalError("3×3 PNG save failed: \(error)")
     }
-    guard let restoredFrames = PetSpriteSheetImporter.load(from: savedFile), restoredFrames.count == 16 else {
+    guard let restoredFrames = PetSpriteSheetImporter.load(from: savedFile),
+          restoredFrames.typingSequence.count == 12, restoredFrames.enterSequence.count == 1 else {
         fatalError("3×3 PNG reload failed")
     }
     print("3×3 transparent PNG import and persistence passed")
@@ -809,11 +857,8 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(KeyboardMonitor.isEnterKeyCode(36))
     precondition(KeyboardMonitor.isEnterKeyCode(76))
     precondition(!KeyboardMonitor.isEnterKeyCode(0))
-    precondition(PetSpriteSheetImporter.cellForFrame[10] == 6)
-    precondition(PetSpriteSheetImporter.cellForFrame[12] == 7)
-    precondition(PetSpriteSheetImporter.cellForFrame[13] == 8)
-    precondition(PetSpriteSheetImporter.cellForFrame[14] == 6)
-    print("Pet phases, typing motion, Enter detection, and sprite mapping passed")
+    precondition(PetFrames.bundled(from: Array(repeating: NSImage(size: NSSize(width: 1, height: 1)), count: 16))?.enterSequence.count == 5)
+    print("Pet phases, typing motion, Enter detection, and named sprite roles passed")
     exit(0)
 }
 
