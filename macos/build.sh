@@ -20,6 +20,7 @@ swiftc -swift-version 6 -target "$(uname -m)-apple-macos13.0" -O \
 
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT"/assets/[0-9][0-9]-*.png "$APP/Contents/Resources/Frames/"
+cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 
 ICON_SOURCE="$APP/Contents/Resources/waddly-icon-source.png"
 ICONSET="$APP/Contents/Resources/Waddly.iconset"

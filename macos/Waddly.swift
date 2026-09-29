@@ -5,6 +5,10 @@ import QuartzCore
 import ServiceManagement
 import UniformTypeIdentifiers
 
+private func localizedString(_ key: String) -> String {
+    NSLocalizedString(key, comment: "")
+}
+
 private enum PetPhase: Equatable {
     case typing
     case idle
@@ -27,9 +31,9 @@ private enum TypingMotion: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .off: "オフ"
-        case .weak: "弱"
-        case .strong: "強"
+        case .off: localizedString("motion.off")
+        case .weak: localizedString("motion.weak")
+        case .strong: localizedString("motion.strong")
         }
     }
 
@@ -288,7 +292,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         buildMenu()
         petView.onFileDrop = { [weak self] in self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
-        petView.toolTip = "3×3の透過PNGをドロップしてペットを変更"
+        petView.toolTip = localizedString("pet.dropTooltip")
         monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
         startMonitoring()
         schedulePhaseChange()
@@ -344,14 +348,15 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private func buildMenu() {
         statusMenu = NSMenu()
 
-        pauseItem = NSMenuItem(title: "入力反応を一時停止", action: #selector(togglePause), keyEquivalent: "")
+        pauseItem = NSMenuItem(title: localizedString("menu.pause"), action: #selector(togglePause), keyEquivalent: "")
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
 
-        let sizeItem = NSMenuItem(title: "表示サイズ", action: nil, keyEquivalent: "")
+        let sizeItem = NSMenuItem(title: localizedString("menu.displaySize"), action: nil, keyEquivalent: "")
         let sizeMenu = NSMenu()
-        for size in [180, 240, 320] {
-            let item = NSMenuItem(title: "\(size) px", action: #selector(setSize(_:)), keyEquivalent: "")
+        for (size, labelKey) in [(180, "size.small"), (240, "size.medium"), (320, "size.large")] {
+            let title = "\(localizedString(labelKey)) (\(size) px)"
+            let item = NSMenuItem(title: title, action: #selector(setSize(_:)), keyEquivalent: "")
             item.target = self
             item.tag = size
             item.state = CGFloat(size) == displaySize ? .on : .off
@@ -360,7 +365,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         sizeItem.submenu = sizeMenu
         statusMenu.addItem(sizeItem)
 
-        let motionItem = NSMenuItem(title: "タイピング時の揺れ", action: nil, keyEquivalent: "")
+        let motionItem = NSMenuItem(title: localizedString("menu.typingMotion"), action: nil, keyEquivalent: "")
         let motionMenu = NSMenu()
         for motion in TypingMotion.allCases {
             let item = NSMenuItem(title: motion.title, action: #selector(setTypingMotion(_:)), keyEquivalent: "")
@@ -372,20 +377,21 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         motionItem.submenu = motionMenu
         statusMenu.addItem(motionItem)
 
-        let importPetItem = NSMenuItem(title: "ペット画像を読み込む…", action: #selector(choosePetImage), keyEquivalent: "")
+        let importPetItem = NSMenuItem(title: localizedString("menu.importPet"), action: #selector(choosePetImage), keyEquivalent: "")
         importPetItem.target = self
         statusMenu.addItem(importPetItem)
 
-        loginItem = NSMenuItem(title: "ログイン時に起動", action: #selector(toggleLoginItem), keyEquivalent: "")
+        loginItem = NSMenuItem(title: localizedString("menu.login"), action: #selector(toggleLoginItem), keyEquivalent: "")
         loginItem.target = self
         statusMenu.addItem(loginItem)
 
         statusMenu.addItem(.separator())
-        let quitItem = NSMenuItem(title: "終了", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: localizedString("menu.quit"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusMenu.addItem(quitItem)
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Waddly")
+        statusItem.button?.image = makeStatusIcon()
+        statusItem.button?.setAccessibilityLabel(localizedString("a11y.menuBar"))
         statusItem.button?.title = " Waddly"
         statusItem.menu = statusMenu
         petView.contextMenu = statusMenu
@@ -424,8 +430,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     private func showPetImageImportError() {
         let alert = NSAlert()
-        alert.messageText = "ペット画像を読み込めませんでした"
-        alert.informativeText = "20MB以下・4096px以下の正方形で、3×3に分割できる透過PNGを選んでください。"
+        alert.messageText = localizedString("pet.importErrorTitle")
+        alert.informativeText = localizedString("pet.importErrorMessage")
         alert.alertStyle = .warning
         alert.runModal()
     }
@@ -435,20 +441,21 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         picker.allowedContentTypes = [.png]
         picker.allowsMultipleSelection = false
         picker.canChooseDirectories = false
-        picker.prompt = "読み込む"
+        picker.prompt = localizedString("pet.importPrompt")
         guard picker.runModal() == .OK, let url = picker.url else { return }
         importPetImage(from: url)
     }
 
     private func startMonitoring() {
         if !isPaused { _ = monitor.start() }
-        pauseItem.title = isPaused ? "入力反応を再開" : "入力反応を一時停止"
+        pauseItem.title = localizedString(isPaused ? "menu.resume" : "menu.pause")
         updateMenuStatus()
     }
 
     private func updateMenuStatus() {
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        statusItem.button?.toolTip = isPaused ? "Waddly：一時停止中" : (monitor.isRunning ? "Waddly：入力に反応中" : "Waddly：入力監視の許可が必要")
+        let statusKey = isPaused ? "tooltip.paused" : (monitor.isRunning ? "tooltip.active" : "tooltip.permission")
+        statusItem.button?.toolTip = localizedString(statusKey)
     }
 
     private func receivedKeyDown(isEnter: Bool) {
@@ -518,6 +525,25 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private func showFrame(_ index: Int) {
         guard frames.indices.contains(index) else { return }
         petView.image = frames[index]
+    }
+
+    private func makeStatusIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            let path = NSBezierPath()
+            path.lineWidth = 2.2
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            path.move(to: NSPoint(x: 2, y: 14))
+            path.line(to: NSPoint(x: 5.5, y: 4))
+            path.line(to: NSPoint(x: 9, y: 10))
+            path.line(to: NSPoint(x: 12.5, y: 4))
+            path.line(to: NSPoint(x: 16, y: 14))
+            NSColor.black.setStroke()
+            path.stroke()
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 
     private func bounce() {
@@ -686,7 +712,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             }
         } catch {
             let alert = NSAlert()
-            alert.messageText = "ログイン時起動を設定できませんでした"
+            alert.messageText = localizedString("menu.loginError")
             alert.alertStyle = .warning
             alert.runModal()
         }
