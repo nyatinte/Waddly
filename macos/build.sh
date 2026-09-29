@@ -3,6 +3,7 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
+BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Frames"
@@ -42,7 +43,8 @@ rm -f "$ICON_SOURCE"
 if [ -n "${WADDLY_SIGN_IDENTITY:-}" ]; then
   codesign --force --deep --options runtime --timestamp --sign "$WADDLY_SIGN_IDENTITY" "$APP"
 else
-  codesign --force --deep --sign - "$APP"
+  codesign --force --deep --sign - --identifier "$BUNDLE_ID" \
+    --requirements "=designated => identifier \"$BUNDLE_ID\"" "$APP"
 fi
 
 printf 'Built %s\n' "$APP"

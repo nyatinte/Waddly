@@ -36,7 +36,7 @@ Applications にインストールする場合は、生成した `Waddly.app` �
 ./macos/package.sh
 ```
 
-`dist/` に `Waddly-0.1.0-macos-<architecture>.dmg` ができます。Developer ID 証明書がこの Mac にないため、標準ビルドは ad-hoc 署名で、公証は行いません。インターネット配布で Gatekeeper の警告を避けるには Developer ID 署名と Apple の公証が必要です。署名 ID は `WADDLY_SIGN_IDENTITY` 環境変数で指定できます。
+`dist/` に `Waddly-0.1.0-macos-<architecture>.dmg` ができます。Developer ID 証明書がこの Mac にないため、標準ビルドはバンドル ID を基準にした ad-hoc 署名で、公証は行いません。Developer ID 証明書を設定しないローカル開発でも、入力監視の許可識別子が再ビルドごとに変わらないようにしています。インターネット配布で Gatekeeper の警告を避けるには Developer ID 署名と Apple の公証が必要です。署名 ID は `WADDLY_SIGN_IDENTITY` 環境変数で指定できます。
 
 ## 自分のペットに置き換える
 

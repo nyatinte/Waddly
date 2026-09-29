@@ -14,7 +14,7 @@
 
 - macOS 専用で、macOS 13 以降を対象にする。ビルド時に実行中の Mac の CPU アーキテクチャを選ぶ。
 - 開発環境は macOS 27.0、Apple Swift 6.4、macOS SDK 27.0。Xcode 本体ではなく Command Line Tools を使う。
-- `.app` と `.dmg` を生成する。Developer ID 証明書がないため、現状は ad-hoc 署名で、公証と App Store 対応は未実施。
+- `.app` と `.dmg` を生成する。Developer ID 証明書がないため、現状はバンドル ID を基準に ad-hoc 署名し、公証と App Store 対応は未実施。
 
 ### アプリと表示
 

@@ -94,7 +94,7 @@ private final class KeyboardMonitor: @unchecked Sendable {
             MainActor.assumeIsolated {
                 monitor.onKeyDown?()
             }
-        } else if type == .tapDisabledByTimeout, let tap = monitor.tap {
+        } else if (type == .tapDisabledByTimeout || type == .tapDisabledByUserInput), let tap = monitor.tap {
             CGEvent.tapEnable(tap: tap, enable: true)
         }
         return Unmanaged.passUnretained(event)
@@ -147,6 +147,11 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         monitor.onKeyDown = { [weak self] in self?.receivedKeyDown() }
         startMonitoring()
         schedulePhaseChange()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard !isPaused, !monitor.isRunning, CGPreflightListenEventAccess() else { return }
+        startMonitoring()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
