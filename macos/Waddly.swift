@@ -18,6 +18,28 @@ private enum PetPhase: Equatable {
     }
 }
 
+private enum TypingMotion: Int, CaseIterable {
+    case off
+    case weak
+    case strong
+
+    var title: String {
+        switch self {
+        case .off: "オフ"
+        case .weak: "弱"
+        case .strong: "強"
+        }
+    }
+
+    var amplitude: CGFloat {
+        switch self {
+        case .off: 0
+        case .weak: 5
+        case .strong: 10
+        }
+    }
+}
+
 @MainActor
 private final class PetWindow: NSPanel {
     override var canBecomeKey: Bool { false }
@@ -162,6 +184,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var isPaused = false
     private var isVisible = true
     private var currentPhase: PetPhase?
+    private var typingMotion: TypingMotion {
+        TypingMotion(rawValue: defaults.integer(forKey: "typingMotion")) ?? .weak
+    }
     private var displaySize: CGFloat {
         let value = defaults.double(forKey: "displaySize")
         return value == 0 ? 240 : CGFloat(value)
@@ -175,6 +200,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     ]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        defaults.register(defaults: ["typingMotion": TypingMotion.weak.rawValue])
         buildPanel()
         buildMenu()
         monitor.onKeyDown = { [weak self] in self?.receivedKeyDown() }
@@ -274,6 +300,18 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
         sizeItem.submenu = sizeMenu
         statusMenu.addItem(sizeItem)
+
+        let motionItem = NSMenuItem(title: "タイピング時の揺れ", action: nil, keyEquivalent: "")
+        let motionMenu = NSMenu()
+        for motion in TypingMotion.allCases {
+            let item = NSMenuItem(title: motion.title, action: #selector(setTypingMotion(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = motion.rawValue
+            item.state = motion == typingMotion ? .on : .off
+            motionMenu.addItem(item)
+        }
+        motionItem.submenu = motionMenu
+        statusMenu.addItem(motionItem)
 
         let resetItem = NSMenuItem(title: "位置を右下に戻す", action: #selector(resetPosition), keyEquivalent: "")
         resetItem.target = self
@@ -402,10 +440,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     }
 
     private func bounce() {
+        let motion = typingMotion
+        guard motion != .off else { return }
         guard let layer = petView.layer else { return }
         layer.removeAnimation(forKey: "type-bounce")
         let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
-        animation.values = [0, 5, 0]
+        animation.values = [0, motion.amplitude, 0]
         animation.keyTimes = [0, 0.45, 1]
         animation.duration = 0.14
         animation.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -476,6 +516,15 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         saveOrigin()
     }
 
+    @objc private func setTypingMotion(_ sender: NSMenuItem) {
+        guard let motion = TypingMotion(rawValue: sender.tag) else { return }
+        defaults.set(motion.rawValue, forKey: "typingMotion")
+        sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
+        if motion == .off {
+            petView.layer?.removeAnimation(forKey: "type-bounce")
+        }
+    }
+
     @objc private func togglePause() {
         isPaused.toggle()
         phaseTimer?.invalidate()
@@ -526,7 +575,10 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(PetPhase.after(2.5) == .idle)
     precondition(PetPhase.after(25) == .sleeping)
     precondition(PetPhase.after(325) == .frozen)
-    print("Pet phase thresholds passed")
+    precondition(TypingMotion.off.amplitude == 0)
+    precondition(TypingMotion.weak.amplitude == 5)
+    precondition(TypingMotion.strong.amplitude > TypingMotion.weak.amplitude)
+    print("Pet phases and typing motion levels passed")
     exit(0)
 }
 
