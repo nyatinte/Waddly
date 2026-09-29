@@ -43,7 +43,7 @@ The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Develop
 
 Choose **Pet images…** from the menu to add any number of transparent PNGs to the Idle, Typing, Sleep, and Enter rows. Drop files onto a row or use **Add** to select multiple images. Images play in the order added; remove them with the button on each thumbnail. Idle uses the first image as its normal pose and the rest as blink variants. Typing and Enter images play in order. Sleep images cycle and stop on the last image after five minutes.
 
-Transparent 3×3 PNG sprite sheets are still supported. Drop a sheet onto the pet to preview its cell boundaries and dimensions before importing. Images are stored locally in Application Support and restored at the next launch; they are never uploaded.
+Transparent 3×3 PNG sprite sheets are still supported. Drop a sheet onto the pet to preview its cell boundaries and dimensions before importing. Images are stored locally in Application Support and restored at the next launch. Images with a side longer than 1024 px are downsampled in the app before saving; the selected source files are not modified or uploaded.
 
 The image must be square, with dimensions divisible by 3. The limit is 20 MB and 4096 px. Waddly divides the image into equal cells, so follow the cell order and spacing in the prompts.
 

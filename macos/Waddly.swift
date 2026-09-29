@@ -78,10 +78,17 @@ private struct PetImageSet {
     }
 }
 
+private struct OptimizedPetImage {
+    let image: NSImage
+    let pngData: Data
+    let wasDownsampled: Bool
+}
+
 private enum PetSpriteSheetImporter {
     static let maximumFileSize = 20 * 1_024 * 1_024
+    static let maximumImageDimension = 1_024
 
-    static func image(from data: Data) -> NSImage? {
+    static func optimizedImage(from data: Data) -> OptimizedPetImage? {
         guard data.count <= maximumFileSize,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let sourceType = CGImageSourceGetType(source),
@@ -90,12 +97,23 @@ private enum PetSpriteSheetImporter {
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,
               width > 0, height > 0, width <= 4_096, height <= 4_096,
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+              let cgImage = image(from: source, maxDimension: maximumImageDimension) else {
             return nil
         }
 
-        guard hasAlpha(image) else { return nil }
-        return NSImage(cgImage: image, size: NSSize(width: width, height: height))
+        guard hasAlpha(cgImage) else { return nil }
+        let wasDownsampled = max(width, height) > maximumImageDimension
+        guard let pngData = wasDownsampled ? pngData(from: cgImage) : data,
+              pngData.count <= maximumFileSize else { return nil }
+        return OptimizedPetImage(
+            image: NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height)),
+            pngData: pngData,
+            wasDownsampled: wasDownsampled
+        )
+    }
+
+    static func image(from data: Data) -> NSImage? {
+        optimizedImage(from: data)?.image
     }
 
     static func frames(from data: Data) -> PetImageSet? {
@@ -107,12 +125,12 @@ private enum PetSpriteSheetImporter {
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,
               width == height, width % 3 == 0, width <= 4_096,
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil),
+              let image = image(from: source, maxDimension: maximumImageDimension * 3),
               hasAlpha(image) else {
             return nil
         }
 
-        let cellSize = width / 3
+        let cellSize = image.width / 3
         let pointSize = CGFloat(cellSize)
         var cells: [NSImage] = []
         for row in 0..<3 {
@@ -142,7 +160,9 @@ private enum PetSpriteSheetImporter {
               let data = try? Data(contentsOf: url) else {
             return nil
         }
-        return image(from: data)
+        guard let optimized = optimizedImage(from: data) else { return nil }
+        if optimized.wasDownsampled { try? optimized.pngData.write(to: url, options: .atomic) }
+        return optimized.image
     }
 
     static func pngData(for image: NSImage) -> Data? {
@@ -158,6 +178,29 @@ private enum PetSpriteSheetImporter {
         default:
             false
         }
+    }
+
+    private static func image(from source: CGImageSource, maxDimension: Int) -> CGImage? {
+        guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        guard max(width, height) > maxDimension else {
+            return CGImageSourceCreateImageAtIndex(source, 0, nil)
+        }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension,
+            kCGImageSourceCreateThumbnailWithTransform: false
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+    }
+
+    private static func pngData(from image: CGImage) -> Data? {
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, image, nil)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return data as Data
     }
 
     static func save(_ data: Data, to url: URL) throws {
@@ -765,13 +808,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                   let size = attributes[.size] as? NSNumber,
                   size.intValue <= PetSpriteSheetImporter.maximumFileSize,
                   let data = try? Data(contentsOf: url),
-                  let image = PetSpriteSheetImporter.image(from: data) else {
+                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data) else {
                 skippedCount += 1
                 continue
             }
             do {
-                try persistAddedImage(image, data: data, existingImages: updated[category], to: category)
-                updated[category].append(image)
+                try persistAddedImage(optimized.image, data: optimized.pngData, existingImages: updated[category], to: category)
+                updated[category].append(optimized.image)
                 importedImages = updated
                 addedCount += 1
             } catch {
@@ -1338,7 +1381,36 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(bundled?[.typing].count == 7)
     precondition(bundled?[.sleep].count == 2)
     precondition(bundled?[.enter].count == 3)
-    print("Pet phases, typing motion, Enter detection, and image categories passed")
+    guard let context = CGContext(
+        data: nil,
+        width: 2_048,
+        height: 2_048,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ), let largeImage = context.makeImage() else {
+        fatalError("Image optimization test setup failed")
+    }
+    let sourceData = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(sourceData, UTType.png.identifier as CFString, 1, nil) else {
+        fatalError("Image optimization test setup failed")
+    }
+    CGImageDestinationAddImage(destination, largeImage, nil)
+    guard CGImageDestinationFinalize(destination),
+          let optimized = PetSpriteSheetImporter.optimizedImage(from: sourceData as Data),
+          let optimizedSource = CGImageSourceCreateWithData(optimized.pngData as CFData, nil),
+          let optimizedProperties = CGImageSourceCopyPropertiesAtIndex(optimizedSource, 0, nil) as? [CFString: Any],
+          let optimizedWidth = optimizedProperties[kCGImagePropertyPixelWidth] as? Int,
+          let optimizedHeight = optimizedProperties[kCGImagePropertyPixelHeight] as? Int,
+          optimized.wasDownsampled,
+          optimizedWidth == 1_024,
+          optimizedHeight == 1_024,
+          optimized.image.size.width == 1_024,
+          optimized.image.size.height == 1_024 else {
+        fatalError("Image downsampling failed")
+    }
+    print("Pet phases, image categories, and 1024px image optimization passed")
     exit(0)
 }
 
