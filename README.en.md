@@ -8,8 +8,9 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 
 - Reacts to key-down events without storing typed text or key codes.
 - Breathes subtly and blinks while idle, falls asleep after a while, and stops animating after five minutes. Input monitoring remains active so it can wake up.
-- Drag the pet around the desktop; its position is saved. Choose from 180, 240, and 320 px sizes.
-- Waddly appears in both the Dock and menu bar. Click the menu bar label or right-click the pet to open the menu. Change size or position, toggle visibility, pause reactions, configure launch at login, or quit.
+- Drag the pet around the desktop; its position is saved. Choose Small, Medium, or Large.
+- The UI follows the preferred macOS language (Japanese or English) and falls back to English for other languages.
+- Waddly appears in both the Dock and menu bar. Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, import a pet image, pause reactions, or configure launch at login.
 - The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
 
@@ -28,7 +29,7 @@ open build/Waddly.app
 
 To install it, copy `Waddly.app` to `~/Applications`, or open the DMG in `dist/` and drag the app to its `Applications` shortcut.
 
-On first launch, allow Waddly under **System Settings → Privacy & Security → Input Monitoring**. The app and menu bar item can still launch without this permission; the menu links to the setting.
+On first launch, allow Waddly under **System Settings → Privacy & Security → Input Monitoring**. The app still launches without this permission but will not react to key input. The menu bar icon's tooltip indicates when permission is required.
 
 Create a distributable disk image with:
 
@@ -38,56 +39,23 @@ Create a distributable disk image with:
 
 The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Developer ID signing identity is installed on the build machine, so the default build is ad-hoc signed with a bundle-ID-based designated requirement and is not notarized. This keeps the local Input Monitoring identity stable across rebuilds. Developer ID signing and Apple notarization are required to avoid Gatekeeper warnings when distributing over the internet. Set `WADDLY_SIGN_IDENTITY` to select a signing identity.
 
-## Add your own pet
+## Use your own pet
 
-The repository includes `index.html`, a preview and splitter for 4×4 sprite sheets.
+Waddly accepts transparent 3×3 PNG sprite sheets. Drag an image onto the pet or choose **Import pet image…** from its menu. The image is stored locally in Application Support and restored at the next launch; it is never uploaded.
 
-1. Start a local server:
+The image must be square, with dimensions divisible by 3. The limit is 20 MB and 4096 px. Waddly divides the image into equal cells, so follow the cell order and spacing in the prompts.
 
-   ```sh
-   python3 -m http.server 8000
-   ```
+The image-generation prompts are in [`prompts/ja.md`](prompts/ja.md) and [`prompts/en.md`](prompts/en.md). They leave transparent padding around each pose so the character and keyboard do not crowd the cell boundaries.
 
-2. Open `http://localhost:8000` and choose your sprite-sheet image.
-3. Review the frames and select **Save PNGs to assets/**. Browsers without folder-picker support download the PNGs individually.
-4. Back up the existing `assets/01-*.png` through `assets/16-*.png`, then replace them with the new PNGs. Keep the filenames unchanged.
-5. Run `./macos/build.sh` and launch the rebuilt `build/Waddly.app`.
+Images made with an earlier prompt may use a different cell order. Use the current prompt order for the Enter, drowsy, and sleep reactions to map correctly.
 
-### ChatGPT image-generation prompt
+### Edit the bundled pet frames
 
-Attach a photo or illustration of your pet as the reference image, then use this prompt. The splitter looks for a white background and magenta dividers.
-
-```text
-Use the attached image as the only character reference. Create one sprite sheet featuring the same pet in every frame.
-
-Make a square image with 4 equal columns and 4 equal rows (16 cells). Draw exactly one full-body pet in each cell. Keep its scale, orientation, line style, colors, and placement consistent. Do not let the character overlap cell boundaries.
-
-Order the poses from left to right, then top to bottom:
-1. Neutral front-facing idle
-2. Blinking with eyes closed
-3. Surprised, looking left
-4. Surprised, looking right
-5. Looking at a laptop
-6. Typing normally
-7. Typing quickly
-8. Peeking over the screen
-9. Typing excitedly
-10. Focused on work
-11. Jumping
-12. Working one-handed
-13. Getting sleepy
-14. Sitting asleep
-15. Raising both hands to cheer
-16. Being gently picked up
-
-Use a pure white background. Add thick, straight, vivid magenta (#ff00ff) dividers between all cells and around the outer edge, making five continuous vertical and five continuous horizontal bands. Do not use magenta on the pet. Do not add shadows, text, speech bubbles, props, or decorative borders. Output one square PNG image.
-```
-
-Depending on the generated image, the divider or background detection may need correction before import.
+The repository also includes the legacy `index.html` splitter for editing the bundled 4×4 sprite sheet. Replace the frames in `assets/` and rebuild to change the default pet. For custom pets imported in the app, use the 3×3 PNG format above.
 
 ## Privacy
 
-Waddly observes key-down events through a listen-only `CGEventTap`. It uses event timing only. It does not store typed text or key codes, write input logs, or send input data over the network. The app can run without Input Monitoring permission.
+Waddly observes key-down events through a listen-only `CGEventTap`. It uses event timing and a transient check for whether the key is Enter. It does not store typed text or key codes, write input logs, or send input data over the network. The app can run without Input Monitoring permission.
 
 ## Measured memory
 
