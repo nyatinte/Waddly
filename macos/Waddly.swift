@@ -40,16 +40,33 @@ private final class DraggableImageView: NSImageView {
 
 private final class KeyboardMonitor: @unchecked Sendable {
     var onKeyDown: (@MainActor () -> Void)?
-    private(set) var isRunning = false
+    private(set) var keyDownCallbackCount = 0
+    private(set) var tapCreationFailed = false
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
+    var permissionGranted: Bool { CGPreflightListenEventAccess() }
+    var isRunning: Bool { tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false }
+    var tapStatus: String {
+        guard tap != nil else {
+            return tapCreationFailed ? "作成失敗" : "未作成"
+        }
+        return isRunning ? "有効" : "無効・再試行待ち"
+    }
+
     func start() -> Bool {
-        guard !isRunning else { return true }
-        if !CGPreflightListenEventAccess() {
+        if !permissionGranted {
             _ = CGRequestListenEventAccess()
         }
-        guard CGPreflightListenEventAccess() else { return false }
+        guard permissionGranted else { return false }
+
+        if let tap {
+            if CGEvent.tapIsEnabled(tap: tap) { return true }
+            CGEvent.tapEnable(tap: tap, enable: true)
+            if CGEvent.tapIsEnabled(tap: tap) { return true }
+            stop()
+        }
+        tapCreationFailed = false
 
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         let context = Unmanaged.passUnretained(self).toOpaque()
@@ -60,7 +77,13 @@ private final class KeyboardMonitor: @unchecked Sendable {
             eventsOfInterest: mask,
             callback: Self.handleEvent,
             userInfo: context
-        ), let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0) else {
+        ) else {
+            tapCreationFailed = true
+            return false
+        }
+        guard let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0) else {
+            CFMachPortInvalidate(tap)
+            tapCreationFailed = true
             return false
         }
 
@@ -68,8 +91,12 @@ private final class KeyboardMonitor: @unchecked Sendable {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        isRunning = true
-        return true
+        guard isRunning else {
+            stop()
+            tapCreationFailed = true
+            return false
+        }
+        return isRunning
     }
 
     func stop() {
@@ -83,7 +110,6 @@ private final class KeyboardMonitor: @unchecked Sendable {
         }
         runLoopSource = nil
         tap = nil
-        isRunning = false
     }
 
     private static let handleEvent: CGEventTapCallBack = { _, type, event, userInfo in
@@ -92,6 +118,7 @@ private final class KeyboardMonitor: @unchecked Sendable {
 
         if type == .keyDown {
             MainActor.assumeIsolated {
+                monitor.keyDownCallbackCount += 1
                 monitor.onKeyDown?()
             }
         } else if (type == .tapDisabledByTimeout || type == .tapDisabledByUserInput), let tap = monitor.tap {
@@ -102,7 +129,7 @@ private final class KeyboardMonitor: @unchecked Sendable {
 }
 
 @MainActor
-private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     private let defaults = UserDefaults.standard
     private let monitor = KeyboardMonitor()
     private lazy var frames = (1...16).compactMap { index -> NSImage? in
@@ -117,7 +144,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var petView: DraggableImageView!
     private var statusItem: NSStatusItem!
     private var statusMenu: NSMenu!
+    private var diagnosticMenu: NSMenu!
     private var permissionItem: NSMenuItem!
+    private var permissionDiagnosticItem: NSMenuItem!
+    private var tapDiagnosticItem: NSMenuItem!
+    private var callbackDiagnosticItem: NSMenuItem!
+    private var reactionDiagnosticItem: NSMenuItem!
     private var pauseItem: NSMenuItem!
     private var visibilityItem: NSMenuItem!
     private var loginItem: NSMenuItem!
@@ -126,6 +158,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
     private var lastTypingFrameTime: TimeInterval = 0
     private var typingFrameIndex = 0
+    private var petReactionCount = 0
     private var isPaused = false
     private var isVisible = true
     private var currentPhase: PetPhase?
@@ -150,8 +183,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard !isPaused, !monitor.isRunning, CGPreflightListenEventAccess() else { return }
+        guard !isPaused, CGPreflightListenEventAccess() else { return }
         startMonitoring()
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === statusMenu || menu === diagnosticMenu else { return }
+        updateDiagnostics()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -210,6 +248,17 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         permissionItem.target = self
         statusMenu.addItem(permissionItem)
 
+        diagnosticMenu = NSMenu()
+        permissionDiagnosticItem = addDiagnosticRow("許可状態: 未確認")
+        tapDiagnosticItem = addDiagnosticRow("イベントタップ: 未確認")
+        callbackDiagnosticItem = addDiagnosticRow("コールバック受信: 0回")
+        reactionDiagnosticItem = addDiagnosticRow("ペット反応: 0回")
+        diagnosticMenu.delegate = self
+        let diagnosticItem = NSMenuItem(title: "入力監視の診断", action: nil, keyEquivalent: "")
+        diagnosticItem.submenu = diagnosticMenu
+        statusMenu.addItem(diagnosticItem)
+        statusMenu.delegate = self
+
         pauseItem = NSMenuItem(title: "入力反応を一時停止", action: #selector(togglePause), keyEquivalent: "")
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
@@ -250,15 +299,30 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         updateMenuStatus()
     }
 
+    private func addDiagnosticRow(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        diagnosticMenu.addItem(item)
+        return item
+    }
+
+    private func updateDiagnostics() {
+        permissionDiagnosticItem.title = "許可状態: \(monitor.permissionGranted ? "許可済み" : "未許可")"
+        tapDiagnosticItem.title = "イベントタップ: \(monitor.tapStatus)"
+        callbackDiagnosticItem.title = "コールバック受信: \(monitor.keyDownCallbackCount)回"
+        reactionDiagnosticItem.title = "ペット反応: \(petReactionCount)回"
+    }
+
     private func startMonitoring() {
         if !isPaused && monitor.start() {
             permissionItem.title = "入力監視中（読み取りのみ）"
-            permissionItem.action = nil
+            permissionItem.action = #selector(openInputSettings)
+            permissionItem.target = self
         } else if isPaused {
             permissionItem.title = "入力監視は一時停止中"
             permissionItem.action = nil
         } else {
-            permissionItem.title = "入力監視の許可を再確認…"
+            permissionItem.title = monitor.permissionGranted ? "入力監視を再試行…" : "入力監視の許可を確認…"
             permissionItem.action = #selector(openInputSettings)
             permissionItem.target = self
         }
@@ -273,6 +337,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     private func receivedKeyDown() {
         guard !isPaused else { return }
+        petReactionCount += 1
         lastInputTime = ProcessInfo.processInfo.systemUptime
         phaseTimer?.invalidate()
         idleBlinkTimer?.invalidate()
