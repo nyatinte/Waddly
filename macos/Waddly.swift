@@ -152,19 +152,11 @@ private final class DraggableImageView: NSImageView {
 
 private final class KeyboardMonitor: @unchecked Sendable {
     var onKeyDown: (@MainActor (Bool) -> Void)?
-    private(set) var keyDownCallbackCount = 0
-    private(set) var tapCreationFailed = false
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
     var permissionGranted: Bool { CGPreflightListenEventAccess() }
     var isRunning: Bool { tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false }
-    var tapStatus: String {
-        guard tap != nil else {
-            return tapCreationFailed ? "作成失敗" : "未作成"
-        }
-        return isRunning ? "有効" : "無効・再試行待ち"
-    }
 
     static func isEnterKeyCode(_ keyCode: Int64) -> Bool {
         keyCode == 36 || keyCode == 76
@@ -182,8 +174,6 @@ private final class KeyboardMonitor: @unchecked Sendable {
             if CGEvent.tapIsEnabled(tap: tap) { return true }
             stop()
         }
-        tapCreationFailed = false
-
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         let context = Unmanaged.passUnretained(self).toOpaque()
         guard let tap = CGEvent.tapCreate(
@@ -194,12 +184,10 @@ private final class KeyboardMonitor: @unchecked Sendable {
             callback: Self.handleEvent,
             userInfo: context
         ) else {
-            tapCreationFailed = true
             return false
         }
         guard let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0) else {
             CFMachPortInvalidate(tap)
-            tapCreationFailed = true
             return false
         }
 
@@ -209,7 +197,6 @@ private final class KeyboardMonitor: @unchecked Sendable {
         CGEvent.tapEnable(tap: tap, enable: true)
         guard isRunning else {
             stop()
-            tapCreationFailed = true
             return false
         }
         return isRunning
@@ -235,7 +222,6 @@ private final class KeyboardMonitor: @unchecked Sendable {
         if type == .keyDown {
             let isEnter = isEnterKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
             MainActor.assumeIsolated {
-                monitor.keyDownCallbackCount += 1
                 monitor.onKeyDown?(isEnter)
             }
         } else if (type == .tapDisabledByTimeout || type == .tapDisabledByUserInput), let tap = monitor.tap {
@@ -246,7 +232,7 @@ private final class KeyboardMonitor: @unchecked Sendable {
 }
 
 @MainActor
-private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
+private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let defaults = UserDefaults.standard
     private let monitor = KeyboardMonitor()
     private lazy var bundledFrames = (1...16).compactMap { index -> NSImage? in
@@ -263,16 +249,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var petView: DraggableImageView!
     private var statusItem: NSStatusItem!
     private var statusMenu: NSMenu!
-    private var diagnosticMenu: NSMenu!
-    private var permissionItem: NSMenuItem!
-    private var permissionDiagnosticItem: NSMenuItem!
-    private var tapDiagnosticItem: NSMenuItem!
-    private var callbackDiagnosticItem: NSMenuItem!
-    private var reactionDiagnosticItem: NSMenuItem!
     private var pauseItem: NSMenuItem!
-    private var visibilityItem: NSMenuItem!
     private var loginItem: NSMenuItem!
-    private var resetPetImageItem: NSMenuItem!
     private var phaseTimer: Timer?
     private var idleBlinkTimer: Timer?
     private var enterReactionTimer: Timer?
@@ -281,9 +259,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
     private var lastTypingFrameTime: TimeInterval = 0
     private var typingFrameIndex = 0
-    private var petReactionCount = 0
     private var isPaused = false
-    private var isVisible = true
     private var currentPhase: PetPhase?
     private var typingMotion: TypingMotion {
         TypingMotion(rawValue: defaults.integer(forKey: "typingMotion")) ?? .weak
@@ -323,11 +299,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         startMonitoring()
     }
 
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        guard menu === statusMenu || menu === diagnosticMenu else { return }
-        updateDiagnostics()
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
         phaseTimer?.invalidate()
         idleBlinkTimer?.invalidate()
@@ -337,15 +308,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     func windowDidMove(_ notification: Notification) {
         saveOrigin()
-    }
-
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if isVisible {
-            panel.orderFrontRegardless()
-        } else {
-            toggleVisibility()
-        }
-        return true
     }
 
     private func buildPanel() {
@@ -374,27 +336,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         if let saved = defaults.array(forKey: "panelOrigin") as? [Double], saved.count == 2 {
             panel.setFrameOrigin(clampedOrigin(NSPoint(x: saved[0], y: saved[1])))
         } else {
-            resetPosition()
+            placeAtDefaultPosition()
         }
         panel.orderFrontRegardless()
     }
 
     private func buildMenu() {
         statusMenu = NSMenu()
-        permissionItem = NSMenuItem(title: "入力監視を確認中…", action: #selector(openInputSettings), keyEquivalent: "")
-        permissionItem.target = self
-        statusMenu.addItem(permissionItem)
-
-        diagnosticMenu = NSMenu()
-        permissionDiagnosticItem = addDiagnosticRow("許可状態: 未確認")
-        tapDiagnosticItem = addDiagnosticRow("イベントタップ: 未確認")
-        callbackDiagnosticItem = addDiagnosticRow("コールバック受信: 0回")
-        reactionDiagnosticItem = addDiagnosticRow("ペット反応: 0回")
-        diagnosticMenu.delegate = self
-        let diagnosticItem = NSMenuItem(title: "入力監視の診断", action: nil, keyEquivalent: "")
-        diagnosticItem.submenu = diagnosticMenu
-        statusMenu.addItem(diagnosticItem)
-        statusMenu.delegate = self
 
         pauseItem = NSMenuItem(title: "入力反応を一時停止", action: #selector(togglePause), keyEquivalent: "")
         pauseItem.target = self
@@ -424,22 +372,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         motionItem.submenu = motionMenu
         statusMenu.addItem(motionItem)
 
-        let resetItem = NSMenuItem(title: "位置を右下に戻す", action: #selector(resetPosition), keyEquivalent: "")
-        resetItem.target = self
-        statusMenu.addItem(resetItem)
-
         let importPetItem = NSMenuItem(title: "ペット画像を読み込む…", action: #selector(choosePetImage), keyEquivalent: "")
         importPetItem.target = self
         statusMenu.addItem(importPetItem)
-
-        resetPetImageItem = NSMenuItem(title: "標準のペットに戻す", action: #selector(resetPetImage), keyEquivalent: "")
-        resetPetImageItem.target = self
-        resetPetImageItem.isEnabled = importedFrames != nil
-        statusMenu.addItem(resetPetImageItem)
-
-        visibilityItem = NSMenuItem(title: "ペンギンを隠す", action: #selector(toggleVisibility), keyEquivalent: "")
-        visibilityItem.target = self
-        statusMenu.addItem(visibilityItem)
 
         loginItem = NSMenuItem(title: "ログイン時に起動", action: #selector(toggleLoginItem), keyEquivalent: "")
         loginItem.target = self
@@ -455,20 +390,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem.menu = statusMenu
         petView.contextMenu = statusMenu
         updateMenuStatus()
-    }
-
-    private func addDiagnosticRow(_ title: String) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        item.isEnabled = false
-        diagnosticMenu.addItem(item)
-        return item
-    }
-
-    private func updateDiagnostics() {
-        permissionDiagnosticItem.title = "許可状態: \(monitor.permissionGranted ? "許可済み" : "未許可")"
-        tapDiagnosticItem.title = "イベントタップ: \(monitor.tapStatus)"
-        callbackDiagnosticItem.title = "コールバック受信: \(monitor.keyDownCallbackCount)回"
-        reactionDiagnosticItem.title = "ペット反応: \(petReactionCount)回"
     }
 
     private func loadSavedPetImage() {
@@ -496,7 +417,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
         stopEnterReaction()
         importedFrames = newFrames
-        resetPetImageItem.isEnabled = true
         lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
         currentPhase = nil
         schedulePhaseChange()
@@ -520,51 +440,21 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         importPetImage(from: url)
     }
 
-    @objc private func resetPetImage() {
-        guard let url = customPetImageURL else { return }
-        do {
-            if FileManager.default.fileExists(atPath: url.path) {
-                try FileManager.default.removeItem(at: url)
-            }
-        } catch {
-            showPetImageImportError()
-            return
-        }
-        stopEnterReaction()
-        importedFrames = nil
-        resetPetImageItem.isEnabled = false
-        lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
-        currentPhase = nil
-        schedulePhaseChange()
-    }
-
     private func startMonitoring() {
-        if !isPaused && monitor.start() {
-            permissionItem.title = "入力監視中（読み取りのみ）"
-            permissionItem.action = #selector(openInputSettings)
-            permissionItem.target = self
-        } else if isPaused {
-            permissionItem.title = "入力監視は一時停止中"
-            permissionItem.action = nil
-        } else {
-            permissionItem.title = monitor.permissionGranted ? "入力監視を再試行…" : "入力監視の許可を確認…"
-            permissionItem.action = #selector(openInputSettings)
-            permissionItem.target = self
-        }
+        if !isPaused { _ = monitor.start() }
         pauseItem.title = isPaused ? "入力反応を再開" : "入力反応を一時停止"
         updateMenuStatus()
     }
 
     private func updateMenuStatus() {
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        statusItem.button?.toolTip = isPaused ? "ペンギン：一時停止中" : (monitor.isRunning ? "ペンギン：入力に反応中" : "ペンギン：入力監視の許可が必要")
+        statusItem.button?.toolTip = isPaused ? "Waddly：一時停止中" : (monitor.isRunning ? "Waddly：入力に反応中" : "Waddly：入力監視の許可が必要")
     }
 
     private func receivedKeyDown(isEnter: Bool) {
         guard !isPaused else { return }
         let interruptedEnterReaction = enterReactionTimer != nil
         stopEnterReaction()
-        petReactionCount += 1
         lastInputTime = ProcessInfo.processInfo.systemUptime
         phaseTimer?.invalidate()
         idleBlinkTimer?.invalidate()
@@ -744,7 +634,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         defaults.set([origin.x, origin.y], forKey: "panelOrigin")
     }
 
-    @objc private func resetPosition() {
+    private func placeAtDefaultPosition() {
         let screen = NSScreen.main ?? NSScreen.screens.first
         guard let visible = screen?.visibleFrame else { return }
         let origin = NSPoint(x: visible.maxX - panel.frame.width - 18, y: visible.minY + 18)
@@ -787,12 +677,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         if !isPaused { schedulePhaseChange() }
     }
 
-    @objc private func toggleVisibility() {
-        isVisible.toggle()
-        if isVisible { panel.orderFrontRegardless() } else { panel.orderOut(nil) }
-        visibilityItem.title = isVisible ? "ペンギンを隠す" : "ペンギンを表示する"
-    }
-
     @objc private func toggleLoginItem() {
         do {
             if SMAppService.mainApp.status == .enabled {
@@ -801,19 +685,14 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 try SMAppService.mainApp.register()
             }
         } catch {
-            permissionItem.title = "ログイン時起動を設定できませんでした"
+            let alert = NSAlert()
+            alert.messageText = "ログイン時起動を設定できませんでした"
+            alert.alertStyle = .warning
+            alert.runModal()
         }
         updateMenuStatus()
     }
 
-    @objc private func openInputSettings() {
-        if !isPaused && monitor.start() {
-            startMonitoring()
-            return
-        }
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
-        NSWorkspace.shared.open(url)
-    }
 }
 
 if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sprite-sheet" {
