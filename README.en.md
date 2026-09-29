@@ -41,7 +41,7 @@ The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Develop
 
 ## Use your own pet
 
-Waddly accepts transparent 3×3 PNG sprite sheets. Drag an image onto the pet or choose **Import pet image…** from its menu. The image is stored locally in Application Support and restored at the next launch; it is never uploaded.
+Waddly accepts transparent 3×3 PNG sprite sheets. Drag an image onto the pet or choose **Import pet image…** from its menu. The preview shows cell boundaries, image dimensions, and the current display size before importing. Once confirmed, the image is stored locally in Application Support and restored at the next launch; it is never uploaded.
 
 The image must be square, with dimensions divisible by 3. The limit is 20 MB and 4096 px. Waddly divides the image into equal cells, so follow the cell order and spacing in the prompts.
 

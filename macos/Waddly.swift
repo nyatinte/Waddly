@@ -154,6 +154,24 @@ private final class DraggableImageView: NSImageView {
     }
 }
 
+@MainActor
+private final class SpriteSheetGridOverlay: NSView {
+    override func draw(_ dirtyRect: NSRect) {
+        let lines = NSBezierPath()
+        lines.lineWidth = 1
+        for division in 1...2 {
+            let x = bounds.width * CGFloat(division) / 3
+            let y = bounds.height * CGFloat(division) / 3
+            lines.move(to: NSPoint(x: x, y: bounds.minY))
+            lines.line(to: NSPoint(x: x, y: bounds.maxY))
+            lines.move(to: NSPoint(x: bounds.minX, y: y))
+            lines.line(to: NSPoint(x: bounds.maxX, y: y))
+        }
+        NSColor.separatorColor.withAlphaComponent(0.75).setStroke()
+        lines.stroke()
+    }
+}
+
 private final class KeyboardMonitor: @unchecked Sendable {
     var onKeyDown: (@MainActor (Bool) -> Void)?
     private var tap: CFMachPort?
@@ -413,6 +431,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             showPetImageImportError()
             return
         }
+        guard confirmPetImageImport(data, cellSize: Int(newFrames[0].size.width)) else { return }
 
         do {
             try PetSpriteSheetImporter.save(data, to: destination)
@@ -434,6 +453,45 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         alert.informativeText = localizedString("pet.importErrorMessage")
         alert.alertStyle = .warning
         alert.runModal()
+    }
+
+    private func confirmPetImageImport(_ data: Data, cellSize: Int) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = localizedString("pet.previewTitle")
+        alert.informativeText = localizedString("pet.previewPrompt")
+        alert.alertStyle = .informational
+
+        let previewSize: CGFloat = 240
+        let detailsHeight: CGFloat = 72
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: previewSize, height: previewSize + detailsHeight))
+        let imageView = NSImageView(frame: NSRect(x: 0, y: detailsHeight, width: previewSize, height: previewSize))
+        imageView.image = NSImage(data: data)
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        imageView.wantsLayer = true
+        imageView.layer?.borderColor = NSColor.separatorColor.cgColor
+        imageView.layer?.borderWidth = 1
+        imageView.setAccessibilityLabel(localizedString("a11y.spritePreview"))
+
+        let grid = SpriteSheetGridOverlay(frame: imageView.bounds)
+        grid.autoresizingMask = [.width, .height]
+        imageView.addSubview(grid)
+        accessory.addSubview(imageView)
+
+        let imageSize = cellSize * 3
+        let details = [
+            "\(localizedString("pet.previewImageSize")) \(imageSize) × \(imageSize) px",
+            "\(localizedString("pet.previewCellSize")) \(cellSize) × \(cellSize) px",
+            "\(localizedString("pet.previewDisplaySize")) \(Int(displaySize)) px",
+            localizedString("pet.previewPosition")
+        ].joined(separator: "\n")
+        let detailsLabel = NSTextField(wrappingLabelWithString: details)
+        detailsLabel.frame = NSRect(x: 0, y: 0, width: previewSize, height: detailsHeight)
+        accessory.addSubview(detailsLabel)
+
+        alert.accessoryView = accessory
+        alert.addButton(withTitle: localizedString("pet.importConfirm"))
+        alert.addButton(withTitle: localizedString("common.cancel"))
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     @objc private func choosePetImage() {
@@ -718,7 +776,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
         updateMenuStatus()
     }
-
 }
 
 if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sprite-sheet" {

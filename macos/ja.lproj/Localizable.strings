@@ -16,6 +16,15 @@
 "pet.importErrorTitle" = "ペット画像を読み込めませんでした";
 "pet.importErrorMessage" = "20 MB以下、4096 px以下の正方形で、3×3に分割できる透過PNGを選んでください。";
 "pet.importPrompt" = "読み込む";
+"pet.previewTitle" = "このペット画像を読み込みますか？";
+"pet.previewPrompt" = "読み込み前に3×3のコマを確認してください。";
+"pet.previewImageSize" = "画像サイズ：";
+"pet.previewCellSize" = "1コマのサイズ：";
+"pet.previewDisplaySize" = "表示サイズ：";
+"pet.previewPosition" = "現在のデスクトップ上の位置を維持します。";
+"pet.importConfirm" = "画像を読み込む";
+"common.cancel" = "キャンセル";
+"a11y.spritePreview" = "3×3ペットスプライトシートのプレビュー";
 "tooltip.paused" = "Waddly：入力反応を一時停止中";
 "tooltip.active" = "Waddly：入力に反応中";
 "tooltip.permission" = "Waddly：入力監視の許可が必要";
