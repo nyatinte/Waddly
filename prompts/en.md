@@ -15,6 +15,7 @@ Create a 3×3 animated sprite sheet for Waddly, using the attached pet or charac
 - Draw each cell on the same 64×64-pixel logical grid. Keep the palette, outlines, pixel scale, and shading consistent across all cells.
 - Do not use anti-aliasing, blur, gradients, glow, or photorealistic textures.
 - Keep the same character, facing direction, camera angle, and character scale in every cell. Keep ears, tail, and other features inside each cell; nothing may overlap a neighboring cell.
+- Leave about 10% transparent padding on every side of each cell. Fit the character, keyboard, and effects inside the central 80% safe area instead of filling the cell edge to edge. Keep ears, tails, the keyboard, and Enter impact effects well away from cell boundaries.
 
 [Sheet format]
 - Output one transparent PNG.
@@ -36,7 +37,7 @@ Create a 3×3 animated sprite sheet for Waddly, using the attached pet or charac
 [Keyboard]
 - Show the same small keyboard or laptop only in cells 3–7.
 - In cell 7, make the Enter key visibly larger than the other keys. It may carry a simple “↵” symbol; do not write the word “Enter.”
-- Keep the keyboard and character entirely within their own cells.
+- Keep the keyboard and character entirely within their own cells and away from the cell edges.
 
 Output only the sprite sheet image that meets these requirements.
 ```
