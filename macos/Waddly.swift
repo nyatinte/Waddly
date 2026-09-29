@@ -1,7 +1,9 @@
 import AppKit
 import ApplicationServices
+import ImageIO
 import QuartzCore
 import ServiceManagement
+import UniformTypeIdentifiers
 
 private enum PetPhase: Equatable {
     case typing
@@ -40,6 +42,67 @@ private enum TypingMotion: Int, CaseIterable {
     }
 }
 
+private enum PetSpriteSheetImporter {
+    static let maximumFileSize = 20 * 1_024 * 1_024
+    private static let cellForFrame = [0, 1, 2, 2, 2, 3, 5, 4, 5, 4, 4, 4, 6, 7, 8, 8]
+
+    static func frames(from data: Data) -> [NSImage]? {
+        guard data.count <= maximumFileSize,
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let sourceType = CGImageSourceGetType(source),
+              sourceType as String == UTType.png.identifier,
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int,
+              width == height, width % 3 == 0, width <= 4_096,
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            return nil
+        }
+
+        switch image.alphaInfo {
+        case .first, .last, .premultipliedFirst, .premultipliedLast, .alphaOnly:
+            break
+        default:
+            return nil
+        }
+
+        let cellSize = width / 3
+        let pointSize = CGFloat(cellSize)
+        var cells: [NSImage] = []
+        for row in 0..<3 {
+            for column in 0..<3 {
+                let rect = CGRect(
+                    x: CGFloat(column * cellSize),
+                    y: CGFloat(row * cellSize),
+                    width: pointSize,
+                    height: pointSize
+                )
+                guard let cell = image.cropping(to: rect) else { return nil }
+                cells.append(NSImage(cgImage: cell, size: NSSize(width: pointSize, height: pointSize)))
+            }
+        }
+        return cellForFrame.map { cells[$0] }
+    }
+
+    static func load(from url: URL) -> [NSImage]? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let fileSize = attributes[.size] as? NSNumber,
+              fileSize.intValue <= maximumFileSize,
+              let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return frames(from: data)
+    }
+
+    static func save(_ data: Data, to url: URL) throws {
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try data.write(to: url, options: .atomic)
+    }
+}
+
 @MainActor
 private final class PetWindow: NSPanel {
     override var canBecomeKey: Bool { false }
@@ -49,6 +112,11 @@ private final class PetWindow: NSPanel {
 @MainActor
 private final class DraggableImageView: NSImageView {
     var contextMenu: NSMenu?
+    var onFileDrop: ((URL) -> Void)?
+
+    func acceptPNGFileDrops() {
+        registerForDraggedTypes([.fileURL])
+    }
 
     override func mouseDown(with event: NSEvent) {
         window?.performDrag(with: event)
@@ -57,6 +125,28 @@ private final class DraggableImageView: NSImageView {
     override func rightMouseDown(with event: NSEvent) {
         guard let contextMenu else { return }
         NSMenu.popUpContextMenu(contextMenu, with: event, for: self)
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        fileURL(from: sender) == nil ? [] : .copy
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let url = fileURL(from: sender) else { return false }
+        onFileDrop?(url)
+        return true
+    }
+
+    private func fileURL(from sender: NSDraggingInfo) -> URL? {
+        guard let urls = sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]
+        ) as? [URL],
+           let url = urls.first,
+           url.pathExtension.lowercased() == "png" else {
+            return nil
+        }
+        return url
     }
 }
 
@@ -154,13 +244,15 @@ private final class KeyboardMonitor: @unchecked Sendable {
 private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     private let defaults = UserDefaults.standard
     private let monitor = KeyboardMonitor()
-    private lazy var frames = (1...16).compactMap { index -> NSImage? in
+    private lazy var bundledFrames = (1...16).compactMap { index -> NSImage? in
         let name = String(format: "%02d", index)
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("Frames/\(name)-\(Self.frameSlugs[index - 1]).png") else {
             return nil
         }
         return NSImage(contentsOf: url)
     }
+    private var importedFrames: [NSImage]?
+    private var frames: [NSImage] { importedFrames ?? bundledFrames }
     private let typingFrames = [5, 6, 5, 8, 7, 6, 9, 5, 11, 6, 8, 5]
     private var panel: PetWindow!
     private var petView: DraggableImageView!
@@ -175,6 +267,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var pauseItem: NSMenuItem!
     private var visibilityItem: NSMenuItem!
     private var loginItem: NSMenuItem!
+    private var resetPetImageItem: NSMenuItem!
     private var phaseTimer: Timer?
     private var idleBlinkTimer: Timer?
     private var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
@@ -191,6 +284,11 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         let value = defaults.double(forKey: "displaySize")
         return value == 0 ? 240 : CGFloat(value)
     }
+    private var customPetImageURL: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Waddly", isDirectory: true)
+            .appendingPathComponent("custom-pet.png")
+    }
 
     private static let frameSlugs = [
         "idle", "blink", "surprised-left", "surprised-right",
@@ -201,8 +299,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         defaults.register(defaults: ["typingMotion": TypingMotion.weak.rawValue])
+        loadSavedPetImage()
         buildPanel()
         buildMenu()
+        petView.onFileDrop = { [weak self] in self?.importPetImage(from: $0) }
+        petView.acceptPNGFileDrops()
+        petView.toolTip = "3×3の透過PNGをドロップしてペットを変更"
         monitor.onKeyDown = { [weak self] in self?.receivedKeyDown() }
         startMonitoring()
         schedulePhaseChange()
@@ -317,6 +419,15 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         resetItem.target = self
         statusMenu.addItem(resetItem)
 
+        let importPetItem = NSMenuItem(title: "ペット画像を読み込む…", action: #selector(choosePetImage), keyEquivalent: "")
+        importPetItem.target = self
+        statusMenu.addItem(importPetItem)
+
+        resetPetImageItem = NSMenuItem(title: "標準のペットに戻す", action: #selector(resetPetImage), keyEquivalent: "")
+        resetPetImageItem.target = self
+        resetPetImageItem.isEnabled = importedFrames != nil
+        statusMenu.addItem(resetPetImageItem)
+
         visibilityItem = NSMenuItem(title: "ペンギンを隠す", action: #selector(toggleVisibility), keyEquivalent: "")
         visibilityItem.target = self
         statusMenu.addItem(visibilityItem)
@@ -349,6 +460,71 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         tapDiagnosticItem.title = "イベントタップ: \(monitor.tapStatus)"
         callbackDiagnosticItem.title = "コールバック受信: \(monitor.keyDownCallbackCount)回"
         reactionDiagnosticItem.title = "ペット反応: \(petReactionCount)回"
+    }
+
+    private func loadSavedPetImage() {
+        guard let url = customPetImageURL else { return }
+        importedFrames = PetSpriteSheetImporter.load(from: url)
+    }
+
+    private func importPetImage(from url: URL) {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let fileSize = attributes[.size] as? NSNumber,
+              fileSize.intValue <= PetSpriteSheetImporter.maximumFileSize,
+              let data = try? Data(contentsOf: url),
+              let newFrames = PetSpriteSheetImporter.frames(from: data),
+              let destination = customPetImageURL else {
+            showPetImageImportError()
+            return
+        }
+
+        do {
+            try PetSpriteSheetImporter.save(data, to: destination)
+        } catch {
+            showPetImageImportError()
+            return
+        }
+
+        importedFrames = newFrames
+        resetPetImageItem.isEnabled = true
+        lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
+        currentPhase = nil
+        schedulePhaseChange()
+    }
+
+    private func showPetImageImportError() {
+        let alert = NSAlert()
+        alert.messageText = "ペット画像を読み込めませんでした"
+        alert.informativeText = "20MB以下・4096px以下の正方形で、3×3に分割できる透過PNGを選んでください。"
+        alert.alertStyle = .warning
+        alert.runModal()
+    }
+
+    @objc private func choosePetImage() {
+        let picker = NSOpenPanel()
+        picker.allowedContentTypes = [.png]
+        picker.allowsMultipleSelection = false
+        picker.canChooseDirectories = false
+        picker.prompt = "読み込む"
+        guard picker.runModal() == .OK, let url = picker.url else { return }
+        importPetImage(from: url)
+    }
+
+    @objc private func resetPetImage() {
+        guard let url = customPetImageURL else { return }
+        do {
+            if FileManager.default.fileExists(atPath: url.path) {
+                try FileManager.default.removeItem(at: url)
+            }
+        } catch {
+            showPetImageImportError()
+            return
+        }
+        importedFrames = nil
+        resetPetImageItem.isEnabled = false
+        lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
+        currentPhase = nil
+        schedulePhaseChange()
     }
 
     private func startMonitoring() {
@@ -568,6 +744,26 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
         NSWorkspace.shared.open(url)
     }
+}
+
+if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sprite-sheet" {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[2])),
+          let frames = PetSpriteSheetImporter.frames(from: data), frames.count == 16 else {
+        fatalError("3×3 transparent PNG import failed")
+    }
+    let savedFile = FileManager.default.temporaryDirectory
+        .appendingPathComponent("Waddly-self-test-\(UUID().uuidString).png")
+    defer { try? FileManager.default.removeItem(at: savedFile) }
+    do {
+        try PetSpriteSheetImporter.save(data, to: savedFile)
+    } catch {
+        fatalError("3×3 PNG save failed: \(error)")
+    }
+    guard let restoredFrames = PetSpriteSheetImporter.load(from: savedFile), restoredFrames.count == 16 else {
+        fatalError("3×3 PNG reload failed")
+    }
+    print("3×3 transparent PNG import and persistence passed")
+    exit(0)
 }
 
 if CommandLine.arguments.contains("--self-test") {

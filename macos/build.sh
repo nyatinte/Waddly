@@ -11,8 +11,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Frames"
 swiftc -swift-version 6 -target "$(uname -m)-apple-macos13.0" -O \
   -framework Cocoa \
   -framework ApplicationServices \
+  -framework ImageIO \
   -framework QuartzCore \
   -framework ServiceManagement \
+  -framework UniformTypeIdentifiers \
   "$ROOT/macos/Waddly.swift" \
   -o "$APP/Contents/MacOS/Waddly"
 
