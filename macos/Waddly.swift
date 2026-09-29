@@ -44,7 +44,7 @@ private enum TypingMotion: Int, CaseIterable {
 
 private enum PetSpriteSheetImporter {
     static let maximumFileSize = 20 * 1_024 * 1_024
-    private static let cellForFrame = [0, 1, 2, 2, 2, 3, 5, 4, 5, 4, 4, 4, 6, 7, 8, 8]
+    static let cellForFrame = [0, 1, 2, 2, 2, 3, 5, 4, 5, 4, 6, 4, 7, 8, 6, 6]
 
     static func frames(from data: Data) -> [NSImage]? {
         guard data.count <= maximumFileSize,
@@ -151,7 +151,7 @@ private final class DraggableImageView: NSImageView {
 }
 
 private final class KeyboardMonitor: @unchecked Sendable {
-    var onKeyDown: (@MainActor () -> Void)?
+    var onKeyDown: (@MainActor (Bool) -> Void)?
     private(set) var keyDownCallbackCount = 0
     private(set) var tapCreationFailed = false
     private var tap: CFMachPort?
@@ -164,6 +164,10 @@ private final class KeyboardMonitor: @unchecked Sendable {
             return tapCreationFailed ? "作成失敗" : "未作成"
         }
         return isRunning ? "有効" : "無効・再試行待ち"
+    }
+
+    static func isEnterKeyCode(_ keyCode: Int64) -> Bool {
+        keyCode == 36 || keyCode == 76
     }
 
     func start() -> Bool {
@@ -229,9 +233,10 @@ private final class KeyboardMonitor: @unchecked Sendable {
         let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
 
         if type == .keyDown {
+            let isEnter = isEnterKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
             MainActor.assumeIsolated {
                 monitor.keyDownCallbackCount += 1
-                monitor.onKeyDown?()
+                monitor.onKeyDown?(isEnter)
             }
         } else if (type == .tapDisabledByTimeout || type == .tapDisabledByUserInput), let tap = monitor.tap {
             CGEvent.tapEnable(tap: tap, enable: true)
@@ -270,6 +275,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var resetPetImageItem: NSMenuItem!
     private var phaseTimer: Timer?
     private var idleBlinkTimer: Timer?
+    private var enterReactionTimer: Timer?
+    private var enterReactionFrameIndex = 0
+    private let enterReactionFrames = [10, 14, 15, 14, 10]
     private var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
     private var lastTypingFrameTime: TimeInterval = 0
     private var typingFrameIndex = 0
@@ -305,7 +313,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         petView.onFileDrop = { [weak self] in self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
         petView.toolTip = "3×3の透過PNGをドロップしてペットを変更"
-        monitor.onKeyDown = { [weak self] in self?.receivedKeyDown() }
+        monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
         startMonitoring()
         schedulePhaseChange()
     }
@@ -323,6 +331,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     func applicationWillTerminate(_ notification: Notification) {
         phaseTimer?.invalidate()
         idleBlinkTimer?.invalidate()
+        stopEnterReaction()
         monitor.stop()
     }
 
@@ -485,6 +494,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             return
         }
 
+        stopEnterReaction()
         importedFrames = newFrames
         resetPetImageItem.isEnabled = true
         lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
@@ -520,6 +530,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             showPetImageImportError()
             return
         }
+        stopEnterReaction()
         importedFrames = nil
         resetPetImageItem.isEnabled = false
         lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
@@ -549,8 +560,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem.button?.toolTip = isPaused ? "ペンギン：一時停止中" : (monitor.isRunning ? "ペンギン：入力に反応中" : "ペンギン：入力監視の許可が必要")
     }
 
-    private func receivedKeyDown() {
+    private func receivedKeyDown(isEnter: Bool) {
         guard !isPaused else { return }
+        let interruptedEnterReaction = enterReactionTimer != nil
+        stopEnterReaction()
         petReactionCount += 1
         lastInputTime = ProcessInfo.processInfo.systemUptime
         phaseTimer?.invalidate()
@@ -560,7 +573,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         petView.layer?.removeAnimation(forKey: "sleep-breathe")
         currentPhase = .typing
 
-        if lastInputTime - lastTypingFrameTime >= 0.075 {
+        if isEnter {
+            playEnterReaction()
+        } else if interruptedEnterReaction || lastInputTime - lastTypingFrameTime >= 0.075 {
             showFrame(typingFrames[typingFrameIndex % typingFrames.count])
             typingFrameIndex += 1
             lastTypingFrameTime = lastInputTime
@@ -593,7 +608,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 idleBlinkTimer?.invalidate()
                 idleBlinkTimer = nil
                 petView.layer?.removeAllAnimations()
-                showFrame(12)
+                showFrame(13)
             }
         }
 
@@ -626,6 +641,61 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         animation.duration = 0.14
         animation.timingFunction = CAMediaTimingFunction(name: .easeOut)
         layer.add(animation, forKey: "type-bounce")
+    }
+
+    private func playEnterReaction() {
+        let sequence = importedFrames == nil ? enterReactionFrames : [14]
+        enterReactionFrameIndex = 0
+        showFrame(sequence[enterReactionFrameIndex])
+        enterReactionFrameIndex += 1
+
+        if let layer = petView.layer {
+            layer.removeAnimation(forKey: "type-bounce")
+            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+            scale.values = [1, 0.86, 1.12, 0.96, 1]
+            scale.keyTimes = [0, 0.2, 0.48, 0.72, 1]
+            scale.duration = 0.58
+
+            let press = CAKeyframeAnimation(keyPath: "transform.translation.y")
+            press.values = [0, 8, -5, 2, 0]
+            press.keyTimes = scale.keyTimes
+            press.duration = scale.duration
+
+            let impact = CAAnimationGroup()
+            impact.animations = [scale, press]
+            impact.duration = scale.duration
+            impact.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            layer.add(impact, forKey: "enter-impact")
+        }
+
+        let isCustomPet = importedFrames != nil
+        enterReactionTimer = Timer.scheduledTimer(
+            withTimeInterval: isCustomPet ? 0.58 : 0.12,
+            repeats: !isCustomPet
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                guard self.currentPhase == .typing, !self.isPaused else {
+                    self.enterReactionTimer?.invalidate()
+                    self.enterReactionTimer = nil
+                    return
+                }
+                guard self.enterReactionFrameIndex < sequence.count else {
+                    self.enterReactionTimer?.invalidate()
+                    self.enterReactionTimer = nil
+                    self.showFrame(0)
+                    return
+                }
+                self.showFrame(sequence[self.enterReactionFrameIndex])
+                self.enterReactionFrameIndex += 1
+            }
+        }
+    }
+
+    private func stopEnterReaction() {
+        enterReactionTimer?.invalidate()
+        enterReactionTimer = nil
+        petView?.layer?.removeAnimation(forKey: "enter-impact")
     }
 
     private func breathe(key: String = "sleep-breathe", breathScale: CGFloat = 1.018, duration: CFTimeInterval = 1.5) {
@@ -774,7 +844,14 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(TypingMotion.off.amplitude == 0)
     precondition(TypingMotion.weak.amplitude == 5)
     precondition(TypingMotion.strong.amplitude > TypingMotion.weak.amplitude)
-    print("Pet phases and typing motion levels passed")
+    precondition(KeyboardMonitor.isEnterKeyCode(36))
+    precondition(KeyboardMonitor.isEnterKeyCode(76))
+    precondition(!KeyboardMonitor.isEnterKeyCode(0))
+    precondition(PetSpriteSheetImporter.cellForFrame[10] == 6)
+    precondition(PetSpriteSheetImporter.cellForFrame[12] == 7)
+    precondition(PetSpriteSheetImporter.cellForFrame[13] == 8)
+    precondition(PetSpriteSheetImporter.cellForFrame[14] == 6)
+    print("Pet phases, typing motion, Enter detection, and sprite mapping passed")
     exit(0)
 }
 
