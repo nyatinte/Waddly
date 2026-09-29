@@ -9,7 +9,8 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 - Reacts to key-down events without storing typed text or key codes.
 - Breathes subtly and blinks while idle, falls asleep after a while, and stops animating after five minutes. Input monitoring remains active so it can wake up.
 - Drag the pet around the desktop; its position is saved. Choose from 180, 240, and 320 px sizes.
-- Pause reactions, toggle visibility, and configure launch at login from the menu bar.
+- Right-click the pet or click the menu bar icon to open the menu. Change size or position, toggle visibility, pause reactions, configure launch at login, or quit.
+- The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
 
 ## Requirements

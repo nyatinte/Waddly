@@ -26,8 +26,15 @@ private final class PetWindow: NSPanel {
 
 @MainActor
 private final class DraggableImageView: NSImageView {
+    var contextMenu: NSMenu?
+
     override func mouseDown(with event: NSEvent) {
         window?.performDrag(with: event)
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        guard let contextMenu else { return }
+        NSMenu.popUpContextMenu(contextMenu, with: event, for: self)
     }
 }
 
@@ -224,6 +231,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Waddly")
         statusItem.menu = statusMenu
+        petView.contextMenu = statusMenu
         updateMenuStatus()
     }
 
