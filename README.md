@@ -18,6 +18,7 @@
 
 - macOS 13 以降
 - Swift 6 を含む Xcode Command Line Tools
+- SwiftLint（開発ビルドの厳格チェック用。`brew install swiftlint`）
 - 現在のビルドスクリプトは、実行した Mac の CPU アーキテクチャ向けにビルドします
 
 ## ビルドと起動

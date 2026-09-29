@@ -17,10 +17,11 @@ private func makeIcon() throws {
     canvas.lockFocus()
 
     let bounds = NSRect(x: 0, y: 0, width: 1024, height: 1024)
-    NSGradient(colors: [
+    let gradient = NSGradient(colors: [
         NSColor(calibratedRed: 0.08, green: 0.22, blue: 0.38, alpha: 1),
         NSColor(calibratedRed: 0.18, green: 0.52, blue: 0.70, alpha: 1)
-    ])!.draw(in: bounds, angle: 90)
+    ])
+    gradient?.draw(in: bounds, angle: 90)
 
     NSColor(calibratedRed: 0.73, green: 0.91, blue: 0.96, alpha: 0.20).setFill()
     NSBezierPath(ovalIn: NSRect(x: 172, y: 218, width: 680, height: 680)).fill()

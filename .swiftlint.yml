@@ -1,0 +1,14 @@
+opt_in_rules:
+  - array_init
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - discouraged_optional_boolean
+  - empty_count
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - modifier_order
+  - prefer_key_path
+  - redundant_nil_coalescing
+  - unowned_variable_capture

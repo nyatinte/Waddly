@@ -5,6 +5,16 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
+if ! command -v swiftlint >/dev/null 2>&1; then
+  printf 'SwiftLint is required. Install it with: brew install swiftlint\n' >&2
+  exit 1
+fi
+
+(
+  cd "$ROOT"
+  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict macos
+)
+
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Frames"
 
@@ -15,7 +25,15 @@ swiftc -swift-version 6 -target "$(uname -m)-apple-macos13.0" -O \
   -framework QuartzCore \
   -framework ServiceManagement \
   -framework UniformTypeIdentifiers \
+  "$ROOT/macos/main.swift" \
   "$ROOT/macos/Waddly.swift" \
+  "$ROOT/macos/PetImageImporter.swift" \
+  "$ROOT/macos/PetImageViews.swift" \
+  "$ROOT/macos/PetImageSettings.swift" \
+  "$ROOT/macos/PetImagePersistence.swift" \
+  "$ROOT/macos/PetAnimations.swift" \
+  "$ROOT/macos/AppDelegateWindow.swift" \
+  "$ROOT/macos/AppDelegateMenu.swift" \
   -o "$APP/Contents/MacOS/Waddly"
 
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"

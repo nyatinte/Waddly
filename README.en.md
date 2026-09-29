@@ -18,6 +18,7 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 
 - macOS 13 or later
 - Xcode Command Line Tools with Swift 6
+- SwiftLint for strict linting during development builds (`brew install swiftlint`)
 - The build script targets the CPU architecture of the Mac running it
 
 ## Build and run
