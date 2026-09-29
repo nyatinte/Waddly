@@ -23,6 +23,8 @@
 "images.category.enter" = "Enter";
 "images.add" = "追加";
 "images.remove" = "画像を削除";
+"images.moveLeft" = "画像を左へ移動";
+"images.moveRight" = "画像を右へ移動";
 "images.thumbnail" = "ペット画像";
 "images.errorTitle" = "ペット画像を追加できませんでした";
 "images.errorMessage" = "20 MB以下、4096 × 4096 px以下の透過PNGを選んでください。";

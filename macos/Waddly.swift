@@ -78,6 +78,14 @@ private struct PetImageSet {
     }
 }
 
+private func moving<Element>(_ elements: [Element], from source: Int, to destination: Int) -> [Element]? {
+    guard elements.indices.contains(source), elements.indices.contains(destination) else { return nil }
+    var result = elements
+    let item = result.remove(at: source)
+    result.insert(item, at: destination)
+    return result
+}
+
 private struct OptimizedPetImage {
     let image: NSImage
     let pngData: Data
@@ -319,8 +327,11 @@ private final class PetImageDropView: NSView {
 @MainActor
 private final class PetImageTileView: NSView {
     var onRemove: (() -> Void)?
+    var onMove: ((Int) -> Void)?
+    private let index: Int
 
-    init(image: NSImage, index: Int, canRemove: Bool) {
+    init(image: NSImage, index: Int, imageCount: Int) {
+        self.index = index
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         wantsLayer = true
@@ -336,27 +347,49 @@ private final class PetImageTileView: NSView {
         let removeButton = NSButton(image: NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: nil)!, target: self, action: #selector(removeImage))
         removeButton.translatesAutoresizingMaskIntoConstraints = false
         removeButton.isBordered = false
-        removeButton.isEnabled = canRemove
+        removeButton.isEnabled = imageCount > 1
         removeButton.setAccessibilityLabel("\(localizedString("images.remove")) \(index + 1)")
         addSubview(removeButton)
 
+        let moveLeftButton = NSButton(image: NSImage(systemSymbolName: "chevron.left", accessibilityDescription: nil)!, target: self, action: #selector(moveImageLeft))
+        moveLeftButton.translatesAutoresizingMaskIntoConstraints = false
+        moveLeftButton.isEnabled = index > 0
+        moveLeftButton.setAccessibilityLabel("\(localizedString("images.moveLeft")) \(index + 1)")
+        addSubview(moveLeftButton)
+
+        let moveRightButton = NSButton(image: NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil)!, target: self, action: #selector(moveImageRight))
+        moveRightButton.translatesAutoresizingMaskIntoConstraints = false
+        moveRightButton.isEnabled = index < imageCount - 1
+        moveRightButton.setAccessibilityLabel("\(localizedString("images.moveRight")) \(index + 1)")
+        addSubview(moveRightButton)
+
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: 88),
-            heightAnchor.constraint(equalToConstant: 96),
+            heightAnchor.constraint(equalToConstant: 104),
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            imageView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            imageView.widthAnchor.constraint(equalToConstant: 72),
-            imageView.heightAnchor.constraint(equalToConstant: 72),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            imageView.widthAnchor.constraint(equalToConstant: 64),
+            imageView.heightAnchor.constraint(equalToConstant: 64),
             removeButton.topAnchor.constraint(equalTo: topAnchor, constant: 2),
             removeButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
             removeButton.widthAnchor.constraint(equalToConstant: 20),
-            removeButton.heightAnchor.constraint(equalToConstant: 20)
+            removeButton.heightAnchor.constraint(equalToConstant: 20),
+            moveLeftButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            moveLeftButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
+            moveLeftButton.widthAnchor.constraint(equalToConstant: 26),
+            moveLeftButton.heightAnchor.constraint(equalToConstant: 20),
+            moveRightButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            moveRightButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
+            moveRightButton.widthAnchor.constraint(equalToConstant: 26),
+            moveRightButton.heightAnchor.constraint(equalToConstant: 20)
         ])
     }
 
     required init?(coder: NSCoder) { nil }
 
     @objc private func removeImage() { onRemove?() }
+    @objc private func moveImageLeft() { onMove?(index - 1) }
+    @objc private func moveImageRight() { onMove?(index + 1) }
 }
 
 @MainActor
@@ -367,6 +400,7 @@ private final class PetImageCategoryRowView: NSView {
         didSet { dropView.onDrop = onDrop }
     }
     var onRemove: ((Int) -> Void)?
+    var onMove: ((Int, Int) -> Void)?
 
     private let dropView = PetImageDropView(frame: .zero)
     private let imageStack = NSStackView()
@@ -438,8 +472,9 @@ private final class PetImageCategoryRowView: NSView {
             view.removeFromSuperview()
         }
         for (index, image) in images.enumerated() {
-            let tile = PetImageTileView(image: image, index: index, canRemove: images.count > 1)
+            let tile = PetImageTileView(image: image, index: index, imageCount: images.count)
             tile.onRemove = { [weak self] in self?.onRemove?(index) }
+            tile.onMove = { [weak self] in self?.onMove?(index, $0) }
             imageStack.insertArrangedSubview(tile, at: index)
         }
     }
@@ -888,7 +923,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             }
         } else {
             do {
-                try persistPetImages(updated)
+                try persistCategoryImages(updated[category], for: category)
             } catch {
                 showImageSaveError()
                 return
@@ -896,6 +931,65 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         }
         importedImages = updated
         imageSetDidChange()
+    }
+
+    private func moveImage(from source: Int, to destination: Int, in category: PetImageCategory) {
+        let current = petImages[category]
+        guard source != destination, let reordered = moving(current, from: source, to: destination) else { return }
+        let key = category.rawValue
+        let names = storedImageFiles[key] ?? []
+        if names.count == current.count {
+            var reorderedNames = names
+            let name = reorderedNames.remove(at: source)
+            reorderedNames.insert(name, at: destination)
+            var updatedFiles = storedImageFiles
+            updatedFiles[key] = reorderedNames
+            defaults.set(updatedFiles, forKey: "petImageFiles")
+            storedImageFiles = updatedFiles
+        } else {
+            do {
+                try persistCategoryImages(reordered, for: category)
+            } catch {
+                showImageSaveError()
+                return
+            }
+        }
+        var updated = petImages
+        updated[category] = reordered
+        importedImages = updated
+        imageSetDidChange()
+    }
+
+    private func persistCategoryImages(_ images: [NSImage], for category: PetImageCategory) throws {
+        guard !images.isEmpty, let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var names: [String] = []
+        var createdURLs: [URL] = []
+        do {
+            for image in images {
+                guard let data = PetSpriteSheetImporter.pngData(for: image),
+                      data.count <= PetSpriteSheetImporter.maximumFileSize else { throw CocoaError(.fileWriteOutOfSpace) }
+                let name = "\(UUID().uuidString).png"
+                let url = directory.appendingPathComponent(name)
+                try data.write(to: url, options: .atomic)
+                createdURLs.append(url)
+                names.append(name)
+            }
+        } catch {
+            createdURLs.forEach { try? FileManager.default.removeItem(at: $0) }
+            throw error
+        }
+
+        let oldFiles = storedImageFiles
+        var updatedFiles = storedImageFiles
+        updatedFiles[category.rawValue] = names
+        defaults.set(updatedFiles, forKey: "petImageFiles")
+        storedImageFiles = updatedFiles
+        for oldNames in oldFiles.values {
+            for name in oldNames where !updatedFiles.values.contains(where: { $0.contains(name) }) {
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+            }
+        }
     }
 
     private func imageSetDidChange() {
@@ -1008,6 +1102,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 row.onAdd = { [weak self] in self?.chooseImages(for: category) }
                 row.onDrop = { [weak self] in self?.addImages($0, to: category) }
                 row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }
+                row.onMove = { [weak self] in self?.moveImage(from: $0, to: $1, in: category) }
                 imageRows[category] = row
                 stack.addArrangedSubview(row)
                 row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -1376,6 +1471,9 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(KeyboardMonitor.isEnterKeyCode(36))
     precondition(KeyboardMonitor.isEnterKeyCode(76))
     precondition(!KeyboardMonitor.isEnterKeyCode(0))
+    precondition(moving(["first", "second", "third"], from: 0, to: 2) == ["second", "third", "first"])
+    precondition(moving(["first", "second", "third"], from: 2, to: 0) == ["third", "first", "second"])
+    precondition(moving(["only"], from: 1, to: 0) == nil)
     let bundled = PetImageSet.bundled(from: Array(repeating: NSImage(size: NSSize(width: 1, height: 1)), count: 16))
     precondition(bundled?[.idle].count == 2)
     precondition(bundled?[.typing].count == 7)
