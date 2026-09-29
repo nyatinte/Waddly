@@ -5,40 +5,46 @@ import UniformTypeIdentifiers
 final class SetupWizardController: NSWindowController, NSWindowDelegate {
     private let prompt: String
     private let onImportImage: @MainActor (URL) -> Bool
+    private let hasCustomImage: @MainActor () -> Bool
     private let hasInputMonitoringPermission: @MainActor () -> Bool
     private let requestInputMonitoringPermission: @MainActor () -> Bool
     private let onClose: @MainActor () -> Void
     private let progressLabel = NSTextField(labelWithString: "")
+    private let progressIndicator = NSProgressIndicator()
     private let pageContainer = NSView()
-    private let promptStatusLabel = NSTextField(labelWithString: "")
+    private let copyPromptButton = NSButton(title: "", target: nil, action: nil)
     private let imageStatusLabel = NSTextField(labelWithString: "")
     private let permissionStatusLabel = NSTextField(labelWithString: "")
+    private let requestPermissionButton = NSButton(title: "", target: nil, action: nil)
     private let settingsButton = NSButton(title: "", target: nil, action: nil)
     private let backButton = NSButton(title: "", target: nil, action: nil)
+    private let skipButton = NSButton(title: "", target: nil, action: nil)
     private let nextButton = NSButton(title: "", target: nil, action: nil)
     private var currentStep = 0
 
     init(
         onImportImage: @escaping @MainActor (URL) -> Bool,
+        hasCustomImage: @escaping @MainActor () -> Bool,
         hasInputMonitoringPermission: @escaping @MainActor () -> Bool,
         requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
         onClose: @escaping @MainActor () -> Void
     ) {
         self.prompt = Self.loadPrompt()
         self.onImportImage = onImportImage
+        self.hasCustomImage = hasCustomImage
         self.hasInputMonitoringPermission = hasInputMonitoringPermission
         self.requestInputMonitoringPermission = requestInputMonitoringPermission
         self.onClose = onClose
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 720, height: 620),
+            contentRect: NSRect(x: 0, y: 0, width: 680, height: 440),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         super.init(window: window)
         window.title = localizedString("setup.windowTitle")
-        window.minSize = NSSize(width: 650, height: 560)
+        window.minSize = NSSize(width: 680, height: 440)
         window.isReleasedWhenClosed = false
         window.delegate = self
         buildWindow()
@@ -47,10 +53,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     required init?(coder: NSCoder) { nil }
 
     func refreshPermissionStatus() {
-        permissionStatusLabel.stringValue = localizedString(
-            hasInputMonitoringPermission() ? "setup.permissionGranted" : "setup.permissionRequired"
-        )
-        settingsButton.isHidden = hasInputMonitoringPermission()
+        let isGranted = hasInputMonitoringPermission()
+        let statusKey = isGranted ? "setup.permissionGranted" : "setup.permissionRequired"
+        permissionStatusLabel.stringValue = localizedString(statusKey)
+        requestPermissionButton.isHidden = isGranted
+        settingsButton.isHidden = isGranted
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -62,8 +69,9 @@ extension SetupWizardController {
     private func buildWindow() {
         let contentView = NSView()
         let navigation = makeNavigation()
-        let stack = makeStack([progressLabel, pageContainer, navigation])
-        stack.spacing = 16
+        let progressRow = makeProgressRow()
+        let stack = makeStack([progressRow, pageContainer, navigation])
+        stack.spacing = 20
         stack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -71,8 +79,9 @@ extension SetupWizardController {
             stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            progressRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             pageContainer.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            pageContainer.heightAnchor.constraint(equalToConstant: 440),
+            pageContainer.heightAnchor.constraint(equalToConstant: 300),
             navigation.widthAnchor.constraint(equalTo: stack.widthAnchor),
             navigation.heightAnchor.constraint(equalToConstant: 32)
         ])
@@ -80,22 +89,38 @@ extension SetupWizardController {
         renderCurrentStep()
     }
 
+    private func makeProgressRow() -> NSStackView {
+        progressLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        progressLabel.textColor = .secondaryLabelColor
+        progressIndicator.style = .bar
+        progressIndicator.controlSize = .small
+        progressIndicator.isIndeterminate = false
+        progressIndicator.minValue = 0
+        progressIndicator.maxValue = 3
+        progressIndicator.widthAnchor.constraint(equalToConstant: 120).isActive = true
+
+        let row = NSStackView(views: [progressLabel, NSView(), progressIndicator])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 12
+        row.translatesAutoresizingMaskIntoConstraints = false
+        return row
+    }
+
     private func makeNavigation() -> NSStackView {
         backButton.target = self
         backButton.action = #selector(goBack)
         backButton.setAccessibilityLabel(localizedString("setup.back"))
 
-        let laterButton = NSButton(
-            title: localizedString("setup.later"),
-            target: self,
-            action: #selector(closeWizard)
-        )
+        skipButton.title = localizedString("setup.skip")
+        skipButton.target = self
+        skipButton.action = #selector(skipPrompt)
         let spacer = NSView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nextButton.target = self
         nextButton.action = #selector(goNext)
 
-        let navigation = makeStack([backButton, laterButton, spacer, nextButton])
+        let navigation = makeStack([backButton, skipButton, spacer, nextButton])
         navigation.orientation = .horizontal
         navigation.alignment = .centerY
         navigation.distribution = .fill
@@ -123,9 +148,12 @@ extension SetupWizardController {
             format: localizedString("setup.progress"),
             currentStep + 1
         )
+        progressIndicator.doubleValue = Double(currentStep + 1)
         backButton.title = localizedString("setup.back")
         backButton.isEnabled = currentStep > 0
+        skipButton.isHidden = currentStep != 0
         nextButton.title = localizedString(currentStep == 2 ? "setup.finish" : "setup.next")
+        nextButton.isEnabled = currentStep != 1 || hasCustomImage()
         window?.defaultButtonCell = nextButton.cell as? NSButtonCell
         if currentStep == 2 { refreshPermissionStatus() }
     }
@@ -136,35 +164,28 @@ extension SetupWizardController {
     private func makePromptPage() -> NSView {
         let title = makeTitle("setup.promptTitle")
         let description = makeDescription("setup.promptDescription")
-        let promptView = NSTextView()
-        promptView.isEditable = false
-        promptView.isSelectable = true
-        promptView.string = prompt
-        promptView.font = .systemFont(ofSize: 13)
-        promptView.textContainerInset = NSSize(width: 12, height: 12)
-
-        let scrollView = NSScrollView()
-        scrollView.borderType = .bezelBorder
-        scrollView.hasVerticalScroller = true
-        scrollView.documentView = promptView
-        scrollView.heightAnchor.constraint(equalToConstant: 240).isActive = true
-
-        let copyButton = NSButton(
-            title: localizedString("setup.copyPrompt"),
-            target: self,
-            action: #selector(copyPrompt)
+        let promptCard = makeInfoCard(
+            symbol: "doc.text",
+            titleKey: "setup.promptCardTitle",
+            detailKey: "setup.promptCardDescription"
         )
-        copyButton.isEnabled = !prompt.isEmpty
+        copyPromptButton.title = localizedString("setup.copyPrompt")
+        copyPromptButton.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
+        copyPromptButton.imagePosition = .imageLeading
+        copyPromptButton.target = self
+        copyPromptButton.action = #selector(copyPrompt)
+        copyPromptButton.isEnabled = !prompt.isEmpty
         let chatGPTButton = NSButton(
             title: localizedString("setup.openChatGPT"),
             target: self,
             action: #selector(openChatGPT)
         )
-        let actions = makeStack([copyButton, chatGPTButton])
+        chatGPTButton.image = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: nil)
+        chatGPTButton.imagePosition = .imageLeading
+        let actions = makeStack([copyPromptButton, chatGPTButton])
         actions.orientation = .horizontal
         actions.alignment = .centerY
-        promptStatusLabel.stringValue = prompt.isEmpty ? localizedString("setup.promptUnavailable") : ""
-        return makeStack([title, description, scrollView, actions, promptStatusLabel])
+        return makeStack([title, description, promptCard, actions], fullWidth: [description, promptCard])
     }
 
     private func makeImagePage() -> NSView {
@@ -173,7 +194,8 @@ extension SetupWizardController {
         let dropZone = PetImageDropView(frame: .zero)
         dropZone.translatesAutoresizingMaskIntoConstraints = false
         dropZone.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-        dropZone.heightAnchor.constraint(equalToConstant: 180).isActive = true
+        dropZone.layer?.cornerRadius = 12
+        dropZone.heightAnchor.constraint(equalToConstant: 160).isActive = true
         dropZone.onDrop = { [weak self] urls in
             guard let url = urls.first else { return }
             self?.importImage(from: url)
@@ -199,45 +221,40 @@ extension SetupWizardController {
             chooseButton.centerXAnchor.constraint(equalTo: dropZone.centerXAnchor),
             chooseButton.topAnchor.constraint(equalTo: dropLabel.bottomAnchor, constant: 14)
         ])
-        imageStatusLabel.stringValue = localizedString("setup.imageOptional")
-        return makeStack([title, description, dropZone, imageStatusLabel])
+        imageStatusLabel.font = .systemFont(ofSize: 13)
+        imageStatusLabel.textColor = .secondaryLabelColor
+        imageStatusLabel.stringValue = localizedString(
+            hasCustomImage() ? "setup.imageAlreadyConfigured" : "setup.imageRequired"
+        )
+        return makeStack(
+            [title, description, dropZone, imageStatusLabel],
+            fullWidth: [description, dropZone, imageStatusLabel]
+        )
     }
 
     private func makePermissionPage() -> NSView {
         let title = makeTitle("setup.permissionTitle")
         let description = makeDescription("setup.permissionDescription")
-        let privacyNote = makeDescription("setup.privacyNote")
-        let requestButton = NSButton(
-            title: localizedString("setup.requestPermission"),
-            target: self,
-            action: #selector(requestPermission)
+        let privacyCard = makeInfoCard(
+            symbol: "hand.raised",
+            titleKey: "setup.privacyTitle",
+            detailKey: "setup.privacyNote"
         )
+        requestPermissionButton.title = localizedString("setup.requestPermission")
+        requestPermissionButton.target = self
+        requestPermissionButton.action = #selector(requestPermission)
         settingsButton.title = localizedString("setup.openSettings")
         settingsButton.target = self
         settingsButton.action = #selector(openInputMonitoringSettings)
-        let actions = makeStack([requestButton, settingsButton])
+        permissionStatusLabel.font = .systemFont(ofSize: 13)
+        permissionStatusLabel.textColor = .secondaryLabelColor
+        let actions = makeStack([requestPermissionButton, settingsButton])
         actions.orientation = .horizontal
         actions.alignment = .centerY
-        return makeStack([title, description, privacyNote, permissionStatusLabel, actions])
-    }
-
-    private func makeTitle(_ key: String) -> NSTextField {
-        let label = NSTextField(labelWithString: localizedString(key))
-        label.font = .boldSystemFont(ofSize: 21)
-        return label
-    }
-
-    private func makeDescription(_ key: String) -> NSTextField {
-        NSTextField(wrappingLabelWithString: localizedString(key))
-    }
-
-    private func makeStack(_ views: [NSView]) -> NSStackView {
-        let stack = NSStackView(views: views)
-        stack.orientation = .vertical
-        stack.alignment = .width
-        stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
+        return makeStack(
+            [title, description, privacyCard, permissionStatusLabel, actions],
+            fullWidth: [description, privacyCard, permissionStatusLabel]
+        )
     }
 
 }
@@ -246,12 +263,14 @@ extension SetupWizardController {
     private func importImage(from url: URL) {
         guard onImportImage(url) else {
             imageStatusLabel.stringValue = localizedString("setup.imageNotImported")
+            nextButton.isEnabled = hasCustomImage()
             return
         }
         imageStatusLabel.stringValue = String(
             format: localizedString("setup.imageImported"),
             url.lastPathComponent
         )
+        nextButton.isEnabled = true
     }
 
     @objc private func chooseImage() {
@@ -267,9 +286,12 @@ extension SetupWizardController {
     @objc private func copyPrompt() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        let copied = pasteboard.setString(prompt, forType: .string)
-        let statusKey = copied ? "setup.promptCopied" : "setup.promptCopyFailed"
-        promptStatusLabel.stringValue = localizedString(statusKey)
+        guard pasteboard.setString(prompt, forType: .string) else {
+            NSSound.beep()
+            return
+        }
+        copyPromptButton.title = localizedString("setup.promptCopiedShort")
+        copyPromptButton.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil)
     }
 
     @objc private func openChatGPT() {
@@ -297,6 +319,7 @@ extension SetupWizardController {
     }
 
     @objc private func goNext() {
+        guard currentStep != 1 || hasCustomImage() else { return }
         guard currentStep < 2 else {
             window?.close()
             return
@@ -305,8 +328,10 @@ extension SetupWizardController {
         renderCurrentStep()
     }
 
-    @objc private func closeWizard() {
-        window?.close()
+    @objc private func skipPrompt() {
+        guard currentStep == 0 else { return }
+        currentStep = 1
+        renderCurrentStep()
     }
 
     private static func loadPrompt() -> String {
@@ -327,6 +352,7 @@ extension AppDelegate {
         if setupWizardController == nil {
             setupWizardController = SetupWizardController(
                 onImportImage: { [weak self] in self?.importPetImage(from: $0) ?? false },
+                hasCustomImage: { [weak self] in self?.importedImages != nil },
                 hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
                 requestInputMonitoringPermission: { [weak self] in
                     guard let self else { return false }
@@ -336,7 +362,11 @@ extension AppDelegate {
                 },
                 onClose: { [weak self] in
                     guard let self else { return }
-                    self.defaults.set(true, forKey: "setupWizardSeen")
+                    if self.importedImages == nil {
+                        self.defaults.removeObject(forKey: "setupWizardSeen")
+                    } else {
+                        self.defaults.set(true, forKey: "setupWizardSeen")
+                    }
                     if self.monitor.permissionGranted && !self.isPaused { self.startMonitoring() }
                 }
             )
