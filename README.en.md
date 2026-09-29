@@ -10,7 +10,7 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 - Breathes subtly and blinks while idle, falls asleep after a while, and stops animating after five minutes. Input monitoring remains active so it can wake up.
 - Drag the pet around the desktop; its position is saved. Choose Small, Medium, or Large.
 - The UI follows the preferred macOS language (Japanese or English) and falls back to English for other languages.
-- Waddly appears in both the Dock and menu bar. Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, import a pet image, pause reactions, or configure launch at login.
+- Waddly appears in both the Dock and menu bar. Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
 - The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
 
@@ -41,7 +41,9 @@ The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Develop
 
 ## Use your own pet
 
-Waddly accepts transparent 3×3 PNG sprite sheets. Drag an image onto the pet or choose **Import pet image…** from its menu. The preview shows cell boundaries, image dimensions, and the current display size before importing. Once confirmed, the image is stored locally in Application Support and restored at the next launch; it is never uploaded.
+Choose **Pet images…** from the menu to add any number of transparent PNGs to the Idle, Typing, Sleep, and Enter rows. Drop files onto a row or use **Add** to select multiple images. Images play in the order added; remove them with the button on each thumbnail. Idle uses the first image as its normal pose and the rest as blink variants. Typing and Enter images play in order. Sleep images cycle and stop on the last image after five minutes.
+
+Transparent 3×3 PNG sprite sheets are still supported. Drop a sheet onto the pet to preview its cell boundaries and dimensions before importing. Images are stored locally in Application Support and restored at the next launch; they are never uploaded.
 
 The image must be square, with dimensions divisible by 3. The limit is 20 MB and 4096 px. Waddly divides the image into equal cells, so follow the cell order and spacing in the prompts.
 
@@ -51,7 +53,7 @@ Images made with an earlier prompt may use a different cell order. Use the curre
 
 ### Edit the bundled pet frames
 
-The repository also includes the legacy `index.html` splitter for editing the bundled 4×4 sprite sheet. Replace the frames in `assets/` and rebuild to change the default pet. For custom pets imported in the app, use the 3×3 PNG format above.
+The repository also includes the legacy `index.html` splitter for editing the bundled 4×4 sprite sheet. Replace the frames in `assets/` and rebuild to change the default pet. Custom images can be configured in the app's image settings window or imported as a 3×3 PNG sheet.
 
 ## Privacy
 
