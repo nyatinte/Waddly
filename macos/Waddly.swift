@@ -159,6 +159,15 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         saveOrigin()
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if isVisible {
+            panel.orderFrontRegardless()
+        } else {
+            toggleVisibility()
+        }
+        return true
+    }
+
     private func buildPanel() {
         panel = PetWindow(
             contentRect: NSRect(x: 0, y: 0, width: displaySize, height: displaySize),
@@ -228,8 +237,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         let quitItem = NSMenuItem(title: "終了", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusMenu.addItem(quitItem)
 
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Waddly")
+        statusItem.button?.title = " Waddly"
         statusItem.menu = statusMenu
         petView.contextMenu = statusMenu
         updateMenuStatus()
@@ -455,7 +465,7 @@ private func runApplication() {
     let app = NSApplication.shared
     let appDelegate = AppDelegate()
     app.delegate = appDelegate
-    app.setActivationPolicy(.accessory)
+    app.setActivationPolicy(.regular)
     app.run()
 }
 
