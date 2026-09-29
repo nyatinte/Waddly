@@ -12,33 +12,20 @@ fi
 
 (
   cd "$ROOT"
-  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict macos
+  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources macos Package.swift
 )
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Frames"
+mkdir -p "$APP/Contents/Resources/prompts"
 
-swiftc -swift-version 6 -target "$(uname -m)-apple-macos13.0" -O \
-  -framework Cocoa \
-  -framework ApplicationServices \
-  -framework ImageIO \
-  -framework QuartzCore \
-  -framework ServiceManagement \
-  -framework UniformTypeIdentifiers \
-  "$ROOT/macos/main.swift" \
-  "$ROOT/macos/Waddly.swift" \
-  "$ROOT/macos/PetImageImporter.swift" \
-  "$ROOT/macos/PetImageViews.swift" \
-  "$ROOT/macos/PetImageSettings.swift" \
-  "$ROOT/macos/PetImagePersistence.swift" \
-  "$ROOT/macos/PetAnimations.swift" \
-  "$ROOT/macos/AppDelegateWindow.swift" \
-  "$ROOT/macos/AppDelegateMenu.swift" \
-  -o "$APP/Contents/MacOS/Waddly"
+swift build --package-path "$ROOT" --configuration release --product Waddly
+cp "$ROOT/.build/release/Waddly" "$APP/Contents/MacOS/Waddly"
 
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT"/assets/[0-9][0-9]-*.png "$APP/Contents/Resources/Frames/"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
+cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
 
 ICON_SOURCE="$APP/Contents/Resources/waddly-icon-source.png"
 ICONSET="$APP/Contents/Resources/Waddly.iconset"

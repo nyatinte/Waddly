@@ -1,4 +1,5 @@
 import AppKit
+import WaddlyCore
 
 extension AppDelegate {
     func loadSavedPetImage() {
@@ -35,22 +36,22 @@ extension AppDelegate {
         if legacyImages != nil || !manifest.isEmpty { importedImages = loadedImages }
     }
 
-    func importPetImage(from url: URL) {
+    func importPetImage(from url: URL) -> Bool {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= PetSpriteSheetImporter.maximumFileSize,
               let data = try? Data(contentsOf: url),
               let newImages = PetSpriteSheetImporter.frames(from: data) else {
             showPetImageImportError()
-            return
+            return false
         }
-        guard confirmPetImageImport(data, cellSize: Int(newImages[.idle][0].size.width)) else { return }
+        guard confirmPetImageImport(data, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
 
         do {
             try persistPetImages(newImages)
         } catch {
             showImageSaveError()
-            return
+            return false
         }
 
         importedImages = newImages
@@ -58,6 +59,7 @@ extension AppDelegate {
         currentPhase = nil
         imageSetDidChange()
         schedulePhaseChange()
+        return true
     }
 
     func imageSetDidChange() {

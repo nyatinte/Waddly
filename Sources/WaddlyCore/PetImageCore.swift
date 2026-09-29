@@ -2,69 +2,27 @@ import AppKit
 import ImageIO
 import UniformTypeIdentifiers
 
-func localizedString(_ key: String) -> String {
-    NSLocalizedString(key, comment: "")
-}
-
-enum PetPhase: Equatable {
-    case typing
-    case idle
-    case sleeping
-    case frozen
-
-    static func after(_ seconds: TimeInterval) -> PetPhase {
-        let elapsed = max(0, seconds)
-        if elapsed < 2.5 { return .typing }
-        if elapsed < 25 { return .idle }
-        if elapsed < 325 { return .sleeping }
-        return .frozen
-    }
-}
-
-enum TypingMotion: Int, CaseIterable {
-    case off
-    case weak
-    case strong
-
-    var title: String {
-        switch self {
-        case .off: localizedString("motion.off")
-        case .weak: localizedString("motion.weak")
-        case .strong: localizedString("motion.strong")
-        }
-    }
-
-    var amplitude: CGFloat {
-        switch self {
-        case .off: 0
-        case .weak: 5
-        case .strong: 10
-        }
-    }
-}
-
-enum PetImageCategory: String, CaseIterable {
+public enum PetImageCategory: String, CaseIterable {
     case idle
     case typing
     case sleep
     case enter
 
-    var title: String { localizedString("images.category.\(rawValue)") }
 }
 
-struct PetImageSet {
+public struct PetImageSet {
     private var images: [PetImageCategory: [NSImage]]
 
-    init(_ images: [PetImageCategory: [NSImage]] = [:]) {
+    public init(_ images: [PetImageCategory: [NSImage]] = [:]) {
         self.images = images
     }
 
-    subscript(_ category: PetImageCategory) -> [NSImage] {
+    public subscript(_ category: PetImageCategory) -> [NSImage] {
         get { images[category] ?? [] }
         set { images[category] = newValue }
     }
 
-    static func bundled(from images: [NSImage]) -> PetImageSet? {
+    public static func bundled(from images: [NSImage]) -> PetImageSet? {
         guard images.count == 16 else { return nil }
         return PetImageSet([
             .idle: [images[0], images[1]],
@@ -75,25 +33,17 @@ struct PetImageSet {
     }
 }
 
-func moving<Element>(_ elements: [Element], from source: Int, to destination: Int) -> [Element]? {
-    guard elements.indices.contains(source), elements.indices.contains(destination) else { return nil }
-    var result = elements
-    let item = result.remove(at: source)
-    result.insert(item, at: destination)
-    return result
+public struct OptimizedPetImage {
+    public let image: NSImage
+    public let pngData: Data
+    public let wasDownsampled: Bool
 }
 
-struct OptimizedPetImage {
-    let image: NSImage
-    let pngData: Data
-    let wasDownsampled: Bool
-}
+public enum PetSpriteSheetImporter {
+    public static let maximumFileSize = 20 * 1_024 * 1_024
+    public static let maximumImageDimension = 1_024
 
-enum PetSpriteSheetImporter {
-    static let maximumFileSize = 20 * 1_024 * 1_024
-    static let maximumImageDimension = 1_024
-
-    static func optimizedImage(from data: Data) -> OptimizedPetImage? {
+    public static func optimizedImage(from data: Data) -> OptimizedPetImage? {
         guard data.count <= maximumFileSize,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let sourceType = CGImageSourceGetType(source),
@@ -117,11 +67,11 @@ enum PetSpriteSheetImporter {
         )
     }
 
-    static func image(from data: Data) -> NSImage? {
+    public static func image(from data: Data) -> NSImage? {
         optimizedImage(from: data)?.image
     }
 
-    static func frames(from data: Data) -> PetImageSet? {
+    public static func frames(from data: Data) -> PetImageSet? {
         guard data.count <= maximumFileSize,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let sourceType = CGImageSourceGetType(source),
@@ -158,7 +108,7 @@ enum PetSpriteSheetImporter {
         ])
     }
 
-    static func load(from url: URL) -> NSImage? {
+    public static func load(from url: URL) -> NSImage? {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= maximumFileSize,
@@ -170,7 +120,7 @@ enum PetSpriteSheetImporter {
         return optimized.image
     }
 
-    static func pngData(for image: NSImage) -> Data? {
+    public static func pngData(for image: NSImage) -> Data? {
         guard let tiff = image.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
         return bitmap.representation(using: .png, properties: [:])
@@ -213,7 +163,7 @@ enum PetSpriteSheetImporter {
         return data as Data
     }
 
-    static func save(_ data: Data, to url: URL) throws {
+    public static func save(_ data: Data, to url: URL) throws {
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(),
             withIntermediateDirectories: true

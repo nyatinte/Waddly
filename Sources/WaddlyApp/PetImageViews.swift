@@ -1,4 +1,5 @@
 import AppKit
+import WaddlyCore
 
 @MainActor
 final class SpriteSheetGridOverlay: NSView {
@@ -19,7 +20,7 @@ final class SpriteSheetGridOverlay: NSView {
 }
 
 @MainActor
-private final class PetImageDropView: NSView {
+final class PetImageDropView: NSView {
     var onDrop: (([URL]) -> Void)?
 
     override init(frame frameRect: NSRect) {

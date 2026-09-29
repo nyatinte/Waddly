@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import ServiceManagement
+import WaddlyCore
 
 @MainActor
 final class PetWindow: NSPanel {
@@ -57,15 +58,19 @@ final class KeyboardMonitor: @unchecked Sendable {
     var permissionGranted: Bool { CGPreflightListenEventAccess() }
     var isRunning: Bool { tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false }
 
+    func requestPermission() -> Bool {
+        if !permissionGranted {
+            _ = CGRequestListenEventAccess()
+        }
+        return permissionGranted
+    }
+
     static func isEnterKeyCode(_ keyCode: Int64) -> Bool {
         keyCode == 36 || keyCode == 76
     }
 
     func start() -> Bool {
-        if !permissionGranted {
-            _ = CGRequestListenEventAccess()
-        }
-        guard permissionGranted else { return false }
+        guard requestPermission() else { return false }
 
         if let tap {
             if CGEvent.tapIsEnabled(tap: tap) { return true }
@@ -162,6 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusMenu = NSMenu()
     var pauseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var loginItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
     var phaseTimer: Timer?
@@ -205,16 +211,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         loadSavedPetImage()
         buildPanel()
         buildMenu()
-        petView.onFileDrop = { [weak self] in self?.importPetImage(from: $0) }
+        petView.onFileDrop = { [weak self] in _ = self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString("pet.dropTooltip")
         monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
-        startMonitoring()
+        if defaults.bool(forKey: "setupWizardSeen") {
+            startMonitoring()
+        } else {
+            showSetupWizard()
+        }
         schedulePhaseChange()
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard !isPaused, CGPreflightListenEventAccess() else { return }
+        setupWizardController?.refreshPermissionStatus()
+        guard !isPaused, monitor.permissionGranted else { return }
         startMonitoring()
     }
 

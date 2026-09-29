@@ -11,6 +11,7 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 - Drag the pet around the desktop; its position is saved. Choose Small, Medium, or Large.
 - The UI follows the preferred macOS language (Japanese or English) and falls back to English for other languages.
 - Waddly appears in both the Dock and menu bar. Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
+- On first launch, a setup wizard walks through the image-generation prompt, 3×3 PNG import, and Input Monitoring permission. Reopen it from the menu at any time.
 - The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
 
@@ -27,6 +28,8 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 ./macos/build.sh
 open build/Waddly.app
 ```
+
+Swift Package Manager builds two modules: `WaddlyCore` for image data and import processing, and `WaddlyApp` for the application and UI.
 
 To install it, copy `Waddly.app` to `~/Applications`, or open the DMG in `dist/` and drag the app to its `Applications` shortcut.
 

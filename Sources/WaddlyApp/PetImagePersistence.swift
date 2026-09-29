@@ -1,4 +1,5 @@
 import AppKit
+import WaddlyCore
 
 extension AppDelegate {
     func persistPetImages(_ imageSet: PetImageSet) throws {

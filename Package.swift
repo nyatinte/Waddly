@@ -1,0 +1,18 @@
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+    name: "Waddly",
+    platforms: [.macOS(.v13)],
+    products: [
+        .executable(name: "Waddly", targets: ["WaddlyApp"])
+    ],
+    targets: [
+        .target(name: "WaddlyCore", path: "Sources/WaddlyCore"),
+        .executableTarget(
+            name: "WaddlyApp",
+            dependencies: ["WaddlyCore"],
+            path: "Sources/WaddlyApp"
+        )
+    ]
+)

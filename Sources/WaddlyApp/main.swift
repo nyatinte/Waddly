@@ -1,6 +1,7 @@
 import AppKit
 import ImageIO
 import UniformTypeIdentifiers
+import WaddlyCore
 
 if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sprite-sheet" {
     guard let data = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[2])),

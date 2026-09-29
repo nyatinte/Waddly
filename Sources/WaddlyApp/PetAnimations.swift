@@ -1,5 +1,6 @@
 import AppKit
 import QuartzCore
+import WaddlyCore
 
 extension AppDelegate {
     func receivedKeyDown(isEnter: Bool) {

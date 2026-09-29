@@ -1,5 +1,6 @@
 import AppKit
 import ServiceManagement
+import WaddlyCore
 
 extension AppDelegate {
     private func makeSizeMenuItem() -> NSMenuItem {
@@ -44,6 +45,14 @@ extension AppDelegate {
         )
         imageSettingsItem.target = self
         statusMenu.addItem(imageSettingsItem)
+
+        let setupItem = NSMenuItem(
+            title: localizedString("menu.setupWizard"),
+            action: #selector(showSetupWizard),
+            keyEquivalent: ""
+        )
+        setupItem.target = self
+        statusMenu.addItem(setupItem)
 
         loginItem.title = localizedString("menu.login")
         loginItem.action = #selector(toggleLoginItem)
