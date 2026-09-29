@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waddly · ペット・スプライトスタジオ</title>
+  <style>
+    :root { color-scheme: light; --ink:#26334a; --muted:#78869d; --blue:#347fe8; --pink:#f06b9c; --line:#e6eaf1; --paper:#fff; --bg:#f5f7fb; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,select,input { font:inherit; }
+    button { cursor:pointer; }
+    .shell { width:min(1120px,100%); margin:auto; padding:34px 22px 48px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:24px; }
+    .eyebrow { color:var(--blue); font-size:11px; font-weight:800; letter-spacing:.16em; }
+    h1 { margin:3px 0 0; font-size:clamp(25px,4vw,34px); letter-spacing:-.04em; }
+    .header-note { color:var(--muted); font-size:13px; }
+    .layout { display:grid; grid-template-columns:minmax(320px,1fr) minmax(310px,.85fr); gap:18px; align-items:start; }
+    .card { background:var(--paper); border:1px solid var(--line); border-radius:20px; box-shadow:0 8px 28px #3045670a; }
+    .stage-card { padding:22px; }
+    .stage { position:relative; display:grid; place-items:center; min-height:370px; overflow:hidden; border:1px solid #e8edf5; border-radius:16px; background-color:#fbfcff; background-image:linear-gradient(45deg,#edf1f7 25%,transparent 25%),linear-gradient(-45deg,#edf1f7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#edf1f7 75%),linear-gradient(-45deg,transparent 75%,#edf1f7 75%); background-size:22px 22px; background-position:0 0,0 11px,11px -11px,-11px 0; }
+    #sprite { display:none; width:min(78%,310px); height:310px; object-fit:contain; image-rendering:pixelated; filter:drop-shadow(0 12px 11px #31466522); }
+    .empty { padding:25px; text-align:center; max-width:310px; }
+    .empty-icon { font-size:76px; line-height:1; margin-bottom:16px; }
+    .empty strong { display:block; font-size:17px; margin-bottom:5px; }
+    .empty span { color:var(--muted); font-size:13px; }
+    .frame-label { position:absolute; bottom:13px; left:15px; color:#68758a; font-size:12px; background:#ffffffd9; padding:4px 9px; border-radius:99px; }
+    .controls { display:grid; grid-template-columns:auto minmax(0,1fr); gap:12px; align-items:center; margin-top:17px; }
+    .transport { display:flex; gap:8px; align-items:center; }
+    .button { min-height:42px; border:1px solid var(--line); border-radius:12px; padding:0 15px; background:white; color:var(--ink); font-weight:700; }
+    .button:hover { border-color:#c6d5ef; background:#f8faff; }
+    .button.primary { border-color:var(--blue); background:var(--blue); color:white; min-width:100px; }
+    .button.primary:hover { background:#246fd9; }
+    .button:disabled { opacity:.45; cursor:not-allowed; }
+    .stepper { display:flex; gap:7px; }
+    .stepper .button { width:42px; padding:0; font-size:19px; }
+    .scene-wrap { min-width:0; }
+    .field-label { display:block; margin-bottom:6px; color:var(--muted); font-size:12px; font-weight:700; }
+    select { width:100%; height:42px; border:1px solid var(--line); border-radius:12px; padding:0 12px; background:#fff; color:var(--ink); }
+    .speed { display:grid; grid-column:1/-1; grid-template-columns:auto minmax(0,1fr) 42px; align-items:center; gap:10px; color:var(--muted); font-size:12px; }
+    .speed input { width:100%; accent-color:var(--blue); }
+    .side { padding:20px; }
+    .side-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+    h2 { margin:0; font-size:16px; }
+    .count { color:var(--muted); font-size:12px; }
+    .import-row { display:flex; gap:8px; margin-bottom:15px; }
+    .import-row .button { flex:1; min-height:38px; font-size:13px; }
+    .upload { position:relative; overflow:hidden; }
+    .upload input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .asset-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .asset { position:relative; min-width:0; padding:6px; border:1px solid var(--line); border-radius:12px; background:#fff; text-align:left; color:var(--ink); }
+    .asset:hover { border-color:#b8c9e6; }
+    .asset.active { border-color:var(--blue); box-shadow:0 0 0 2px #347fe822; }
+    .thumb { display:grid; place-items:center; height:69px; overflow:hidden; border-radius:8px; background-color:#f8faff; background-image:linear-gradient(45deg,#edf1f7 25%,transparent 25%),linear-gradient(-45deg,#edf1f7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#edf1f7 75%),linear-gradient(-45deg,transparent 75%,#edf1f7 75%); background-size:14px 14px; background-position:0 0,0 7px,7px -7px,-7px 0; }
+    .thumb img { width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+    .asset b { display:block; overflow:hidden; margin:5px 0 0; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+    .asset small { color:var(--muted); font-size:10px; }
+    .asset.empty-asset { background:#fafbfe; }
+    .asset.empty-asset .thumb { color:#c4ccda; font-size:20px; }
+    .footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:15px; padding-top:13px; border-top:1px solid var(--line); }
+    .footer p { margin:0; color:var(--muted); font-size:11px; }
+    .footer .button { min-height:36px; padding:0 11px; font-size:12px; white-space:nowrap; }
+    .notice { display:none; margin-top:13px; padding:10px 12px; border-radius:11px; background:#fff8e8; color:#8c6417; font-size:12px; }
+    .notice.show { display:block; }
+    @media (max-width:760px) { .shell { padding:24px 14px 36px; } header { align-items:flex-start; } .header-note { max-width:130px; text-align:right; } .layout { grid-template-columns:1fr; } .stage { min-height:310px; } #sprite { height:260px; } }
+    @media (max-width:600px) { .controls { grid-template-columns:1fr; } .scene-wrap,.speed { grid-column:auto; } }
+    @media (max-width:390px) { .asset-grid { gap:5px; } .asset { padding:4px; } .thumb { height:57px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><div class="eyebrow">WADDLY · PET STUDIO</div><h1>ペット・スプライトスタジオ</h1></div>
+      <div class="header-note">16コマのスプライトを<br>シチュエーション別に再生</div>
+    </header>
+
+    <div class="layout">
+      <section class="card stage-card" aria-label="アニメーション再生">
+        <div class="stage">
+          <img id="sprite" alt="ペンギンのアニメーション">
+          <div id="empty" class="empty">
+            <div class="empty-icon" aria-hidden="true">🐧</div>
+            <strong>スプライトシートを読み込む</strong>
+            <span>4×4の画像を選ぶと、ピンクの区切り線で16コマに分割します。</span>
+          </div>
+          <div class="frame-label" id="frameLabel">画像を読み込んでください</div>
+        </div>
+        <div class="controls">
+          <div class="transport"><div class="stepper"><button class="button" id="prev" aria-label="前のコマ" disabled>‹</button><button class="button" id="next" aria-label="次のコマ" disabled>›</button></div>
+          <button class="button primary" id="play" disabled>▶ 再生</button></div>
+          <div class="scene-wrap"><label class="field-label" for="scene">シチュエーション</label><select id="scene" disabled></select></div>
+          <div class="speed"><label for="speed">再生速度</label><input id="speed" type="range" min="75" max="225" step="5" value="135"><span id="speedLabel">1.35×</span></div>
+        </div>
+        <div class="notice" id="notice" role="status"></div>
+      </section>
+
+      <section class="card side" aria-label="コマとアセット">
+        <div class="side-head"><h2>コマ一覧</h2><span class="count" id="count">0 / 16 読み込み済み</span></div>
+        <div class="import-row">
+          <label class="button upload">画像を選択<input id="file" type="file" accept="image/*"></label>
+          <button class="button" id="save" disabled>PNGを assets/ に保存</button>
+        </div>
+        <div class="asset-grid" id="assets"></div>
+        <div class="footer"><p>白背景は透明化。各コマは名前付きPNGで保存できます。</p><button class="button" id="download" disabled>個別PNGを保存</button></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const names = [
+      ['idle','ふつう'], ['blink','まばたき'], ['surprised-left','びっくり・左'], ['surprised-right','びっくり・右'],
+      ['laptop-look','PCを見る'], ['typing','タイピング'], ['typing-fast','集中タイピング'], ['peek-screen','画面をのぞく'],
+      ['typing-excited','高速タイピング'], ['focused','真剣モード'], ['jump','ジャンプ'], ['one-hand-work','片手で作業'],
+      ['sleepy','うとうと'], ['sleep-sitting','すわって睡眠'], ['cheer','よろこぶ'], ['picked-up','つまみ上げ']
+    ];
+    const scenes = [
+      { name:'いつもの表情', frames:[[0,680],[1,140],[0,900],[1,140],[0,420]] },
+      { name:'びっくり', frames:[[0,260],[2,180],[0,360],[3,180],[0,520]] },
+      { name:'お仕事中', frames:[[4,200],[5,90],[6,105],[5,80],[8,95],[6,105],[5,80],[9,160],[8,95],[6,100],[11,180],[5,85],[4,240]] },
+      { name:'おやすみ', frames:[[12,760],[13,520],[12,680],[13,520]] },
+      { name:'うれしい！', frames:[[10,190],[14,240],[15,220],[14,230],[10,320]] }
+    ];
+    const $ = (id) => document.getElementById(id);
+    const image = $('sprite'), empty = $('empty'), grid = $('assets');
+    let frames = [], current = 0, timer = null, playing = false, scenePosition = 0, objectUrls = [];
+
+    scenes.forEach((scene, i) => $('scene').add(new Option(scene.name, i)));
+    names.forEach(([slug, title], i) => {
+      const button = document.createElement('button');
+      button.className = 'asset empty-asset';
+      button.type = 'button';
+      button.setAttribute('aria-label', `${i + 1}. ${title} コマを表示`);
+      button.innerHTML = `<span class="thumb">${String(i + 1).padStart(2, '0')}</span><b>${title}</b><small>${String(i + 1).padStart(2, '0')} · ${slug}</small>`;
+      button.addEventListener('click', () => { stop(); showFrame(i); });
+      grid.append(button);
+    });
+
+    $('file').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) loadSheet(file);
+      event.target.value = '';
+    });
+    $('play').addEventListener('click', () => playing ? stop() : play());
+    $('prev').addEventListener('click', () => { stop(); showFrame((current + 15) % 16); });
+    $('next').addEventListener('click', () => { stop(); showFrame((current + 1) % 16); });
+    $('scene').addEventListener('change', () => {
+      scenePosition = 0;
+      showFrame(scenes[Number($('scene').value)].frames[0][0]);
+      if (playing) { clearTimeout(timer); scheduleNext(); }
+    });
+    $('speed').addEventListener('input', () => {
+      $('speedLabel').textContent = `${(Number($('speed').value) / 100).toFixed(2)}×`;
+      if (playing) { clearTimeout(timer); scheduleNext(); }
+    });
+    $('save').addEventListener('click', saveToFolder);
+    $('download').addEventListener('click', downloadPngs);
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' && !['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName)) { event.preventDefault(); if (frames.length) playing ? stop() : play(); }
+    });
+
+    if (location.protocol !== 'file:') {
+      Promise.all(names.map(async ([slug], i) => {
+        const response = await fetch(`./assets/${String(i + 1).padStart(2, '0')}-${slug}.png`);
+        if (!response.ok) throw new Error('saved sprites unavailable');
+        const blob = await response.blob();
+        return {blob, url:URL.createObjectURL(blob)};
+      })).then(setFrames).catch(() => {});
+    }
+
+    async function loadSheet(file) {
+      stop();
+      try {
+        const bitmap = await createImageBitmap(file);
+        const source = document.createElement('canvas');
+        source.width = bitmap.width; source.height = bitmap.height;
+        const ctx = source.getContext('2d', {willReadFrequently:true});
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        const xs = findBands(ctx, source.width, source.height, 'x');
+        const ys = findBands(ctx, source.width, source.height, 'y');
+        const extracted = [];
+        for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
+          const [left, right] = cellBounds(xs, source.width, col);
+          const [top, bottom] = cellBounds(ys, source.height, row);
+          const crop = document.createElement('canvas');
+          crop.width = Math.max(1, right - left); crop.height = Math.max(1, bottom - top);
+          const cropCtx = crop.getContext('2d', {willReadFrequently:true});
+          cropCtx.drawImage(source, left, top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+          removeEdgeWhite(cropCtx, crop.width, crop.height);
+          const blob = await new Promise(resolve => crop.toBlob(resolve, 'image/png'));
+          extracted.push({ blob, url:URL.createObjectURL(blob) });
+        }
+        setFrames(extracted);
+      } catch (error) {
+        $('notice').textContent = '画像を読み込めませんでした。PNGまたはJPEG画像を選び直してください。';
+        $('notice').classList.add('show');
+        console.error(error);
+      }
+    }
+
+    function setFrames(nextFrames) {
+      objectUrls.forEach(URL.revokeObjectURL);
+      frames = nextFrames;
+      objectUrls = frames.map(frame => frame.url);
+      $('count').textContent = '16 / 16 読み込み済み';
+      $('scene').disabled = $('play').disabled = $('prev').disabled = $('next').disabled = $('save').disabled = $('download').disabled = false;
+      empty.style.display = 'none'; image.style.display = 'block';
+      frames.forEach((frame, i) => {
+        const button = grid.children[i];
+        button.classList.remove('empty-asset');
+        button.querySelector('.thumb').innerHTML = `<img src="${frame.url}" alt="">`;
+      });
+      $('notice').classList.remove('show');
+      showFrame(0);
+    }
+
+    function findBands(ctx, width, height, axis) {
+      const length = axis === 'x' ? width : height;
+      const cross = axis === 'x' ? height : width;
+      const data = ctx.getImageData(0, 0, width, height).data;
+      const stride = Math.max(1, Math.floor(cross / 400));
+      const hits = new Uint8Array(length);
+      for (let pos = 0; pos < length; pos++) {
+        let pink = 0, samples = 0;
+        for (let q = 0; q < cross; q += stride) {
+          const x = axis === 'x' ? pos : q, y = axis === 'x' ? q : pos;
+          const offset = (y * width + x) * 4, r = data[offset], g = data[offset + 1], b = data[offset + 2];
+          if (r > 180 && b > 150 && g < 135 && r - g > 90 && b - g > 60) pink++;
+          samples++;
+        }
+        hits[pos] = pink / samples > .55 ? 1 : 0;
+      }
+      const bands = [];
+      for (let i = 0; i < length;) {
+        if (!hits[i]) { i++; continue; }
+        const start = i;
+        while (i < length && hits[i]) i++;
+        bands.push([start, i]);
+      }
+      return bands.length === 5 ? bands : null;
+    }
+
+    function cellBounds(bands, size, index) {
+      if (!bands) return [Math.round(index * size / 4), Math.round((index + 1) * size / 4)];
+      const guard = 2;
+      return [Math.min(size, bands[index][1] + guard), Math.max(0, bands[index + 1][0] - guard)];
+    }
+
+    function removeEdgeWhite(ctx, width, height) {
+      const imageData = ctx.getImageData(0, 0, width, height), pixels = imageData.data;
+      for (let i = 0; i < width * height; i++) {
+        const p = i * 4, r = pixels[p], g = pixels[p + 1], b = pixels[p + 2];
+        if (r > 160 && b > 130 && g < 130 && r - g > 55 && b - g > 45) pixels[p + 3] = 0;
+      }
+      const seen = new Uint8Array(width * height), queue = new Int32Array(width * height);
+      let head = 0, tail = 0;
+      const isWhite = (i) => pixels[i * 4] > 238 && pixels[i * 4 + 1] > 238 && pixels[i * 4 + 2] > 238;
+      const add = (i) => { if (!seen[i] && isWhite(i)) { seen[i] = 1; queue[tail++] = i; } };
+      for (let x = 0; x < width; x++) { add(x); add((height - 1) * width + x); }
+      for (let y = 0; y < height; y++) { add(y * width); add(y * width + width - 1); }
+      // ponytail: remove edge-connected white + magenta key; non-white backgrounds need a tuned mask.
+      while (head < tail) {
+        const i = queue[head++]; pixels[i * 4 + 3] = 0;
+        const x = i % width, y = (i / width) | 0;
+        if (x) add(i - 1); if (x + 1 < width) add(i + 1);
+        if (y) add(i - width); if (y + 1 < height) add(i + width);
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function showFrame(index) {
+      if (!frames.length) return;
+      current = index; image.src = frames[index].url;
+      $('frameLabel').textContent = `${String(index + 1).padStart(2, '0')} · ${names[index][1]}`;
+      [...grid.children].forEach((el, i) => el.classList.toggle('active', i === index));
+    }
+
+    function play() {
+      if (!frames.length) return;
+      const sequence = scenes[Number($('scene').value)].frames;
+      const found = sequence.findIndex(([frame]) => frame === current);
+      scenePosition = found < 0 ? 0 : found;
+      showFrame(sequence[scenePosition][0]);
+      playing = true;
+      $('play').textContent = 'Ⅱ 停止';
+      scheduleNext();
+    }
+
+    function scheduleNext() {
+      const sequence = scenes[Number($('scene').value)].frames;
+      const multiplier = Number($('speed').value) / 100;
+      timer = setTimeout(() => {
+        scenePosition = (scenePosition + 1) % sequence.length;
+        showFrame(sequence[scenePosition][0]);
+        scheduleNext();
+      }, Math.max(35, sequence[scenePosition][1] / multiplier));
+    }
+
+    function stop() { clearTimeout(timer); timer = null; playing = false; $('play').textContent = '▶ 再生'; }
+
+    function manifest() {
+      return JSON.stringify({source:'4x4 penguin sprite sheet', frames:names.map(([slug,title],i)=>({file:`${String(i+1).padStart(2,'0')}-${slug}.png`,title,index:i+1})), scenes:scenes.map(scene=>({name:scene.name,frames:scene.frames.map(([i])=>i+1)}))}, null, 2);
+    }
+
+    async function saveToFolder() {
+      if (!frames.length) return;
+      if (!window.showDirectoryPicker) { downloadPngs(); return; }
+      try {
+        const dir = await window.showDirectoryPicker({mode:'readwrite'});
+        for (let i=0; i<frames.length; i++) {
+          const filename = `${String(i+1).padStart(2,'0')}-${names[i][0]}.png`;
+          const file = await dir.getFileHandle(filename, {create:true});
+          const writable = await file.createWritable(); await writable.write(frames[i].blob); await writable.close();
+        }
+        const mf = await dir.getFileHandle('manifest.json', {create:true});
+        const writable = await mf.createWritable(); await writable.write(manifest()); await writable.close();
+        $('notice').textContent = '16個のPNGとmanifest.jsonを選択したフォルダに保存しました。';
+        $('notice').classList.add('show');
+      } catch (error) {
+        if (error.name !== 'AbortError') { $('notice').textContent = 'フォルダへ保存できませんでした。個別PNGの保存をお試しください。'; $('notice').classList.add('show'); }
+      }
+    }
+
+    function downloadPngs() {
+      frames.forEach((frame, i) => {
+        const a = document.createElement('a'); a.href = frame.url; a.download = `${String(i+1).padStart(2,'0')}-${names[i][0]}.png`; a.click();
+      });
+      const blob = new Blob([manifest()], {type:'application/json'}), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = 'manifest.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  </script>
+</body>
+</html>
