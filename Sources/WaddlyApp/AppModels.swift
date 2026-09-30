@@ -1,8 +1,47 @@
 import Foundation
 import WaddlyCore
 
+enum AppLanguage: Int, CaseIterable {
+    case system
+    case japanese
+    case english
+
+    static let defaultsKey = "appLanguage"
+
+    static var selected: AppLanguage {
+        AppLanguage(rawValue: UserDefaults.standard.integer(forKey: defaultsKey)) ?? .system
+    }
+
+    static let active = selected
+
+    var localization: String {
+        switch self {
+        case .system: Self.detectedLocalization(Bundle.main.preferredLocalizations)
+        case .japanese: "ja"
+        case .english: "en"
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .system: "language.system"
+        case .japanese: "language.japanese"
+        case .english: "language.english"
+        }
+    }
+
+    static func detectedLocalization(_ preferredLocalizations: [String]) -> String {
+        preferredLocalizations.first?.hasPrefix("ja") == true ? "ja" : "en"
+    }
+}
+
 func localizedString(_ key: String) -> String {
-    NSLocalizedString(key, comment: "")
+    let localization = AppLanguage.active.localization
+    guard let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
+          let bundle = Bundle(path: path) else {
+        return NSLocalizedString(key, comment: "")
+    }
+    return NSLocalizedString(key, bundle: bundle, comment: "")
 }
 
 enum PetPhase: Equatable {

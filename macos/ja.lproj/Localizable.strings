@@ -8,6 +8,7 @@
 "size.medium" = "中";
 "size.large" = "大";
 "menu.typingMotion" = "タイピング時の揺れ";
+"menu.language" = "言語";
 "menu.breathing" = "呼吸アニメーション";
 "menu.presence" = "表示先";
 "menu.showInDock" = "Dockに表示";
@@ -17,6 +18,13 @@
 "menu.login" = "ログイン時に起動";
 "menu.quit" = "Waddlyを終了";
 "menu.loginError" = "ログイン時起動を設定できませんでした。";
+"language.system" = "システム設定に従う";
+"language.japanese" = "日本語";
+"language.english" = "English";
+"language.restartTitle" = "言語設定を変更しました";
+"language.restartMessage" = "変更を反映するには Waddly を再起動してください。今すぐ終了しますか？";
+"language.restartNow" = "今すぐ終了";
+"language.restartLater" = "後で";
 "pet.dropTooltip" = "透過3×3 PNGをペットにドロップして変更";
 "pet.importErrorTitle" = "ペット画像を読み込めませんでした";
 "pet.importErrorMessage" = "20 MB以下、4096 px以下の正方形で、3×3に分割できる透過PNGを選んでください。";

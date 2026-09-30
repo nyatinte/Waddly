@@ -8,6 +8,7 @@
 "size.medium" = "Medium";
 "size.large" = "Large";
 "menu.typingMotion" = "Typing motion";
+"menu.language" = "Language";
 "menu.breathing" = "Breathing animation";
 "menu.presence" = "Show in";
 "menu.showInDock" = "Dock";
@@ -17,6 +18,13 @@
 "menu.login" = "Launch at Login";
 "menu.quit" = "Quit Waddly";
 "menu.loginError" = "Could not change the login item setting.";
+"language.system" = "Follow System Settings";
+"language.japanese" = "日本語";
+"language.english" = "English";
+"language.restartTitle" = "Language preference changed";
+"language.restartMessage" = "Restart Waddly to apply the change. Quit now?";
+"language.restartNow" = "Quit Now";
+"language.restartLater" = "Later";
 "pet.dropTooltip" = "Drop a transparent 3×3 PNG on the pet to change it";
 "pet.importErrorTitle" = "Could not import the pet image";
 "pet.importErrorMessage" = "Choose a square transparent PNG no larger than 20 MB, with sides no longer than 4096 px and a 3×3 grid.";

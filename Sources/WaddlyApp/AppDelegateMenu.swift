@@ -38,6 +38,8 @@ extension AppDelegate {
         motionItem.submenu = motionMenu
         statusMenu.addItem(motionItem)
 
+        addLanguageMenu()
+
         addBreathingMenuItem()
 
         addPresenceMenu()
@@ -104,6 +106,24 @@ extension AppDelegate {
         breathingItem.target = self
         breathingItem.state = isBreathingEnabled ? .on : .off
         statusMenu.addItem(breathingItem)
+    }
+
+    private func addLanguageMenu() {
+        let languageItem = NSMenuItem(title: localizedString("menu.language"), action: nil, keyEquivalent: "")
+        let languageMenu = NSMenu()
+        for language in AppLanguage.allCases {
+            let item = NSMenuItem(
+                title: localizedString(language.titleKey),
+                action: #selector(setAppLanguage(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.tag = language.rawValue
+            item.state = language == AppLanguage.selected ? .on : .off
+            languageMenu.addItem(item)
+        }
+        languageItem.submenu = languageMenu
+        statusMenu.addItem(languageItem)
     }
 
     private func makeStatusIcon() -> NSImage {
@@ -192,6 +212,21 @@ extension AppDelegate {
         case .idle: breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
         case .sleeping: breathe()
         case .typing, .frozen, nil: break
+        }
+    }
+
+    @objc private func setAppLanguage(_ sender: NSMenuItem) {
+        guard let language = AppLanguage(rawValue: sender.tag), language != AppLanguage.selected else { return }
+        defaults.set(language.rawValue, forKey: AppLanguage.defaultsKey)
+        sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
+
+        let alert = NSAlert()
+        alert.messageText = localizedString("language.restartTitle")
+        alert.informativeText = localizedString("language.restartMessage")
+        alert.addButton(withTitle: localizedString("language.restartNow"))
+        alert.addButton(withTitle: localizedString("language.restartLater"))
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSApp.terminate(nil)
         }
     }
 

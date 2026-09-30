@@ -351,7 +351,7 @@ extension SetupWizardController {
     }
 
     private static func loadPrompt() -> String {
-        let language = Bundle.main.preferredLocalizations.first?.hasPrefix("ja") == true ? "ja" : "en"
+        let language = AppLanguage.active.localization
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
               let markdown = try? String(contentsOf: url, encoding: .utf8),
               let start = markdown.range(of: "```text\n"),
