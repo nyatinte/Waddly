@@ -1,12 +1,21 @@
-# Waddly
+<div align="center">
+  <img src="assets/waddly-app-icon-rounded.png" alt="Waddly のアプリアイコン" width="192" height="192">
+  <h1>Waddly</h1>
+</div>
+
+<p align="center">自分のペットを macOS のデスクトップに住まわせるデスクトップコンパニオンです。</p>
+
+<p align="center"><a href="README.en.md">English README</a></p>
 
 <p align="center">
-  <img src="assets/waddly-app-icon.png" alt="Waddly のアプリアイコン" width="160">
+  <img src="assets/waddly-demo.gif" alt="Waddly がキー入力に反応して動く様子" width="900">
 </p>
 
-自分のペットを macOS のデスクトップに住まわせるデスクトップコンパニオンです。デスクトップに表示するペット画像は同梱せず、初回セットアップで自分の画像を登録して使います。アプリアイコンには作者のペンギン画像を使用します。画像が登録されるまではペットを表示しません。
+## はじめる
 
-[English README](README.en.md)
+Homebrew でのインストールは今後対応予定です。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
+
+初回起動時はセットアップウィザードに従って透過 3×3 PNG を登録します。キー入力に反応させるには、「システム設定 → プライバシーとセキュリティ → 入力監視」で Waddly を許可してください。許可がなくても起動しますが、キー入力には反応しません。画像形式の詳細は「[自分のペットを使う](#自分のペットを使う)」を参照してください。
 
 ## できること
 
@@ -17,34 +26,6 @@
 - Dock とメニューバーの両方に表示し、メニューの「表示先」から切り替えられます（どちらか一方は表示されます）。メニューバーの W アイコンまたはペットを右クリックするとメニューが開きます。サイズ、タイピング時の揺れ、画像、一時停止、ログイン時起動も設定できます。
 - 初回起動時はセットアップウィザードが開き、画像生成プロンプト、3×3 PNG の読み込み、入力監視の許可を案内します。画像ページ全体に PNG をドロップでき、画像を登録するまで次へ進めません。メニューから再度開くこともできます。
 - AppKit、Core Graphics、Core Animation を使った Swift アプリです。外部ライブラリは使っていません。
-
-## 動作環境
-
-- macOS 13 以降
-- Swift 6 を含む Xcode Command Line Tools
-- SwiftLint（開発ビルドの厳格チェック用。`brew install swiftlint`）
-- 現在のビルドスクリプトは、実行した Mac の CPU アーキテクチャ向けにビルドします
-
-## ビルドと起動
-
-```sh
-./macos/build.sh
-open build/Waddly.app
-```
-
-Swift Package Manager で `WaddlyCore`（画像データとインポート処理）と `WaddlyApp`（アプリと UI）の二つのモジュールをビルドします。
-
-Applications にインストールする場合は、生成した `Waddly.app` を `~/Applications` にコピーしてください。`dist/` の DMG を開いて `Waddly.app` を `Applications` へドラッグする方法も使えます。
-
-初回起動時は「システム設定 → プライバシーとセキュリティ → 入力監視」で Waddly を許可してください。許可されない場合もアプリは起動しますが、キー入力には反応しません。メニューバーアイコンのツールチップで許可が必要か確認できます。
-
-配布用ディスクイメージを作るには次を実行します。
-
-```sh
-./macos/package.sh
-```
-
-`dist/` に `Waddly-0.1.0-macos-<architecture>.dmg` ができます。Developer ID 証明書がこの Mac にないため、標準ビルドはバンドル ID を基準にした ad-hoc 署名で、公証は行いません。Developer ID 証明書を設定しないローカル開発でも、入力監視の許可識別子が再ビルドごとに変わらないようにしています。インターネット配布で Gatekeeper の警告を避けるには Developer ID 署名と Apple の公証が必要です。署名 ID は `WADDLY_SIGN_IDENTITY` 環境変数で指定できます。
 
 ## 自分のペットを使う
 
@@ -86,4 +67,4 @@ RSS には共有ライブラリなども含まれます。macOS のフットプ�
 
 ## ライセンス
 
-コードは[MIT License](LICENSE)で公開します。アプリアイコンと作例画像は MIT License の対象ではありません。アイコンは作者のペンギン画像を基にしています。再利用する場合は作者に確認してください。
+コードは[MIT License](LICENSE)で公開します。アプリアイコン、作例画像、デモ GIF は MIT License の対象ではありません。アイコンと GIF には作者のペンギン画像が含まれます。再利用する場合は作者に確認してください。

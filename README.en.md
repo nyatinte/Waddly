@@ -1,12 +1,21 @@
-# Waddly
+<div align="center">
+  <img src="assets/waddly-app-icon-rounded.png" alt="Waddly app icon" width="192" height="192">
+  <h1>Waddly</h1>
+</div>
+
+<p align="center">A macOS desktop companion that lets your pet live on your desktop.</p>
+
+<p align="center"><a href="README.md">日本語 README</a></p>
 
 <p align="center">
-  <img src="assets/waddly-app-icon.png" alt="Waddly app icon" width="160">
+  <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
 </p>
 
-A lightweight macOS desktop companion that lets your pet live on your desktop. Desktop pet images are not bundled; add your own during setup. The app icon uses the author's penguin artwork, and the pet stays hidden until an image is registered.
+## Getting Started
 
-[日本語 README](README.md)
+Homebrew installation is planned. To try Waddly from source, see the developer [build instructions](CONTRIBUTING.md).
+
+On first launch, follow the setup wizard to import a transparent 3×3 PNG. To react to key input, allow Waddly under **System Settings → Privacy & Security → Input Monitoring**. The app still launches without permission but will not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
 
 ## Features
 
@@ -17,34 +26,6 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. D
 - Waddly appears in both the Dock and menu bar; choose where it appears from the “Show in” menu (at least one remains visible). Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
 - On first launch, a setup wizard walks through the image-generation prompt, required 3×3 PNG import, and Input Monitoring permission. Drop a PNG anywhere on the image page; a custom image is required to continue. Reopen it from the menu at any time.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
-
-## Requirements
-
-- macOS 13 or later
-- Xcode Command Line Tools with Swift 6
-- SwiftLint for strict linting during development builds (`brew install swiftlint`)
-- The build script targets the CPU architecture of the Mac running it
-
-## Build and run
-
-```sh
-./macos/build.sh
-open build/Waddly.app
-```
-
-Swift Package Manager builds two modules: `WaddlyCore` for image data and import processing, and `WaddlyApp` for the application and UI.
-
-To install it, copy `Waddly.app` to `~/Applications`, or open the DMG in `dist/` and drag the app to its `Applications` shortcut.
-
-On first launch, allow Waddly under **System Settings → Privacy & Security → Input Monitoring**. The app still launches without this permission but will not react to key input. The menu bar icon's tooltip indicates when permission is required.
-
-Create a distributable disk image with:
-
-```sh
-./macos/package.sh
-```
-
-The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Developer ID signing identity is installed on the build machine, so the default build is ad-hoc signed with a bundle-ID-based designated requirement and is not notarized. This keeps the local Input Monitoring identity stable across rebuilds. Developer ID signing and Apple notarization are required to avoid Gatekeeper warnings when distributing over the internet. Set `WADDLY_SIGN_IDENTITY` to select a signing identity.
 
 ## Use your own pet
 
@@ -86,4 +67,4 @@ RSS includes shared libraries and other resident pages. macOS footprint is a sep
 
 ## License
 
-The code is released under the [MIT License](LICENSE). The app icon and example images are not covered by that license. The icon is based on the author's penguin artwork; ask the author before reusing it.
+The code is released under the [MIT License](LICENSE). The app icon, example images, and demo GIF are not covered by that license. The icon and GIF include the author's penguin artwork; ask the author before reusing them.
