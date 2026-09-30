@@ -65,6 +65,9 @@
 "setup.imageNotImported" = "The image was not imported. You can choose another PNG.";
 "setup.permissionTitle" = "Allow Input Monitoring";
 "setup.permissionDescription" = "Waddly needs Input Monitoring permission to react to keyboard input. You can change this permission in System Settings at any time.";
+"setup.dragAppTitle" = "Drag Waddly to the list";
+"setup.dragAppDescription" = "Drag this icon to the Input Monitoring list and turn Waddly on. If your macOS version does not accept drops, use the button below to add it in System Settings.";
+"setup.dragAppIcon" = "Waddly app icon. Drag to the Input Monitoring list.";
 "setup.privacyTitle" = "Your input stays private";
 "setup.privacyNote" = "Waddly temporarily checks only that a key was pressed and whether it was Enter. It does not save, log, or send typed content or key codes.";
 "setup.permissionGranted" = "Input Monitoring is allowed.";

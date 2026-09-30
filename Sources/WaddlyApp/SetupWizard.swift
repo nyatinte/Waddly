@@ -15,6 +15,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     private let copyPromptButton = NSButton(title: "", target: nil, action: nil)
     private let imageStatusLabel = NSTextField(labelWithString: "")
     private let permissionStatusLabel = NSTextField(labelWithString: "")
+    private var appDragCard: NSView?
     private let requestPermissionButton = NSButton(title: "", target: nil, action: nil)
     private let settingsButton = NSButton(title: "", target: nil, action: nil)
     private let backButton = NSButton(title: "", target: nil, action: nil)
@@ -56,6 +57,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         let isGranted = hasInputMonitoringPermission()
         let statusKey = isGranted ? "setup.permissionGranted" : "setup.permissionRequired"
         permissionStatusLabel.stringValue = localizedString(statusKey)
+        appDragCard?.isHidden = isGranted
         requestPermissionButton.isHidden = isGranted
         settingsButton.isHidden = isGranted
     }
@@ -249,11 +251,9 @@ extension SetupWizardController {
     private func makePermissionPage() -> NSView {
         let title = makeTitle("setup.permissionTitle")
         let description = makeDescription("setup.permissionDescription")
-        let privacyCard = makeInfoCard(
-            symbol: "hand.raised",
-            titleKey: "setup.privacyTitle",
-            detailKey: "setup.privacyNote"
-        )
+        let privacyNote = makeDescription("setup.privacyNote")
+        let appDragCard = makeDraggableAppCard()
+        self.appDragCard = appDragCard
         requestPermissionButton.title = localizedString("setup.requestPermission")
         requestPermissionButton.target = self
         requestPermissionButton.action = #selector(requestPermission)
@@ -265,10 +265,12 @@ extension SetupWizardController {
         let actions = makeStack([requestPermissionButton, settingsButton])
         actions.orientation = .horizontal
         actions.alignment = .centerY
-        return makeStack(
-            [title, description, privacyCard, permissionStatusLabel, actions],
-            fullWidth: [description, privacyCard, permissionStatusLabel]
+        let page = makeStack(
+            [title, description, appDragCard, privacyNote, permissionStatusLabel, actions],
+            fullWidth: [description, appDragCard, privacyNote, permissionStatusLabel]
         )
+        page.spacing = 8
+        return page
     }
 
 }
