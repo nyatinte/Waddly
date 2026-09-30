@@ -1,6 +1,10 @@
 # Waddly
 
-A lightweight macOS desktop companion that lets your pet live on your desktop. Pet images are not bundled; add your own during setup. The pet stays hidden until an image is registered.
+<p align="center">
+  <img src="assets/waddly-app-icon.png" alt="Waddly app icon" width="160">
+</p>
+
+A lightweight macOS desktop companion that lets your pet live on your desktop. Desktop pet images are not bundled; add your own during setup. The app icon uses the author's penguin artwork, and the pet stays hidden until an image is registered.
 
 [日本語 README](README.md)
 
@@ -58,7 +62,7 @@ Waddly validates the PNG format, transparency, square shape, and dimensions divi
 
 Choose **Pet images…** from the menu to add transparent PNGs to the Idle, Typing, Sleep, and Enter rows. Individual images are downsampled to a maximum side of 1024 px. Idle uses the first image as its normal pose and the rest as blink variants. Typing and Enter images play in order. Sleep images cycle and stop on the last image after five minutes.
 
-The app stores each frame locally as a PNG in Application Support and restores it at the next launch. It does not modify the selected source file or upload images. Pet artwork, including these examples, is not included in the app bundle.
+The app stores each frame locally as a PNG in Application Support and restores it at the next launch. It does not modify the selected source file or upload images. Pet frames and sample artwork are not included in the app bundle; the separate app icon image is.
 
 The image-generation prompts are in [`prompts/ja.md`](prompts/ja.md) and [`prompts/en.md`](prompts/en.md). They leave transparent padding around each pose so the character and keyboard do not crowd the cell boundaries.
 
@@ -82,4 +86,4 @@ RSS includes shared libraries and other resident pages. macOS footprint is a sep
 
 ## License
 
-The code is released under the [MIT License](LICENSE). The example images are not covered by that license; check the notes above and the rights for each source material before reuse.
+The code is released under the [MIT License](LICENSE). The app icon and example images are not covered by that license. The icon is based on the author's penguin artwork; ask the author before reusing it.

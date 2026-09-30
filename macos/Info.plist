@@ -17,6 +17,8 @@
   <string>dev.nyatinte.waddly</string>
   <key>CFBundleExecutable</key>
   <string>Waddly</string>
+  <key>CFBundleIconFile</key>
+  <string>Waddly.icns</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleVersion</key>
