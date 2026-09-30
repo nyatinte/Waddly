@@ -27,6 +27,7 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sp
 }
 
 if CommandLine.arguments.contains("--self-test") {
+    runImageImportSelfTests()
     precondition(PetPhase.after(0) == .typing)
     precondition(PetPhase.after(2.5) == .idle)
     precondition(PetPhase.after(25) == .sleeping)
@@ -79,8 +80,64 @@ if CommandLine.arguments.contains("--self-test") {
           optimized.image.size.height == 1_024 else {
         fatalError("Image downsampling failed")
     }
-    print("Pet phases, image categories, and 1024px image optimization passed")
+    print("Pet phases, image import validation, and 1024px optimization passed")
     exit(0)
+}
+
+private func runImageImportSelfTests() {
+    let invalidData = Data("not a PNG".utf8)
+    precondition(PetSpriteSheetImporter.frames(from: invalidData) == nil)
+    precondition(PetSpriteSheetImporter.optimizedImage(from: invalidData) == nil)
+
+    guard let sheet = makeTestPNG(width: 6, height: 6, alphaInfo: .premultipliedLast),
+          let images = PetSpriteSheetImporter.frames(from: sheet) else {
+        fatalError("Valid 3×3 PNG import failed")
+    }
+    precondition(images[.idle].count == 2)
+    precondition(images[.typing].count == 4)
+    precondition(images[.sleep].count == 2)
+    precondition(images[.enter].count == 1)
+    precondition(images[.idle][0].size == NSSize(width: 2, height: 2))
+    precondition(PetSpriteSheetImporter.image(from: sheet) != nil)
+
+    guard let rectangle = makeTestPNG(width: 6, height: 3, alphaInfo: .premultipliedLast),
+          let opaque = makeTestPNG(width: 6, height: 6, alphaInfo: .noneSkipLast) else {
+        fatalError("Image import test setup failed")
+    }
+    precondition(PetSpriteSheetImporter.frames(from: rectangle) == nil)
+    precondition(PetSpriteSheetImporter.frames(from: opaque) == nil)
+    precondition(PetSpriteSheetImporter.optimizedImage(from: opaque) == nil)
+
+    let oversizedData = Data(repeating: 0, count: PetSpriteSheetImporter.maximumFileSize + 1)
+    precondition(PetSpriteSheetImporter.frames(from: oversizedData) == nil)
+    precondition(PetSpriteSheetImporter.optimizedImage(from: oversizedData) == nil)
+}
+
+private func makeTestPNG(width: Int, height: Int, alphaInfo: CGImageAlphaInfo) -> Data? {
+    guard let context = CGContext(
+        data: nil,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: alphaInfo.rawValue
+    ), let image = context.makeImage() else {
+        return nil
+    }
+
+    let data = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(
+        data,
+        UTType.png.identifier as CFString,
+        1,
+        nil
+    ) else {
+        return nil
+    }
+    CGImageDestinationAddImage(destination, image, nil)
+    guard CGImageDestinationFinalize(destination) else { return nil }
+    return data as Data
 }
 
 @MainActor

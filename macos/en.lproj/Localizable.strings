@@ -8,6 +8,9 @@
 "size.medium" = "Medium";
 "size.large" = "Large";
 "menu.typingMotion" = "Typing motion";
+"menu.presence" = "Show in";
+"menu.showInDock" = "Dock";
+"menu.showInMenuBar" = "Menu Bar";
 "menu.imageSettings" = "Pet images…";
 "menu.setupWizard" = "Setup…";
 "menu.login" = "Launch at Login";

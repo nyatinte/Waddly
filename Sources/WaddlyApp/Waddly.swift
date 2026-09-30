@@ -167,6 +167,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusMenu = NSMenu()
     var pauseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var loginItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    var dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    var menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
@@ -207,10 +209,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     ]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        defaults.register(defaults: ["typingMotion": TypingMotion.weak.rawValue])
+        defaults.register(defaults: [
+            "typingMotion": TypingMotion.weak.rawValue,
+            "showInDock": true,
+            "showInMenuBar": true
+        ])
+        if !defaults.bool(forKey: "showInDock"), !defaults.bool(forKey: "showInMenuBar") {
+            defaults.set(true, forKey: "showInDock")
+        }
         loadSavedPetImage()
         buildPanel()
         buildMenu()
+        updatePresenceOptions()
         petView.onFileDrop = { [weak self] in _ = self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString("pet.dropTooltip")

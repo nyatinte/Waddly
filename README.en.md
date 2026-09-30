@@ -10,7 +10,7 @@ A lightweight macOS desktop companion that lets your pet live on your desktop. R
 - Breathes subtly and blinks while idle, falls asleep after a while, and stops animating after five minutes. Input monitoring remains active so it can wake up.
 - Drag the pet around the desktop; its position is saved. Choose Small, Medium, or Large.
 - The UI follows the preferred macOS language (Japanese or English) and falls back to English for other languages.
-- Waddly appears in both the Dock and menu bar. Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
+- Waddly appears in both the Dock and menu bar; choose where it appears from the “Show in” menu (at least one remains visible). Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
 - On first launch, a setup wizard walks through the image-generation prompt, required 3×3 PNG import, and Input Monitoring permission. Drop a PNG anywhere on the image page; a custom image is required to continue. Reopen it from the menu at any time.
 - The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.

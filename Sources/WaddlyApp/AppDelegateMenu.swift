@@ -38,6 +38,8 @@ extension AppDelegate {
         motionItem.submenu = motionMenu
         statusMenu.addItem(motionItem)
 
+        addPresenceMenu()
+
         let imageSettingsItem = NSMenuItem(
             title: localizedString("menu.imageSettings"),
             action: #selector(showImageSettings),
@@ -75,6 +77,25 @@ extension AppDelegate {
         updateMenuStatus()
     }
 
+    private func addPresenceMenu() {
+        let presenceItem = NSMenuItem(
+            title: localizedString("menu.presence"),
+            action: nil,
+            keyEquivalent: ""
+        )
+        let presenceMenu = NSMenu()
+        dockVisibilityItem.title = localizedString("menu.showInDock")
+        dockVisibilityItem.action = #selector(toggleDockVisibility)
+        dockVisibilityItem.target = self
+        menuBarVisibilityItem.title = localizedString("menu.showInMenuBar")
+        menuBarVisibilityItem.action = #selector(toggleMenuBarVisibility)
+        menuBarVisibilityItem.target = self
+        presenceMenu.addItem(dockVisibilityItem)
+        presenceMenu.addItem(menuBarVisibilityItem)
+        presenceItem.submenu = presenceMenu
+        statusMenu.addItem(presenceItem)
+    }
+
     private func makeStatusIcon() -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             let path = NSBezierPath()
@@ -98,6 +119,27 @@ extension AppDelegate {
         if !isPaused { _ = monitor.start() }
         pauseItem.title = localizedString(isPaused ? "menu.resume" : "menu.pause")
         updateMenuStatus()
+    }
+
+    func updatePresenceOptions() {
+        let showInDock = defaults.bool(forKey: "showInDock")
+        let showInMenuBar = defaults.bool(forKey: "showInMenuBar")
+        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
+        statusItem.isVisible = showInMenuBar
+        dockVisibilityItem.state = showInDock ? .on : .off
+        menuBarVisibilityItem.state = showInMenuBar ? .on : .off
+        dockVisibilityItem.isEnabled = showInMenuBar
+        menuBarVisibilityItem.isEnabled = showInDock
+    }
+
+    @objc private func toggleDockVisibility() {
+        defaults.set(!defaults.bool(forKey: "showInDock"), forKey: "showInDock")
+        updatePresenceOptions()
+    }
+
+    @objc private func toggleMenuBarVisibility() {
+        defaults.set(!defaults.bool(forKey: "showInMenuBar"), forKey: "showInMenuBar")
+        updatePresenceOptions()
     }
 
     private func updateMenuStatus() {

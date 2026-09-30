@@ -8,6 +8,9 @@
 "size.medium" = "中";
 "size.large" = "大";
 "menu.typingMotion" = "タイピング時の揺れ";
+"menu.presence" = "表示先";
+"menu.showInDock" = "Dockに表示";
+"menu.showInMenuBar" = "メニューバーに表示";
 "menu.imageSettings" = "画像設定…";
 "menu.setupWizard" = "セットアップ…";
 "menu.login" = "ログイン時に起動";
