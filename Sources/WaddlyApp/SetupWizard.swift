@@ -142,7 +142,7 @@ extension SetupWizardController {
             page.trailingAnchor.constraint(equalTo: pageContainer.trailingAnchor),
             page.widthAnchor.constraint(equalTo: pageContainer.widthAnchor),
             page.topAnchor.constraint(equalTo: pageContainer.topAnchor),
-            page.bottomAnchor.constraint(lessThanOrEqualTo: pageContainer.bottomAnchor)
+            page.bottomAnchor.constraint(equalTo: pageContainer.bottomAnchor)
         ])
         progressLabel.stringValue = String(
             format: localizedString("setup.progress"),
@@ -196,11 +196,6 @@ extension SetupWizardController {
         dropZone.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         dropZone.layer?.cornerRadius = 12
         dropZone.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        dropZone.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
-        }
-
         let dropLabel = NSTextField(wrappingLabelWithString: localizedString("setup.imageDrop"))
         dropLabel.translatesAutoresizingMaskIntoConstraints = false
         dropLabel.alignment = .center
@@ -226,10 +221,29 @@ extension SetupWizardController {
         imageStatusLabel.stringValue = localizedString(
             hasCustomImage() ? "setup.imageAlreadyConfigured" : "setup.imageRequired"
         )
-        return makeStack(
+        let content = makeStack(
             [title, description, dropZone, imageStatusLabel],
             fullWidth: [description, dropZone, imageStatusLabel]
         )
+        return makeImageDropTarget(content)
+    }
+
+    private func makeImageDropTarget(_ content: NSView) -> NSView {
+        let dropTarget = PetImageDropView(frame: .zero)
+        dropTarget.translatesAutoresizingMaskIntoConstraints = false
+        dropTarget.layer?.cornerRadius = 14
+        dropTarget.onDrop = { [weak self] urls in
+            guard let url = urls.first else { return }
+            self?.importImage(from: url)
+        }
+        dropTarget.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.leadingAnchor.constraint(equalTo: dropTarget.leadingAnchor, constant: 16),
+            content.trailingAnchor.constraint(equalTo: dropTarget.trailingAnchor, constant: -16),
+            content.topAnchor.constraint(equalTo: dropTarget.topAnchor, constant: 16),
+            content.bottomAnchor.constraint(lessThanOrEqualTo: dropTarget.bottomAnchor, constant: -16)
+        ])
+        return dropTarget
     }
 
     private func makePermissionPage() -> NSView {

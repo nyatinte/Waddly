@@ -40,14 +40,27 @@ final class PetImageDropView: NSView {
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        fileURLs(from: sender).isEmpty ? [] : .copy
+        guard !fileURLs(from: sender).isEmpty else { return [] }
+        layer?.borderColor = NSColor.controlAccentColor.cgColor
+        layer?.borderWidth = 2
+        return .copy
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        restoreDropAppearance()
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let urls = fileURLs(from: sender)
+        restoreDropAppearance()
         guard !urls.isEmpty else { return false }
         onDrop?(urls)
         return true
+    }
+
+    private func restoreDropAppearance() {
+        layer?.borderColor = NSColor.separatorColor.cgColor
+        layer?.borderWidth = 1
     }
 
     private func fileURLs(from sender: NSDraggingInfo) -> [URL] {
