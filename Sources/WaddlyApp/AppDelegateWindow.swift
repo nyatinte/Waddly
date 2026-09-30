@@ -12,7 +12,7 @@ extension AppDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         panel.delegate = self
 
-        petView.image = petImages[.idle][0]
+        petView.image = petImages[.idle].first
         petView.imageScaling = .scaleProportionallyUpOrDown
         petView.wantsLayer = true
         petView.autoresizingMask = [.width, .height]
@@ -23,7 +23,9 @@ extension AppDelegate {
         } else {
             placeAtDefaultPosition()
         }
-        panel.orderFrontRegardless()
+        if hasCompletePetImageSet {
+            panel.orderFrontRegardless()
+        }
     }
 
     func clampedOrigin(_ origin: NSPoint) -> NSPoint {

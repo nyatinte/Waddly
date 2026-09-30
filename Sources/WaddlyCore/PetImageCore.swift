@@ -22,15 +22,10 @@ public struct PetImageSet {
         set { images[category] = newValue }
     }
 
-    public static func bundled(from images: [NSImage]) -> PetImageSet? {
-        guard images.count == 16 else { return nil }
-        return PetImageSet([
-            .idle: [images[0], images[1]],
-            .typing: [images[4], images[5], images[6], images[7], images[8], images[9], images[11]],
-            .sleep: [images[12], images[13]],
-            .enter: [images[10], images[14], images[15]]
-        ])
+    public var isComplete: Bool {
+        PetImageCategory.allCases.allSatisfy { !self[$0].isEmpty }
     }
+
 }
 
 public struct OptimizedPetImage {

@@ -8,6 +8,7 @@
 "size.medium" = "Medium";
 "size.large" = "Large";
 "menu.typingMotion" = "Typing motion";
+"menu.breathing" = "Breathing animation";
 "menu.presence" = "Show in";
 "menu.showInDock" = "Dock";
 "menu.showInMenuBar" = "Menu Bar";

@@ -1,18 +1,17 @@
 # Waddly
 
-A lightweight macOS desktop companion that lets your pet live on your desktop. Replace the bundled penguin sprites with your own pet.
+A lightweight macOS desktop companion that lets your pet live on your desktop. Pet images are not bundled; add your own during setup. The pet stays hidden until an image is registered.
 
 [日本語 README](README.md)
 
 ## Features
 
 - Reacts to key-down events without storing typed text or key codes.
-- Breathes subtly and blinks while idle, falls asleep after a while, and stops animating after five minutes. Input monitoring remains active so it can wake up.
+- Breathes subtly and blinks while idle. Toggle breathing from the menu. The pet falls asleep after a while and stops animating after five minutes; Input Monitoring remains active so it can wake up.
 - Drag the pet around the desktop; its position is saved. Choose Small, Medium, or Large.
 - The UI follows the preferred macOS language (Japanese or English) and falls back to English for other languages.
 - Waddly appears in both the Dock and menu bar; choose where it appears from the “Show in” menu (at least one remains visible). Click the custom W icon or right-click the pet to open the menu. Change size and typing motion, configure pet images, pause reactions, or configure launch at login.
 - On first launch, a setup wizard walks through the image-generation prompt, required 3×3 PNG import, and Input Monitoring permission. Drop a PNG anywhere on the image page; a custom image is required to continue. Reopen it from the menu at any time.
-- The app icon is generated from the bundled pet's idle frame. Replace `assets/01-idle.png` and rebuild to update it.
 - Built with Swift, AppKit, Core Graphics, and Core Animation. No third-party libraries.
 
 ## Requirements
@@ -45,19 +44,31 @@ The script writes `Waddly-0.1.0-macos-<architecture>.dmg` to `dist/`. No Develop
 
 ## Use your own pet
 
-Choose **Pet images…** from the menu to add any number of transparent PNGs to the Idle, Typing, Sleep, and Enter rows. Drop files onto a row or use **Add** to select multiple images. Use the arrow buttons to reorder images and the remove button to delete them. Idle uses the first image as its normal pose and the rest as blink variants. Typing and Enter images play in order. Sleep images cycle and stop on the last image after five minutes.
+### Image processing
 
-Transparent 3×3 PNG sprite sheets are still supported. Drop a sheet onto the pet to preview its cell boundaries and dimensions before importing. Images are stored locally in Application Support and restored at the next launch. Images with a side longer than 1024 px are downsampled in the app before saving; the selected source files are not modified or uploaded.
+Setup imports a transparent 3×3 PNG sprite sheet. The example below shows a reference image and the corresponding nine-cell sheet that Waddly splits during import.
 
-The image must be square, with dimensions divisible by 3. The limit is 20 MB and 4096 px. Waddly divides the image into equal cells, so follow the cell order and spacing in the prompts.
+| Reference image | 3×3 sprite sheet |
+| --- | --- |
+| ![nyatinte-bot reference image](assets/examples/nyatinte-bot.png) | ![nyatinte-bot 3×3 transparent sprite sheet](assets/examples/nyatinte-bot-3x3.png) |
+
+For the README, the reference image is reduced to 384 × 384 px and the sprite sheet to 768 × 768 px.
+
+Waddly validates the PNG format, transparency, square shape, and dimensions divisible by 3. Files must be at most 20 MB and 4096 px per side. The sheet is split into nine equal cells: cells 1–2 are Idle, 3–6 Typing, 7 Enter, and 8–9 Sleep. Sheets longer than 3072 px on a side are downsampled to 3072 px before splitting.
+
+Choose **Pet images…** from the menu to add transparent PNGs to the Idle, Typing, Sleep, and Enter rows. Individual images are downsampled to a maximum side of 1024 px. Idle uses the first image as its normal pose and the rest as blink variants. Typing and Enter images play in order. Sleep images cycle and stop on the last image after five minutes.
+
+The app stores each frame locally as a PNG in Application Support and restores it at the next launch. It does not modify the selected source file or upload images. Pet artwork, including these examples, is not included in the app bundle.
 
 The image-generation prompts are in [`prompts/ja.md`](prompts/ja.md) and [`prompts/en.md`](prompts/en.md). They leave transparent padding around each pose so the character and keyboard do not crowd the cell boundaries.
 
 Images made with an earlier prompt may use a different cell order. Use the current prompt order for the Enter, drowsy, and sleep reactions to map correctly.
 
-### Edit the bundled pet frames
+### Example image license
 
-The repository also includes the legacy `index.html` splitter for editing the bundled 4×4 sprite sheet. Replace the frames in `assets/` and rebuild to change the default pet. Custom images can be configured in the app's image settings window or imported as a 3×3 PNG sheet.
+The reference image is an example generated with inspiration from [Grokbot Icon Studio](https://grokbot-icon-studio.serio-ai.chatgpt.site/ja). Its page states that the prompt text is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) by X user `@multi_serio_ai` (APG) for noncommercial use. Public redistribution of the prompt requires attribution, a source link, license notice, and change notice; commercial prompt use requires separate permission. The prompt text itself is not included in this repository.
+
+The page also says that CC BY-NC 4.0 does not automatically apply to generated images; the operator does not claim copyright or revenue-sharing rights over generated images and does not require attribution for them. Rights in generated images still depend on applicable law, input-image rights, human creative contribution, and the AI service's terms. The repository author makes no claim over the 3×3 grid layout itself.
 
 ## Privacy
 
@@ -71,4 +82,4 @@ RSS includes shared libraries and other resident pages. macOS footprint is a sep
 
 ## License
 
-The code and bundled assets are released under the [MIT License](LICENSE).
+The code is released under the [MIT License](LICENSE). The example images are not covered by that license; check the notes above and the rights for each source material before reuse.

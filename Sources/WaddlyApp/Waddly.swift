@@ -139,22 +139,9 @@ final class KeyboardMonitor: @unchecked Sendable {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let defaults = UserDefaults.standard
     let monitor = KeyboardMonitor()
-    lazy var bundledImages = (1...16).compactMap { index -> NSImage? in
-        let name = String(format: "%02d", index)
-        let frameName = "\(name)-\(Self.frameSlugs[index - 1]).png"
-        guard let resourceURL = Bundle.main.resourceURL else {
-            return nil
-        }
-        return NSImage(contentsOf: resourceURL.appendingPathComponent("Frames/\(frameName)"))
-    }
-    lazy var bundledImageSet: PetImageSet = {
-        guard let imageSet = PetImageSet.bundled(from: bundledImages) else {
-            fatalError("Waddly frame assets are incomplete")
-        }
-        return imageSet
-    }()
     var importedImages: PetImageSet?
-    var petImages: PetImageSet { importedImages ?? bundledImageSet }
+    var petImages: PetImageSet { importedImages ?? PetImageSet() }
+    var hasCompletePetImageSet: Bool { petImages.isComplete }
     var storedImageFiles: [String: [String]] = [:]
     lazy var panel = PetWindow(
         contentRect: NSRect(x: 0, y: 0, width: displaySize, height: displaySize),
@@ -167,6 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusMenu = NSMenu()
     var pauseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var loginItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    var breathingItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var setupWizardController: SetupWizardController?
@@ -187,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var typingMotion: TypingMotion {
         TypingMotion(rawValue: defaults.integer(forKey: "typingMotion")) ?? .weak
     }
+    var isBreathingEnabled: Bool { defaults.bool(forKey: "breathingEnabled") }
     var displaySize: CGFloat {
         let value = defaults.double(forKey: "displaySize")
         return value == 0 ? 240 : CGFloat(value)
@@ -201,16 +190,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .appendingPathComponent("Waddly", isDirectory: true)
             .appendingPathComponent("PetImages", isDirectory: true)
     }
-    private static let frameSlugs = [
-        "idle", "blink", "surprised-left", "surprised-right",
-        "laptop-look", "typing", "typing-fast", "peek-screen",
-        "typing-excited", "focused", "jump", "one-hand-work",
-        "sleepy", "sleep-sitting", "cheer", "picked-up"
-    ]
-
     func applicationDidFinishLaunching(_ notification: Notification) {
         defaults.register(defaults: [
             "typingMotion": TypingMotion.weak.rawValue,
+            "breathingEnabled": true,
             "showInDock": true,
             "showInMenuBar": true
         ])
@@ -225,17 +208,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString("pet.dropTooltip")
         monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
-        if defaults.bool(forKey: "setupWizardSeen") {
+        if hasCompletePetImageSet, defaults.bool(forKey: "setupWizardSeen") {
             startMonitoring()
+            schedulePhaseChange()
         } else {
             showSetupWizard()
         }
-        schedulePhaseChange()
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
         setupWizardController?.refreshPermissionStatus()
-        guard !isPaused, monitor.permissionGranted else { return }
+        guard hasCompletePetImageSet, !isPaused, monitor.permissionGranted else { return }
         startMonitoring()
     }
 

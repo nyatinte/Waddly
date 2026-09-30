@@ -41,11 +41,6 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(moving(["first", "second", "third"], from: 0, to: 2) == ["second", "third", "first"])
     precondition(moving(["first", "second", "third"], from: 2, to: 0) == ["third", "first", "second"])
     precondition(moving(["only"], from: 1, to: 0) == nil)
-    let bundled = PetImageSet.bundled(from: Array(repeating: NSImage(size: NSSize(width: 1, height: 1)), count: 16))
-    precondition(bundled?[.idle].count == 2)
-    precondition(bundled?[.typing].count == 7)
-    precondition(bundled?[.sleep].count == 2)
-    precondition(bundled?[.enter].count == 3)
     guard let context = CGContext(
         data: nil,
         width: 2_048,
@@ -85,6 +80,7 @@ if CommandLine.arguments.contains("--self-test") {
 }
 
 private func runImageImportSelfTests() {
+    precondition(!PetImageSet().isComplete)
     let invalidData = Data("not a PNG".utf8)
     precondition(PetSpriteSheetImporter.frames(from: invalidData) == nil)
     precondition(PetSpriteSheetImporter.optimizedImage(from: invalidData) == nil)
@@ -97,6 +93,7 @@ private func runImageImportSelfTests() {
     precondition(images[.typing].count == 4)
     precondition(images[.sleep].count == 2)
     precondition(images[.enter].count == 1)
+    precondition(images.isComplete)
     precondition(images[.idle][0].size == NSSize(width: 2, height: 2))
     precondition(PetSpriteSheetImporter.image(from: sheet) != nil)
 

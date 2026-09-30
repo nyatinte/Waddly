@@ -10,7 +10,7 @@ extension AppDelegate {
                   let data = try? Data(contentsOf: url) else { return nil }
             return PetSpriteSheetImporter.frames(from: data)
         }
-        var loadedImages = legacyImages ?? bundledImageSet
+        var loadedImages = legacyImages ?? PetImageSet()
         guard let directory = petImagesDirectoryURL else {
             importedImages = legacyImages
             return
@@ -70,6 +70,18 @@ extension AppDelegate {
         sleepAnimationTimer = nil
         for category in PetImageCategory.allCases {
             imageRows[category]?.setImages(petImages[category])
+        }
+        guard hasCompletePetImageSet else {
+            panel.orderOut(nil)
+            return
+        }
+        panel.orderFrontRegardless()
+        if currentPhase == nil {
+            currentPhase = .idle
+            show(petImages[.idle][0])
+            breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+            scheduleIdleBlink()
+            return
         }
         switch currentPhase {
         case .typing:

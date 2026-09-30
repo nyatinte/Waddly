@@ -8,6 +8,7 @@
 "size.medium" = "中";
 "size.large" = "大";
 "menu.typingMotion" = "タイピング時の揺れ";
+"menu.breathing" = "呼吸アニメーション";
 "menu.presence" = "表示先";
 "menu.showInDock" = "Dockに表示";
 "menu.showInMenuBar" = "メニューバーに表示";

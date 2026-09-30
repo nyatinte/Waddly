@@ -368,7 +368,7 @@ extension AppDelegate {
         if setupWizardController == nil {
             setupWizardController = SetupWizardController(
                 onImportImage: { [weak self] in self?.importPetImage(from: $0) ?? false },
-                hasCustomImage: { [weak self] in self?.importedImages != nil },
+                hasCustomImage: { [weak self] in self?.hasCompletePetImageSet ?? false },
                 hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
                 requestInputMonitoringPermission: { [weak self] in
                     guard let self else { return false }
@@ -378,12 +378,14 @@ extension AppDelegate {
                 },
                 onClose: { [weak self] in
                     guard let self else { return }
-                    if self.importedImages == nil {
+                    if !self.hasCompletePetImageSet {
                         self.defaults.removeObject(forKey: "setupWizardSeen")
                     } else {
                         self.defaults.set(true, forKey: "setupWizardSeen")
                     }
-                    if self.monitor.permissionGranted && !self.isPaused { self.startMonitoring() }
+                    if self.hasCompletePetImageSet, self.monitor.permissionGranted, !self.isPaused {
+                        self.startMonitoring()
+                    }
                 }
             )
         }

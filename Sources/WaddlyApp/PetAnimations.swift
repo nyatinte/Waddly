@@ -4,7 +4,7 @@ import WaddlyCore
 
 extension AppDelegate {
     func receivedKeyDown(isEnter: Bool) {
-        guard !isPaused else { return }
+        guard hasCompletePetImageSet, !isPaused else { return }
         let startsTyping = currentPhase != .typing
         let interruptedEnterReaction = enterReactionTimer != nil
         stopEnterReaction()
@@ -37,6 +37,7 @@ extension AppDelegate {
 
     func schedulePhaseChange() {
         phaseTimer?.invalidate()
+        guard hasCompletePetImageSet else { return }
         let elapsed = ProcessInfo.processInfo.systemUptime - lastInputTime
         let phase = PetPhase.after(elapsed)
         if phase != currentPhase {
@@ -61,6 +62,7 @@ extension AppDelegate {
     }
 
     private func updatePet(for phase: PetPhase) {
+        guard hasCompletePetImageSet else { return }
         switch phase {
         case .typing:
             break
@@ -162,7 +164,8 @@ extension AppDelegate {
     }
 
     func breathe(key: String = "sleep-breathe", breathScale: CGFloat = 1.018, duration: CFTimeInterval = 1.5) {
-        guard let layer = petView.layer else { return }
+        guard isBreathingEnabled, !isPaused, hasCompletePetImageSet,
+              let layer = petView.layer else { return }
         let animation = CABasicAnimation(keyPath: "transform.scale")
         animation.fromValue = 1.0
         animation.toValue = breathScale

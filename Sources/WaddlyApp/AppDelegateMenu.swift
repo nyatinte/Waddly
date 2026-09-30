@@ -38,6 +38,8 @@ extension AppDelegate {
         motionItem.submenu = motionMenu
         statusMenu.addItem(motionItem)
 
+        addBreathingMenuItem()
+
         addPresenceMenu()
 
         let imageSettingsItem = NSMenuItem(
@@ -96,6 +98,14 @@ extension AppDelegate {
         statusMenu.addItem(presenceItem)
     }
 
+    private func addBreathingMenuItem() {
+        breathingItem.title = localizedString("menu.breathing")
+        breathingItem.action = #selector(toggleBreathing)
+        breathingItem.target = self
+        breathingItem.state = isBreathingEnabled ? .on : .off
+        statusMenu.addItem(breathingItem)
+    }
+
     private func makeStatusIcon() -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             let path = NSBezierPath()
@@ -116,8 +126,12 @@ extension AppDelegate {
     }
 
     func startMonitoring() {
-        if !isPaused { _ = monitor.start() }
         pauseItem.title = localizedString(isPaused ? "menu.resume" : "menu.pause")
+        guard hasCompletePetImageSet else {
+            updateMenuStatus()
+            return
+        }
+        if !isPaused { _ = monitor.start() }
         updateMenuStatus()
     }
 
@@ -167,6 +181,20 @@ extension AppDelegate {
         }
     }
 
+    @objc private func toggleBreathing() {
+        let enabled = !isBreathingEnabled
+        defaults.set(enabled, forKey: "breathingEnabled")
+        breathingItem.state = enabled ? .on : .off
+        petView.layer?.removeAnimation(forKey: "idle-breathe")
+        petView.layer?.removeAnimation(forKey: "sleep-breathe")
+        guard enabled, !isPaused else { return }
+        switch currentPhase {
+        case .idle: breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+        case .sleeping: breathe()
+        case .typing, .frozen, nil: break
+        }
+    }
+
     @objc private func togglePause() {
         isPaused.toggle()
         phaseTimer?.invalidate()
@@ -181,10 +209,12 @@ extension AppDelegate {
         } else {
             lastInputTime = ProcessInfo.processInfo.systemUptime
             currentPhase = nil
-            show(petImages[.typing][0])
+            if hasCompletePetImageSet {
+                show(petImages[.typing][0])
+            }
         }
         startMonitoring()
-        if !isPaused { schedulePhaseChange() }
+        if !isPaused, hasCompletePetImageSet { schedulePhaseChange() }
     }
 
     @objc private func toggleLoginItem() {
