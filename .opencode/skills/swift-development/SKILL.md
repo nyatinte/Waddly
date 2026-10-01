@@ -25,4 +25,4 @@ Adapted for this repository from [sammcj/agentic-coding's Swift development skil
 
 ## Verification
 
-Run `swift test` for the Swift Testing suites. Run `./macos/build.sh` after Swift changes; it checks SwiftFormat, enforces `.swiftlint.yml` with `swiftlint lint --strict`, and builds the Release app.
+Run `swift test` for the Swift Testing suites. Run `./macos/build.sh` after Swift changes; it enforces `.swiftlint.yml` with `swiftlint lint --strict` and builds the Release app.
