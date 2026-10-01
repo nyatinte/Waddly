@@ -1,8 +1,21 @@
 # Agent instructions
 
-- Keep changes within the existing Swift 6, AppKit, and macOS 13+ setup; prefer system APIs and avoid new dependencies.
-- Keep image models, import, and processing in `Sources/WaddlyCore`; keep app lifecycle, input monitoring, and UI in `Sources/WaddlyApp`.
-- Preserve the privacy boundary: use key codes only while handling input events to identify Enter; never persist, log, or transmit them. Keep imported images on-device.
-- Add or change user-facing strings in both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
-- Run `swift test` for the test suite and `./macos/build.sh` after Swift changes. The build script runs strict SwiftLint and creates the Release app.
-- Update `README.md` and `README.en.md` when user-visible behavior or setup instructions change.
+## Development environment and code placement
+
+Keep changes within the existing Swift 6, AppKit, and macOS 13+ setup. Prefer system APIs and avoid adding dependencies.
+
+Keep image models, image import, and image processing in `Sources/WaddlyCore`. Keep the app lifecycle, input monitoring, and UI in `Sources/WaddlyApp`.
+
+## Privacy
+
+Use key codes only while handling input events to identify Enter. Never store, log, or transmit key codes. Keep imported images on the device.
+
+## Localization and documentation
+
+When adding or changing user-facing strings, update both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
+
+When user-visible behavior or setup instructions change, update both `README.md` and `README.en.md`.
+
+## Verification
+
+After changing Swift code, run the test suite with `swift test` and build with `./macos/build.sh`. The build script runs strict SwiftLint checks and creates the Release app.
