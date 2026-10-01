@@ -5,11 +5,6 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
-if ! command -v mint >/dev/null 2>&1; then
-  printf 'Mint is required to run the pinned SwiftFormat version. Install it with: brew install mint\n' >&2
-  exit 1
-fi
-
 if ! command -v swiftlint >/dev/null 2>&1; then
   printf 'SwiftLint is required. Install it with: brew install swiftlint\n' >&2
   exit 1
@@ -17,8 +12,8 @@ fi
 
 (
   cd "$ROOT"
-  mint run swiftformat Sources Package.swift --lint
-  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources macos Package.swift
+  mint run swiftformat Sources Tests Package.swift --lint
+  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources Tests macos Package.swift
 )
 
 rm -rf "$APP"
