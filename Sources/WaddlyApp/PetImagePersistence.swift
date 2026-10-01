@@ -72,14 +72,14 @@ extension AppDelegate {
             }
         }
         guard addedCount > 0 else {
-            showAlert("images.errorTitle", "images.errorMessage")
+            showAlert(.imagesErrorTitle, .imagesErrorMessage)
             return
         }
         imageSetDidChange()
         if saveFailed {
             showImageSaveError()
         } else if skippedCount > 0 {
-            showAlert("images.skippedTitle", "images.skippedMessage")
+            showAlert(.imagesSkippedTitle, .imagesSkippedMessage)
         }
     }
 

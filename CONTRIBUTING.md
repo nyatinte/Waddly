@@ -54,6 +54,16 @@ swift test
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
 
+## Localization keys
+
+Add each localization key to both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`, then regenerate the typed accessors from the repository root:
+
+```sh
+swift Tools/generate_localizations.swift
+```
+
+The generator checks that both languages have matching keys and writes `Sources/WaddlyApp/LocalizationKey.generated.swift`. `./macos/build.sh` checks that the generated file is current.
+
 ## Create a DMG
 
 ```sh

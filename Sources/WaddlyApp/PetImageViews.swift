@@ -90,22 +90,22 @@ private final class PetImageTileView: NSView {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = image
         imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.setAccessibilityLabel("\(localizedString("images.thumbnail")) \(index + 1)")
+        imageView.setAccessibilityLabel("\(localizedString(.imagesThumbnail)) \(index + 1)")
         addSubview(imageView)
 
         let removeButton = makeButton(title: "×", symbol: "xmark.circle.fill", action: #selector(removeImage))
         removeButton.isEnabled = imageCount > 1
-        removeButton.setAccessibilityLabel("\(localizedString("images.remove")) \(index + 1)")
+        removeButton.setAccessibilityLabel("\(localizedString(.imagesRemove)) \(index + 1)")
         addSubview(removeButton)
 
         let moveLeftButton = makeButton(title: "‹", symbol: "chevron.left", action: #selector(moveImageLeft))
         moveLeftButton.isEnabled = index > 0
-        moveLeftButton.setAccessibilityLabel("\(localizedString("images.moveLeft")) \(index + 1)")
+        moveLeftButton.setAccessibilityLabel("\(localizedString(.imagesMoveLeft)) \(index + 1)")
         addSubview(moveLeftButton)
 
         let moveRightButton = makeButton(title: "›", symbol: "chevron.right", action: #selector(moveImageRight))
         moveRightButton.isEnabled = index < imageCount - 1
-        moveRightButton.setAccessibilityLabel("\(localizedString("images.moveRight")) \(index + 1)")
+        moveRightButton.setAccessibilityLabel("\(localizedString(.imagesMoveRight)) \(index + 1)")
         addSubview(moveRightButton)
 
         configureLayout(
@@ -213,10 +213,10 @@ final class PetImageCategoryRowView: NSView {
         scrollView.documentView = imageStack
         dropView.addSubview(scrollView)
 
-        let addButton = NSButton(title: localizedString("images.add"), target: self, action: #selector(addImages))
+        let addButton = NSButton(title: localizedString(.imagesAdd), target: self, action: #selector(addImages))
         addButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil)
         addButton.imagePosition = .imageLeading
-        addButton.setAccessibilityLabel("\(localizedString("images.add")) — \(category.title)")
+        addButton.setAccessibilityLabel("\(localizedString(.imagesAdd)) — \(category.title)")
         addButton.translatesAutoresizingMaskIntoConstraints = false
         imageStack.addArrangedSubview(addButton)
         addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 88).isActive = true

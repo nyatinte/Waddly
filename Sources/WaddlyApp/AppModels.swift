@@ -20,11 +20,11 @@ enum AppLanguage: Int, CaseIterable {
         }
     }
 
-    var titleKey: String {
+    var titleKey: LocalizationKey {
         switch self {
-        case .system: "language.system"
-        case .japanese: "language.japanese"
-        case .english: "language.english"
+        case .system: .languageSystem
+        case .japanese: .languageJapanese
+        case .english: .languageEnglish
         }
     }
 
@@ -33,7 +33,8 @@ enum AppLanguage: Int, CaseIterable {
     }
 }
 
-func localizedString(_ key: String) -> String {
+func localizedString(_ key: LocalizationKey) -> String {
+    let key = key.rawValue
     let localization = AppLanguage.active.localization
     guard let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
           let bundle = Bundle(path: path)
@@ -71,9 +72,9 @@ enum TypingMotion: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .off: localizedString("motion.off")
-        case .weak: localizedString("motion.weak")
-        case .strong: localizedString("motion.strong")
+        case .off: localizedString(.motionOff)
+        case .weak: localizedString(.motionWeak)
+        case .strong: localizedString(.motionStrong)
         }
     }
 
@@ -88,7 +89,12 @@ enum TypingMotion: Int, CaseIterable {
 
 extension PetImageCategory {
     var title: String {
-        localizedString("images.category.\(rawValue)")
+        switch self {
+        case .idle: localizedString(.imagesCategoryIdle)
+        case .typing: localizedString(.imagesCategoryTyping)
+        case .enter: localizedString(.imagesCategoryEnter)
+        case .sleep: localizedString(.imagesCategorySleep)
+        }
     }
 }
 

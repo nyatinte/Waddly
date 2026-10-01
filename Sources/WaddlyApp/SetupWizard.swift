@@ -44,7 +44,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
             defer: false
         )
         super.init(window: window)
-        window.title = localizedString("setup.windowTitle")
+        window.title = localizedString(.setupWindowTitle)
         window.minSize = NSSize(width: 680, height: 440)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -57,7 +57,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
 
     func refreshPermissionStatus() {
         let isGranted = hasInputMonitoringPermission()
-        let statusKey = isGranted ? "setup.permissionGranted" : "setup.permissionRequired"
+        let statusKey: LocalizationKey = isGranted ? .setupPermissionGranted : .setupPermissionRequired
         permissionStatusLabel.stringValue = localizedString(statusKey)
         appDragCard?.isHidden = isGranted
         requestPermissionButton.isHidden = isGranted
@@ -114,9 +114,9 @@ extension SetupWizardController {
     private func makeNavigation() -> NSStackView {
         backButton.target = self
         backButton.action = #selector(goBack)
-        backButton.setAccessibilityLabel(localizedString("setup.back"))
+        backButton.setAccessibilityLabel(localizedString(.setupBack))
 
-        skipButton.title = localizedString("setup.skip")
+        skipButton.title = localizedString(.setupSkip)
         skipButton.target = self
         skipButton.action = #selector(skipPrompt)
         let spacer = NSView()
@@ -148,14 +148,14 @@ extension SetupWizardController {
             page.bottomAnchor.constraint(equalTo: pageContainer.bottomAnchor)
         ])
         progressLabel.stringValue = String(
-            format: localizedString("setup.progress"),
+            format: localizedString(.setupProgress),
             currentStep + 1
         )
         progressIndicator.doubleValue = Double(currentStep + 1)
-        backButton.title = localizedString("setup.back")
+        backButton.title = localizedString(.setupBack)
         backButton.isEnabled = currentStep > 0
         skipButton.isHidden = currentStep != 0
-        nextButton.title = localizedString(currentStep == 2 ? "setup.finish" : "setup.next")
+        nextButton.title = localizedString(currentStep == 2 ? .setupFinish : .setupNext)
         nextButton.isEnabled = currentStep != 1 || hasCustomImage()
         window?.defaultButtonCell = nextButton.cell as? NSButtonCell
         if currentStep == 2 {
@@ -166,21 +166,21 @@ extension SetupWizardController {
 
 extension SetupWizardController {
     private func makePromptPage() -> NSView {
-        let title = makeTitle("setup.promptTitle")
-        let description = makeDescription("setup.promptDescription")
+        let title = makeTitle(.setupPromptTitle)
+        let description = makeDescription(.setupPromptDescription)
         let promptCard = makeInfoCard(
             symbol: "doc.text",
-            titleKey: "setup.promptCardTitle",
-            detailKey: "setup.promptCardDescription"
+            titleKey: .setupPromptCardTitle,
+            detailKey: .setupPromptCardDescription
         )
-        copyPromptButton.title = localizedString("setup.copyPrompt")
+        copyPromptButton.title = localizedString(.setupCopyPrompt)
         copyPromptButton.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
         copyPromptButton.imagePosition = .imageLeading
         copyPromptButton.target = self
         copyPromptButton.action = #selector(copyPrompt)
         copyPromptButton.isEnabled = !prompt.isEmpty
         let chatGPTButton = NSButton(
-            title: localizedString("setup.openChatGPT"),
+            title: localizedString(.setupOpenChatGPT),
             target: self,
             action: #selector(openChatGPT)
         )
@@ -193,19 +193,19 @@ extension SetupWizardController {
     }
 
     private func makeImagePage() -> NSView {
-        let title = makeTitle("setup.imageTitle")
-        let description = makeDescription("setup.imageDescription")
+        let title = makeTitle(.setupImageTitle)
+        let description = makeDescription(.setupImageDescription)
         let dropZone = PetImageDropView(frame: .zero)
         dropZone.translatesAutoresizingMaskIntoConstraints = false
         dropZone.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         dropZone.layer?.cornerRadius = 12
         dropZone.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        let dropLabel = NSTextField(wrappingLabelWithString: localizedString("setup.imageDrop"))
+        let dropLabel = NSTextField(wrappingLabelWithString: localizedString(.setupImageDrop))
         dropLabel.translatesAutoresizingMaskIntoConstraints = false
         dropLabel.alignment = .center
-        dropLabel.setAccessibilityLabel(localizedString("setup.imageDrop"))
+        dropLabel.setAccessibilityLabel(localizedString(.setupImageDrop))
         let chooseButton = NSButton(
-            title: localizedString("setup.chooseImage"),
+            title: localizedString(.setupChooseImage),
             target: self,
             action: #selector(chooseImage)
         )
@@ -223,7 +223,7 @@ extension SetupWizardController {
         imageStatusLabel.font = .systemFont(ofSize: 13)
         imageStatusLabel.textColor = .secondaryLabelColor
         imageStatusLabel.stringValue = localizedString(
-            hasCustomImage() ? "setup.imageAlreadyConfigured" : "setup.imageRequired"
+            hasCustomImage() ? .setupImageAlreadyConfigured : .setupImageRequired
         )
         let content = makeStack(
             [title, description, dropZone, imageStatusLabel],
@@ -251,15 +251,15 @@ extension SetupWizardController {
     }
 
     private func makePermissionPage() -> NSView {
-        let title = makeTitle("setup.permissionTitle")
-        let description = makeDescription("setup.permissionDescription")
-        let privacyNote = makeDescription("setup.privacyNote")
+        let title = makeTitle(.setupPermissionTitle)
+        let description = makeDescription(.setupPermissionDescription)
+        let privacyNote = makeDescription(.setupPrivacyNote)
         let appDragCard = makeDraggableAppCard()
         self.appDragCard = appDragCard
-        requestPermissionButton.title = localizedString("setup.requestPermission")
+        requestPermissionButton.title = localizedString(.setupRequestPermission)
         requestPermissionButton.target = self
         requestPermissionButton.action = #selector(requestPermission)
-        settingsButton.title = localizedString("setup.openSettings")
+        settingsButton.title = localizedString(.setupOpenSettings)
         settingsButton.target = self
         settingsButton.action = #selector(openInputMonitoringSettings)
         permissionStatusLabel.font = .systemFont(ofSize: 13)
@@ -279,12 +279,12 @@ extension SetupWizardController {
 extension SetupWizardController {
     private func importImage(from url: URL) {
         guard onImportImage(url) else {
-            imageStatusLabel.stringValue = localizedString("setup.imageNotImported")
+            imageStatusLabel.stringValue = localizedString(.setupImageNotImported)
             nextButton.isEnabled = hasCustomImage()
             return
         }
         imageStatusLabel.stringValue = String(
-            format: localizedString("setup.imageImported"),
+            format: localizedString(.setupImageImported),
             url.lastPathComponent
         )
         nextButton.isEnabled = true
@@ -295,7 +295,7 @@ extension SetupWizardController {
         panel.allowedContentTypes = [.png]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.prompt = localizedString("setup.chooseImage")
+        panel.prompt = localizedString(.setupChooseImage)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         importImage(from: url)
     }
@@ -307,7 +307,7 @@ extension SetupWizardController {
             NSSound.beep()
             return
         }
-        copyPromptButton.title = localizedString("setup.promptCopiedShort")
+        copyPromptButton.title = localizedString(.setupPromptCopiedShort)
         copyPromptButton.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil)
     }
 
