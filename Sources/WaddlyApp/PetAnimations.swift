@@ -45,12 +45,11 @@ extension AppDelegate {
             updatePet(for: phase)
         }
 
-        let nextBoundary: TimeInterval?
-        switch phase {
-        case .typing: nextBoundary = 2.5
-        case .idle: nextBoundary = 25
-        case .sleeping: nextBoundary = 325
-        case .frozen: nextBoundary = nil
+        let nextBoundary: TimeInterval? = switch phase {
+        case .typing: 2.5
+        case .idle: 25
+        case .sleeping: 325
+        case .frozen: nil
         }
         guard let nextBoundary else { return }
         phaseTimer = Timer.scheduledTimer(
@@ -180,13 +179,13 @@ extension AppDelegate {
         idleBlinkTimer?.invalidate()
         guard currentPhase == .idle, !isPaused, petImages[.idle].count > 1 else { return }
         idleBlinkTimer = Timer.scheduledTimer(
-            withTimeInterval: Double.random(in: 4...8),
+            withTimeInterval: Double.random(in: 4 ... 8),
             repeats: false
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.currentPhase == .idle, !self.isPaused else { return }
                 let blinkImages = self.petImages[.idle]
-                self.idleFrameIndex = Int.random(in: 1..<blinkImages.count)
+                self.idleFrameIndex = Int.random(in: 1 ..< blinkImages.count)
                 self.show(blinkImages[self.idleFrameIndex])
                 self.idleBlinkTimer = Timer.scheduledTimer(withTimeInterval: 0.16, repeats: false) { [weak self] _ in
                     MainActor.assumeIsolated {
@@ -211,5 +210,4 @@ extension AppDelegate {
             }
         }
     }
-
 }

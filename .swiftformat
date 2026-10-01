@@ -1,0 +1,10 @@
+# Keep SwiftFormat behavior and Swift syntax aligned with the project toolchain.
+--swiftversion 6.0
+
+# Match the existing four-space indentation and LF line endings.
+--indent 4
+--linebreaks lf
+--commas inline
+
+# Avoid changing function argument labels as part of formatting.
+--disable unusedArguments

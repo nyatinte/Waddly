@@ -6,9 +6,34 @@ Thanks for your interest in contributing. This guide covers local development an
 
 - macOS 13 or later
 - Xcode Command Line Tools with Swift 6
+- Mint (`brew install mint`) for the pinned SwiftFormat development tool
 - SwiftLint (`brew install swiftlint`)
 
-The Homebrew installation method for Waddly itself is planned; Homebrew is currently used here only to install the SwiftLint development tool.
+The Homebrew installation method for Waddly itself is planned; Homebrew is currently used here only to install development tools.
+
+After installing Mint and SwiftLint, install the pinned formatter with:
+
+```sh
+mint bootstrap
+```
+
+SwiftFormat is a development-only tool and is not included in the Waddly app.
+
+## Format and lint
+
+Format Swift source files with the version pinned in `Mintfile`:
+
+```sh
+mint run swiftformat Sources Package.swift
+```
+
+Check formatting without changing files:
+
+```sh
+mint run swiftformat Sources Package.swift --lint
+```
+
+SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
 
 ## Build and run
 
@@ -17,7 +42,7 @@ The Homebrew installation method for Waddly itself is planned; Homebrew is curre
 open build/Waddly.app
 ```
 
-The build script runs strict SwiftLint checks, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
+The build script checks formatting with SwiftFormat, runs SwiftLint in strict mode, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
 
 ## Tests
 

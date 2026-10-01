@@ -5,8 +5,13 @@ import WaddlyCore
 
 @MainActor
 final class PetWindow: NSPanel {
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeKey: Bool {
+        false
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
 }
 
 @MainActor
@@ -42,8 +47,9 @@ final class DraggableImageView: NSImageView {
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
         ) as? [URL],
-           let url = urls.first,
-           url.pathExtension.lowercased() == "png" else {
+            let url = urls.first,
+            url.pathExtension.lowercased() == "png"
+        else {
             return nil
         }
         return url
@@ -55,8 +61,13 @@ final class KeyboardMonitor: @unchecked Sendable {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
-    var permissionGranted: Bool { CGPreflightListenEventAccess() }
-    var isRunning: Bool { tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false }
+    var permissionGranted: Bool {
+        CGPreflightListenEventAccess()
+    }
+
+    var isRunning: Bool {
+        tap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
+    }
 
     func requestPermission() -> Bool {
         if !permissionGranted {
@@ -73,9 +84,13 @@ final class KeyboardMonitor: @unchecked Sendable {
         guard requestPermission() else { return false }
 
         if let tap {
-            if CGEvent.tapIsEnabled(tap: tap) { return true }
+            if CGEvent.tapIsEnabled(tap: tap) {
+                return true
+            }
             CGEvent.tapEnable(tap: tap, enable: true)
-            if CGEvent.tapIsEnabled(tap: tap) { return true }
+            if CGEvent.tapIsEnabled(tap: tap) {
+                return true
+            }
             stop()
         }
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
@@ -140,8 +155,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let defaults = UserDefaults.standard
     let monitor = KeyboardMonitor()
     var importedImages: PetImageSet?
-    var petImages: PetImageSet { importedImages ?? PetImageSet() }
-    var hasCompletePetImageSet: Bool { petImages.isComplete }
+    var petImages: PetImageSet {
+        importedImages ?? PetImageSet()
+    }
+
+    var hasCompletePetImageSet: Bool {
+        petImages.isComplete
+    }
+
     var storedImageFiles: [String: [String]] = [:]
     lazy var panel = PetWindow(
         contentRect: NSRect(x: 0, y: 0, width: displaySize, height: displaySize),
@@ -175,21 +196,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var typingMotion: TypingMotion {
         TypingMotion(rawValue: defaults.integer(forKey: "typingMotion")) ?? .weak
     }
-    var isBreathingEnabled: Bool { defaults.bool(forKey: "breathingEnabled") }
+
+    var isBreathingEnabled: Bool {
+        defaults.bool(forKey: "breathingEnabled")
+    }
+
     var displaySize: CGFloat {
         let value = defaults.double(forKey: "displaySize")
         return value == 0 ? 240 : CGFloat(value)
     }
+
     var customPetImageURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Waddly", isDirectory: true)
             .appendingPathComponent("custom-pet.png")
     }
+
     var petImagesDirectoryURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Waddly", isDirectory: true)
             .appendingPathComponent("PetImages", isDirectory: true)
     }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         defaults.register(defaults: [
             "typingMotion": TypingMotion.weak.rawValue,
