@@ -108,7 +108,7 @@ let generated = """
 enum LocalizationKey: String, CaseIterable {
 \(accessors)
 }
-"""
+""" + "\n"
 
 if arguments == ["--check"] {
     guard let current = try? String(contentsOf: outputURL, encoding: .utf8), current == generated else {
