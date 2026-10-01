@@ -55,51 +55,21 @@ extension AppDelegate {
         }
 
         importedImages = newImages
-        lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
-        currentPhase = nil
-        imageSetDidChange()
-        schedulePhaseChange()
+        imageSetDidChange(resetActivity: true)
         return true
     }
 
-    func imageSetDidChange() {
-        stopEnterReaction()
-        idleBlinkTimer?.invalidate()
-        idleBlinkTimer = nil
-        sleepAnimationTimer?.invalidate()
-        sleepAnimationTimer = nil
+    func imageSetDidChange(resetActivity: Bool = false) {
         for category in PetImageCategory.allCases {
             imageRows[category]?.setImages(petImages[category])
         }
         guard hasCompletePetImageSet else {
             panel.orderOut(nil)
+            animationController.imageSetDidChange(resetActivity: resetActivity)
             return
         }
         panel.orderFrontRegardless()
-        if currentPhase == nil {
-            currentPhase = .idle
-            show(petImages[.idle][0])
-            breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
-            scheduleIdleBlink()
-            return
-        }
-        switch currentPhase {
-        case .typing:
-            typingFrameIndex = 1
-            show(petImages[.typing][0])
-        case .idle:
-            show(petImages[.idle][0])
-            scheduleIdleBlink()
-        case .sleeping:
-            sleepFrameIndex = 0
-            show(petImages[.sleep][0])
-            scheduleSleepAnimation()
-        case .frozen:
-            if let lastSleepImage = petImages[.sleep].last {
-                show(lastSleepImage)
-            }
-        case nil: break
-        }
+        animationController.imageSetDidChange(resetActivity: resetActivity)
     }
 
     private func showPetImageImportError() {
