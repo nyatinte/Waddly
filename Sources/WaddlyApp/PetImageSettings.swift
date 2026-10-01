@@ -16,7 +16,7 @@ extension AppDelegate {
             return
         }
 
-        let manifest = defaults.dictionary(forKey: "petImageFiles") as? [String: [String]] ?? [:]
+        let manifest = settings.petImageFiles
         for category in PetImageCategory.allCases {
             let names = manifest[category.rawValue] ?? []
             var validNames: [String] = []

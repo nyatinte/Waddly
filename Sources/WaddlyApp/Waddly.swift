@@ -137,7 +137,7 @@ final class KeyboardMonitor: @unchecked Sendable {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    let defaults = UserDefaults.standard
+    let settings = AppSettings.standard
     let monitor = KeyboardMonitor()
     var importedImages: PetImageSet?
     var petImages: PetImageSet { importedImages ?? PetImageSet() }
@@ -173,13 +173,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var isPaused = false
     var currentPhase: PetPhase?
     var typingMotion: TypingMotion {
-        TypingMotion(rawValue: defaults.integer(forKey: "typingMotion")) ?? .weak
+        settings.typingMotion
     }
-    var isBreathingEnabled: Bool { defaults.bool(forKey: "breathingEnabled") }
-    var displaySize: CGFloat {
-        let value = defaults.double(forKey: "displaySize")
-        return value == 0 ? 240 : CGFloat(value)
-    }
+    var isBreathingEnabled: Bool { settings.breathingEnabled }
+    var displaySize: CGFloat { settings.displaySize }
     var customPetImageURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Waddly", isDirectory: true)
@@ -191,15 +188,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .appendingPathComponent("PetImages", isDirectory: true)
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
-        defaults.register(defaults: [
-            "typingMotion": TypingMotion.weak.rawValue,
-            "breathingEnabled": true,
-            "showInDock": true,
-            "showInMenuBar": true
-        ])
-        if !defaults.bool(forKey: "showInDock"), !defaults.bool(forKey: "showInMenuBar") {
-            defaults.set(true, forKey: "showInDock")
-        }
+        settings.registerDefaults()
+        settings.ensurePresenceIsVisible()
         loadSavedPetImage()
         buildPanel()
         buildMenu()
@@ -208,7 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString("pet.dropTooltip")
         monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
-        if hasCompletePetImageSet, defaults.bool(forKey: "setupWizardSeen") {
+        if hasCompletePetImageSet, settings.setupWizardSeen {
             startMonitoring()
             schedulePhaseChange()
         } else {

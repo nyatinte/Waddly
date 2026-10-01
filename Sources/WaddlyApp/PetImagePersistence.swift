@@ -30,7 +30,7 @@ extension AppDelegate {
             throw error
         }
 
-        defaults.set(newFiles, forKey: "petImageFiles")
+        settings.petImageFiles = newFiles
         storedImageFiles = newFiles
         for names in oldFiles.values {
             for name in names where !newFiles.values.contains(where: { $0.contains(name) }) {
@@ -120,7 +120,7 @@ extension AppDelegate {
 
         var updatedFiles = storedImageFiles
         updatedFiles[key] = names
-        defaults.set(updatedFiles, forKey: "petImageFiles")
+        settings.petImageFiles = updatedFiles
         storedImageFiles = updatedFiles
         for name in previousFiles where !names.contains(name) {
             try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
@@ -138,7 +138,7 @@ extension AppDelegate {
             var newNames = oldNames
             let removedName = newNames.remove(at: index)
             updatedFiles[key] = newNames
-            defaults.set(updatedFiles, forKey: "petImageFiles")
+            settings.petImageFiles = updatedFiles
             storedImageFiles = updatedFiles
             if let directory = petImagesDirectoryURL {
                 try? FileManager.default.removeItem(at: directory.appendingPathComponent(removedName))
@@ -166,7 +166,7 @@ extension AppDelegate {
             reorderedNames.insert(name, at: destination)
             var updatedFiles = storedImageFiles
             updatedFiles[key] = reorderedNames
-            defaults.set(updatedFiles, forKey: "petImageFiles")
+            settings.petImageFiles = updatedFiles
             storedImageFiles = updatedFiles
         } else {
             do {
@@ -209,7 +209,7 @@ extension AppDelegate {
         let oldFiles = storedImageFiles
         var updatedFiles = storedImageFiles
         updatedFiles[category.rawValue] = names
-        defaults.set(updatedFiles, forKey: "petImageFiles")
+        settings.petImageFiles = updatedFiles
         storedImageFiles = updatedFiles
         for oldNames in oldFiles.values {
             for name in oldNames where !updatedFiles.values.contains(where: { $0.contains(name) }) {
