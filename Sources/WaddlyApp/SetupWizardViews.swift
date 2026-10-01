@@ -1,20 +1,20 @@
 import AppKit
 
 extension SetupWizardController {
-    func makeTitle(_ key: String) -> NSTextField {
+    func makeTitle(_ key: LocalizationKey) -> NSTextField {
         let label = NSTextField(labelWithString: localizedString(key))
         label.font = .systemFont(ofSize: 25, weight: .bold)
         return label
     }
 
-    func makeDescription(_ key: String) -> NSTextField {
+    func makeDescription(_ key: LocalizationKey) -> NSTextField {
         let label = NSTextField(wrappingLabelWithString: localizedString(key))
         label.font = .systemFont(ofSize: 14)
         label.textColor = .secondaryLabelColor
         return label
     }
 
-    func makeInfoCard(symbol: String, titleKey: String, detailKey: String) -> NSView {
+    func makeInfoCard(symbol: String, titleKey: LocalizationKey, detailKey: LocalizationKey) -> NSView {
         let card = NSVisualEffectView()
         card.material = .contentBackground
         card.blendingMode = .withinWindow
@@ -63,9 +63,9 @@ extension SetupWizardController {
         let icon = DraggableAppIconView(frame: .zero)
         icon.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = NSTextField(labelWithString: localizedString("setup.dragAppTitle"))
+        let title = NSTextField(labelWithString: localizedString(.setupDragAppTitle))
         title.font = .systemFont(ofSize: 15, weight: .semibold)
-        let text = makeStack([title, makeDescription("setup.dragAppDescription")])
+        let text = makeStack([title, makeDescription(.setupDragAppDescription)])
         text.spacing = 5
         text.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
@@ -106,8 +106,8 @@ final class DraggableAppIconView: NSImageView, NSDraggingSource {
         super.init(frame: frameRect)
         image = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
         imageScaling = .scaleProportionallyUpOrDown
-        setAccessibilityLabel(localizedString("setup.dragAppIcon"))
-        toolTip = localizedString("setup.dragAppIcon")
+        setAccessibilityLabel(localizedString(.setupDragAppIcon))
+        toolTip = localizedString(.setupDragAppIcon)
     }
 
     required init?(coder: NSCoder) { nil }

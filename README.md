@@ -65,6 +65,16 @@ Apple Silicon 搭載 Mac、macOS 27.0、Release ビルドで測定しました�
 
 RSS には共有ライブラリなども含まれます。macOS のフットプリントはアプリが物理メモリに与える影響を見るための別指標です。どちらも、このプロジェクトの目標である 100 MB を下回る測定結果でした。
 
+## 翻訳キーの追加
+
+アプリの翻訳キーを追加・変更したら、`macos/ja.lproj/Localizable.strings` と `macos/en.lproj/Localizable.strings` の両方を更新し、リポジトリのルートで次を実行してください。
+
+```sh
+swift Tools/generate_localizations.swift
+```
+
+両言語のキーが揃っているか確認し、型安全なアクセサーを再生成します。`./macos/build.sh` は生成ファイルが最新かを検査します。
+
 ## ライセンス
 
 コードは[MIT License](LICENSE)で公開します。アプリアイコン、作例画像、デモ GIF は MIT License の対象ではありません。アイコンと GIF には作者のペンギン画像が含まれます。再利用する場合は作者に確認してください。

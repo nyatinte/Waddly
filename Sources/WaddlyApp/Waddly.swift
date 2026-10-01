@@ -206,7 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         updatePresenceOptions()
         petView.onFileDrop = { [weak self] in _ = self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
-        petView.toolTip = localizedString("pet.dropTooltip")
+        petView.toolTip = localizedString(.petDropTooltip)
         monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
         if hasCompletePetImageSet, defaults.bool(forKey: "setupWizardSeen") {
             startMonitoring()
