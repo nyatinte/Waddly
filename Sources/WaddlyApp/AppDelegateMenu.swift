@@ -151,7 +151,9 @@ extension AppDelegate {
             updateMenuStatus()
             return
         }
-        if !isPaused { _ = monitor.start() }
+        if !isPaused {
+            _ = monitor.start()
+        }
         updateMenuStatus()
     }
 
@@ -249,7 +251,9 @@ extension AppDelegate {
             }
         }
         startMonitoring()
-        if !isPaused, hasCompletePetImageSet { schedulePhaseChange() }
+        if !isPaused, hasCompletePetImageSet {
+            schedulePhaseChange()
+        }
     }
 
     @objc private func toggleLoginItem() {
@@ -266,4 +270,5 @@ extension AppDelegate {
             alert.runModal()
         }
         updateMenuStatus()
-    }}
+    }
+}

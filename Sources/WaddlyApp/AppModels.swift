@@ -36,7 +36,8 @@ enum AppLanguage: Int, CaseIterable {
 func localizedString(_ key: String) -> String {
     let localization = AppLanguage.active.localization
     guard let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
-          let bundle = Bundle(path: path) else {
+          let bundle = Bundle(path: path)
+    else {
         return NSLocalizedString(key, comment: "")
     }
     return NSLocalizedString(key, bundle: bundle, comment: "")
@@ -50,9 +51,15 @@ enum PetPhase: Equatable {
 
     static func after(_ seconds: TimeInterval) -> PetPhase {
         let elapsed = max(0, seconds)
-        if elapsed < 2.5 { return .typing }
-        if elapsed < 25 { return .idle }
-        if elapsed < 325 { return .sleeping }
+        if elapsed < 2.5 {
+            return .typing
+        }
+        if elapsed < 25 {
+            return .idle
+        }
+        if elapsed < 325 {
+            return .sleeping
+        }
         return .frozen
     }
 }
@@ -80,7 +87,9 @@ enum TypingMotion: Int, CaseIterable {
 }
 
 extension PetImageCategory {
-    var title: String { localizedString("images.category.\(rawValue)") }
+    var title: String {
+        localizedString("images.category.\(rawValue)")
+    }
 }
 
 func moving<Element>(_ elements: [Element], from source: Int, to destination: Int) -> [Element]? {

@@ -15,7 +15,8 @@ extension AppDelegate {
                 guard !images.isEmpty else { throw CocoaError(.validationMissingMandatoryProperty) }
                 for image in images {
                     guard let data = PetSpriteSheetImporter.pngData(for: image),
-                          data.count <= PetSpriteSheetImporter.maximumFileSize else {
+                          data.count <= PetSpriteSheetImporter.maximumFileSize
+                    else {
                         throw CocoaError(.fileWriteOutOfSpace)
                     }
                     let name = "\(UUID().uuidString).png"
@@ -50,7 +51,8 @@ extension AppDelegate {
                   let size = attributes[.size] as? NSNumber,
                   size.intValue <= PetSpriteSheetImporter.maximumFileSize,
                   let data = try? Data(contentsOf: url),
-                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data) else {
+                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data)
+            else {
                 skippedCount += 1
                 continue
             }
@@ -98,7 +100,8 @@ extension AppDelegate {
                 names = []
                 for existingImage in existingImages {
                     guard let imageData = PetSpriteSheetImporter.pngData(for: existingImage),
-                          imageData.count <= PetSpriteSheetImporter.maximumFileSize else {
+                          imageData.count <= PetSpriteSheetImporter.maximumFileSize
+                    else {
                         throw CocoaError(.fileWriteOutOfSpace)
                     }
                     let name = "\(UUID().uuidString).png"
@@ -192,7 +195,8 @@ extension AppDelegate {
         do {
             for image in images {
                 guard let data = PetSpriteSheetImporter.pngData(for: image),
-                      data.count <= PetSpriteSheetImporter.maximumFileSize else {
+                      data.count <= PetSpriteSheetImporter.maximumFileSize
+                else {
                     throw CocoaError(.fileWriteOutOfSpace)
                 }
                 let name = "\(UUID().uuidString).png"
@@ -217,5 +221,4 @@ extension AppDelegate {
             }
         }
     }
-
 }

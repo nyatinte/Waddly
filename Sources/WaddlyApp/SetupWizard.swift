@@ -30,7 +30,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
         onClose: @escaping @MainActor () -> Void
     ) {
-        self.prompt = Self.loadPrompt()
+        prompt = Self.loadPrompt()
         self.onImportImage = onImportImage
         self.hasCustomImage = hasCustomImage
         self.hasInputMonitoringPermission = hasInputMonitoringPermission
@@ -51,7 +51,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         buildWindow()
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     func refreshPermissionStatus() {
         let isGranted = hasInputMonitoringPermission()
@@ -130,11 +132,10 @@ extension SetupWizardController {
     }
 
     private func renderCurrentStep() {
-        let page: NSView
-        switch currentStep {
-        case 0: page = makePromptPage()
-        case 1: page = makeImagePage()
-        default: page = makePermissionPage()
+        let page: NSView = switch currentStep {
+        case 0: makePromptPage()
+        case 1: makeImagePage()
+        default: makePermissionPage()
         }
         page.translatesAutoresizingMaskIntoConstraints = false
         pageContainer.subviews.forEach { $0.removeFromSuperview() }
@@ -157,9 +158,10 @@ extension SetupWizardController {
         nextButton.title = localizedString(currentStep == 2 ? "setup.finish" : "setup.next")
         nextButton.isEnabled = currentStep != 1 || hasCustomImage()
         window?.defaultButtonCell = nextButton.cell as? NSButtonCell
-        if currentStep == 2 { refreshPermissionStatus() }
+        if currentStep == 2 {
+            refreshPermissionStatus()
+        }
     }
-
 }
 
 extension SetupWizardController {
@@ -272,7 +274,6 @@ extension SetupWizardController {
         page.spacing = 8
         return page
     }
-
 }
 
 extension SetupWizardController {
@@ -355,10 +356,11 @@ extension SetupWizardController {
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
               let markdown = try? String(contentsOf: url, encoding: .utf8),
               let start = markdown.range(of: "```text\n"),
-              let end = markdown[start.upperBound...].range(of: "```") else {
+              let end = markdown[start.upperBound...].range(of: "```")
+        else {
             return ""
         }
-        return String(markdown[start.upperBound..<end.lowerBound])
+        return String(markdown[start.upperBound ..< end.lowerBound])
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
@@ -372,8 +374,10 @@ extension AppDelegate {
                 hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
                 requestInputMonitoringPermission: { [weak self] in
                     guard let self else { return false }
-                    let granted = self.monitor.requestPermission()
-                    if granted && !self.isPaused { self.startMonitoring() }
+                    let granted = monitor.requestPermission()
+                    if granted, !isPaused {
+                        startMonitoring()
+                    }
                     return granted
                 },
                 onClose: { [weak self] in
@@ -383,8 +387,8 @@ extension AppDelegate {
                     } else {
                         self.settings.setupWizardSeen = true
                     }
-                    if self.hasCompletePetImageSet, self.monitor.permissionGranted, !self.isPaused {
-                        self.startMonitoring()
+                    if hasCompletePetImageSet, monitor.permissionGranted, !isPaused {
+                        startMonitoring()
                     }
                 }
             )
