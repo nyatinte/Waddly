@@ -171,6 +171,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         defer: false
     )
     lazy var petView = DraggableImageView(frame: panel.contentView?.bounds ?? .zero)
+    lazy var animationController = PetAnimationController(
+        petView: petView,
+        petImages: { [weak self] in self?.petImages ?? PetImageSet() },
+        hasCompletePetImageSet: { [weak self] in self?.hasCompletePetImageSet ?? false },
+        typingMotion: { [weak self] in self?.typingMotion ?? .weak },
+        isBreathingEnabled: { [weak self] in self?.isBreathingEnabled ?? false }
+    )
     lazy var statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     var statusMenu = NSMenu()
     var pauseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -181,18 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
-    var phaseTimer: Timer?
-    var idleBlinkTimer: Timer?
-    var sleepAnimationTimer: Timer?
-    var enterReactionTimer: Timer?
-    var enterReactionFrameIndex = 0
-    var lastInputTime = ProcessInfo.processInfo.systemUptime - 2.5
-    var lastTypingFrameTime: TimeInterval = 0
-    var typingFrameIndex = 0
-    var idleFrameIndex = 1
-    var sleepFrameIndex = 0
-    var isPaused = false
-    var currentPhase: PetPhase?
+    var isPaused: Bool { animationController.isPaused }
     var typingMotion: TypingMotion {
         settings.typingMotion
     }
@@ -227,10 +223,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         petView.onFileDrop = { [weak self] in _ = self?.importPetImage(from: $0) }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString(.petDropTooltip)
-        monitor.onKeyDown = { [weak self] isEnter in self?.receivedKeyDown(isEnter: isEnter) }
+        monitor.onKeyDown = { [weak self] isEnter in self?.animationController.handleKeyDown(isEnter: isEnter) }
         if hasCompletePetImageSet, settings.setupWizardSeen {
             startMonitoring()
-            schedulePhaseChange()
+            animationController.start()
         } else {
             showSetupWizard()
         }
@@ -243,10 +239,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        phaseTimer?.invalidate()
-        idleBlinkTimer?.invalidate()
-        sleepAnimationTimer?.invalidate()
-        stopEnterReaction()
+        animationController.shutdown()
         monitor.stop()
     }
 

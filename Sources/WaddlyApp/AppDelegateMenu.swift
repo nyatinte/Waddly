@@ -201,23 +201,14 @@ extension AppDelegate {
         guard let motion = TypingMotion(rawValue: sender.tag) else { return }
         settings.typingMotion = motion
         sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
-        if motion == .off {
-            petView.layer?.removeAnimation(forKey: "type-bounce")
-        }
+        animationController.typingMotionDidChange(motion)
     }
 
     @objc private func toggleBreathing() {
         let enabled = !isBreathingEnabled
         settings.breathingEnabled = enabled
         breathingItem.state = enabled ? .on : .off
-        petView.layer?.removeAnimation(forKey: "idle-breathe")
-        petView.layer?.removeAnimation(forKey: "sleep-breathe")
-        guard enabled, !isPaused else { return }
-        switch currentPhase {
-        case .idle: breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
-        case .sleeping: breathe()
-        case .typing, .frozen, nil: break
-        }
+        animationController.breathingPreferenceDidChange()
     }
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
@@ -236,27 +227,10 @@ extension AppDelegate {
     }
 
     @objc private func togglePause() {
-        isPaused.toggle()
-        phaseTimer?.invalidate()
-        if isPaused {
-            monitor.stop()
-            idleBlinkTimer?.invalidate()
-            idleBlinkTimer = nil
-            sleepAnimationTimer?.invalidate()
-            sleepAnimationTimer = nil
-            stopEnterReaction()
-            petView.layer?.removeAllAnimations()
-        } else {
-            lastInputTime = ProcessInfo.processInfo.systemUptime
-            currentPhase = nil
-            if hasCompletePetImageSet {
-                show(petImages[.typing][0])
-            }
-        }
+        let shouldPause = !animationController.isPaused
+        animationController.setPaused(shouldPause)
+        if shouldPause { monitor.stop() }
         startMonitoring()
-        if !isPaused, hasCompletePetImageSet {
-            schedulePhaseChange()
-        }
     }
 
     @objc private func toggleLoginItem() {
