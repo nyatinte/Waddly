@@ -2,6 +2,105 @@ import AppKit
 import ServiceManagement
 import WaddlyCore
 
+private enum MenuBarIconRenderer {
+    static func makeImage() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            NSColor.black.setFill()
+            bodyPath().fill()
+            faceDetailsPath().fill()
+            beaniePath().fill()
+            cuffPath().fill()
+            pompomPath().fill()
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
+    private static func bodyPath() -> NSBezierPath {
+        let penguin = NSBezierPath()
+        penguin.windingRule = .evenOdd
+        penguin.move(to: NSPoint(x: 9, y: 1))
+        penguin.curve(
+            to: NSPoint(x: 15.3, y: 7.8),
+            controlPoint1: NSPoint(x: 12.8, y: 1),
+            controlPoint2: NSPoint(x: 15.3, y: 4.1)
+        )
+        penguin.curve(
+            to: NSPoint(x: 12.5, y: 12.2),
+            controlPoint1: NSPoint(x: 15.3, y: 10),
+            controlPoint2: NSPoint(x: 14.2, y: 11.6)
+        )
+        penguin.line(to: NSPoint(x: 11.9, y: 9.6))
+        penguin.curve(
+            to: NSPoint(x: 6.1, y: 9.6),
+            controlPoint1: NSPoint(x: 10.3, y: 11.2),
+            controlPoint2: NSPoint(x: 7.7, y: 11.2)
+        )
+        penguin.line(to: NSPoint(x: 5.5, y: 12.2))
+        penguin.curve(
+            to: NSPoint(x: 2.7, y: 7.8),
+            controlPoint1: NSPoint(x: 3.8, y: 11.6),
+            controlPoint2: NSPoint(x: 2.7, y: 10)
+        )
+        penguin.curve(
+            to: NSPoint(x: 9, y: 1),
+            controlPoint1: NSPoint(x: 2.7, y: 4.1),
+            controlPoint2: NSPoint(x: 5.2, y: 1)
+        )
+        penguin.close()
+        penguin.appendOval(in: NSRect(x: 5.2, y: 3.2, width: 7.6, height: 7.2))
+        return penguin
+    }
+
+    private static func faceDetailsPath() -> NSBezierPath {
+        let faceDetails = NSBezierPath()
+        faceDetails.appendOval(in: NSRect(x: 6.8, y: 8.2, width: 0.9, height: 0.9))
+        faceDetails.appendOval(in: NSRect(x: 10.3, y: 8.2, width: 0.9, height: 0.9))
+        faceDetails.move(to: NSPoint(x: 8.2, y: 7.5))
+        faceDetails.line(to: NSPoint(x: 9.8, y: 7.5))
+        faceDetails.line(to: NSPoint(x: 9, y: 6.5))
+        faceDetails.close()
+        return faceDetails
+    }
+
+    private static func beaniePath() -> NSBezierPath {
+        let hat = NSBezierPath()
+        hat.move(to: NSPoint(x: 4.7, y: 11.2))
+        hat.line(to: NSPoint(x: 4.7, y: 12.2))
+        hat.curve(
+            to: NSPoint(x: 6.1, y: 15),
+            controlPoint1: NSPoint(x: 4.7, y: 13.7),
+            controlPoint2: NSPoint(x: 5.1, y: 14.7)
+        )
+        hat.curve(
+            to: NSPoint(x: 11.9, y: 15),
+            controlPoint1: NSPoint(x: 7.2, y: 15.5),
+            controlPoint2: NSPoint(x: 10.8, y: 15.5)
+        )
+        hat.curve(
+            to: NSPoint(x: 13.3, y: 12.2),
+            controlPoint1: NSPoint(x: 12.9, y: 14.7),
+            controlPoint2: NSPoint(x: 13.3, y: 13.7)
+        )
+        hat.line(to: NSPoint(x: 13.3, y: 11.2))
+        hat.close()
+        return hat
+    }
+
+    private static func cuffPath() -> NSBezierPath {
+        NSBezierPath(
+            roundedRect: NSRect(x: 3.7, y: 10.6, width: 10.6, height: 1.9),
+            xRadius: 0.8,
+            yRadius: 0.8
+        )
+    }
+
+    private static func pompomPath() -> NSBezierPath {
+        NSBezierPath(ovalIn: NSRect(x: 7.8, y: 15.2, width: 2.4, height: 2.4))
+    }
+}
+
 extension AppDelegate {
     private func makeSizeMenuItem() -> NSMenuItem {
         let menuItem = NSMenuItem(title: localizedString(.menuDisplaySize), action: nil, keyEquivalent: "")
@@ -128,88 +227,8 @@ extension AppDelegate {
     }
 
     private func makeStatusIcon() -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
-            let penguin = NSBezierPath()
-            penguin.windingRule = .evenOdd
-            penguin.move(to: NSPoint(x: 9, y: 1))
-            penguin.curve(
-                to: NSPoint(x: 15.3, y: 7.8),
-                controlPoint1: NSPoint(x: 12.8, y: 1),
-                controlPoint2: NSPoint(x: 15.3, y: 4.1)
-            )
-            penguin.curve(
-                to: NSPoint(x: 12.5, y: 12.2),
-                controlPoint1: NSPoint(x: 15.3, y: 10),
-                controlPoint2: NSPoint(x: 14.2, y: 11.6)
-            )
-            penguin.line(to: NSPoint(x: 11.9, y: 9.6))
-            penguin.curve(
-                to: NSPoint(x: 6.1, y: 9.6),
-                controlPoint1: NSPoint(x: 10.3, y: 11.2),
-                controlPoint2: NSPoint(x: 7.7, y: 11.2)
-            )
-            penguin.line(to: NSPoint(x: 5.5, y: 12.2))
-            penguin.curve(
-                to: NSPoint(x: 2.7, y: 7.8),
-                controlPoint1: NSPoint(x: 3.8, y: 11.6),
-                controlPoint2: NSPoint(x: 2.7, y: 10)
-            )
-            penguin.curve(
-                to: NSPoint(x: 9, y: 1),
-                controlPoint1: NSPoint(x: 2.7, y: 4.1),
-                controlPoint2: NSPoint(x: 5.2, y: 1)
-            )
-            penguin.close()
-            penguin.appendOval(in: NSRect(x: 5.2, y: 3.2, width: 7.6, height: 7.2))
-
-            NSColor.black.setFill()
-            penguin.fill()
-
-            let faceDetails = NSBezierPath()
-            faceDetails.appendOval(in: NSRect(x: 6.8, y: 8.2, width: 0.9, height: 0.9))
-            faceDetails.appendOval(in: NSRect(x: 10.3, y: 8.2, width: 0.9, height: 0.9))
-            faceDetails.move(to: NSPoint(x: 8.2, y: 7.5))
-            faceDetails.line(to: NSPoint(x: 9.8, y: 7.5))
-            faceDetails.line(to: NSPoint(x: 9, y: 6.5))
-            faceDetails.close()
-            faceDetails.fill()
-
-            let hat = NSBezierPath()
-            hat.move(to: NSPoint(x: 4.7, y: 11.2))
-            hat.line(to: NSPoint(x: 4.7, y: 12.2))
-            hat.curve(
-                to: NSPoint(x: 6.1, y: 15),
-                controlPoint1: NSPoint(x: 4.7, y: 13.7),
-                controlPoint2: NSPoint(x: 5.1, y: 14.7)
-            )
-            hat.curve(
-                to: NSPoint(x: 11.9, y: 15),
-                controlPoint1: NSPoint(x: 7.2, y: 15.5),
-                controlPoint2: NSPoint(x: 10.8, y: 15.5)
-            )
-            hat.curve(
-                to: NSPoint(x: 13.3, y: 12.2),
-                controlPoint1: NSPoint(x: 12.9, y: 14.7),
-                controlPoint2: NSPoint(x: 13.3, y: 13.7)
-            )
-            hat.line(to: NSPoint(x: 13.3, y: 11.2))
-            hat.close()
-            hat.fill()
-
-            let brim = NSBezierPath(
-                roundedRect: NSRect(x: 3.7, y: 10.6, width: 10.6, height: 1.9),
-                xRadius: 0.8,
-                yRadius: 0.8
-            )
-            brim.fill()
-
-            NSBezierPath(ovalIn: NSRect(x: 7.8, y: 15.2, width: 2.4, height: 2.4)).fill()
-            return true
-        }
-        image.isTemplate = true
-        return image
+        MenuBarIconRenderer.makeImage()
     }
-
     func startMonitoring() {
         pauseItem.title = localizedString(isPaused ? .menuResume : .menuPause)
         guard hasCompletePetImageSet else {
