@@ -6,10 +6,8 @@ enum AppLanguage: Int, CaseIterable {
     case japanese
     case english
 
-    static let defaultsKey = "appLanguage"
-
     static var selected: AppLanguage {
-        AppLanguage(rawValue: UserDefaults.standard.integer(forKey: defaultsKey)) ?? .system
+        AppSettings.standard.appLanguage
     }
 
     static let active = selected
