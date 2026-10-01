@@ -16,7 +16,7 @@ extension AppDelegate {
             return
         }
 
-        let manifest = defaults.dictionary(forKey: "petImageFiles") as? [String: [String]] ?? [:]
+        let manifest = settings.petImageFiles
         for category in PetImageCategory.allCases {
             let names = manifest[category.rawValue] ?? []
             var validNames: [String] = []
@@ -30,10 +30,14 @@ extension AppDelegate {
                 validNames.append(name)
                 return image
             }
-            if !savedImages.isEmpty { loadedImages[category] = savedImages }
+            if !savedImages.isEmpty {
+                loadedImages[category] = savedImages
+            }
             storedImageFiles[category.rawValue] = validNames
         }
-        if legacyImages != nil || !manifest.isEmpty { importedImages = loadedImages }
+        if legacyImages != nil || !manifest.isEmpty {
+            importedImages = loadedImages
+        }
     }
 
     func importPetImage(from url: URL) -> Bool {
@@ -41,7 +45,8 @@ extension AppDelegate {
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= PetSpriteSheetImporter.maximumFileSize,
               let data = try? Data(contentsOf: url),
-              let newImages = PetSpriteSheetImporter.frames(from: data) else {
+              let newImages = PetSpriteSheetImporter.frames(from: data)
+        else {
             showPetImageImportError()
             return false
         }
@@ -73,14 +78,14 @@ extension AppDelegate {
     }
 
     private func showPetImageImportError() {
-        showAlert("pet.importErrorTitle", "pet.importErrorMessage")
+        showAlert(.petImportErrorTitle, .petImportErrorMessage)
     }
 
     func showImageSaveError() {
-        showAlert("images.saveErrorTitle", "images.saveErrorMessage")
+        showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
     }
 
-    func showAlert(_ titleKey: String, _ messageKey: String) {
+    func showAlert(_ titleKey: LocalizationKey, _ messageKey: LocalizationKey) {
         let alert = NSAlert()
         alert.messageText = localizedString(titleKey)
         alert.informativeText = localizedString(messageKey)
@@ -90,8 +95,8 @@ extension AppDelegate {
 
     private func confirmPetImageImport(_ data: Data, cellSize: Int) -> Bool {
         let alert = NSAlert()
-        alert.messageText = localizedString("pet.previewTitle")
-        alert.informativeText = localizedString("pet.previewPrompt")
+        alert.messageText = localizedString(.petPreviewTitle)
+        alert.informativeText = localizedString(.petPreviewPrompt)
         alert.alertStyle = .informational
 
         let previewSize: CGFloat = 240
@@ -103,7 +108,7 @@ extension AppDelegate {
         imageView.wantsLayer = true
         imageView.layer?.borderColor = NSColor.separatorColor.cgColor
         imageView.layer?.borderWidth = 1
-        imageView.setAccessibilityLabel(localizedString("a11y.spritePreview"))
+        imageView.setAccessibilityLabel(localizedString(.a11ySpritePreview))
 
         let grid = SpriteSheetGridOverlay(frame: imageView.bounds)
         grid.autoresizingMask = [.width, .height]
@@ -112,18 +117,18 @@ extension AppDelegate {
 
         let imageSize = cellSize * 3
         let details = [
-            "\(localizedString("pet.previewImageSize")) \(imageSize) × \(imageSize) px",
-            "\(localizedString("pet.previewCellSize")) \(cellSize) × \(cellSize) px",
-            "\(localizedString("pet.previewDisplaySize")) \(Int(displaySize)) px",
-            localizedString("pet.previewPosition")
+            "\(localizedString(.petPreviewImageSize)) \(imageSize) × \(imageSize) px",
+            "\(localizedString(.petPreviewCellSize)) \(cellSize) × \(cellSize) px",
+            "\(localizedString(.petPreviewDisplaySize)) \(Int(displaySize)) px",
+            localizedString(.petPreviewPosition)
         ].joined(separator: "\n")
         let detailsLabel = NSTextField(wrappingLabelWithString: details)
         detailsLabel.frame = NSRect(x: 0, y: 0, width: previewSize, height: detailsHeight)
         accessory.addSubview(detailsLabel)
 
         alert.accessoryView = accessory
-        alert.addButton(withTitle: localizedString("pet.importConfirm"))
-        alert.addButton(withTitle: localizedString("common.cancel"))
+        alert.addButton(withTitle: localizedString(.petImportConfirm))
+        alert.addButton(withTitle: localizedString(.commonCancel))
         return alert.runModal() == .alertFirstButtonReturn
     }
 
@@ -135,7 +140,7 @@ extension AppDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = localizedString("images.windowTitle")
+            window.title = localizedString(.imagesWindowTitle)
             window.minSize = NSSize(width: 620, height: 670)
             window.isReleasedWhenClosed = false
 
@@ -147,7 +152,7 @@ extension AppDelegate {
             stack.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(stack)
 
-            let note = NSTextField(wrappingLabelWithString: localizedString("images.instructions"))
+            let note = NSTextField(wrappingLabelWithString: localizedString(.imagesInstructions))
             note.translatesAutoresizingMaskIntoConstraints = false
             stack.addArrangedSubview(note)
             note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -182,9 +187,8 @@ extension AppDelegate {
         picker.allowedContentTypes = [.png]
         picker.allowsMultipleSelection = true
         picker.canChooseDirectories = false
-        picker.prompt = localizedString("images.add")
+        picker.prompt = localizedString(.imagesAdd)
         guard picker.runModal() == .OK else { return }
         addImages(picker.urls, to: category)
     }
-
 }

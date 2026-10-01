@@ -65,6 +65,16 @@ Measured on Apple Silicon with macOS 27.0, using the Release build. About eight 
 
 RSS includes shared libraries and other resident pages. macOS footprint is a separate measure of the app's impact on physical memory. Both observed values were below this project's 100 MB target.
 
+## Adding localization keys
+
+When adding or changing an app localization key, update both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`, then run this from the repository root:
+
+```sh
+swift Tools/generate_localizations.swift
+```
+
+The generator checks that both languages have matching keys and regenerates the typed accessors. `./macos/build.sh` verifies that the generated file is current.
+
 ## License
 
 The code is released under the [MIT License](LICENSE). The app icon, example images, and demo GIF are not covered by that license. The icon and GIF include the author's penguin artwork; ask the author before reusing them.

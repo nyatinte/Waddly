@@ -12,7 +12,9 @@ fi
 
 (
   cd "$ROOT"
-  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources macos Package.swift
+  mint run swiftformat Sources Tests Package.swift Tools --lint
+  swift Tools/generate_localizations.swift --check
+  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources Tests macos Package.swift Tools
 )
 
 rm -rf "$APP"

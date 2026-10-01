@@ -25,4 +25,4 @@ Adapted for this repository from [sammcj/agentic-coding's Swift development skil
 
 ## Verification
 
-Run `./macos/build.sh`; it enforces `.swiftlint.yml` with `swiftlint lint --strict` before compiling. For focused checks, run the project's self-tests after building the app.
+Run `swift test` for the Swift Testing suites. Run `./macos/build.sh` after Swift changes; it enforces `.swiftlint.yml` with `swiftlint lint --strict` and builds the Release app.

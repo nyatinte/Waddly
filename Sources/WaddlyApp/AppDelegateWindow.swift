@@ -18,7 +18,7 @@ extension AppDelegate {
         petView.autoresizingMask = [.width, .height]
         panel.contentView = petView
 
-        if let saved = defaults.array(forKey: "panelOrigin") as? [Double], saved.count == 2 {
+        if let saved = settings.panelOrigin, saved.count == 2 {
             panel.setFrameOrigin(clampedOrigin(NSPoint(x: saved[0], y: saved[1])))
         } else {
             placeAtDefaultPosition()
@@ -41,7 +41,7 @@ extension AppDelegate {
 
     func saveOrigin() {
         let origin = panel.frame.origin
-        defaults.set([origin.x, origin.y], forKey: "panelOrigin")
+        settings.panelOrigin = [origin.x, origin.y]
     }
 
     private func placeAtDefaultPosition() {

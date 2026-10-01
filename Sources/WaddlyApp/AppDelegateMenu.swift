@@ -4,9 +4,10 @@ import WaddlyCore
 
 extension AppDelegate {
     private func makeSizeMenuItem() -> NSMenuItem {
-        let menuItem = NSMenuItem(title: localizedString("menu.displaySize"), action: nil, keyEquivalent: "")
+        let menuItem = NSMenuItem(title: localizedString(.menuDisplaySize), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
-        for (size, labelKey) in [(180, "size.small"), (240, "size.medium"), (320, "size.large")] {
+        let sizes: [(Int, LocalizationKey)] = [(180, .sizeSmall), (240, .sizeMedium), (320, .sizeLarge)]
+        for (size, labelKey) in sizes {
             let title = "\(localizedString(labelKey)) (\(size) px)"
             let item = NSMenuItem(title: title, action: #selector(setSize(_:)), keyEquivalent: "")
             item.target = self
@@ -19,14 +20,14 @@ extension AppDelegate {
     }
 
     func buildMenu() {
-        pauseItem.title = localizedString("menu.pause")
+        pauseItem.title = localizedString(.menuPause)
         pauseItem.action = #selector(togglePause)
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
 
         statusMenu.addItem(makeSizeMenuItem())
 
-        let motionItem = NSMenuItem(title: localizedString("menu.typingMotion"), action: nil, keyEquivalent: "")
+        let motionItem = NSMenuItem(title: localizedString(.menuTypingMotion), action: nil, keyEquivalent: "")
         let motionMenu = NSMenu()
         for motion in TypingMotion.allCases {
             let item = NSMenuItem(title: motion.title, action: #selector(setTypingMotion(_:)), keyEquivalent: "")
@@ -45,7 +46,7 @@ extension AppDelegate {
         addPresenceMenu()
 
         let imageSettingsItem = NSMenuItem(
-            title: localizedString("menu.imageSettings"),
+            title: localizedString(.menuImageSettings),
             action: #selector(showImageSettings),
             keyEquivalent: ""
         )
@@ -53,28 +54,28 @@ extension AppDelegate {
         statusMenu.addItem(imageSettingsItem)
 
         let setupItem = NSMenuItem(
-            title: localizedString("menu.setupWizard"),
+            title: localizedString(.menuSetupWizard),
             action: #selector(showSetupWizard),
             keyEquivalent: ""
         )
         setupItem.target = self
         statusMenu.addItem(setupItem)
 
-        loginItem.title = localizedString("menu.login")
+        loginItem.title = localizedString(.menuLogin)
         loginItem.action = #selector(toggleLoginItem)
         loginItem.target = self
         statusMenu.addItem(loginItem)
 
         statusMenu.addItem(.separator())
         let quitItem = NSMenuItem(
-            title: localizedString("menu.quit"),
+            title: localizedString(.menuQuit),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
         statusMenu.addItem(quitItem)
 
         statusItem.button?.image = makeStatusIcon()
-        statusItem.button?.setAccessibilityLabel(localizedString("a11y.menuBar"))
+        statusItem.button?.setAccessibilityLabel(localizedString(.a11yMenuBar))
         statusItem.button?.title = " Waddly"
         statusItem.menu = statusMenu
         petView.contextMenu = statusMenu
@@ -83,15 +84,15 @@ extension AppDelegate {
 
     private func addPresenceMenu() {
         let presenceItem = NSMenuItem(
-            title: localizedString("menu.presence"),
+            title: localizedString(.menuPresence),
             action: nil,
             keyEquivalent: ""
         )
         let presenceMenu = NSMenu()
-        dockVisibilityItem.title = localizedString("menu.showInDock")
+        dockVisibilityItem.title = localizedString(.menuShowInDock)
         dockVisibilityItem.action = #selector(toggleDockVisibility)
         dockVisibilityItem.target = self
-        menuBarVisibilityItem.title = localizedString("menu.showInMenuBar")
+        menuBarVisibilityItem.title = localizedString(.menuShowInMenuBar)
         menuBarVisibilityItem.action = #selector(toggleMenuBarVisibility)
         menuBarVisibilityItem.target = self
         presenceMenu.addItem(dockVisibilityItem)
@@ -101,7 +102,7 @@ extension AppDelegate {
     }
 
     private func addBreathingMenuItem() {
-        breathingItem.title = localizedString("menu.breathing")
+        breathingItem.title = localizedString(.menuBreathing)
         breathingItem.action = #selector(toggleBreathing)
         breathingItem.target = self
         breathingItem.state = isBreathingEnabled ? .on : .off
@@ -109,7 +110,7 @@ extension AppDelegate {
     }
 
     private func addLanguageMenu() {
-        let languageItem = NSMenuItem(title: localizedString("menu.language"), action: nil, keyEquivalent: "")
+        let languageItem = NSMenuItem(title: localizedString(.menuLanguage), action: nil, keyEquivalent: "")
         let languageMenu = NSMenu()
         for language in AppLanguage.allCases {
             let item = NSMenuItem(
@@ -146,18 +147,20 @@ extension AppDelegate {
     }
 
     func startMonitoring() {
-        pauseItem.title = localizedString(isPaused ? "menu.resume" : "menu.pause")
+        pauseItem.title = localizedString(isPaused ? .menuResume : .menuPause)
         guard hasCompletePetImageSet else {
             updateMenuStatus()
             return
         }
-        if !isPaused { _ = monitor.start() }
+        if !isPaused {
+            _ = monitor.start()
+        }
         updateMenuStatus()
     }
 
     func updatePresenceOptions() {
-        let showInDock = defaults.bool(forKey: "showInDock")
-        let showInMenuBar = defaults.bool(forKey: "showInMenuBar")
+        let showInDock = settings.showInDock
+        let showInMenuBar = settings.showInMenuBar
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
         statusItem.isVisible = showInMenuBar
         dockVisibilityItem.state = showInDock ? .on : .off
@@ -167,24 +170,26 @@ extension AppDelegate {
     }
 
     @objc private func toggleDockVisibility() {
-        defaults.set(!defaults.bool(forKey: "showInDock"), forKey: "showInDock")
+        settings.showInDock.toggle()
         updatePresenceOptions()
     }
 
     @objc private func toggleMenuBarVisibility() {
-        defaults.set(!defaults.bool(forKey: "showInMenuBar"), forKey: "showInMenuBar")
+        settings.showInMenuBar.toggle()
         updatePresenceOptions()
     }
 
     private func updateMenuStatus() {
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        let statusKey = isPaused ? "tooltip.paused" : (monitor.isRunning ? "tooltip.active" : "tooltip.permission")
+        let statusKey: LocalizationKey = isPaused
+            ? .tooltipPaused
+            : (monitor.isRunning ? .tooltipActive : .tooltipPermission)
         statusItem.button?.toolTip = localizedString(statusKey)
     }
 
     @objc private func setSize(_ sender: NSMenuItem) {
         let size = CGFloat(sender.tag)
-        defaults.set(Double(size), forKey: "displaySize")
+        settings.displaySize = size
         panel.setContentSize(NSSize(width: size, height: size))
         petView.frame = panel.contentView?.bounds ?? .zero
         panel.setFrameOrigin(clampedOrigin(panel.frame.origin))
@@ -194,28 +199,28 @@ extension AppDelegate {
 
     @objc private func setTypingMotion(_ sender: NSMenuItem) {
         guard let motion = TypingMotion(rawValue: sender.tag) else { return }
-        defaults.set(motion.rawValue, forKey: "typingMotion")
+        settings.typingMotion = motion
         sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
         animationController.typingMotionDidChange(motion)
     }
 
     @objc private func toggleBreathing() {
         let enabled = !isBreathingEnabled
-        defaults.set(enabled, forKey: "breathingEnabled")
+        settings.breathingEnabled = enabled
         breathingItem.state = enabled ? .on : .off
         animationController.breathingPreferenceDidChange()
     }
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
         guard let language = AppLanguage(rawValue: sender.tag), language != AppLanguage.selected else { return }
-        defaults.set(language.rawValue, forKey: AppLanguage.defaultsKey)
+        settings.appLanguage = language
         sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
 
         let alert = NSAlert()
-        alert.messageText = localizedString("language.restartTitle")
-        alert.informativeText = localizedString("language.restartMessage")
-        alert.addButton(withTitle: localizedString("language.restartNow"))
-        alert.addButton(withTitle: localizedString("language.restartLater"))
+        alert.messageText = localizedString(.languageRestartTitle)
+        alert.informativeText = localizedString(.languageRestartMessage)
+        alert.addButton(withTitle: localizedString(.languageRestartNow))
+        alert.addButton(withTitle: localizedString(.languageRestartLater))
         if alert.runModal() == .alertFirstButtonReturn {
             NSApp.terminate(nil)
         }
@@ -237,9 +242,10 @@ extension AppDelegate {
             }
         } catch {
             let alert = NSAlert()
-            alert.messageText = localizedString("menu.loginError")
+            alert.messageText = localizedString(.menuLoginError)
             alert.alertStyle = .warning
             alert.runModal()
         }
         updateMenuStatus()
-    }}
+    }
+}

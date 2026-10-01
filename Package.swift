@@ -13,6 +13,17 @@ let package = Package(
             name: "WaddlyApp",
             dependencies: ["WaddlyCore"],
             path: "Sources/WaddlyApp"
+        ),
+        .testTarget(
+            name: "WaddlyCoreTests",
+            dependencies: ["WaddlyCore"],
+            path: "Tests/WaddlyCoreTests",
+            resources: [.copy("Fixtures")]
+        ),
+        .testTarget(
+            name: "WaddlyAppTests",
+            dependencies: ["WaddlyApp"],
+            path: "Tests/WaddlyAppTests"
         )
     ]
 )
