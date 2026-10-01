@@ -8,7 +8,8 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--self-test-sp
           let images = PetSpriteSheetImporter.frames(from: data),
           images[.idle].count == 2, images[.typing].count == 4,
           images[.sleep].count == 2, images[.enter].count == 1,
-          PetSpriteSheetImporter.image(from: data) != nil else {
+          PetSpriteSheetImporter.image(from: data) != nil
+    else {
         fatalError("3×3 transparent PNG import failed")
     }
     let savedFile = FileManager.default.temporaryDirectory
@@ -48,8 +49,8 @@ if CommandLine.arguments.contains("--self-test") {
     precondition(moving(["only"], from: 1, to: 0) == nil)
     guard let context = CGContext(
         data: nil,
-        width: 2_048,
-        height: 2_048,
+        width: 2048,
+        height: 2048,
         bitsPerComponent: 8,
         bytesPerRow: 0,
         space: CGColorSpaceCreateDeviceRGB(),
@@ -74,10 +75,11 @@ if CommandLine.arguments.contains("--self-test") {
           let optimizedWidth = optimizedProperties[kCGImagePropertyPixelWidth] as? Int,
           let optimizedHeight = optimizedProperties[kCGImagePropertyPixelHeight] as? Int,
           optimized.wasDownsampled,
-          optimizedWidth == 1_024,
-          optimizedHeight == 1_024,
-          optimized.image.size.width == 1_024,
-          optimized.image.size.height == 1_024 else {
+          optimizedWidth == 1024,
+          optimizedHeight == 1024,
+          optimized.image.size.width == 1024,
+          optimized.image.size.height == 1024
+    else {
         fatalError("Image downsampling failed")
     }
     print("Pet phases, image import validation, and 1024px optimization passed")
@@ -91,7 +93,8 @@ private func runImageImportSelfTests() {
     precondition(PetSpriteSheetImporter.optimizedImage(from: invalidData) == nil)
 
     guard let sheet = makeTestPNG(width: 6, height: 6, alphaInfo: .premultipliedLast),
-          let images = PetSpriteSheetImporter.frames(from: sheet) else {
+          let images = PetSpriteSheetImporter.frames(from: sheet)
+    else {
         fatalError("Valid 3×3 PNG import failed")
     }
     precondition(images[.idle].count == 2)
@@ -103,7 +106,8 @@ private func runImageImportSelfTests() {
     precondition(PetSpriteSheetImporter.image(from: sheet) != nil)
 
     guard let rectangle = makeTestPNG(width: 6, height: 3, alphaInfo: .premultipliedLast),
-          let opaque = makeTestPNG(width: 6, height: 6, alphaInfo: .noneSkipLast) else {
+          let opaque = makeTestPNG(width: 6, height: 6, alphaInfo: .noneSkipLast)
+    else {
         fatalError("Image import test setup failed")
     }
     precondition(PetSpriteSheetImporter.frames(from: rectangle) == nil)
