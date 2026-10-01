@@ -152,13 +152,15 @@ extension AppDelegate {
             updateMenuStatus()
             return
         }
-        if !isPaused { _ = monitor.start() }
+        if !isPaused {
+            _ = monitor.start()
+        }
         updateMenuStatus()
     }
 
     func updatePresenceOptions() {
-        let showInDock = defaults.bool(forKey: "showInDock")
-        let showInMenuBar = defaults.bool(forKey: "showInMenuBar")
+        let showInDock = settings.showInDock
+        let showInMenuBar = settings.showInMenuBar
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
         statusItem.isVisible = showInMenuBar
         dockVisibilityItem.state = showInDock ? .on : .off
@@ -168,12 +170,12 @@ extension AppDelegate {
     }
 
     @objc private func toggleDockVisibility() {
-        defaults.set(!defaults.bool(forKey: "showInDock"), forKey: "showInDock")
+        settings.showInDock.toggle()
         updatePresenceOptions()
     }
 
     @objc private func toggleMenuBarVisibility() {
-        defaults.set(!defaults.bool(forKey: "showInMenuBar"), forKey: "showInMenuBar")
+        settings.showInMenuBar.toggle()
         updatePresenceOptions()
     }
 
@@ -187,7 +189,7 @@ extension AppDelegate {
 
     @objc private func setSize(_ sender: NSMenuItem) {
         let size = CGFloat(sender.tag)
-        defaults.set(Double(size), forKey: "displaySize")
+        settings.displaySize = size
         panel.setContentSize(NSSize(width: size, height: size))
         petView.frame = panel.contentView?.bounds ?? .zero
         panel.setFrameOrigin(clampedOrigin(panel.frame.origin))
@@ -197,7 +199,7 @@ extension AppDelegate {
 
     @objc private func setTypingMotion(_ sender: NSMenuItem) {
         guard let motion = TypingMotion(rawValue: sender.tag) else { return }
-        defaults.set(motion.rawValue, forKey: "typingMotion")
+        settings.typingMotion = motion
         sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
         if motion == .off {
             petView.layer?.removeAnimation(forKey: "type-bounce")
@@ -206,7 +208,7 @@ extension AppDelegate {
 
     @objc private func toggleBreathing() {
         let enabled = !isBreathingEnabled
-        defaults.set(enabled, forKey: "breathingEnabled")
+        settings.breathingEnabled = enabled
         breathingItem.state = enabled ? .on : .off
         petView.layer?.removeAnimation(forKey: "idle-breathe")
         petView.layer?.removeAnimation(forKey: "sleep-breathe")
@@ -220,7 +222,7 @@ extension AppDelegate {
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
         guard let language = AppLanguage(rawValue: sender.tag), language != AppLanguage.selected else { return }
-        defaults.set(language.rawValue, forKey: AppLanguage.defaultsKey)
+        settings.appLanguage = language
         sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
 
         let alert = NSAlert()
@@ -252,7 +254,9 @@ extension AppDelegate {
             }
         }
         startMonitoring()
-        if !isPaused, hasCompletePetImageSet { schedulePhaseChange() }
+        if !isPaused, hasCompletePetImageSet {
+            schedulePhaseChange()
+        }
     }
 
     @objc private func toggleLoginItem() {
@@ -269,4 +273,5 @@ extension AppDelegate {
             alert.runModal()
         }
         updateMenuStatus()
-    }}
+    }
+}

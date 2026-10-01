@@ -6,7 +6,7 @@ final class SpriteSheetGridOverlay: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let lines = NSBezierPath()
         lines.lineWidth = 1
-        for division in 1...2 {
+        for division in 1 ... 2 {
             let verticalPosition = bounds.width * CGFloat(division) / 3
             let horizontalPosition = bounds.height * CGFloat(division) / 3
             lines.move(to: NSPoint(x: verticalPosition, y: bounds.minY))
@@ -32,7 +32,9 @@ final class PetImageDropView: NSView {
         layer?.borderColor = NSColor.separatorColor.cgColor
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard let hit = super.hitTest(point) else { return nil }
@@ -114,7 +116,9 @@ private final class PetImageTileView: NSView {
         )
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     private func makeButton(title: String, symbol: String, action: Selector) -> NSButton {
         let button = NSButton(title: title, target: self, action: action)
@@ -155,10 +159,19 @@ private final class PetImageTileView: NSView {
         ])
     }
 
-    @objc private func removeImage() { onRemove?() }
-    @objc private func moveImageLeft() { onMove?(index - 1) }
-    @objc private func moveImageRight() { onMove?(index + 1) }
+    @objc private func removeImage() {
+        onRemove?()
+    }
+
+    @objc private func moveImageLeft() {
+        onMove?(index - 1)
+    }
+
+    @objc private func moveImageRight() {
+        onMove?(index + 1)
+    }
 }
+
 @MainActor
 final class PetImageCategoryRowView: NSView {
     let category: PetImageCategory
@@ -166,6 +179,7 @@ final class PetImageCategoryRowView: NSView {
     var onDrop: (([URL]) -> Void)? {
         didSet { dropView.onDrop = onDrop }
     }
+
     var onRemove: ((Int) -> Void)?
     var onMove: ((Int, Int) -> Void)?
 
@@ -231,7 +245,9 @@ final class PetImageCategoryRowView: NSView {
         setImages(images)
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     func setImages(_ images: [NSImage]) {
         for view in imageStack.arrangedSubviews where view is PetImageTileView {
@@ -246,5 +262,7 @@ final class PetImageCategoryRowView: NSView {
         }
     }
 
-    @objc private func addImages() { onAdd?() }
+    @objc private func addImages() {
+        onAdd?()
+    }
 }

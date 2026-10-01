@@ -110,7 +110,9 @@ final class DraggableAppIconView: NSImageView, NSDraggingSource {
         toolTip = localizedString(.setupDragAppIcon)
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     override func mouseDragged(with event: NSEvent) {
         let appURL = Bundle.main.bundleURL as NSURL

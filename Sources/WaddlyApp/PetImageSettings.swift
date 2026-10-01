@@ -16,7 +16,7 @@ extension AppDelegate {
             return
         }
 
-        let manifest = defaults.dictionary(forKey: "petImageFiles") as? [String: [String]] ?? [:]
+        let manifest = settings.petImageFiles
         for category in PetImageCategory.allCases {
             let names = manifest[category.rawValue] ?? []
             var validNames: [String] = []
@@ -30,10 +30,14 @@ extension AppDelegate {
                 validNames.append(name)
                 return image
             }
-            if !savedImages.isEmpty { loadedImages[category] = savedImages }
+            if !savedImages.isEmpty {
+                loadedImages[category] = savedImages
+            }
             storedImageFiles[category.rawValue] = validNames
         }
-        if legacyImages != nil || !manifest.isEmpty { importedImages = loadedImages }
+        if legacyImages != nil || !manifest.isEmpty {
+            importedImages = loadedImages
+        }
     }
 
     func importPetImage(from url: URL) -> Bool {
@@ -41,7 +45,8 @@ extension AppDelegate {
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= PetSpriteSheetImporter.maximumFileSize,
               let data = try? Data(contentsOf: url),
-              let newImages = PetSpriteSheetImporter.frames(from: data) else {
+              let newImages = PetSpriteSheetImporter.frames(from: data)
+        else {
             showPetImageImportError()
             return false
         }
@@ -216,5 +221,4 @@ extension AppDelegate {
         guard picker.runModal() == .OK else { return }
         addImages(picker.urls, to: category)
     }
-
 }

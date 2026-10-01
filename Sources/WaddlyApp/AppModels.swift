@@ -6,10 +6,8 @@ enum AppLanguage: Int, CaseIterable {
     case japanese
     case english
 
-    static let defaultsKey = "appLanguage"
-
     static var selected: AppLanguage {
-        AppLanguage(rawValue: UserDefaults.standard.integer(forKey: defaultsKey)) ?? .system
+        AppSettings.standard.appLanguage
     }
 
     static let active = selected
@@ -39,7 +37,8 @@ func localizedString(_ key: LocalizationKey) -> String {
     let key = key.rawValue
     let localization = AppLanguage.active.localization
     guard let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
-          let bundle = Bundle(path: path) else {
+          let bundle = Bundle(path: path)
+    else {
         return NSLocalizedString(key, comment: "")
     }
     return NSLocalizedString(key, bundle: bundle, comment: "")
@@ -53,9 +52,15 @@ enum PetPhase: Equatable {
 
     static func after(_ seconds: TimeInterval) -> PetPhase {
         let elapsed = max(0, seconds)
-        if elapsed < 2.5 { return .typing }
-        if elapsed < 25 { return .idle }
-        if elapsed < 325 { return .sleeping }
+        if elapsed < 2.5 {
+            return .typing
+        }
+        if elapsed < 25 {
+            return .idle
+        }
+        if elapsed < 325 {
+            return .sleeping
+        }
         return .frozen
     }
 }

@@ -6,9 +6,34 @@ Thanks for your interest in contributing. This guide covers local development an
 
 - macOS 13 or later
 - Xcode Command Line Tools with Swift 6
+- Mint (`brew install mint`) for the pinned SwiftFormat development tool
 - SwiftLint (`brew install swiftlint`)
 
-The Homebrew installation method for Waddly itself is planned; Homebrew is currently used here only to install the SwiftLint development tool.
+The Homebrew installation method for Waddly itself is planned; Homebrew is currently used here only to install development tools.
+
+After installing Mint and SwiftLint, install the pinned formatter with:
+
+```sh
+mint bootstrap
+```
+
+SwiftFormat is a development-only tool and is not included in the Waddly app.
+
+## Format and lint
+
+Format Swift source files with the version pinned in `Mintfile`:
+
+```sh
+mint run swiftformat Sources Tests Package.swift
+```
+
+Check formatting without changing files:
+
+```sh
+mint run swiftformat Sources Tests Package.swift --lint
+```
+
+SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
 
 ## Build and run
 
@@ -17,18 +42,17 @@ The Homebrew installation method for Waddly itself is planned; Homebrew is curre
 open build/Waddly.app
 ```
 
-The build script runs strict SwiftLint checks, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
+The build script checks formatting with SwiftFormat, runs SwiftLint in strict mode, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
 
 ## Tests
 
-Run the app's self-tests after building:
+Run the test suite:
 
 ```sh
-build/Waddly.app/Contents/MacOS/Waddly --self-test
-build/Waddly.app/Contents/MacOS/Waddly --self-test-sprite-sheet assets/examples/nyatinte-bot-3x3.png
+swift test
 ```
 
-The tests cover animation phases, image validation and optimization, and importing and saving the example 3×3 sprite sheet.
+The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
 
 ## Localization keys
 
@@ -52,6 +76,7 @@ The script writes an architecture-specific DMG to `dist/`. The default build is 
 
 - `Sources/WaddlyCore`: image models, import, and processing
 - `Sources/WaddlyApp`: app lifecycle, input monitoring, and UI
+- `Tests`: Swift Testing suites for core image and app behavior
 - `macos`: localized strings, app metadata, and build/package scripts
 - `assets`: the app icon and README examples; pet frames are not bundled
 

@@ -15,7 +15,8 @@ extension AppDelegate {
                 guard !images.isEmpty else { throw CocoaError(.validationMissingMandatoryProperty) }
                 for image in images {
                     guard let data = PetSpriteSheetImporter.pngData(for: image),
-                          data.count <= PetSpriteSheetImporter.maximumFileSize else {
+                          data.count <= PetSpriteSheetImporter.maximumFileSize
+                    else {
                         throw CocoaError(.fileWriteOutOfSpace)
                     }
                     let name = "\(UUID().uuidString).png"
@@ -30,7 +31,7 @@ extension AppDelegate {
             throw error
         }
 
-        defaults.set(newFiles, forKey: "petImageFiles")
+        settings.petImageFiles = newFiles
         storedImageFiles = newFiles
         for names in oldFiles.values {
             for name in names where !newFiles.values.contains(where: { $0.contains(name) }) {
@@ -50,7 +51,8 @@ extension AppDelegate {
                   let size = attributes[.size] as? NSNumber,
                   size.intValue <= PetSpriteSheetImporter.maximumFileSize,
                   let data = try? Data(contentsOf: url),
-                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data) else {
+                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data)
+            else {
                 skippedCount += 1
                 continue
             }
@@ -98,7 +100,8 @@ extension AppDelegate {
                 names = []
                 for existingImage in existingImages {
                     guard let imageData = PetSpriteSheetImporter.pngData(for: existingImage),
-                          imageData.count <= PetSpriteSheetImporter.maximumFileSize else {
+                          imageData.count <= PetSpriteSheetImporter.maximumFileSize
+                    else {
                         throw CocoaError(.fileWriteOutOfSpace)
                     }
                     let name = "\(UUID().uuidString).png"
@@ -120,7 +123,7 @@ extension AppDelegate {
 
         var updatedFiles = storedImageFiles
         updatedFiles[key] = names
-        defaults.set(updatedFiles, forKey: "petImageFiles")
+        settings.petImageFiles = updatedFiles
         storedImageFiles = updatedFiles
         for name in previousFiles where !names.contains(name) {
             try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
@@ -138,7 +141,7 @@ extension AppDelegate {
             var newNames = oldNames
             let removedName = newNames.remove(at: index)
             updatedFiles[key] = newNames
-            defaults.set(updatedFiles, forKey: "petImageFiles")
+            settings.petImageFiles = updatedFiles
             storedImageFiles = updatedFiles
             if let directory = petImagesDirectoryURL {
                 try? FileManager.default.removeItem(at: directory.appendingPathComponent(removedName))
@@ -166,7 +169,7 @@ extension AppDelegate {
             reorderedNames.insert(name, at: destination)
             var updatedFiles = storedImageFiles
             updatedFiles[key] = reorderedNames
-            defaults.set(updatedFiles, forKey: "petImageFiles")
+            settings.petImageFiles = updatedFiles
             storedImageFiles = updatedFiles
         } else {
             do {
@@ -192,7 +195,8 @@ extension AppDelegate {
         do {
             for image in images {
                 guard let data = PetSpriteSheetImporter.pngData(for: image),
-                      data.count <= PetSpriteSheetImporter.maximumFileSize else {
+                      data.count <= PetSpriteSheetImporter.maximumFileSize
+                else {
                     throw CocoaError(.fileWriteOutOfSpace)
                 }
                 let name = "\(UUID().uuidString).png"
@@ -209,7 +213,7 @@ extension AppDelegate {
         let oldFiles = storedImageFiles
         var updatedFiles = storedImageFiles
         updatedFiles[category.rawValue] = names
-        defaults.set(updatedFiles, forKey: "petImageFiles")
+        settings.petImageFiles = updatedFiles
         storedImageFiles = updatedFiles
         for oldNames in oldFiles.values {
             for name in oldNames where !updatedFiles.values.contains(where: { $0.contains(name) }) {
@@ -217,5 +221,4 @@ extension AppDelegate {
             }
         }
     }
-
 }
