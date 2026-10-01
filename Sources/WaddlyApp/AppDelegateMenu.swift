@@ -229,6 +229,7 @@ extension AppDelegate {
     private func makeStatusIcon() -> NSImage {
         MenuBarIconRenderer.makeImage()
     }
+
     func startMonitoring() {
         pauseItem.title = localizedString(isPaused ? .menuResume : .menuPause)
         guard hasCompletePetImageSet else {
