@@ -12,7 +12,7 @@ fi
 
 (
   cd "$ROOT"
-  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources macos Package.swift
+  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources Tests macos Package.swift
 )
 
 rm -rf "$APP"

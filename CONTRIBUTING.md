@@ -21,14 +21,13 @@ The build script runs strict SwiftLint checks, builds the Release app for the ho
 
 ## Tests
 
-Run the app's self-tests after building:
+Run the test suite:
 
 ```sh
-build/Waddly.app/Contents/MacOS/Waddly --self-test
-build/Waddly.app/Contents/MacOS/Waddly --self-test-sprite-sheet assets/examples/nyatinte-bot-3x3.png
+swift test
 ```
 
-The tests cover animation phases, image validation and optimization, and importing and saving the example 3×3 sprite sheet.
+The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
 
 ## Create a DMG
 
@@ -42,6 +41,7 @@ The script writes an architecture-specific DMG to `dist/`. The default build is 
 
 - `Sources/WaddlyCore`: image models, import, and processing
 - `Sources/WaddlyApp`: app lifecycle, input monitoring, and UI
+- `Tests`: Swift Testing suites for core image and app behavior
 - `macos`: localized strings, app metadata, and build/package scripts
 - `assets`: the app icon and README examples; pet frames are not bundled
 
