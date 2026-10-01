@@ -209,6 +209,7 @@ extension AppDelegate {
         image.isTemplate = true
         return image
     }
+
     func startMonitoring() {
         pauseItem.title = localizedString(isPaused ? .menuResume : .menuPause)
         guard hasCompletePetImageSet else {
