@@ -35,11 +35,12 @@ import WaddlyCore
     #expect(PetSpriteSheetImporter.optimizedImage(from: opaque) == nil)
 }
 
-@Test func rejectsPngDataLargerThanTheFileLimit() {
-    let oversizedData = Data(repeating: 0, count: PetSpriteSheetImporter.maximumFileSize + 1)
+@Test func rejectsValidPngDataLargerThanTheFileLimit() throws {
+    let data = try #require(makeLargePNG(width: 3072, height: 3072))
 
-    #expect(PetSpriteSheetImporter.frames(from: oversizedData) == nil)
-    #expect(PetSpriteSheetImporter.optimizedImage(from: oversizedData) == nil)
+    #expect(data.count > PetSpriteSheetImporter.maximumFileSize)
+    #expect(PetSpriteSheetImporter.frames(from: data) == nil)
+    #expect(PetSpriteSheetImporter.optimizedImage(from: data) == nil)
 }
 
 @Test func downsamplesLargePngsToTheConfiguredMaximum() throws {
@@ -81,6 +82,48 @@ import WaddlyCore
 
     #expect(FileManager.default.fileExists(atPath: savedFile.path))
     #expect(PetSpriteSheetImporter.load(from: savedFile) != nil)
+}
+
+private func makeLargePNG(width: Int, height: Int) -> Data? {
+    let bytesPerRow = width * 4
+    let pixelBytes = UnsafeMutablePointer<UInt8>.allocate(capacity: bytesPerRow * height)
+    defer { pixelBytes.deallocate() }
+
+    var state: UInt32 = 0xA5A5_1234
+    for offset in stride(from: 0, to: bytesPerRow * height, by: 4) {
+        for channel in 0..<3 {
+            state ^= state << 13
+            state ^= state >> 17
+            state ^= state << 5
+            pixelBytes[offset + channel] = UInt8(truncatingIfNeeded: state)
+        }
+        pixelBytes[offset + 3] = 255
+    }
+
+    guard let context = CGContext(
+        data: UnsafeMutableRawPointer(pixelBytes),
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: bytesPerRow,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ), let image = context.makeImage() else {
+        return nil
+    }
+
+    let data = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(
+        data,
+        UTType.png.identifier as CFString,
+        1,
+        nil
+    ) else {
+        return nil
+    }
+    CGImageDestinationAddImage(destination, image, nil)
+    guard CGImageDestinationFinalize(destination) else { return nil }
+    return data as Data
 }
 
 private func makePNG(
