@@ -7,7 +7,6 @@ public enum PetImageCategory: String, CaseIterable {
     case typing
     case sleep
     case enter
-
 }
 
 public struct PetImageSet {
@@ -25,7 +24,6 @@ public struct PetImageSet {
     public var isComplete: Bool {
         PetImageCategory.allCases.allSatisfy { !self[$0].isEmpty }
     }
-
 }
 
 public struct OptimizedPetImage {
@@ -35,8 +33,8 @@ public struct OptimizedPetImage {
 }
 
 public enum PetSpriteSheetImporter {
-    public static let maximumFileSize = 20 * 1_024 * 1_024
-    public static let maximumImageDimension = 1_024
+    public static let maximumFileSize = 20 * 1024 * 1024
+    public static let maximumImageDimension = 1024
 
     public static func optimizedImage(from data: Data) -> OptimizedPetImage? {
         guard data.count <= maximumFileSize,
@@ -46,8 +44,9 @@ public enum PetSpriteSheetImporter {
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,
-              width > 0, height > 0, width <= 4_096, height <= 4_096,
-              let cgImage = image(from: source, maxDimension: maximumImageDimension) else {
+              width > 0, height > 0, width <= 4096, height <= 4096,
+              let cgImage = image(from: source, maxDimension: maximumImageDimension)
+        else {
             return nil
         }
 
@@ -74,17 +73,18 @@ public enum PetSpriteSheetImporter {
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,
-              width == height, width % 3 == 0, width <= 4_096,
+              width == height, width % 3 == 0, width <= 4096,
               let image = image(from: source, maxDimension: maximumImageDimension * 3),
-              hasAlpha(image) else {
+              hasAlpha(image)
+        else {
             return nil
         }
 
         let cellSize = image.width / 3
         let pointSize = CGFloat(cellSize)
         var cells: [NSImage] = []
-        for row in 0..<3 {
-            for column in 0..<3 {
+        for row in 0 ..< 3 {
+            for column in 0 ..< 3 {
                 let rect = CGRect(
                     x: CGFloat(column * cellSize),
                     y: CGFloat(row * cellSize),
@@ -107,11 +107,14 @@ public enum PetSpriteSheetImporter {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= maximumFileSize,
-              let data = try? Data(contentsOf: url) else {
+              let data = try? Data(contentsOf: url)
+        else {
             return nil
         }
         guard let optimized = optimizedImage(from: data) else { return nil }
-        if optimized.wasDownsampled { try? optimized.pngData.write(to: url, options: .atomic) }
+        if optimized.wasDownsampled {
+            try? optimized.pngData.write(to: url, options: .atomic)
+        }
         return optimized.image
     }
 

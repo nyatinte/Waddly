@@ -12,6 +12,7 @@ fi
 
 (
   cd "$ROOT"
+  mint run swiftformat Sources Tests Package.swift --lint
   TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources Tests macos Package.swift
 )
 
