@@ -91,7 +91,7 @@ private func makeLargePNG(width: Int, height: Int) -> Data? {
 
     var state: UInt32 = 0xA5A5_1234
     for offset in stride(from: 0, to: bytesPerRow * height, by: 4) {
-        for channel in 0..<3 {
+        for channel in 0 ..< 3 {
             state ^= state << 13
             state ^= state >> 17
             state ^= state << 5

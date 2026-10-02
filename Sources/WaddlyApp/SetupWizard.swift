@@ -382,10 +382,10 @@ extension AppDelegate {
                 },
                 onClose: { [weak self] in
                     guard let self else { return }
-                    if !self.hasCompletePetImageSet {
-                        self.settings.removeSetupWizardSeen()
+                    if !hasCompletePetImageSet {
+                        settings.removeSetupWizardSeen()
                     } else {
-                        self.settings.setupWizardSeen = true
+                        settings.setupWizardSeen = true
                     }
                     if hasCompletePetImageSet, monitor.permissionGranted, !isPaused {
                         startMonitoring()

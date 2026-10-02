@@ -188,7 +188,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
-    var isPaused: Bool { animationController.isPaused }
+    var isPaused: Bool {
+        animationController.isPaused
+    }
+
     var typingMotion: TypingMotion {
         settings.typingMotion
     }
