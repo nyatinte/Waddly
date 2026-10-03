@@ -27,6 +27,9 @@ cp "$ROOT/.build/release/Waddly" "$APP/Contents/MacOS/Waddly"
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
+# The PDF rendition preserves the SVG artwork without requiring macOS 14's SVG decoder.
+cp "$ROOT/assets/waddly-menubar.pdf" "$APP/Contents/Resources/"
+swift "$ROOT/Tools/check_menu_bar_icon.swift" "$APP"
 
 ICONSET="$APP/Contents/Resources/Waddly.iconset"
 mkdir -p "$ICONSET"
