@@ -35,6 +35,17 @@ mint run swiftformat Sources Tests Package.swift Tools --lint
 
 SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
 
+## Git hooks
+
+The commit hook runs through [hk](https://hk.jdx.dev), which is pinned in `mise.toml`:
+
+```sh
+mise install hk
+hk install
+```
+
+`hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, and strict SwiftLint before a commit. These are the checks `./macos/build.sh` performs before it compiles, so a change that would fail the build is reported at commit time. Run them without committing with `hk check`, apply fixes with `hk fix`, and remove the hooks with `hk uninstall`.
+
 ## Build and run
 
 ```sh
