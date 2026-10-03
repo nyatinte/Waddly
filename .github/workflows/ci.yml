@@ -25,27 +25,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Mint and SwiftLint
-        run: |
-          brew install mint swiftlint
-          mint bootstrap
-
-      # Homebrew ships hk 1.58.1, which does not read the hk.pkl used here, so CI
-      # installs the version pinned in mise.toml from its release asset.
-      - name: Install the pinned hk version
-        env:
-          HK_VERSION: 2.4.0
-          HK_SHA256: 6e1c970b9de7ab4ee52c85869b2ea9cfe8769d25a0fe9536062e0ba62366ec59
-        run: |
-          curl -fsSL -o /tmp/hk.tar.gz \
-            "https://github.com/jdx/hk/releases/download/v${HK_VERSION}/hk-aarch64-apple-darwin.tar.gz"
-          echo "${HK_SHA256}  /tmp/hk.tar.gz" | shasum -a 256 -c -
-          sudo tar -xzf /tmp/hk.tar.gz -C /usr/local/bin hk
+      - name: Install locked development tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.11
 
       - name: Show toolchain versions
         run: |
           swift --version
-          mint run swiftformat --version
+          swiftformat --version
           swiftlint version
           hk --version
 
