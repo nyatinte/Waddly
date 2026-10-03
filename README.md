@@ -13,7 +13,22 @@
 
 ## はじめる
 
-Homebrewでのインストールは今後対応予定です。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
+最初の安定版 GitHub Release が完了し、Tap に Cask が反映された後、Homebrew Cask からインストールできます。Homebrew 配信は Apple Silicon 搭載 Mac の macOS 13 以降に対応します。
+
+```sh
+brew tap nyatinte/waddly
+brew install --cask waddly
+```
+
+ベータ版 `0.1.0-beta.1` は安定版と別の `Waddly Beta.app` として試せます。
+
+```sh
+brew install --cask nyatinte/waddly/waddly-beta
+```
+
+更新するには `brew upgrade --cask waddly` を実行してください。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
+
+配布アプリは ad-hoc 署名で、公証していません。Gatekeeper が初回起動を止めた場合は、公式 GitHub Release から取得したことを確認し、Finder でアプリを Control キーを押しながらクリックして「開く」を選びます。Finder に「開く」が表示されない場合は、「システム設定 → プライバシーとセキュリティ → このまま開く」から許可してください。Gatekeeper を無効にしたり、隔離属性を削除したりしないでください。DMG を直接使う場合は、同じ Release にある `.sha256` ファイルでチェックサムを確認します。
 
 初回起動時はセットアップウィザードで透過PNGの3×3スプライトシートを登録してください。キー入力に反応させるには、「システム設定 → プライバシーとセキュリティ → 入力監視」でWaddlyを許可してください。許可がなくてもアプリは起動できますが、キー入力には反応しません。画像の条件は「[自分のペットを使う](#自分のペットを使う)」に記載しています。
 
