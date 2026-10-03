@@ -29,6 +29,8 @@ The app displays Japanese or English based on your preferred macOS language. It 
 
 Waddly appears in both the Dock and menu bar. Use the Show in menu to change where it appears; at least one remains visible. Click the penguin icon in the menu bar or right-click the pet to open the menu. You can change the size and typing motion, configure images, pause reactions, and set the app to launch at login.
 
+The menu bar shows only the penguin artwork, at 24 pt. The app bundles a vector PDF rendition of the source SVG so the icon also works on macOS 13.
+
 The setup wizard opens on first launch. It guides you through the image-generation prompt, 3×3 PNG import, and Input Monitoring permission. You can drop a PNG anywhere on the image page. Import a custom image before continuing to the next page. You can reopen the wizard from the menu at any time.
 
 Waddly is written in Swift and uses AppKit, Core Graphics, and Core Animation. It has no third-party libraries.
