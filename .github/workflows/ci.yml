@@ -44,4 +44,4 @@ jobs:
         run: ./macos/build.sh
 
       - name: Run Swift Testing suites
-        run: swift test
+        run: ./macos/test.sh

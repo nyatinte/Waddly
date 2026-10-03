@@ -60,14 +60,16 @@ The build script checks formatting with SwiftFormat, verifies the generated loca
 Run the test suite:
 
 ```sh
-swift test
+./macos/test.sh
 ```
+
+The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path.
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `hk check --all`, `./macos/build.sh`, and `swift test`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `hk check --all`, `./macos/build.sh`, and `./macos/test.sh`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
@@ -89,7 +91,7 @@ The script writes a host-architecture DMG to `dist/`. By design, release builds 
 
 ## Publish a release for Homebrew
 
-`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `swift test`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 13 or later; it does not remove quarantine or delete user data.
+`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `./macos/test.sh`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 13 or later; it does not remove quarantine or delete user data.
 
 Before the first stable release, create a fine-grained GitHub token restricted to `nyatinte/homebrew-waddly` with Contents read/write permission, then add it to this repository's Actions secrets as `HOMEBREW_TAP_TOKEN`. Beta releases do not need this token. No Apple signing certificate or notarization credentials are used. Push a tag only after updating the app version in `macos/Info.plist` and merging that change to `main`.
 

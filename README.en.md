@@ -20,6 +20,12 @@ brew tap nyatinte/waddly
 brew install --cask waddly
 ```
 
+Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
+
+```sh
+brew install --cask nyatinte/waddly/waddly-beta
+```
+
 Update it with `brew upgrade --cask waddly`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
 The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then Control-click it in Finder, choose Open, and confirm. If needed, allow it under System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.

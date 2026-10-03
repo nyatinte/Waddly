@@ -59,7 +59,7 @@ jobs:
           printf 'channel=%s\n' "$CHANNEL" >> "$GITHUB_OUTPUT"
 
       - name: Run tests
-        run: swift test
+        run: ./macos/test.sh
 
       - name: Package and verify ad-hoc signature
         shell: bash
