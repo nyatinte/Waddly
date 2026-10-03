@@ -4,18 +4,18 @@
 amends "package://github.com/jdx/hk/releases/download/v2.4.0/hk@2.4.0#/Config.pkl"
 
 steps {
-  // The pinned SwiftFormat version from Mintfile. --lint reports violations
+  // The pinned SwiftFormat version from mise.toml. --lint reports violations
   // without writing, so the same command serves check and fix.
   ["swiftformat"] = new Step {
     glob = List("Sources/**/*.swift", "Tests/**/*.swift", "Tools/**/*.swift", "Package.swift")
-    check = "mint run swiftformat --lint {{files}}"
-    fix = "mint run swiftformat {{files}}"
+    check = "mise exec -- swiftformat --lint {{files}}"
+    fix = "mise exec -- swiftformat {{files}}"
   }
 
   // Strict lint rules from .swiftlint.yml. TOOLCHAIN_DIR matches build.sh.
   ["swiftlint"] = new Step {
     glob = List("Sources/**/*.swift", "Tests/**/*.swift", "Tools/**/*.swift", "Package.swift")
-    check = "TOOLCHAIN_DIR=\"$(xcode-select -p)\" swiftlint lint --strict {{files}}"
+    check = "TOOLCHAIN_DIR=\"$(xcode-select -p)\" mise exec -- swiftlint lint --strict {{files}}"
   }
 
   // Verifies the typed localization accessors match both .lproj files. The

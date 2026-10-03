@@ -6,31 +6,31 @@ Thanks for your interest in contributing. This guide covers local development an
 
 - macOS 13 or later
 - Xcode Command Line Tools with Swift 6
-- Mint (`brew install mint`) for the pinned SwiftFormat development tool
-- SwiftLint (`brew install swiftlint`)
+- mise ([install and enable it in your shell](https://mise.jdx.dev/getting-started.html)) for the pinned SwiftFormat and SwiftLint development tools
 
-The Homebrew installation method for Waddly itself is planned; Homebrew is currently used here only to install development tools.
-
-After installing Mint and SwiftLint, install the pinned formatter with:
+Trust this repository's mise configuration, then install its pinned tools:
 
 ```sh
-mint bootstrap
+mise trust
+mise install aqua:realm/SwiftLint github:nicklockwood/SwiftFormat
 ```
 
-SwiftFormat is a development-only tool and is not included in the Waddly app.
+Tool versions are pinned in `mise.toml` and their downloads are locked in `mise.lock`. Run `mise lock` after changing a tool version.
+
+SwiftFormat and SwiftLint are development-only tools and are not included in the Waddly app.
 
 ## Format and lint
 
-Format Swift source files with the version pinned in `Mintfile`:
+Format Swift source files with the version pinned in `mise.toml`:
 
 ```sh
-mint run swiftformat Sources Tests Package.swift Tools
+mise exec -- swiftformat Sources Tests Package.swift Tools
 ```
 
 Check formatting without changing files:
 
 ```sh
-mint run swiftformat Sources Tests Package.swift Tools --lint
+mise exec -- swiftformat Sources Tests Package.swift Tools --lint
 ```
 
 SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
@@ -41,10 +41,10 @@ The commit hook runs through [hk](https://hk.jdx.dev), which is pinned in `mise.
 
 ```sh
 mise install hk
-hk install
+mise exec -- hk install
 ```
 
-`hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, and strict SwiftLint before a commit. These are the checks `./macos/build.sh` performs before it compiles, so a change that would fail the build is reported at commit time. Run them without committing with `hk check`, apply fixes with `hk fix`, and remove the hooks with `hk uninstall`.
+hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is available on Apple Silicon. `hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, and strict SwiftLint before a commit. These are the checks `./macos/build.sh` performs before it compiles, so a change that would fail the build is reported at commit time. Run them without committing with `mise exec -- hk check`, apply fixes with `mise exec -- hk fix`, and remove the hooks with `mise exec -- hk uninstall`.
 
 ## Build and run
 
@@ -67,7 +67,7 @@ The tests cover animation phases, image validation and optimization, localizatio
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs Mint and SwiftLint, then runs `./macos/build.sh` and `swift test`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `hk check --all`, `./macos/build.sh`, and `swift test`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 

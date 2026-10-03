@@ -5,16 +5,16 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
-if ! command -v swiftlint >/dev/null 2>&1; then
-  printf 'SwiftLint is required. Install it with: brew install swiftlint\n' >&2
+if ! command -v mise >/dev/null 2>&1; then
+  printf 'mise is required for the pinned development tools. See CONTRIBUTING.md for setup instructions.\n' >&2
   exit 1
 fi
 
 (
   cd "$ROOT"
-  mint run swiftformat Sources Tests Package.swift Tools --lint
+  mise exec -- swiftformat Sources Tests Package.swift Tools --lint
   swift Tools/generate_localizations.swift --check
-  TOOLCHAIN_DIR="$(xcode-select -p)" swiftlint lint --strict Sources Tests macos Package.swift Tools
+  TOOLCHAIN_DIR="$(xcode-select -p)" mise exec -- swiftlint lint --strict Sources Tests macos Package.swift Tools
 )
 
 rm -rf "$APP"
