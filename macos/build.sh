@@ -12,9 +12,9 @@ fi
 
 (
   cd "$ROOT"
-  mise exec -- swiftformat Sources Tests Package.swift Tools --lint
+  mise exec github:nicklockwood/SwiftFormat -- swiftformat Sources Tests Package.swift Tools --lint
   swift Tools/generate_localizations.swift --check
-  TOOLCHAIN_DIR="$(xcode-select -p)" mise exec -- swiftlint lint --strict Sources Tests macos Package.swift Tools
+  TOOLCHAIN_DIR="$(xcode-select -p)" mise exec aqua:realm/SwiftLint -- swiftlint lint --strict Sources Tests macos Package.swift Tools
 )
 
 rm -rf "$APP"

@@ -24,13 +24,13 @@ SwiftFormat and SwiftLint are development-only tools and are not included in the
 Format Swift source files with the version pinned in `mise.toml`:
 
 ```sh
-mise exec -- swiftformat Sources Tests Package.swift Tools
+mise exec github:nicklockwood/SwiftFormat -- swiftformat Sources Tests Package.swift Tools
 ```
 
 Check formatting without changing files:
 
 ```sh
-mise exec -- swiftformat Sources Tests Package.swift Tools --lint
+mise exec github:nicklockwood/SwiftFormat -- swiftformat Sources Tests Package.swift Tools --lint
 ```
 
 SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
