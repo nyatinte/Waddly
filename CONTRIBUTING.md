@@ -85,7 +85,13 @@ The generator checks that both languages have matching keys and writes `Sources/
 ./macos/package.sh
 ```
 
-The script writes an architecture-specific DMG to `dist/`. The default build is ad-hoc signed and is not notarized. Internet distribution without Gatekeeper warnings requires Developer ID signing and Apple notarization. Set `WADDLY_SIGN_IDENTITY` to select a signing identity.
+The script writes a host-architecture DMG to `dist/`. By design, release builds are ad-hoc signed and not notarized. Gatekeeper may require the user to approve the app on first launch; verify the download and use Finder's Open confirmation or System Settings → Privacy & Security. Do not bypass Gatekeeper by removing quarantine attributes.
+
+## Publish a release for Homebrew
+
+`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `swift test`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 13 or later; it does not remove quarantine or delete user data.
+
+Before the first stable release, create a fine-grained GitHub token restricted to `nyatinte/homebrew-waddly` with Contents read/write permission, then add it to this repository's Actions secrets as `HOMEBREW_TAP_TOKEN`. Beta releases do not need this token. No Apple signing certificate or notarization credentials are used. Push a tag only after updating the app version in `macos/Info.plist` and merging that change to `main`.
 
 ## Project structure
 
