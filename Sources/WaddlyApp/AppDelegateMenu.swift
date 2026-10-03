@@ -313,7 +313,9 @@ extension AppDelegate {
     @objc private func togglePause() {
         let shouldPause = !animationController.isPaused
         animationController.setPaused(shouldPause)
-        if shouldPause { monitor.stop() }
+        if shouldPause {
+            monitor.stop()
+        }
         startMonitoring()
     }
 

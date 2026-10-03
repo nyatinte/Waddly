@@ -1,0 +1,112 @@
+name: PR hygiene
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  visual-evidence:
+    name: Screenshot requirement
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check UI change declaration and screenshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+          GH_API_URL: ${{ github.api_url }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          if os.environ["EVENT_NAME"] == "merge_group":
+              print("Visual evidence was checked on the pull request.")
+              raise SystemExit(0)
+
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+          with open(event_path, encoding="utf-8") as event_file:
+              event = json.load(event_file)
+
+          pull_request = event["pull_request"]
+          body = pull_request.get("body") or ""
+          repository = os.environ["GH_REPOSITORY"]
+          pull_number = int(os.environ["PR_NUMBER"])
+          token = os.environ["GH_TOKEN"]
+          api_url = os.environ["GH_API_URL"]
+          page = 1
+          changed_files = []
+
+          while True:
+              request = urllib.request.Request(
+                  f"{api_url}/repos/{repository}/pulls/{pull_number}/files?per_page=100&page={page}",
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {token}",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  files = json.load(response)
+              changed_files.extend(item["filename"] for item in files)
+              if len(files) < 100:
+                  break
+              page += 1
+
+          def is_visual_file(path):
+              if path.startswith("Sources/WaddlyApp/") and path.endswith(".swift"):
+                  return True
+              if path == "Sources/WaddlyCore/PetImageCore.swift":
+                  return True
+              if re.fullmatch(r"macos/[^/]+\.lproj/Localizable\.strings", path):
+                  return True
+              return path.startswith("assets/") and path.lower().endswith(
+                  (".png", ".gif", ".jpg", ".jpeg", ".webp", ".svg")
+              )
+
+          visual_files = [path for path in changed_files if is_visual_file(path)]
+          if not visual_files:
+              print("No UI-related files changed; no screenshot is required.")
+              raise SystemExit(0)
+
+          ui_changed = re.search(
+              r"(?im)^\s*-\s*\[x\]\s*User-visible UI change\b", body
+          )
+          ui_unchanged = re.search(
+              r"(?im)^\s*-\s*\[x\]\s*No user-visible UI change\b", body
+          )
+
+          if bool(ui_changed) == bool(ui_unchanged):
+              print(
+                  "Select exactly one UI-change checkbox in the PR description. "
+                  "Attach a screenshot or GIF when the visible UI changes."
+              )
+              raise SystemExit(1)
+
+          if ui_unchanged:
+              print("No visible UI change was declared.")
+              raise SystemExit(0)
+
+          has_image = re.search(r"!\[[^\]]*\]\(\s*https://[^)]+\)", body)
+          has_html_image = re.search(
+              r"<img\b[^>]*\bsrc\s*=\s*['\"]https://", body, re.IGNORECASE
+          )
+          if not (has_image or has_html_image):
+              print(
+                  "A visible UI change is declared, but no embedded screenshot or GIF "
+                  "was found in the PR description."
+              )
+              raise SystemExit(1)
+
+          print("Visible UI change has an embedded screenshot or GIF.")
+          PY

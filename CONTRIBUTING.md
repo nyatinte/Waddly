@@ -24,16 +24,27 @@ SwiftFormat is a development-only tool and is not included in the Waddly app.
 Format Swift source files with the version pinned in `Mintfile`:
 
 ```sh
-mint run swiftformat Sources Tests Package.swift
+mint run swiftformat Sources Tests Package.swift Tools
 ```
 
 Check formatting without changing files:
 
 ```sh
-mint run swiftformat Sources Tests Package.swift --lint
+mint run swiftformat Sources Tests Package.swift Tools --lint
 ```
 
 SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
+
+## Git hooks
+
+The commit hook runs through [hk](https://hk.jdx.dev), which is pinned in `mise.toml`:
+
+```sh
+mise install hk
+hk install
+```
+
+`hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, and strict SwiftLint before a commit. These are the checks `./macos/build.sh` performs before it compiles, so a change that would fail the build is reported at commit time. Run them without committing with `hk check`, apply fixes with `hk fix`, and remove the hooks with `hk uninstall`.
 
 ## Build and run
 
@@ -42,7 +53,7 @@ SwiftFormat handles formatting; SwiftLint continues to handle lint rules.
 open build/Waddly.app
 ```
 
-The build script checks formatting with SwiftFormat, runs SwiftLint in strict mode, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
+The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
 
 ## Tests
 
@@ -53,6 +64,10 @@ swift test
 ```
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs Mint and SwiftLint, then runs `./macos/build.sh` and `swift test`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
