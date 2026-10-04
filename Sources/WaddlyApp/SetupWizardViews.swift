@@ -2,22 +2,8 @@ import AppKit
 
 extension SetupWizardController {
     func refreshLocalization() {
-        prompt = Self.loadPrompt()
         window?.title = localizedString(.setupWindowTitle)
         renderCurrentStep()
-    }
-
-    static func loadPrompt() -> String {
-        let language = AppLanguage.active.localization
-        guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
-              let markdown = try? String(contentsOf: url, encoding: .utf8),
-              let start = markdown.range(of: "```text\n"),
-              let end = markdown[start.upperBound...].range(of: "```")
-        else {
-            return ""
-        }
-        return String(markdown[start.upperBound ..< end.lowerBound])
-            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
@@ -81,7 +67,7 @@ extension SetupWizardController {
         card.layer?.cornerRadius = 12
         card.translatesAutoresizingMaskIntoConstraints = false
 
-        let icon = DraggableAppIconView(frame: .zero)
+        let icon = DraggableAppIconView(localization: localization)
         icon.translatesAutoresizingMaskIntoConstraints = false
 
         let title = NSTextField(labelWithString: localizedString(.setupDragAppTitle))
@@ -123,12 +109,12 @@ extension SetupWizardController {
 
 @MainActor
 final class DraggableAppIconView: NSImageView, NSDraggingSource {
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
+    init(localization: LocalizationController) {
+        super.init(frame: .zero)
         image = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
         imageScaling = .scaleProportionallyUpOrDown
-        setAccessibilityLabel(localizedString(.setupDragAppIcon))
-        toolTip = localizedString(.setupDragAppIcon)
+        setAccessibilityLabel(localization.string(for: .setupDragAppIcon))
+        toolTip = localization.string(for: .setupDragAppIcon)
     }
 
     required init?(coder: NSCoder) {

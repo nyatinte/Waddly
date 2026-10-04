@@ -1,4 +1,5 @@
 import AppKit
+import Foundation
 import Testing
 @testable import WaddlyApp
 
@@ -21,6 +22,23 @@ import Testing
     #expect(AppLanguage.detectedLocalization(["fr-FR"]) == "en")
     #expect(AppLanguage.japanese.localization == "ja")
     #expect(AppLanguage.english.localization == "en")
+    #expect(AppLanguage.system.localization == AppLanguage.detectedLocalization(Bundle.main.preferredLocalizations))
+}
+
+@Test func localizationControllerUsesItsInjectedSettings() throws {
+    let suiteName = "WaddlyTests.localization.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let controller = LocalizationController(settings: AppSettings(defaults: defaults))
+    let standardLanguage = AppSettings.standard.appLanguage
+
+    #expect(controller.selectedLanguage == .system)
+    controller.changeLanguage(.japanese)
+    #expect(controller.selectedLanguage == .japanese)
+    #expect(controller.activeLocalization == "ja")
+    controller.changeLanguage(.english)
+    #expect(controller.activeLocalization == "en")
+    #expect(AppSettings.standard.appLanguage == standardLanguage)
 }
 
 @Test @MainActor func copiedMenusHaveIndependentItemsAndPreserveNestedCommandsAndState() {

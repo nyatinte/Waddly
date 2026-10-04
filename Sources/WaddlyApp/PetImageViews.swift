@@ -78,9 +78,11 @@ private final class PetImageTileView: NSView {
     var onRemove: (() -> Void)?
     var onMove: ((Int) -> Void)?
     private let index: Int
+    private let localization: LocalizationController
 
-    init(image: NSImage, index: Int, imageCount: Int) {
+    init(image: NSImage, index: Int, imageCount: Int, localization: LocalizationController) {
         self.index = index
+        self.localization = localization
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         wantsLayer = true
@@ -90,23 +92,25 @@ private final class PetImageTileView: NSView {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = image
         imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.setAccessibilityLabel("\(localizedString(.imagesThumbnail)) \(index + 1)")
         addSubview(imageView)
 
         let removeButton = makeButton(title: "×", symbol: "xmark.circle.fill", action: #selector(removeImage))
         removeButton.isEnabled = imageCount > 1
-        removeButton.setAccessibilityLabel("\(localizedString(.imagesRemove)) \(index + 1)")
         addSubview(removeButton)
 
         let moveLeftButton = makeButton(title: "‹", symbol: "chevron.left", action: #selector(moveImageLeft))
         moveLeftButton.isEnabled = index > 0
-        moveLeftButton.setAccessibilityLabel("\(localizedString(.imagesMoveLeft)) \(index + 1)")
         addSubview(moveLeftButton)
 
         let moveRightButton = makeButton(title: "›", symbol: "chevron.right", action: #selector(moveImageRight))
         moveRightButton.isEnabled = index < imageCount - 1
-        moveRightButton.setAccessibilityLabel("\(localizedString(.imagesMoveRight)) \(index + 1)")
         addSubview(moveRightButton)
+        configureAccessibility(
+            imageView: imageView,
+            removeButton: removeButton,
+            moveLeftButton: moveLeftButton,
+            moveRightButton: moveRightButton
+        )
 
         configureLayout(
             imageView: imageView,
@@ -114,6 +118,18 @@ private final class PetImageTileView: NSView {
             moveLeftButton: moveLeftButton,
             moveRightButton: moveRightButton
         )
+    }
+
+    private func configureAccessibility(
+        imageView: NSImageView,
+        removeButton: NSButton,
+        moveLeftButton: NSButton,
+        moveRightButton: NSButton
+    ) {
+        imageView.setAccessibilityLabel("\(localization.string(for: .imagesThumbnail)) \(index + 1)")
+        removeButton.setAccessibilityLabel("\(localization.string(for: .imagesRemove)) \(index + 1)")
+        moveLeftButton.setAccessibilityLabel("\(localization.string(for: .imagesMoveLeft)) \(index + 1)")
+        moveRightButton.setAccessibilityLabel("\(localization.string(for: .imagesMoveRight)) \(index + 1)")
     }
 
     required init?(coder: NSCoder) {
@@ -175,6 +191,7 @@ private final class PetImageTileView: NSView {
 @MainActor
 final class PetImageCategoryRowView: NSView {
     let category: PetImageCategory
+    private let localization: LocalizationController
     var onAdd: (() -> Void)?
     var onDrop: (([URL]) -> Void)? {
         didSet { dropView.onDrop = onDrop }
@@ -186,15 +203,16 @@ final class PetImageCategoryRowView: NSView {
     private let dropView = PetImageDropView(frame: .zero)
     private let imageStack = NSStackView()
 
-    init(category: PetImageCategory, images: [NSImage]) {
+    init(category: PetImageCategory, images: [NSImage], localization: LocalizationController) {
         self.category = category
+        self.localization = localization
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
 
-        let title = NSTextField(labelWithString: category.title)
+        let title = NSTextField(labelWithString: category.title(using: localization))
         title.translatesAutoresizingMaskIntoConstraints = false
         title.font = .boldSystemFont(ofSize: 13)
-        title.setAccessibilityLabel(category.title)
+        title.setAccessibilityLabel(category.title(using: localization))
 
         dropView.translatesAutoresizingMaskIntoConstraints = false
         dropView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
@@ -213,16 +231,27 @@ final class PetImageCategoryRowView: NSView {
         scrollView.documentView = imageStack
         dropView.addSubview(scrollView)
 
-        let addButton = NSButton(title: localizedString(.imagesAdd), target: self, action: #selector(addImages))
+        let addButton = NSButton(
+            title: localization.string(for: .imagesAdd),
+            target: self,
+            action: #selector(addImages)
+        )
         addButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil)
         addButton.imagePosition = .imageLeading
-        addButton.setAccessibilityLabel("\(localizedString(.imagesAdd)) — \(category.title)")
+        addButton.setAccessibilityLabel(
+            "\(localization.string(for: .imagesAdd)) — \(category.title(using: localization))"
+        )
         addButton.translatesAutoresizingMaskIntoConstraints = false
         imageStack.addArrangedSubview(addButton)
         addButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 88).isActive = true
 
         addSubview(title)
         addSubview(dropView)
+        configureLayout(title: title, scrollView: scrollView)
+        setImages(images)
+    }
+
+    private func configureLayout(title: NSTextField, scrollView: NSScrollView) {
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 138),
             title.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -242,7 +271,6 @@ final class PetImageCategoryRowView: NSView {
             imageStack.widthAnchor.constraint(greaterThanOrEqualTo: scrollView.contentView.widthAnchor),
             imageStack.heightAnchor.constraint(equalTo: scrollView.contentView.heightAnchor)
         ])
-        setImages(images)
     }
 
     required init?(coder: NSCoder) {
@@ -255,7 +283,12 @@ final class PetImageCategoryRowView: NSView {
             view.removeFromSuperview()
         }
         for (index, image) in images.enumerated() {
-            let tile = PetImageTileView(image: image, index: index, imageCount: images.count)
+            let tile = PetImageTileView(
+                image: image,
+                index: index,
+                imageCount: images.count,
+                localization: localization
+            )
             tile.onRemove = { [weak self] in self?.onRemove?(index) }
             tile.onMove = { [weak self] in self?.onMove?(index, $0) }
             imageStack.insertArrangedSubview(tile, at: index)
