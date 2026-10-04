@@ -37,6 +37,9 @@ jobs:
           swiftlint version
           hk --version
 
+      - name: Validate release notes configuration
+        run: mise exec -- git-cliff --config cliff.toml --latest > /dev/null
+
       - name: Run the same checks as the commit hook
         run: hk check --all
 
