@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ contains(github.ref_name, '-beta.') && github.ref_name || 'stable' }}
   cancel-in-progress: false
 
 jobs:
@@ -61,31 +61,69 @@ jobs:
       - name: Run tests
         run: ./macos/test.sh
 
-      - name: Package and verify ad-hoc signature
+      - name: Package or reuse the published DMG
+        id: package
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          set -eu
+          set -euo pipefail
           if [ "$(uname -m)" != "arm64" ]; then
             printf 'Release packaging requires an Apple Silicon runner.\n' >&2
             exit 1
           fi
-          unset WADDLY_SIGN_IDENTITY
-          ./macos/package.sh
-          APP="$GITHUB_WORKSPACE/build/Waddly.app"
-          codesign --verify --deep --strict --verbose=2 "$APP"
           APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' macos/Info.plist)
-          RELEASE_VERSION="${RELEASE_TAG#v}"
+          VERSION="${RELEASE_TAG#v}"
           SOURCE_DMG="Waddly-$APP_VERSION-macos-arm64.dmg"
-          DMG="Waddly-$RELEASE_VERSION-macos-arm64.dmg"
-          if [ "$SOURCE_DMG" != "$DMG" ]; then
-            mv "$GITHUB_WORKSPACE/dist/$SOURCE_DMG" "$GITHUB_WORKSPACE/dist/$DMG"
+          DMG="Waddly-$VERSION-macos-arm64.dmg"
+          CHECKSUM="$DMG.sha256"
+          DIST="$GITHUB_WORKSPACE/dist"
+          mkdir -p "$DIST"
+
+          RELEASE_EXISTS=false
+          ASSETS=""
+          if ASSETS=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' 2>/dev/null); then
+            RELEASE_EXISTS=true
           fi
-          (
-            cd "$GITHUB_WORKSPACE/dist"
-            shasum -a 256 "$DMG" > "$DMG.sha256"
-          )
+
+          has_asset() {
+            printf '%s\n' "$ASSETS" | grep -Fxq "$1"
+          }
+
+          UPLOAD_DMG=true
+          UPLOAD_CHECKSUM=true
+          if [ "$RELEASE_EXISTS" = true ] && has_asset "$DMG"; then
+            ASSET_DIR="$RUNNER_TEMP/published-assets"
+            mkdir -p "$ASSET_DIR"
+            gh release download "$RELEASE_TAG" --pattern "$DMG" --dir "$ASSET_DIR"
+            cp "$ASSET_DIR/$DMG" "$DIST/$DMG"
+            UPLOAD_DMG=false
+
+            if has_asset "$CHECKSUM"; then
+              gh release download "$RELEASE_TAG" --pattern "$CHECKSUM" --dir "$ASSET_DIR"
+              (cd "$ASSET_DIR" && shasum -a 256 --check "$CHECKSUM")
+              cp "$ASSET_DIR/$CHECKSUM" "$DIST/$CHECKSUM"
+              UPLOAD_CHECKSUM=false
+            else
+              (cd "$DIST" && shasum -a 256 "$DMG" > "$CHECKSUM")
+            fi
+          else
+            unset WADDLY_SIGN_IDENTITY
+            ./macos/package.sh
+            codesign --verify --deep --strict --verbose=2 "$GITHUB_WORKSPACE/build/Waddly.app"
+            if [ "$SOURCE_DMG" != "$DMG" ]; then
+              mv "$DIST/$SOURCE_DMG" "$DIST/$DMG"
+            fi
+            (cd "$DIST" && shasum -a 256 "$DMG" > "$CHECKSUM")
+          fi
+
+          {
+            echo "release_exists=$RELEASE_EXISTS"
+            echo "upload_dmg=$UPLOAD_DMG"
+            echo "upload_checksum=$UPLOAD_CHECKSUM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Publish versioned GitHub Release
         shell: bash
@@ -94,6 +132,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
+          RELEASE_EXISTS: ${{ steps.package.outputs.release_exists }}
+          UPLOAD_DMG: ${{ steps.package.outputs.upload_dmg }}
+          UPLOAD_CHECKSUM: ${{ steps.package.outputs.upload_checksum }}
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#v}"
@@ -103,15 +144,20 @@ jobs:
           if [ "$RELEASE_CHANNEL" = beta ]; then
             RELEASE_FLAGS=(--prerelease)
           fi
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" "$DMG" "$CHECKSUM" --clobber
-          else
+          if [ "$RELEASE_EXISTS" = false ]; then
             gh release create "$RELEASE_TAG" \
               --verify-tag \
               "${RELEASE_FLAGS[@]}" \
               --generate-notes \
               --title "Waddly $VERSION" \
               "$DMG" "$CHECKSUM"
+          elif [ "$UPLOAD_DMG" = true ]; then
+            # A missing DMG may be uploaded; any existing DMG is always reused above.
+            gh release upload "$RELEASE_TAG" "$DMG" "$CHECKSUM" --clobber
+          elif [ "$UPLOAD_CHECKSUM" = true ]; then
+            gh release upload "$RELEASE_TAG" "$CHECKSUM"
+          else
+            printf 'Published DMG and checksum already match; leaving release assets unchanged.\n'
           fi
 
       - name: Update Homebrew tap
@@ -134,6 +180,19 @@ jobs:
           git clone --depth 1 https://github.com/nyatinte/homebrew-waddly.git "$TAP_DIR"
           if [ -z "$(git -C "$TAP_DIR" branch --show-current)" ]; then
             git -C "$TAP_DIR" checkout -b main
+          fi
+          CASK="$TAP_DIR/Casks/waddly.rb"
+          if [ -f "$CASK" ]; then
+            CURRENT_VERSION=$(ruby -e 'print File.read(ARGV[0])[/^\s*version\s+"([^"]+)"/, 1]' "$CASK")
+            CURRENT_SHA256=$(ruby -e 'print File.read(ARGV[0])[/^\s*sha256\s+"([^"]+)"/, 1]' "$CASK")
+            if [ -n "$CURRENT_VERSION" ] && ruby -rrubygems/version -e 'exit(Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1)' "$CURRENT_VERSION" "$VERSION"; then
+              printf 'Skipping stale release %s; the tap already has newer version %s.\n' "$VERSION" "$CURRENT_VERSION"
+              exit 0
+            fi
+            if [ "$CURRENT_VERSION" = "$VERSION" ] && [ "$CURRENT_SHA256" = "$SHA256" ]; then
+              printf 'Homebrew tap already matches version %s.\n' "$VERSION"
+              exit 0
+            fi
           fi
           git -C "$TAP_DIR" config user.name "github-actions[bot]"
           git -C "$TAP_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
