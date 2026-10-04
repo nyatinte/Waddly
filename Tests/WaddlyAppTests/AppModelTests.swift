@@ -111,6 +111,35 @@ import Testing
     return menu
 }
 
+@Test @MainActor func setupWizardPromptTracksTheInjectedLanguage() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.prompt.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resourcesURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let promptsURL = resourcesURL.appendingPathComponent("prompts", isDirectory: true)
+    try FileManager.default.createDirectory(at: promptsURL, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: resourcesURL) }
+    try Data("```text\nこんにちは\n```".utf8).write(to: promptsURL.appendingPathComponent("ja.md"))
+    try Data("```text\nHello\n```".utf8).write(to: promptsURL.appendingPathComponent("en.md"))
+
+    let localization = LocalizationController(settings: AppSettings(defaults: defaults))
+    localization.changeLanguage(.japanese)
+    let wizard = SetupWizardController(
+        localization: localization,
+        promptResourcesURL: resourcesURL,
+        onImportImage: { _ in false },
+        hasCustomImage: { false },
+        hasInputMonitoringPermission: { false },
+        requestInputMonitoringPermission: { false },
+        onClose: {}
+    )
+
+    #expect(wizard.prompt == "こんにちは")
+    localization.changeLanguage(.english)
+    #expect(wizard.prompt == "Hello")
+}
+
 @Test func enterDetectionRecognizesBothMacEnterKeys() {
     #expect(KeyboardMonitor.isEnterKeyCode(36))
     #expect(KeyboardMonitor.isEnterKeyCode(76))

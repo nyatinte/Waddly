@@ -6,7 +6,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     let localization: LocalizationController
     let promptResourcesURL: URL?
     var prompt: String {
-        Self.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
+        SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
     }
 
     private let onImportImage: @MainActor (URL) async -> Bool
