@@ -59,18 +59,20 @@ private func rgbaSHA256(for image: NSImage) throws -> String {
     let bytesPerRow = cgImage.width * bytesPerPixel
     var pixels = [UInt8](repeating: 0, count: bytesPerRow * cgImage.height)
 
-    let context = try #require(CGContext(
-        data: &pixels,
-        width: cgImage.width,
-        height: cgImage.height,
-        bitsPerComponent: 8,
-        bytesPerRow: bytesPerRow,
-        space: CGColorSpaceCreateDeviceRGB(),
-        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-    ))
-    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+    return try pixels.withUnsafeMutableBytes { buffer in
+        let context = try #require(CGContext(
+            data: buffer.baseAddress,
+            width: cgImage.width,
+            height: cgImage.height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
 
-    return SHA256.hash(data: Data(pixels)).map { String(format: "%02x", $0) }.joined()
+        return SHA256.hash(data: Data(buffer)).map { String(format: "%02x", $0) }.joined()
+    }
 }
 
 private func formatSnapshots(_ snapshots: [ImageSnapshot]) -> String {

@@ -78,7 +78,7 @@ The tests cover animation phases, image validation and optimization, localizatio
 If a deliberate sprite-sheet visual change breaks `spriteSheetExtractionMatchesPixelSnapshots`, run:
 
 ```sh
-WADDLY_PRINT_SNAPSHOTS=1 swift test --filter spriteSheetExtractionMatchesPixelSnapshots
+WADDLY_PRINT_SNAPSHOTS=1 ./macos/test.sh --filter spriteSheetExtractionMatchesPixelSnapshots
 ```
 
 Copy the printed `expectedSpriteSheetSnapshots` value into `Tests/WaddlyCoreTests/PetImageSnapshotTests.swift`, then rerun `./macos/test.sh`.
