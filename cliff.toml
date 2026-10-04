@@ -1,0 +1,23 @@
+[changelog]
+body = """
+{% for entry in commits | commit_groups(groups=commit_parsers_groups) -%}
+### {{ entry.group | striptags | trim | upper_first }}
+{% for commit in entry.commits -%}
+- {% if commit.breaking %}**Breaking:** {% endif %}{{ commit.message | split(pat=": ") | last | upper_first }}
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+commit_parsers = [
+    { message = "^Merge ", skip = true },
+    { message = "^feat", group = "Features" },
+    { message = "^fix", group = "Bug Fixes" },
+    { message = "^perf", group = "Performance" },
+    { message = "^revert", group = "Reverts" },
+    { message = '^(chore|docs|test|ci|build|style|refactor)(\([^)]*\))?:', skip = true },
+    { message = ".*", group = "Other Changes" },
+]

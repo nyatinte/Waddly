@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Install locked development tools
         uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
@@ -125,6 +126,24 @@ jobs:
             echo "upload_checksum=$UPLOAD_CHECKSUM"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Generate release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_CHANNEL" = stable ]; then
+            TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+$'
+          else
+            TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
+          fi
+          mise exec -- git-cliff \
+            --config cliff.toml \
+            --latest \
+            --tag "$RELEASE_TAG" \
+            --tag-pattern "$TAG_PATTERN" \
+            > "$RUNNER_TEMP/release-notes.md"
+
       - name: Publish versioned GitHub Release
         shell: bash
         env:
@@ -148,7 +167,7 @@ jobs:
             gh release create "$RELEASE_TAG" \
               --verify-tag \
               "${RELEASE_FLAGS[@]}" \
-              --generate-notes \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
               --title "Waddly $VERSION" \
               "$DMG" "$CHECKSUM"
           elif [ "$UPLOAD_DMG" = true ]; then
