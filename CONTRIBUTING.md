@@ -4,7 +4,7 @@ Thanks for your interest in contributing. This guide covers local development an
 
 ## Requirements
 
-- macOS 13 or later
+- macOS 14 or later
 - Xcode Command Line Tools with Swift 6
 - mise ([install and enable it in your shell](https://mise.jdx.dev/getting-started.html)) for the pinned SwiftFormat and SwiftLint development tools
 
@@ -100,4 +100,4 @@ The script writes an architecture-specific DMG to `dist/`. The default build is 
 - Add or update user-facing strings in both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
 - Update both `README.md` and `README.en.md` when user-facing behavior or setup instructions change.
 - Preserve the input privacy boundary: key codes may be checked transiently to identify Enter, but must not be stored, logged, or transmitted. Keep imported images on-device.
-- Keep Swift changes compatible with Swift 6 and macOS 13, and avoid new dependencies unless they are needed.
+- Keep Swift changes compatible with Swift 6 and macOS 14, and avoid new dependencies unless they are needed.

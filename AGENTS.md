@@ -2,7 +2,7 @@
 
 ## Development environment and code placement
 
-Keep changes within the existing Swift 6, AppKit, and macOS 13+ setup. Prefer system APIs and avoid adding dependencies.
+Keep changes within the existing Swift 6, AppKit, and macOS 14+ setup. Prefer system APIs and avoid adding dependencies.
 
 Keep image models, image import, and image processing in `Sources/WaddlyCore`. Keep the app lifecycle, input monitoring, and UI in `Sources/WaddlyApp`.
 

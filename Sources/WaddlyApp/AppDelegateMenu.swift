@@ -4,7 +4,7 @@ import WaddlyCore
 
 private enum MenuBarIconRenderer {
     static func makeImage() -> NSImage? {
-        guard let url = Bundle.main.url(forResource: "waddly-menubar", withExtension: "pdf"),
+        guard let url = Bundle.main.url(forResource: "waddly-menubar", withExtension: "svg"),
               let image = NSImage(contentsOf: url) else { return nil }
 
         image.size = NSSize(width: 24, height: 24)
