@@ -1,3 +1,4 @@
+import AppKit
 import Testing
 @testable import WaddlyApp
 
@@ -20,6 +21,28 @@ import Testing
     #expect(AppLanguage.detectedLocalization(["fr-FR"]) == "en")
     #expect(AppLanguage.japanese.localization == "ja")
     #expect(AppLanguage.english.localization == "en")
+}
+
+@Test @MainActor func copiedMenusHaveIndependentItemsAndPreserveNestedCommandsAndState() {
+    let original = NSMenu(title: "Original")
+    let submenu = NSMenu(title: "Options")
+    let item = NSMenuItem(title: "English", action: nil, keyEquivalent: "")
+    item.tag = AppLanguage.english.rawValue
+    item.state = .on
+    submenu.addItem(item)
+    let parent = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
+    parent.submenu = submenu
+    original.addItem(parent)
+
+    let copy = copyMenuTree(original)
+    let copiedItem = copy.items[0].submenu?.items[0]
+
+    #expect(copy !== original)
+    #expect(copy.items[0] !== original.items[0])
+    #expect(copy.items[0].submenu !== original.items[0].submenu)
+    #expect(copiedItem?.title == item.title)
+    #expect(copiedItem?.tag == item.tag)
+    #expect(copiedItem?.state == item.state)
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {

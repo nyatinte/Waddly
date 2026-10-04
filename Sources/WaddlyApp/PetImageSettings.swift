@@ -169,42 +169,53 @@ extension AppDelegate {
             window.minSize = NSSize(width: 620, height: 670)
             window.isReleasedWhenClosed = false
 
-            let content = NSView()
-            let stack = NSStackView()
-            stack.orientation = .vertical
-            stack.alignment = .leading
-            stack.spacing = 8
-            stack.translatesAutoresizingMaskIntoConstraints = false
-            content.addSubview(stack)
-
-            let note = NSTextField(wrappingLabelWithString: localizedString(.imagesInstructions))
-            note.translatesAutoresizingMaskIntoConstraints = false
-            stack.addArrangedSubview(note)
-            note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-            for category in PetImageCategory.allCases {
-                let row = PetImageCategoryRowView(category: category, images: thumbnails(for: category))
-                row.onAdd = { [weak self] in self?.chooseImages(for: category) }
-                row.onDrop = { [weak self] in self?.addImages($0, to: category) }
-                row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }
-                row.onMove = { [weak self] in self?.moveImage(from: $0, to: $1, in: category) }
-                imageRows[category] = row
-                stack.addArrangedSubview(row)
-                row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-            }
-
-            NSLayoutConstraint.activate([
-                stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-                stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
-                stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
-                stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -20)
-            ])
-            window.contentView = content
             imageSettingsWindow = window
             window.center()
+            window.contentView = makeImageSettingsContent()
         }
         NSApp.activate(ignoringOtherApps: true)
         imageSettingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    func refreshImageSettingsLocalization() {
+        guard let window = imageSettingsWindow else { return }
+        window.title = localizedString(.imagesWindowTitle)
+        imageRows.removeAll()
+        window.contentView = makeImageSettingsContent()
+    }
+
+    private func makeImageSettingsContent() -> NSView {
+        let content = NSView()
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(stack)
+
+        let note = NSTextField(wrappingLabelWithString: localizedString(.imagesInstructions))
+        note.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(note)
+        note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        for category in PetImageCategory.allCases {
+            let row = PetImageCategoryRowView(category: category, images: thumbnails(for: category))
+            row.onAdd = { [weak self] in self?.chooseImages(for: category) }
+            row.onDrop = { [weak self] in self?.addImages($0, to: category) }
+            row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }
+            row.onMove = { [weak self] in self?.moveImage(from: $0, to: $1, in: category) }
+            imageRows[category] = row
+            stack.addArrangedSubview(row)
+            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
+
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -20)
+        ])
+        return content
     }
 
     private func chooseImages(for category: PetImageCategory) {

@@ -1,6 +1,14 @@
 import AppKit
 
 extension SetupWizardController {
+    func refreshLocalization() {
+        prompt = Self.loadPrompt()
+        window?.title = localizedString(.setupWindowTitle)
+        renderCurrentStep()
+    }
+}
+
+extension SetupWizardController {
     func makeTitle(_ key: LocalizationKey) -> NSTextField {
         let label = NSTextField(labelWithString: localizedString(key))
         label.font = .systemFont(ofSize: 25, weight: .bold)

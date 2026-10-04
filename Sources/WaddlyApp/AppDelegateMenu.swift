@@ -12,6 +12,22 @@ private enum MenuBarIconRenderer {
     }
 }
 
+func copyMenuTree(_ menu: NSMenu) -> NSMenu {
+    let copy = NSMenu(title: menu.title)
+    for item in menu.items {
+        let itemCopy = NSMenuItem(title: item.title, action: item.action, keyEquivalent: item.keyEquivalent)
+        itemCopy.target = item.target
+        itemCopy.tag = item.tag
+        itemCopy.state = item.state
+        itemCopy.isEnabled = item.isEnabled
+        if let submenu = item.submenu {
+            itemCopy.submenu = copyMenuTree(submenu)
+        }
+        copy.addItem(itemCopy)
+    }
+    return copy
+}
+
 extension AppDelegate {
     private func makeSizeMenuItem() -> NSMenuItem {
         let menuItem = NSMenuItem(title: localizedString(.menuDisplaySize), action: nil, keyEquivalent: "")
@@ -30,6 +46,13 @@ extension AppDelegate {
     }
 
     func buildMenu() {
+        statusMenu = NSMenu()
+        statusMenu.delegate = self
+        pauseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        loginItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        breathingItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         pauseItem.title = localizedString(.menuPause)
         pauseItem.action = #selector(togglePause)
         pauseItem.target = self
@@ -37,6 +60,26 @@ extension AppDelegate {
 
         statusMenu.addItem(makeSizeMenuItem())
 
+        statusMenu.addItem(makeMotionMenuItem())
+
+        addLanguageMenu()
+        addBreathingMenuItem()
+        addPresenceMenu()
+        addWindowMenuItems()
+
+        statusItem.button?.image = makeStatusIcon()
+        statusItem.button?.setAccessibilityLabel(localizedString(.a11yMenuBar))
+        statusItem.menu = statusMenu
+        petView.contextMenuProvider = { [weak self] in
+            guard let self else { return nil }
+            let menu = copyMenuTree(statusMenu)
+            menu.delegate = self
+            return menu
+        }
+        updateMenuStatus()
+    }
+
+    private func makeMotionMenuItem() -> NSMenuItem {
         let motionItem = NSMenuItem(title: localizedString(.menuTypingMotion), action: nil, keyEquivalent: "")
         let motionMenu = NSMenu()
         for motion in TypingMotion.allCases {
@@ -47,14 +90,10 @@ extension AppDelegate {
             motionMenu.addItem(item)
         }
         motionItem.submenu = motionMenu
-        statusMenu.addItem(motionItem)
+        return motionItem
+    }
 
-        addLanguageMenu()
-
-        addBreathingMenuItem()
-
-        addPresenceMenu()
-
+    private func addWindowMenuItems() {
         let imageSettingsItem = NSMenuItem(
             title: localizedString(.menuImageSettings),
             action: #selector(showImageSettings),
@@ -83,12 +122,6 @@ extension AppDelegate {
             keyEquivalent: "q"
         )
         statusMenu.addItem(quitItem)
-
-        statusItem.button?.image = makeStatusIcon()
-        statusItem.button?.setAccessibilityLabel(localizedString(.a11yMenuBar))
-        statusItem.menu = statusMenu
-        petView.contextMenu = statusMenu
-        updateMenuStatus()
     }
 
     private func addPresenceMenu() {
@@ -208,16 +241,7 @@ extension AppDelegate {
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
         guard let language = AppLanguage(rawValue: sender.tag), language != AppLanguage.selected else { return }
         settings.appLanguage = language
-        sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
-
-        let alert = NSAlert()
-        alert.messageText = localizedString(.languageRestartTitle)
-        alert.informativeText = localizedString(.languageRestartMessage)
-        alert.addButton(withTitle: localizedString(.languageRestartNow))
-        alert.addButton(withTitle: localizedString(.languageRestartLater))
-        if alert.runModal() == .alertFirstButtonReturn {
-            NSApp.terminate(nil)
-        }
+        pendingLocalizationRefresh = true
     }
 
     @objc private func togglePause() {
@@ -237,11 +261,24 @@ extension AppDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            let alert = NSAlert()
-            alert.messageText = localizedString(.menuLoginError)
-            alert.alertStyle = .warning
-            alert.runModal()
+            pendingMenuError = true
         }
         updateMenuStatus()
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        if pendingLocalizationRefresh {
+            pendingLocalizationRefresh = false
+            buildMenu()
+            petView.toolTip = localizedString(.petDropTooltip)
+            setupWizardController?.refreshLocalization()
+            refreshImageSettingsLocalization()
+        }
+        guard pendingMenuError else { return }
+        pendingMenuError = false
+        let alert = NSAlert()
+        alert.messageText = localizedString(.menuLoginError)
+        alert.alertStyle = .warning
+        alert.beginSheetModal(for: panel)
     }
 }

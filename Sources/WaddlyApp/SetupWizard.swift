@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate {
-    private let prompt: String
+    var prompt: String
     private let onImportImage: @MainActor (URL) async -> Bool
     private let hasCustomImage: @MainActor () -> Bool
     private let hasInputMonitoringPermission: @MainActor () -> Bool
@@ -131,7 +131,7 @@ extension SetupWizardController {
         return navigation
     }
 
-    private func renderCurrentStep() {
+    func renderCurrentStep() {
         let page: NSView = switch currentStep {
         case 0: makePromptPage()
         case 1: makeImagePage()
@@ -351,7 +351,7 @@ extension SetupWizardController {
         renderCurrentStep()
     }
 
-    private static func loadPrompt() -> String {
+    static func loadPrompt() -> String {
         let language = AppLanguage.active.localization
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
               let markdown = try? String(contentsOf: url, encoding: .utf8),

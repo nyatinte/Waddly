@@ -10,7 +10,9 @@ enum AppLanguage: Int, CaseIterable {
         AppSettings.standard.appLanguage
     }
 
-    static let active = selected
+    static var active: AppLanguage {
+        selected
+    }
 
     var localization: String {
         switch self {
