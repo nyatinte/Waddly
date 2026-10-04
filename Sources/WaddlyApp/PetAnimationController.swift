@@ -9,13 +9,14 @@ final class PetAnimationController {
     private let hasCompletePetImageSet: () -> Bool
     private let typingMotion: () -> TypingMotion
     private let isBreathingEnabled: () -> Bool
-    private let now: () -> TimeInterval
+    private let scheduler: any AnimationScheduling
+    private let blinkDelay: () -> TimeInterval
 
-    private var phaseTimer: Timer?
-    private var idleBlinkTimer: Timer?
-    private var sleepAnimationTimer: Timer?
-    private var enterReactionTimer: Timer?
-    private var phaseTimerGeneration = 0
+    private var phaseWork: AnimationCancellation?
+    private var idleBlinkWork: AnimationCancellation?
+    private var sleepAnimationWork: AnimationCancellation?
+    private var enterReactionWork: AnimationCancellation?
+    private var phaseWorkGeneration = 0
     private var idleBlinkGeneration = 0
     private var sleepAnimationGeneration = 0
     private var enterReactionGeneration = 0
@@ -35,15 +36,17 @@ final class PetAnimationController {
         hasCompletePetImageSet: @escaping () -> Bool,
         typingMotion: @escaping () -> TypingMotion,
         isBreathingEnabled: @escaping () -> Bool,
-        now: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
+        scheduler: any AnimationScheduling = ContinuousAnimationScheduler(),
+        blinkDelay: @escaping () -> TimeInterval = { Double.random(in: 4 ... 8) }
     ) {
         self.petView = petView
         self.petImages = petImages
         self.hasCompletePetImageSet = hasCompletePetImageSet
         self.typingMotion = typingMotion
         self.isBreathingEnabled = isBreathingEnabled
-        self.now = now
-        lastInputTime = now() - 2.5
+        self.scheduler = scheduler
+        self.blinkDelay = blinkDelay
+        lastInputTime = scheduler.now - 2.5
     }
 
     func start() {
@@ -53,11 +56,11 @@ final class PetAnimationController {
     func handleKeyDown(isEnter: Bool) {
         guard hasCompletePetImageSet(), !isPaused else { return }
         let startsTyping = currentPhase != .typing
-        let interruptedEnterReaction = enterReactionTimer != nil
+        let interruptedEnterReaction = enterReactionWork != nil
         stopEnterReaction()
         stopSleepAnimation()
-        lastInputTime = now()
-        stopPhaseTimer()
+        lastInputTime = scheduler.now
+        stopPhaseWork()
         stopIdleBlink()
         petView.layer?.removeAnimation(forKey: "idle-breathe")
         petView.layer?.removeAnimation(forKey: "sleep-breathe")
@@ -85,12 +88,12 @@ final class PetAnimationController {
         guard paused != isPaused else { return }
         isPaused = paused
         if paused {
-            stopAllTimers()
+            stopAllWork()
             petView.layer?.removeAllAnimations()
             return
         }
 
-        lastInputTime = now()
+        lastInputTime = scheduler.now
         currentPhase = nil
         if hasCompletePetImageSet() {
             show(petImages()[.typing][0])
@@ -100,17 +103,18 @@ final class PetAnimationController {
 
     func imageSetDidChange(resetActivity: Bool = false) {
         if resetActivity {
-            lastInputTime = now() - 2.5
+            lastInputTime = scheduler.now - 2.5
             currentPhase = nil
-            stopPhaseTimer()
+            stopPhaseWork()
         }
         stopEnterReaction()
         stopIdleBlink()
         stopSleepAnimation()
 
+        guard !isPaused else { return }
         guard hasCompletePetImageSet() else {
             currentPhase = nil
-            stopPhaseTimer()
+            stopPhaseWork()
             petView.layer?.removeAllAnimations()
             return
         }
@@ -160,16 +164,16 @@ final class PetAnimationController {
     }
 
     func shutdown() {
-        stopAllTimers()
+        stopAllWork()
         petView.layer?.removeAllAnimations()
     }
 }
 
 private extension PetAnimationController {
     private func schedulePhaseChange() {
-        stopPhaseTimer()
+        stopPhaseWork()
         guard hasCompletePetImageSet(), !isPaused else { return }
-        let elapsed = now() - lastInputTime
+        let elapsed = scheduler.now - lastInputTime
         let phase = PetPhase.after(elapsed)
         if phase != currentPhase {
             currentPhase = phase
@@ -183,15 +187,13 @@ private extension PetAnimationController {
         case .frozen: nil
         }
         guard let nextBoundary else { return }
-        let generation = phaseTimerGeneration
-        phaseTimer = Timer.scheduledTimer(
-            withTimeInterval: max(0.05, nextBoundary - elapsed),
+        let generation = phaseWorkGeneration
+        phaseWork = scheduler.schedule(
+            after: max(0.05, nextBoundary - elapsed),
             repeats: false
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, self.phaseTimerGeneration == generation else { return }
-                self.schedulePhaseChange()
-            }
+        ) { [weak self] in
+            guard let self, phaseWorkGeneration == generation else { return }
+            schedulePhaseChange()
         }
     }
 
@@ -265,38 +267,36 @@ private extension PetAnimationController {
         }
 
         let generation = enterReactionGeneration
-        enterReactionTimer = Timer.scheduledTimer(
-            withTimeInterval: sequence.count > 1 ? 0.12 : 0.58,
+        enterReactionWork = scheduler.schedule(
+            after: sequence.count > 1 ? 0.12 : 0.58,
             repeats: sequence.count > 1
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, self.enterReactionGeneration == generation else { return }
-                guard self.currentPhase == .typing, !self.isPaused,
-                      self.hasCompletePetImageSet()
-                else {
-                    self.stopEnterReaction()
-                    return
-                }
-                guard self.enterReactionFrameIndex < sequence.count else {
-                    self.finishEnterReaction()
-                    self.show(self.petImages()[.typing][0])
-                    return
-                }
-                self.show(sequence[self.enterReactionFrameIndex])
-                self.enterReactionFrameIndex += 1
+        ) { [weak self] in
+            guard let self, enterReactionGeneration == generation else { return }
+            guard currentPhase == .typing, !isPaused,
+                  hasCompletePetImageSet()
+            else {
+                stopEnterReaction()
+                return
             }
+            guard enterReactionFrameIndex < sequence.count else {
+                finishEnterReaction()
+                show(petImages()[.typing][0])
+                return
+            }
+            show(sequence[enterReactionFrameIndex])
+            enterReactionFrameIndex += 1
         }
     }
 
     private func finishEnterReaction() {
-        enterReactionTimer?.invalidate()
-        enterReactionTimer = nil
+        enterReactionWork?.invalidate()
+        enterReactionWork = nil
         enterReactionGeneration += 1
     }
 
     private func stopEnterReaction() {
-        enterReactionTimer?.invalidate()
-        enterReactionTimer = nil
+        enterReactionWork?.invalidate()
+        enterReactionWork = nil
         enterReactionGeneration += 1
         petView.layer?.removeAnimation(forKey: "enter-impact")
     }
@@ -324,26 +324,22 @@ private extension PetAnimationController {
         stopIdleBlink()
         guard currentPhase == .idle, !isPaused, petImages()[.idle].count > 1 else { return }
         let generation = idleBlinkGeneration
-        idleBlinkTimer = Timer.scheduledTimer(
-            withTimeInterval: Double.random(in: 4 ... 8),
+        idleBlinkWork = scheduler.schedule(
+            after: blinkDelay(),
             repeats: false
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, self.idleBlinkGeneration == generation,
-                      self.currentPhase == .idle, !self.isPaused else { return }
-                let blinkImages = self.petImages()[.idle]
-                guard blinkImages.count > 1 else { return }
-                self.idleFrameIndex = Int.random(in: 1 ..< blinkImages.count)
-                self.show(blinkImages[self.idleFrameIndex])
-                self.idleBlinkTimer = Timer.scheduledTimer(withTimeInterval: 0.16, repeats: false) { [weak self] _ in
-                    MainActor.assumeIsolated {
-                        guard let self, self.idleBlinkGeneration == generation,
-                              self.currentPhase == .idle, !self.isPaused else { return }
-                        self.idleBlinkTimer = nil
-                        self.show(self.petImages()[.idle][0])
-                        self.scheduleIdleBlink()
-                    }
-                }
+        ) { [weak self] in
+            guard let self, idleBlinkGeneration == generation,
+                  currentPhase == .idle, !self.isPaused else { return }
+            let blinkImages = petImages()[.idle]
+            guard blinkImages.count > 1 else { return }
+            idleFrameIndex = Int.random(in: 1 ..< blinkImages.count)
+            show(blinkImages[idleFrameIndex])
+            idleBlinkWork = scheduler.schedule(after: 0.16, repeats: false) { [weak self] in
+                guard let self, idleBlinkGeneration == generation,
+                      currentPhase == .idle, !self.isPaused else { return }
+                idleBlinkWork = nil
+                show(petImages()[.idle][0])
+                scheduleIdleBlink()
             }
         }
     }
@@ -352,38 +348,36 @@ private extension PetAnimationController {
         stopSleepAnimation()
         guard currentPhase == .sleeping, !isPaused, petImages()[.sleep].count > 1 else { return }
         let generation = sleepAnimationGeneration
-        sleepAnimationTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, self.sleepAnimationGeneration == generation,
-                      self.currentPhase == .sleeping, !self.isPaused else { return }
-                let sleepImages = self.petImages()[.sleep]
-                guard !sleepImages.isEmpty else { return }
-                self.sleepFrameIndex = (self.sleepFrameIndex + 1) % sleepImages.count
-                self.show(sleepImages[self.sleepFrameIndex])
-            }
+        sleepAnimationWork = scheduler.schedule(after: 1.5, repeats: true) { [weak self] in
+            guard let self, sleepAnimationGeneration == generation,
+                  currentPhase == .sleeping, !self.isPaused else { return }
+            let sleepImages = petImages()[.sleep]
+            guard !sleepImages.isEmpty else { return }
+            sleepFrameIndex = (sleepFrameIndex + 1) % sleepImages.count
+            show(sleepImages[sleepFrameIndex])
         }
     }
 
-    private func stopPhaseTimer() {
-        phaseTimerGeneration += 1
-        phaseTimer?.invalidate()
-        phaseTimer = nil
+    private func stopPhaseWork() {
+        phaseWorkGeneration += 1
+        phaseWork?.invalidate()
+        phaseWork = nil
     }
 
     private func stopIdleBlink() {
         idleBlinkGeneration += 1
-        idleBlinkTimer?.invalidate()
-        idleBlinkTimer = nil
+        idleBlinkWork?.invalidate()
+        idleBlinkWork = nil
     }
 
     private func stopSleepAnimation() {
         sleepAnimationGeneration += 1
-        sleepAnimationTimer?.invalidate()
-        sleepAnimationTimer = nil
+        sleepAnimationWork?.invalidate()
+        sleepAnimationWork = nil
     }
 
-    private func stopAllTimers() {
-        stopPhaseTimer()
+    private func stopAllWork() {
+        stopPhaseWork()
         stopIdleBlink()
         stopSleepAnimation()
         stopEnterReaction()

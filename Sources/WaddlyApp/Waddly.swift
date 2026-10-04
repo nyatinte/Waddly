@@ -56,7 +56,8 @@ final class DraggableImageView: NSImageView {
     }
 }
 
-final class KeyboardMonitor: @unchecked Sendable {
+@MainActor
+final class KeyboardMonitor {
     var onKeyDown: (@MainActor (Bool) -> Void)?
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -76,7 +77,7 @@ final class KeyboardMonitor: @unchecked Sendable {
         return permissionGranted
     }
 
-    static func isEnterKeyCode(_ keyCode: Int64) -> Bool {
+    nonisolated static func isEnterKeyCode(_ keyCode: Int64) -> Bool {
         keyCode == 36 || keyCode == 76
     }
 
@@ -134,17 +135,23 @@ final class KeyboardMonitor: @unchecked Sendable {
         tap = nil
     }
 
-    private static let handleEvent: CGEventTapCallBack = { _, type, event, userInfo in
+    // SwiftFormat orders access modifiers before nonisolated.
+    // swiftlint:disable:next modifier_order
+    private nonisolated static let handleEvent: CGEventTapCallBack = { _, type, event, userInfo in
         guard let userInfo else { return Unmanaged.passUnretained(event) }
         let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
 
-        if type == .keyDown {
-            let isEnter = isEnterKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
-            MainActor.assumeIsolated {
+        let isEnter = type == .keyDown && isEnterKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
+        // The source is installed only on the main run loop. Keep the C callback
+        // bridge synchronous so stop() cannot race an outstanding actor hop.
+        MainActor.assumeIsolated {
+            if type == .keyDown {
                 monitor.onKeyDown?(isEnter)
+            } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                if let tap = monitor.tap {
+                    CGEvent.tapEnable(tap: tap, enable: true)
+                }
             }
-        } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput, let tap = monitor.tap {
-            CGEvent.tapEnable(tap: tap, enable: true)
         }
         return Unmanaged.passUnretained(event)
     }

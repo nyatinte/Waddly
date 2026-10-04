@@ -73,7 +73,15 @@ mise run test
 
 The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path.
 
-The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
+The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames.
+
+If a deliberate sprite-sheet visual change breaks `spriteSheetExtractionMatchesPixelSnapshots`, run:
+
+```sh
+WADDLY_PRINT_SNAPSHOTS=1 ./macos/test.sh --filter spriteSheetExtractionMatchesPixelSnapshots
+```
+
+Copy the printed `expectedSpriteSheetSnapshots` value into `Tests/WaddlyCoreTests/PetImageSnapshotTests.swift`, then rerun `./macos/test.sh`.
 
 ## Memory profiling
 
