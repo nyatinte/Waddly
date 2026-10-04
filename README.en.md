@@ -88,9 +88,7 @@ Waddly observes key-down events through a listen-only `CGEventTap`. It uses even
 
 ## Measured memory
 
-Memory was measured on an Apple Silicon Mac running macOS 27.0 with the Release build. About eight seconds after launch, while the idle animation was running, `ps` reported an RSS of 52,416 KB, or about 51 MiB. `footprint` reported a physical memory footprint of about 13 MB and a peak of about 13 MB. Results vary with the process and OS state. Memory use during typing and after more than five minutes without animation has not been measured.
-
-RSS includes shared libraries and other resident pages. The macOS footprint measures the app's impact on physical memory separately. Both measured values were below this project's 100 MB target.
+The memory goal is a physical footprint below 100 MB in representative configurations. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). Compare Release-app RSS and physical footprint across launch, typing, large images, repeated imports, and sleeping/frozen states. `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
 
 ## Adding localization keys
 

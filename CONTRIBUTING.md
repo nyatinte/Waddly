@@ -75,6 +75,10 @@ The script adds the Swift Testing macro plugin path when Command Line Tools inst
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, and importing and saving the example 3×3 sprite sheet.
 
+## Memory profiling
+
+See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activity states, repeated-import checks, measured baselines, and diagnostic commands. `mise run memory:test` runs the separate serialized Release suite on Swift 6.2 / macOS 26+. Its dependencies are isolated from the macOS 14 production app.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `mise run check`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
