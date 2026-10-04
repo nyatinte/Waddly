@@ -30,9 +30,12 @@ extension AppDelegate {
         let storage = PetImageStorage(directory: directory)
         let previous = petImages
         let oldFiles = storedImageFiles
-        let newFiles = try await Task.detached(priority: .userInitiated) {
-            try storage.stage(updated, replacing: previous, files: oldFiles, encodedImages: encodedImages)
+        let staged = try await Task.detached(priority: .userInitiated) {
+            let files = try storage.stage(updated, replacing: previous, files: oldFiles, encodedImages: encodedImages)
+            let thumbnails = autoreleasepool { PetSpriteSheetImporter.thumbnails(for: updated) }
+            return (files, thumbnails)
         }.value
+        let newFiles = staged.0
         guard !isShuttingDown else {
             await Task.detached { storage.removeObsoleteFiles(from: newFiles, keeping: oldFiles) }.value
             throw CancellationError()
@@ -40,6 +43,7 @@ extension AppDelegate {
         settings.petImageFiles = newFiles
         storedImageFiles = newFiles
         importedImages = updated
+        imageThumbnails = staged.1
         imageSetDidChange(resetActivity: resetActivity)
         await cleanup(storage, oldFiles, newFiles)
     }
@@ -53,7 +57,7 @@ extension AppDelegate {
 
     private func addImagesInOrder(_ urls: [URL], to category: PetImageCategory) async -> Bool {
         guard !imageLoadFailed else {
-            showImageSaveError(PetImageStorageError.memoryBudgetExceeded)
+            await showImageSaveError(PetImageStorageError.memoryBudgetExceeded)
             return false
         }
         var addedCount = 0
@@ -76,16 +80,16 @@ extension AppDelegate {
                 try await persistPetImages(updated, encodedImages: encoded)
                 addedCount += 1
             } catch {
-                showImageSaveError(error)
+                await showImageSaveError(error)
                 return false
             }
         }
         guard addedCount > 0 else {
-            showAlert(.imagesErrorTitle, .imagesErrorMessage)
+            await showAlert(.imagesErrorTitle, .imagesErrorMessage)
             return false
         }
         if skippedCount > 0 {
-            showAlert(.imagesSkippedTitle, .imagesSkippedMessage)
+            await showAlert(.imagesSkippedTitle, .imagesSkippedMessage)
         }
         return true
     }
@@ -132,7 +136,7 @@ extension AppDelegate {
             try await persistPetImages(updated)
             return true
         } catch {
-            showImageSaveError(error)
+            await showImageSaveError(error)
             return false
         }
     }

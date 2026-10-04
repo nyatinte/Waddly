@@ -21,7 +21,7 @@ public struct PetImageSet: Sendable {
         set { images[category] = newValue }
     }
 
-    /// 40 MiB leaves room for the app, a replacement sheet, and its thumbnail.
+    /// Bounds decoded frames and metadata; total process footprint also includes rendering and scratch buffers.
     public static let maximumResidentBytes = 40 * 1024 * 1024
 
     public var estimatedResidentBytes: Int {
@@ -33,7 +33,7 @@ public struct PetImageSet: Sendable {
                 else {
                     return Self.maximumResidentBytes + 1
                 }
-                cost += raster.bytesPerRow * raster.height + 128 * 1024
+                cost += raster.bytesPerRow * raster.height + 192 * 1024
                 if cost > Self.maximumResidentBytes {
                     return cost
                 }
@@ -60,6 +60,30 @@ public struct OptimizedPetImage: Sendable {
 public enum PetSpriteSheetImporter {
     public static let maximumFileSize = 20 * 1024 * 1024
     public static let maximumImageDimension = 1024
+
+    public static func thumbnails(for images: PetImageSet) -> [ObjectIdentifier: NSImage] {
+        var thumbnails: [ObjectIdentifier: NSImage] = [:]
+        for category in PetImageCategory.allCases {
+            for image in images[category] {
+                guard let raster = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
+                let scale = min(1, 128 / Double(max(raster.width, raster.height)))
+                let width = max(1, Int(Double(raster.width) * scale))
+                let height = max(1, Int(Double(raster.height) * scale))
+                let space = raster.colorSpace?.model == .rgb ? raster.colorSpace : CGColorSpaceCreateDeviceRGB()
+                guard let space, let context = CGContext(
+                    data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                    space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                ) else { continue }
+                context.interpolationQuality = .high
+                context.draw(raster, in: CGRect(x: 0, y: 0, width: width, height: height))
+                guard let thumbnail = context.makeImage() else { continue }
+                thumbnails[ObjectIdentifier(image)] = NSImage(
+                    cgImage: thumbnail, size: NSSize(width: width, height: height)
+                )
+            }
+        }
+        return thumbnails
+    }
 
     public static func optimizedImage(from data: Data) -> OptimizedPetImage? {
         guard data.count <= maximumFileSize,
