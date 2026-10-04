@@ -6,3 +6,34 @@ lockfile_platforms = ["macos-arm64"]
 hk = "2.4.0"
 "aqua:realm/SwiftLint" = "0.65.1"
 "github:nicklockwood/SwiftFormat" = { version = "0.63.1", no_app = true }
+
+[tasks.format]
+description = "Format Swift sources"
+run = "mise exec github:nicklockwood/SwiftFormat -- swiftformat Sources Tests Package.swift Tools"
+
+[tasks."format:check"]
+description = "Check Swift formatting"
+run = "mise exec github:nicklockwood/SwiftFormat -- swiftformat Sources Tests Package.swift Tools --lint"
+
+[tasks.lint]
+description = "Check localizations and run strict SwiftLint"
+run = [
+  "swift Tools/generate_localizations.swift --check",
+  "TOOLCHAIN_DIR=\"$(xcode-select -p)\" mise exec aqua:realm/SwiftLint -- swiftlint lint --strict Sources Tests macos Package.swift Tools",
+]
+
+[tasks.test]
+description = "Run Swift Testing suites"
+run = "./macos/test.sh"
+
+[tasks.build]
+description = "Build the signed Release app"
+run = "./macos/build.sh"
+
+[tasks.package]
+description = "Build and package the app as a DMG"
+run = "./macos/package.sh"
+
+[tasks.check]
+description = "Run all local validation and build the Release app"
+run = ["mise run format:check", "mise run lint", "mise run test", "mise run build"]

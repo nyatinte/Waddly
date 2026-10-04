@@ -21,6 +21,14 @@ SwiftFormat and SwiftLint are development-only tools and are not included in the
 
 ## Format and lint
 
+Use mise tasks for the common development commands:
+
+```sh
+mise run format       # Format Swift source files
+mise run format:check # Check formatting without changing files
+mise run lint         # Check localization accessors and run strict SwiftLint
+```
+
 Format Swift source files with the version pinned in `mise.toml`:
 
 ```sh
@@ -49,18 +57,18 @@ hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is av
 ## Build and run
 
 ```sh
-./macos/build.sh
+mise run build
 open build/Waddly.app
 ```
 
-The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`.
+The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, tests, and this Release build—the full local validation path used by CI.
 
 ## Tests
 
 Run the test suite:
 
 ```sh
-./macos/test.sh
+mise run test
 ```
 
 The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path.
@@ -69,7 +77,7 @@ The tests cover animation phases, image validation and optimization, localizatio
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `hk check --all`, `./macos/build.sh`, and `./macos/test.sh`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `mise run check`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
@@ -84,7 +92,7 @@ The generator checks that both languages have matching keys and writes `Sources/
 ## Create a DMG
 
 ```sh
-./macos/package.sh
+mise run package
 ```
 
 The script writes an arm64 DMG to `dist/`. By design, release builds are ad-hoc signed and not notarized. Gatekeeper may require the user to approve the app on first launch; verify the download and use Finder's Open confirmation or System Settings → Privacy & Security. Do not bypass Gatekeeper by removing quarantine attributes.
