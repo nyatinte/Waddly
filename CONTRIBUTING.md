@@ -107,11 +107,11 @@ The generator checks that both languages have matching keys and writes `Sources/
 mise run package
 ```
 
-The script writes an arm64 DMG to `dist/`. By design, release builds are ad-hoc signed and not notarized. Gatekeeper may require the user to approve the app on first launch; verify the download and use Finder's Open confirmation or System Settings → Privacy & Security. Do not bypass Gatekeeper by removing quarantine attributes.
+The script writes an arm64 DMG to `dist/`. By design, release builds are ad-hoc signed and not notarized. The Homebrew Casks remove quarantine after install and upgrade; this does not replace Developer ID signing or notarization. A DMG downloaded directly retains quarantine, so Gatekeeper may block its first launch. Verify the DMG and, if needed, approve the app in System Settings → Privacy & Security. Do not remove quarantine from a directly downloaded app to bypass Gatekeeper.
 
 ## Publish a release for Homebrew
 
-`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `./macos/test.sh`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 14 or later; it does not remove quarantine or delete user data.
+`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `./macos/test.sh`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The generated stable Cask and beta Cask remove quarantine after installation and upgrade. They support Apple Silicon and macOS 14 or later; neither deletes user data.
 
 Before the first stable release, create a fine-grained GitHub token restricted to `nyatinte/homebrew-waddly` with Contents read/write permission, then add it to this repository's Actions secrets as `HOMEBREW_TAP_TOKEN`. Beta releases do not need this token. No Apple signing certificate or notarization credentials are used. Push a tag only after updating the app version in `macos/Info.plist` and merging that change to `main`.
 
