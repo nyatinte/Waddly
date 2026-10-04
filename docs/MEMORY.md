@@ -85,7 +85,7 @@ Two paired optimized runs on Apple Silicon / macOS 27.0.1 produced these represe
 | Before (`d9c24d6`) | 351–353 | 261–263 | 192–194 |
 | After (this change) | 221 | 89 | 48 |
 
-Raw samples from one pair: [before](memory-baselines/image-pipeline-before.csv) and [after](memory-baselines/image-pipeline-after.csv). Units in the CSV are bytes; the table rounds to MiB. Both use the deterministic generated PNG, not user images.
+The measurements use the deterministic generated PNG, not user images. Raw CSV samples are not retained in the repository.
 
 The new path thumbnails the preview to 480 px, directly encodes CGImage as PNG, eagerly decodes on workers, and owns each extracted frame independently. Independent buffers prevent a remaining cropped frame from retaining the complete original sheet. Atomic writes are staged and rolled back on failure; the main actor commits the new manifest before workers remove obsolete files. Reorders and removals reuse persisted filenames, and individual imports reuse their optimized PNG bytes. A main-actor queue serializes entire transactions, including worker waits and the manifest commit.
 
@@ -96,7 +96,7 @@ The nine-frame 1024 × 1024 RGBA8 case occupies about 37.7 MiB under this policy
 Budget checks run on worker snapshots before committing. An excessive addition leaves the current manifest and images unchanged. An oversized saved configuration fails loading with an explicit message and retains its files/manifest; category additions are blocked until the user confirms a replacement sheet, so a partial update cannot overwrite the inaccessible saved configuration. No automatic deletion or truncation is used to force a set under budget.
 
 
-A further diagnostic run used a temporary copy of the same optimized probe with 100 imports and a 30-second hold after the final sample, with `MallocStackLogging=1`. Retained physical footprint for imports 10–99 remained within 49.97–50.03 MiB (stack logging adds overhead). macOS `leaks` reported **0 leaks / 0 leaked bytes** with the final nine-frame set still alive. [Diagnostic details](memory-baselines/100-import-diagnostic.txt) record the temporary probe changes and results. This supports bounded retention for this scenario; it does not establish the absence of every possible ownership leak.
+A further diagnostic run used a temporary copy of the same optimized probe with 100 imports and a 30-second hold after the final sample, with `MallocStackLogging=1`. Retained physical footprint for imports 10–99 remained within 49.97–50.03 MiB (stack logging adds overhead). macOS `leaks` reported **0 leaks / 0 leaked bytes** with the final nine-frame set still alive. This supports bounded retention for this scenario; it does not establish the absence of every possible ownership leak.
 
 ## AppKit image-settings comparison
 
@@ -118,6 +118,6 @@ Three sequential paired runs on the same Apple Silicon / macOS 27.0.1 system pro
 | Before (`3426fc4`) | 193.00 | 120.13 | 120.19 |
 | With settings thumbnails | 127.67 | 98.61 | 98.72 |
 
-Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final footprint ranges were 120.11–122.03 MiB before and 96.72–99.50 MiB after. Later imports plateaued in each run. Raw samples: [before 1](memory-baselines/image-app-before-1.csv), [before 2](memory-baselines/image-app-before-2.csv), [before 3](memory-baselines/image-app-before-3.csv), [after 1](memory-baselines/image-app-after-1.csv), [after 2](memory-baselines/image-app-after-2.csv), [after 3](memory-baselines/image-app-after-3.csv).
+Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final footprint ranges were 120.11–122.03 MiB before and 96.72–99.50 MiB after. Later imports plateaued in each run. Raw CSV samples are not retained in the repository.
 
 This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. Closing the settings window retains its controller/views for reuse, so it need not immediately return memory. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
