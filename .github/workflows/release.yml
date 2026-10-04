@@ -1,0 +1,222 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ contains(github.ref_name, '-beta.') && github.ref_name || 'stable' }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish Apple Silicon release
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install locked development tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.11
+
+      - name: Verify tag and Homebrew tap credentials
+        id: release_info
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' macos/Info.plist)
+          if [ "$RELEASE_TAG" = "v$VERSION" ]; then
+            CHANNEL=stable
+            if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+              printf '::error::Set the HOMEBREW_TAP_TOKEN Actions secret; see CONTRIBUTING.md.\n' >&2
+              exit 1
+            fi
+          elif [[ "$RELEASE_TAG" == "v$VERSION-beta."* ]]; then
+            BETA_NUMBER="${RELEASE_TAG#v$VERSION-beta.}"
+            if [[ ! "$BETA_NUMBER" =~ ^[0-9]+$ ]]; then
+              printf 'Invalid beta tag: %s (expected v%s-beta.N).\n' "$RELEASE_TAG" "$VERSION" >&2
+              exit 1
+            fi
+            CHANNEL=beta
+          else
+            printf 'Release tag %s must be v%s or v%s-beta.N.\n' "$RELEASE_TAG" "$VERSION" "$VERSION" >&2
+            exit 1
+          fi
+          printf 'channel=%s\n' "$CHANNEL" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: ./macos/test.sh
+
+      - name: Package or reuse the published DMG
+        id: package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$(uname -m)" != "arm64" ]; then
+            printf 'Release packaging requires an Apple Silicon runner.\n' >&2
+            exit 1
+          fi
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' macos/Info.plist)
+          VERSION="${RELEASE_TAG#v}"
+          SOURCE_DMG="Waddly-$APP_VERSION-macos-arm64.dmg"
+          DMG="Waddly-$VERSION-macos-arm64.dmg"
+          CHECKSUM="$DMG.sha256"
+          DIST="$GITHUB_WORKSPACE/dist"
+          mkdir -p "$DIST"
+
+          RELEASE_EXISTS=false
+          ASSETS=""
+          if ASSETS=$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' 2>/dev/null); then
+            RELEASE_EXISTS=true
+          fi
+
+          has_asset() {
+            printf '%s\n' "$ASSETS" | grep -Fxq "$1"
+          }
+
+          UPLOAD_DMG=true
+          UPLOAD_CHECKSUM=true
+          if [ "$RELEASE_EXISTS" = true ] && has_asset "$DMG"; then
+            ASSET_DIR="$RUNNER_TEMP/published-assets"
+            mkdir -p "$ASSET_DIR"
+            gh release download "$RELEASE_TAG" --pattern "$DMG" --dir "$ASSET_DIR"
+            cp "$ASSET_DIR/$DMG" "$DIST/$DMG"
+            UPLOAD_DMG=false
+
+            if has_asset "$CHECKSUM"; then
+              gh release download "$RELEASE_TAG" --pattern "$CHECKSUM" --dir "$ASSET_DIR"
+              (cd "$ASSET_DIR" && shasum -a 256 --check "$CHECKSUM")
+              cp "$ASSET_DIR/$CHECKSUM" "$DIST/$CHECKSUM"
+              UPLOAD_CHECKSUM=false
+            else
+              (cd "$DIST" && shasum -a 256 "$DMG" > "$CHECKSUM")
+            fi
+          else
+            unset WADDLY_SIGN_IDENTITY
+            ./macos/package.sh
+            codesign --verify --deep --strict --verbose=2 "$GITHUB_WORKSPACE/build/Waddly.app"
+            if [ "$SOURCE_DMG" != "$DMG" ]; then
+              mv "$DIST/$SOURCE_DMG" "$DIST/$DMG"
+            fi
+            (cd "$DIST" && shasum -a 256 "$DMG" > "$CHECKSUM")
+          fi
+
+          {
+            echo "release_exists=$RELEASE_EXISTS"
+            echo "upload_dmg=$UPLOAD_DMG"
+            echo "upload_checksum=$UPLOAD_CHECKSUM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish versioned GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
+          RELEASE_EXISTS: ${{ steps.package.outputs.release_exists }}
+          UPLOAD_DMG: ${{ steps.package.outputs.upload_dmg }}
+          UPLOAD_CHECKSUM: ${{ steps.package.outputs.upload_checksum }}
+        run: |
+          set -euo pipefail
+          VERSION="${RELEASE_TAG#v}"
+          DMG="dist/Waddly-$VERSION-macos-arm64.dmg"
+          CHECKSUM="$DMG.sha256"
+          RELEASE_FLAGS=(--latest)
+          if [ "$RELEASE_CHANNEL" = beta ]; then
+            RELEASE_FLAGS=(--prerelease)
+          fi
+          if [ "$RELEASE_EXISTS" = false ]; then
+            gh release create "$RELEASE_TAG" \
+              --verify-tag \
+              "${RELEASE_FLAGS[@]}" \
+              --generate-notes \
+              --title "Waddly $VERSION" \
+              "$DMG" "$CHECKSUM"
+          elif [ "$UPLOAD_DMG" = true ]; then
+            # A missing DMG may be uploaded; any existing DMG is always reused above.
+            gh release upload "$RELEASE_TAG" "$DMG" "$CHECKSUM" --clobber
+          elif [ "$UPLOAD_CHECKSUM" = true ]; then
+            gh release upload "$RELEASE_TAG" "$CHECKSUM"
+          else
+            printf 'Published DMG and checksum already match; leaving release assets unchanged.\n'
+          fi
+
+      - name: Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_CHANNEL" = beta ]; then
+            printf 'Skipping Homebrew tap update for prerelease %s.\n' "$RELEASE_TAG"
+            exit 0
+          fi
+          VERSION="${RELEASE_TAG#v}"
+          DMG="Waddly-$VERSION-macos-arm64.dmg"
+          SHA256=$(shasum -a 256 "dist/$DMG" | awk '{ print $1 }')
+          TAP_DIR="$RUNNER_TEMP/homebrew-waddly"
+
+          gh auth setup-git
+          git clone --depth 1 https://github.com/nyatinte/homebrew-waddly.git "$TAP_DIR"
+          if [ -z "$(git -C "$TAP_DIR" branch --show-current)" ]; then
+            git -C "$TAP_DIR" checkout -b main
+          fi
+          CASK="$TAP_DIR/Casks/waddly.rb"
+          if [ -f "$CASK" ]; then
+            CURRENT_VERSION=$(ruby -e 'print File.read(ARGV[0])[/^\s*version\s+"([^"]+)"/, 1]' "$CASK")
+            CURRENT_SHA256=$(ruby -e 'print File.read(ARGV[0])[/^\s*sha256\s+"([^"]+)"/, 1]' "$CASK")
+            if [ -n "$CURRENT_VERSION" ] && ruby -rrubygems/version -e 'exit(Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1)' "$CURRENT_VERSION" "$VERSION"; then
+              printf 'Skipping stale release %s; the tap already has newer version %s.\n' "$VERSION" "$CURRENT_VERSION"
+              exit 0
+            fi
+            if [ "$CURRENT_VERSION" = "$VERSION" ] && [ "$CURRENT_SHA256" = "$SHA256" ]; then
+              printf 'Homebrew tap already matches version %s.\n' "$VERSION"
+              exit 0
+            fi
+          fi
+          git -C "$TAP_DIR" config user.name "github-actions[bot]"
+          git -C "$TAP_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p "$TAP_DIR/Casks"
+          cat > "$TAP_DIR/Casks/waddly.rb" <<EOF
+          cask "waddly" do
+            version "$VERSION"
+            sha256 "$SHA256"
+
+            url "https://github.com/nyatinte/Waddly/releases/download/v#{version}/Waddly-#{version}-macos-arm64.dmg"
+            name "Waddly"
+            desc "Desktop pet that reacts to keyboard input"
+            homepage "https://github.com/nyatinte/Waddly"
+
+            depends_on arch: :arm64
+            depends_on macos: :sonoma
+
+            app "Waddly.app"
+          end
+          EOF
+          ruby -c "$TAP_DIR/Casks/waddly.rb"
+          git -C "$TAP_DIR" add Casks/waddly.rb
+          if git -C "$TAP_DIR" diff --cached --quiet; then
+            exit 0
+          fi
+          git -C "$TAP_DIR" commit -m "Update Waddly to $VERSION"
+          git -C "$TAP_DIR" push origin HEAD:main
