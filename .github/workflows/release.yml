@@ -59,7 +59,7 @@ jobs:
           printf 'channel=%s\n' "$CHANNEL" >> "$GITHUB_OUTPUT"
 
       - name: Run tests
-        run: ./macos/test.sh
+        run: mise run test
 
       - name: Package or reuse the published DMG
         id: package
@@ -111,7 +111,7 @@ jobs:
             fi
           else
             unset WADDLY_SIGN_IDENTITY
-            ./macos/package.sh
+            mise run package
             codesign --verify --deep --strict --verbose=2 "$GITHUB_WORKSPACE/build/Waddly.app"
             if [ "$SOURCE_DMG" != "$DMG" ]; then
               mv "$DIST/$SOURCE_DMG" "$DIST/$DMG"

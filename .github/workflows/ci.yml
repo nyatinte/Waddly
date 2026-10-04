@@ -37,11 +37,5 @@ jobs:
           swiftlint version
           hk --version
 
-      - name: Run the same checks as the commit hook
-        run: hk check --all
-
-      - name: Build Release app with strict lint
-        run: ./macos/build.sh
-
-      - name: Run Swift Testing suites
-        run: ./macos/test.sh
+      - name: Run full local validation
+        run: mise run check
