@@ -16,7 +16,8 @@
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
 - While idle, it breathes and blinks. After a while it sleeps and wakes when you type.
 - Drag your pet anywhere on the desktop; its position is saved between launches.
-- Add your own pet images and configure images and animations from the menu.
+- Add your own pet images and configure idle, typing, and other animations with “Animation Settings…”.
+- Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through the initial image import and Input Monitoring permission. The language item is labeled “Language / 言語”.
 
 ## Use your own pet
 

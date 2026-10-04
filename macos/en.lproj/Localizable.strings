@@ -8,13 +8,13 @@
 "size.medium" = "Medium";
 "size.large" = "Large";
 "menu.typingMotion" = "Typing motion";
-"menu.language" = "Language";
+"menu.language" = "Language / 言語";
 "menu.breathing" = "Breathing animation";
 "menu.presence" = "Show in";
 "menu.showInDock" = "Dock";
 "menu.showInMenuBar" = "Menu Bar";
-"menu.imageSettings" = "Pet images…";
-"menu.setupWizard" = "Setup…";
+"menu.imageSettings" = "Animation Settings…";
+"menu.setupWizard" = "Setup Guide…";
 "menu.login" = "Launch at Login";
 "menu.quit" = "Quit Waddly";
 "menu.loginError" = "Could not change the login item setting.";

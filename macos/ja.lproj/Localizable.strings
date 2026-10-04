@@ -8,13 +8,13 @@
 "size.medium" = "中";
 "size.large" = "大";
 "menu.typingMotion" = "タイピング時の揺れ";
-"menu.language" = "言語";
+"menu.language" = "Language / 言語";
 "menu.breathing" = "呼吸アニメーション";
 "menu.presence" = "表示先";
 "menu.showInDock" = "Dockに表示";
 "menu.showInMenuBar" = "メニューバーに表示";
-"menu.imageSettings" = "画像設定…";
-"menu.setupWizard" = "セットアップ…";
+"menu.imageSettings" = "アニメーション設定…";
+"menu.setupWizard" = "セットアップガイド…";
 "menu.login" = "ログイン時に起動";
 "menu.quit" = "Waddlyを終了";
 "menu.loginError" = "ログイン時起動を設定できませんでした。";
