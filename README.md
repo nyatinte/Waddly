@@ -13,7 +13,7 @@
 
 ## はじめる
 
-最初の安定版 GitHub Release が完了し、Tap に Cask が反映された後、Homebrew Cask からインストールできます。Homebrew 配信は Apple Silicon 搭載 Mac の macOS 13 以降に対応します。
+最初の安定版 GitHub Release が完了し、Tap に Cask が反映された後、Homebrew Cask からインストールできます。Homebrew 配信は Apple Silicon 搭載 Mac の macOS 14 以降に対応します。
 
 ```sh
 brew tap nyatinte/waddly

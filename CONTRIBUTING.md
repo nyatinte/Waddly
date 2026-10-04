@@ -4,7 +4,7 @@ Thanks for your interest in contributing. This guide covers local development an
 
 ## Requirements
 
-- macOS 13 or later
+- macOS 14 or later
 - Xcode Command Line Tools with Swift 6
 - mise ([install and enable it in your shell](https://mise.jdx.dev/getting-started.html)) for the pinned SwiftFormat and SwiftLint development tools
 
@@ -91,7 +91,7 @@ The script writes a host-architecture DMG to `dist/`. By design, release builds 
 
 ## Publish a release for Homebrew
 
-`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `./macos/test.sh`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 13 or later; it does not remove quarantine or delete user data.
+`.github/workflows/release.yml` runs when a `v*` tag is pushed. A stable tag such as `v0.1.0` must match `CFBundleShortVersionString` in `macos/Info.plist`; a beta tag such as `v0.1.0-beta.1` publishes a GitHub prerelease and skips the Tap update. Both channels run `./macos/test.sh`, build and package the Apple Silicon app, verify its ad-hoc signature, and publish a versioned DMG with a SHA-256 file. Stable releases also update `Casks/waddly.rb` in `nyatinte/homebrew-waddly` with the matching URL and checksum. The Cask supports Apple Silicon and macOS 14 or later; it does not remove quarantine or delete user data.
 
 Before the first stable release, create a fine-grained GitHub token restricted to `nyatinte/homebrew-waddly` with Contents read/write permission, then add it to this repository's Actions secrets as `HOMEBREW_TAP_TOKEN`. Beta releases do not need this token. No Apple signing certificate or notarization credentials are used. Push a tag only after updating the app version in `macos/Info.plist` and merging that change to `main`.
 
@@ -108,4 +108,4 @@ Before the first stable release, create a fine-grained GitHub token restricted t
 - Add or update user-facing strings in both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
 - Update both `README.md` and `README.en.md` when user-facing behavior or setup instructions change.
 - Preserve the input privacy boundary: key codes may be checked transiently to identify Enter, but must not be stored, logged, or transmitted. Keep imported images on-device.
-- Keep Swift changes compatible with Swift 6 and macOS 13, and avoid new dependencies unless they are needed.
+- Keep Swift changes compatible with Swift 6 and macOS 14, and avoid new dependencies unless they are needed.

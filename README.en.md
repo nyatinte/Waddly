@@ -13,7 +13,7 @@
 
 ## Getting started
 
-After the first stable GitHub Release workflow completes and the Cask is added to the tap, install Waddly with Homebrew Cask. Homebrew distribution supports Apple Silicon Macs running macOS 13 or later.
+After the first stable GitHub Release workflow completes and the Cask is added to the tap, install Waddly with Homebrew Cask. Homebrew distribution supports Apple Silicon Macs running macOS 14 or later.
 
 ```sh
 brew tap nyatinte/waddly
