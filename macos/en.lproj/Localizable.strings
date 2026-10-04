@@ -28,7 +28,7 @@
 "pet.dropTooltip" = "Drop a transparent 3×3 PNG on the pet to change it";
 "pet.importErrorTitle" = "Could not import the pet image";
 "pet.importErrorMessage" = "Choose a square transparent PNG no larger than 20 MB, with sides no longer than 4096 px and a 3×3 grid.";
-"images.windowTitle" = "Pet images";
+"images.windowTitle" = "Animation Settings";
 "images.instructions" = "Drop PNGs onto a row or use Add to select multiple files. Idle: the first image is the normal pose; others are blink variants. Typing and Enter images play in order. Sleep images cycle, then stop on the last image after five minutes.";
 "images.category.idle" = "Idle";
 "images.category.typing" = "Typing";
@@ -68,12 +68,12 @@
 "setup.promptCardDescription" = "Paste the copied prompt into ChatGPT.";
 "setup.promptCopiedShort" = "Copied";
 "setup.imageTitle" = "Import your image";
-"setup.imageDescription" = "Add the transparent 3×3 PNG you generated and review its preview. An image is required to continue. Individual PNGs can be added later in Pet Images.";
+"setup.imageDescription" = "Add the transparent 3×3 PNG you generated and review its preview. An image is required to continue. Individual PNGs can be added later in Animation Settings.";
 "setup.imageDrop" = "Drop a 3×3 PNG here";
 "setup.chooseImage" = "Choose PNG…";
 "setup.imageRequired" = "Add a custom image to continue.";
 "setup.imageAlreadyConfigured" = "A custom image is already set up.";
-"setup.imageImported" = "Imported %@. You can change individual images in Pet Images.";
+"setup.imageImported" = "Imported %@. You can change individual images in Animation Settings.";
 "setup.imageNotImported" = "The image was not imported. You can choose another PNG.";
 "setup.permissionTitle" = "Allow Input Monitoring";
 "setup.permissionDescription" = "Waddly needs Input Monitoring permission to react to keyboard input. You can change this permission in System Settings at any time.";
