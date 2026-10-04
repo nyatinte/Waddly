@@ -211,6 +211,11 @@ jobs:
             depends_on macos: :sonoma
 
             app "Waddly.app"
+
+            # Match the Homebrew distribution behavior documented for this unsigned, unnotarized app.
+            postflight_steps do
+              run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/Waddly.app"]
+            end
           end
           EOF
           ruby -c "$TAP_DIR/Casks/waddly.rb"
