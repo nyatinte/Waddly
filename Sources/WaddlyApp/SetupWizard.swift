@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate {
     private let prompt: String
-    private let onImportImage: @MainActor (URL) -> Bool
+    private let onImportImage: @MainActor (URL) async -> Bool
     private let hasCustomImage: @MainActor () -> Bool
     private let hasInputMonitoringPermission: @MainActor () -> Bool
     private let requestInputMonitoringPermission: @MainActor () -> Bool
@@ -24,7 +24,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     private var currentStep = 0
 
     init(
-        onImportImage: @escaping @MainActor (URL) -> Bool,
+        onImportImage: @escaping @MainActor (URL) async -> Bool,
         hasCustomImage: @escaping @MainActor () -> Bool,
         hasInputMonitoringPermission: @escaping @MainActor () -> Bool,
         requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
@@ -278,16 +278,16 @@ extension SetupWizardController {
 
 extension SetupWizardController {
     private func importImage(from url: URL) {
-        guard onImportImage(url) else {
-            imageStatusLabel.stringValue = localizedString(.setupImageNotImported)
-            nextButton.isEnabled = hasCustomImage()
-            return
+        Task { [weak self] in
+            guard let self else { return }
+            let imported = await onImportImage(url)
+            imageStatusLabel.stringValue = imported
+                ? String(format: localizedString(.setupImageImported), url.lastPathComponent)
+                : localizedString(.setupImageNotImported)
+            if currentStep == 1 {
+                nextButton.isEnabled = hasCustomImage()
+            }
         }
-        imageStatusLabel.stringValue = String(
-            format: localizedString(.setupImageImported),
-            url.lastPathComponent
-        )
-        nextButton.isEnabled = true
     }
 
     @objc private func chooseImage() {
@@ -369,7 +369,7 @@ extension AppDelegate {
     @objc func showSetupWizard() {
         if setupWizardController == nil {
             setupWizardController = SetupWizardController(
-                onImportImage: { [weak self] in self?.importPetImage(from: $0) ?? false },
+                onImportImage: { [weak self] in await self?.importPetImage(from: $0) ?? false },
                 hasCustomImage: { [weak self] in self?.hasCompletePetImageSet ?? false },
                 hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
                 requestInputMonitoringPermission: { [weak self] in

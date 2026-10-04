@@ -13,7 +13,7 @@
 
 ## Getting started
 
-Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask will be available after the first stable GitHub Release.
+Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask is available from the official tap.
 
 ```sh
 brew tap nyatinte/waddly
@@ -87,6 +87,8 @@ The page also states that the prompt's CC BY-NC 4.0 license does not automatical
 ## Privacy
 
 Waddly observes key-down events through a listen-only `CGEventTap`. It uses event timing and checks whether the key is Enter while handling the event. It does not store typed text or key codes, write input logs, or send input data over the network. The app can run without Input Monitoring permission.
+
+Image decoding and persistence run sequentially in the background. Import previews are limited to 480 px. Image sets have a 40 MiB estimated memory budget, including each frame’s pixel buffer and 128 KiB of headroom. Additions exceeding the budget are rejected without saving, and failed loading does not delete existing files.
 
 ## Measured memory
 

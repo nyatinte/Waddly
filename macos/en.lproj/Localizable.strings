@@ -90,3 +90,5 @@
 "setup.next" = "Next";
 "setup.skip" = "Skip";
 "setup.finish" = "Finish";
+
+"images.memoryLimit" = "This image set exceeds the 40 MiB image memory budget. Remove images or choose smaller PNGs. Saved images are kept if loading fails.";

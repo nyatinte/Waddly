@@ -90,3 +90,5 @@
 "setup.next" = "次へ";
 "setup.skip" = "スキップ";
 "setup.finish" = "完了";
+
+"images.memoryLimit" = "画像セットが40 MiBの画像メモリ上限を超えています。画像を減らすか、小さいPNGを選んでください。読み込みに失敗しても保存済み画像は保持されます。";

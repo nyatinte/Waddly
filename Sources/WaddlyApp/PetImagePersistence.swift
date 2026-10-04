@@ -2,223 +2,130 @@ import AppKit
 import WaddlyCore
 
 extension AppDelegate {
-    func persistPetImages(_ imageSet: PetImageSet) throws {
-        guard let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-
-        let oldFiles = storedImageFiles
-        var newFiles: [String: [String]] = [:]
-        var createdURLs: [URL] = []
-        do {
-            for category in PetImageCategory.allCases {
-                let images = imageSet[category]
-                guard !images.isEmpty else { throw CocoaError(.validationMissingMandatoryProperty) }
-                for image in images {
-                    guard let data = PetSpriteSheetImporter.pngData(for: image),
-                          data.count <= PetSpriteSheetImporter.maximumFileSize
-                    else {
-                        throw CocoaError(.fileWriteOutOfSpace)
-                    }
-                    let name = "\(UUID().uuidString).png"
-                    let url = directory.appendingPathComponent(name)
-                    try data.write(to: url, options: .atomic)
-                    createdURLs.append(url)
-                    newFiles[category.rawValue, default: []].append(name)
-                }
-            }
-        } catch {
-            createdURLs.forEach { try? FileManager.default.removeItem(at: $0) }
-            throw error
+    /// Serialize complete image transactions, including their main-actor manifest commit.
+    func queueImageUpdate(_ operation: @escaping @MainActor () async -> Bool) async -> Bool {
+        let previous = pendingImageUpdate
+        let task = Task { @MainActor in
+            await previous?.value
+            guard !isShuttingDown else { return false }
+            return await operation()
         }
+        pendingImageUpdate = Task { _ = await task.value }
+        return await task.value
+    }
 
+    func persistPetImages(
+        _ updated: PetImageSet,
+        encodedImages: [ObjectIdentifier: Data] = [:]
+    ) async throws {
+        guard let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
+        let storage = PetImageStorage(directory: directory)
+        let previous = petImages
+        let oldFiles = storedImageFiles
+        let newFiles = try await Task.detached(priority: .userInitiated) {
+            try storage.stage(updated, replacing: previous, files: oldFiles, encodedImages: encodedImages)
+        }.value
+        guard !isShuttingDown else {
+            await Task.detached { storage.removeObsoleteFiles(from: newFiles, keeping: oldFiles) }.value
+            throw CancellationError()
+        }
         settings.petImageFiles = newFiles
         storedImageFiles = newFiles
-        for names in oldFiles.values {
-            for name in names where !newFiles.values.contains(where: { $0.contains(name) }) {
-                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
-            }
-        }
+        importedImages = updated
+        await Task.detached { storage.removeObsoleteFiles(from: oldFiles, keeping: newFiles) }.value
     }
 
     func addImages(_ urls: [URL], to category: PetImageCategory) {
-        var updated = petImages
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await queueImageUpdate { await self.addImagesInOrder(urls, to: category) }
+        }
+    }
+
+    private func addImagesInOrder(_ urls: [URL], to category: PetImageCategory) async -> Bool {
+        guard !imageLoadFailed else {
+            showImageSaveError(PetImageStorageError.memoryBudgetExceeded)
+            return false
+        }
         var addedCount = 0
         var skippedCount = 0
-        var saveFailed = false
         for url in urls {
-            guard url.pathExtension.lowercased() == "png",
-                  let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
-                  let size = attributes[.size] as? NSNumber,
-                  size.intValue <= PetSpriteSheetImporter.maximumFileSize,
-                  let data = try? Data(contentsOf: url),
-                  let optimized = PetSpriteSheetImporter.optimizedImage(from: data)
-            else {
+            let optimized = await Task.detached(priority: .userInitiated) {
+                autoreleasepool {
+                    PetSpriteSheetImporter.readPNG(from: url).flatMap(PetSpriteSheetImporter.optimizedImage)
+                }
+            }.value
+            guard !isShuttingDown else { return false }
+            guard let optimized else {
                 skippedCount += 1
                 continue
             }
+            var updated = petImages
+            updated[category].append(optimized.image)
             do {
-                try persistAddedImage(
-                    optimized.image,
-                    data: optimized.pngData,
-                    existingImages: updated[category],
-                    to: category
-                )
-                updated[category].append(optimized.image)
-                importedImages = updated
+                let encoded = [ObjectIdentifier(optimized.image): optimized.pngData]
+                try await persistPetImages(updated, encodedImages: encoded)
                 addedCount += 1
+                imageSetDidChange()
             } catch {
-                saveFailed = true
-                break
+                showImageSaveError(error)
+                return false
             }
         }
         guard addedCount > 0 else {
             showAlert(.imagesErrorTitle, .imagesErrorMessage)
-            return
+            return false
         }
-        imageSetDidChange()
-        if saveFailed {
-            showImageSaveError()
-        } else if skippedCount > 0 {
+        if skippedCount > 0 {
             showAlert(.imagesSkippedTitle, .imagesSkippedMessage)
         }
-    }
-
-    private func persistAddedImage(
-        _ image: NSImage,
-        data: Data,
-        existingImages: [NSImage],
-        to category: PetImageCategory
-    ) throws {
-        guard let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let key = category.rawValue
-        let previousFiles = storedImageFiles[key] ?? []
-        var names = previousFiles
-        var createdURLs: [URL] = []
-        do {
-            if names.count != existingImages.count {
-                names = []
-                for existingImage in existingImages {
-                    guard let imageData = PetSpriteSheetImporter.pngData(for: existingImage),
-                          imageData.count <= PetSpriteSheetImporter.maximumFileSize
-                    else {
-                        throw CocoaError(.fileWriteOutOfSpace)
-                    }
-                    let name = "\(UUID().uuidString).png"
-                    let url = directory.appendingPathComponent(name)
-                    try imageData.write(to: url, options: .atomic)
-                    createdURLs.append(url)
-                    names.append(name)
-                }
-            }
-            let name = "\(UUID().uuidString).png"
-            let url = directory.appendingPathComponent(name)
-            try data.write(to: url, options: .atomic)
-            createdURLs.append(url)
-            names.append(name)
-        } catch {
-            createdURLs.forEach { try? FileManager.default.removeItem(at: $0) }
-            throw error
-        }
-
-        var updatedFiles = storedImageFiles
-        updatedFiles[key] = names
-        settings.petImageFiles = updatedFiles
-        storedImageFiles = updatedFiles
-        for name in previousFiles where !names.contains(name) {
-            try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
-        }
+        return true
     }
 
     func removeImage(at index: Int, from category: PetImageCategory) {
-        var updated = petImages
-        guard updated[category].count > 1, updated[category].indices.contains(index) else { return }
-        updated[category].remove(at: index)
-        let key = category.rawValue
-        let oldNames = storedImageFiles[key] ?? []
-        if oldNames.count == petImages[category].count {
-            var updatedFiles = storedImageFiles
-            var newNames = oldNames
-            let removedName = newNames.remove(at: index)
-            updatedFiles[key] = newNames
-            settings.petImageFiles = updatedFiles
-            storedImageFiles = updatedFiles
-            if let directory = petImagesDirectoryURL {
-                try? FileManager.default.removeItem(at: directory.appendingPathComponent(removedName))
-            }
-        } else {
-            do {
-                try persistCategoryImages(updated[category], for: category)
-            } catch {
-                showImageSaveError()
-                return
+        guard petImages[category].indices.contains(index) else { return }
+        let target = petImages[category][index]
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await queueImageUpdate {
+                var updated = self.petImages
+                guard !self.imageLoadFailed, updated[category].count > 1,
+                      let currentIndex = updated[category].firstIndex(where: { $0 === target }) else { return false }
+                updated[category].remove(at: currentIndex)
+                return await self.saveImageEdit(updated)
             }
         }
-        importedImages = updated
-        imageSetDidChange()
     }
 
     func moveImage(from source: Int, to destination: Int, in category: PetImageCategory) {
-        let current = petImages[category]
-        guard source != destination, let reordered = moving(current, from: source, to: destination) else { return }
-        let key = category.rawValue
-        let names = storedImageFiles[key] ?? []
-        if names.count == current.count {
-            var reorderedNames = names
-            let name = reorderedNames.remove(at: source)
-            reorderedNames.insert(name, at: destination)
-            var updatedFiles = storedImageFiles
-            updatedFiles[key] = reorderedNames
-            settings.petImageFiles = updatedFiles
-            storedImageFiles = updatedFiles
-        } else {
-            do {
-                try persistCategoryImages(reordered, for: category)
-            } catch {
-                showImageSaveError()
-                return
+        let images = petImages[category]
+        guard source != destination,
+              images.indices.contains(source), images.indices.contains(destination) else { return }
+        let target = images[source]
+        let anchor = images[destination]
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await queueImageUpdate {
+                let current = self.petImages[category]
+                guard !self.imageLoadFailed,
+                      let sourceIndex = current.firstIndex(where: { $0 === target }),
+                      let destinationIndex = current.firstIndex(where: { $0 === anchor }),
+                      let reordered = moving(current, from: sourceIndex, to: destinationIndex) else { return false }
+                var updated = self.petImages
+                updated[category] = reordered
+                return await self.saveImageEdit(updated)
             }
         }
-        var updated = petImages
-        updated[category] = reordered
-        importedImages = updated
-        imageSetDidChange()
     }
 
-    private func persistCategoryImages(_ images: [NSImage], for category: PetImageCategory) throws {
-        guard !images.isEmpty, let directory = petImagesDirectoryURL else {
-            throw CocoaError(.fileNoSuchFile)
-        }
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        var names: [String] = []
-        var createdURLs: [URL] = []
+    private func saveImageEdit(_ updated: PetImageSet) async -> Bool {
         do {
-            for image in images {
-                guard let data = PetSpriteSheetImporter.pngData(for: image),
-                      data.count <= PetSpriteSheetImporter.maximumFileSize
-                else {
-                    throw CocoaError(.fileWriteOutOfSpace)
-                }
-                let name = "\(UUID().uuidString).png"
-                let url = directory.appendingPathComponent(name)
-                try data.write(to: url, options: .atomic)
-                createdURLs.append(url)
-                names.append(name)
-            }
+            try await persistPetImages(updated)
+            imageSetDidChange()
+            return true
         } catch {
-            createdURLs.forEach { try? FileManager.default.removeItem(at: $0) }
-            throw error
-        }
-
-        let oldFiles = storedImageFiles
-        var updatedFiles = storedImageFiles
-        updatedFiles[category.rawValue] = names
-        settings.petImageFiles = updatedFiles
-        storedImageFiles = updatedFiles
-        for oldNames in oldFiles.values {
-            for name in oldNames where !updatedFiles.values.contains(where: { $0.contains(name) }) {
-                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
-            }
+            showImageSaveError(error)
+            return false
         }
     }
 }
