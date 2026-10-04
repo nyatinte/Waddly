@@ -4,7 +4,7 @@ Thanks for your interest in contributing. This guide covers local development an
 
 ## Requirements
 
-- macOS 13 or later
+- Apple Silicon Mac with macOS 14 or later
 - Xcode Command Line Tools with Swift 6
 - mise ([install and enable it in your shell](https://mise.jdx.dev/getting-started.html)) for the pinned SwiftFormat and SwiftLint development tools
 
@@ -53,7 +53,7 @@ hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is av
 open build/Waddly.app
 ```
 
-The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the Release app for the host Mac's CPU architecture, and creates `build/Waddly.app`.
+The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`.
 
 ## Tests
 
@@ -85,7 +85,7 @@ The generator checks that both languages have matching keys and writes `Sources/
 ./macos/package.sh
 ```
 
-The script writes an architecture-specific DMG to `dist/`. The default build is ad-hoc signed and is not notarized. Internet distribution without Gatekeeper warnings requires Developer ID signing and Apple notarization. Set `WADDLY_SIGN_IDENTITY` to select a signing identity.
+The script writes an arm64 DMG to `dist/`. The default build is ad-hoc signed and is not notarized. Internet distribution without Gatekeeper warnings requires Developer ID signing and Apple notarization. Set `WADDLY_SIGN_IDENTITY` to select a signing identity.
 
 ## Project structure
 
@@ -100,4 +100,4 @@ The script writes an architecture-specific DMG to `dist/`. The default build is 
 - Add or update user-facing strings in both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
 - Update both `README.md` and `README.en.md` when user-facing behavior or setup instructions change.
 - Preserve the input privacy boundary: key codes may be checked transiently to identify Enter, but must not be stored, logged, or transmitted. Keep imported images on-device.
-- Keep Swift changes compatible with Swift 6 and macOS 13, and avoid new dependencies unless they are needed.
+- Keep Swift changes compatible with Swift 6 and macOS 14, and avoid new dependencies unless they are needed.
