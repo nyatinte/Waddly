@@ -1,6 +1,27 @@
 import AppKit
 
 extension SetupWizardController {
+    func refreshLocalization() {
+        prompt = Self.loadPrompt()
+        window?.title = localizedString(.setupWindowTitle)
+        renderCurrentStep()
+    }
+
+    static func loadPrompt() -> String {
+        let language = AppLanguage.active.localization
+        guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
+              let markdown = try? String(contentsOf: url, encoding: .utf8),
+              let start = markdown.range(of: "```text\n"),
+              let end = markdown[start.upperBound...].range(of: "```")
+        else {
+            return ""
+        }
+        return String(markdown[start.upperBound ..< end.lowerBound])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+extension SetupWizardController {
     func makeTitle(_ key: LocalizationKey) -> NSTextField {
         let label = NSTextField(labelWithString: localizedString(key))
         label.font = .systemFont(ofSize: 25, weight: .bold)

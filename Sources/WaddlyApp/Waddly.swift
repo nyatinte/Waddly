@@ -16,7 +16,7 @@ final class PetWindow: NSPanel {
 
 @MainActor
 final class DraggableImageView: NSImageView {
-    var contextMenu: NSMenu?
+    var contextMenuProvider: (() -> NSMenu?)?
     var onFileDrop: ((URL) -> Void)?
 
     func acceptPNGFileDrops() {
@@ -28,7 +28,7 @@ final class DraggableImageView: NSImageView {
     }
 
     override func rightMouseDown(with event: NSEvent) {
-        guard let contextMenu else { return }
+        guard let contextMenu = contextMenuProvider?() else { return }
         NSMenu.popUpContextMenu(contextMenu, with: event, for: self)
     }
 
@@ -158,7 +158,7 @@ final class KeyboardMonitor {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     let settings: AppSettings
     let monitor = KeyboardMonitor()
     var pendingImageUpdate: Task<Void, Never>?
@@ -196,6 +196,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var breathingItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    var pendingMenuError = false
+    var pendingLocalizationRefresh = false
     var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
