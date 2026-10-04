@@ -165,6 +165,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var isShuttingDown = false
     var imageLoadFailed = false
     var importedImages: PetImageSet?
+    var imageThumbnails: [ObjectIdentifier: NSImage] = [:]
     var petImages: PetImageSet {
         importedImages ?? PetImageSet()
     }

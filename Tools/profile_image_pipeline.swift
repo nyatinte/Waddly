@@ -7,6 +7,10 @@ import UniformTypeIdentifiers
 struct ImagePipelineProbe {
     static func main() throws {
         let source = try makeSource()
+        if CommandLine.arguments.count == 2 {
+            try source.write(to: URL(fileURLWithPath: CommandLine.arguments[1]), options: .atomic)
+            return
+        }
         print("state,rss_bytes,physical_footprint_bytes,max_rss_bytes,peak_physical_footprint_bytes")
         snapshot("fixture-ready")
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

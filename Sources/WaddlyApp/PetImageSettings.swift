@@ -7,17 +7,21 @@ extension AppDelegate {
         let manifest = settings.petImageFiles
         do {
             let loaded = try await Task.detached(priority: .userInitiated) {
-                try autoreleasepool { try PetImageStorage(directory: directory).load(manifest) }
+                try autoreleasepool {
+                    let loaded = try PetImageStorage(directory: directory).load(manifest)
+                    return (loaded.0, loaded.1, PetSpriteSheetImporter.thumbnails(for: loaded.0))
+                }
             }.value
             guard !isShuttingDown else { return }
             storedImageFiles = loaded.1
             if !manifest.isEmpty {
                 importedImages = loaded.0
+                imageThumbnails = loaded.2
             }
         } catch {
             imageLoadFailed = true
             storedImageFiles = manifest
-            showImageSaveError(error)
+            await showImageSaveError(error)
         }
     }
 
@@ -36,14 +40,14 @@ extension AppDelegate {
         }.value
         guard !isShuttingDown else { return false }
         guard let (newImages, preview) = prepared else {
-            showPetImageImportError()
+            await showPetImageImportError()
             return false
         }
-        guard confirmPetImageImport(preview, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
+        guard await confirmPetImageImport(preview, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
         do {
             try await persistPetImages(newImages, resetActivity: true)
         } catch {
-            showImageSaveError(error)
+            await showImageSaveError(error)
             return false
         }
         imageLoadFailed = false
@@ -52,7 +56,7 @@ extension AppDelegate {
 
     func imageSetDidChange(resetActivity: Bool = false) {
         for category in PetImageCategory.allCases {
-            imageRows[category]?.setImages(petImages[category])
+            imageRows[category]?.setImages(thumbnails(for: category))
         }
         guard hasCompletePetImageSet else {
             panel.orderOut(nil)
@@ -63,28 +67,32 @@ extension AppDelegate {
         animationController.imageSetDidChange(resetActivity: resetActivity)
     }
 
-    private func showPetImageImportError() {
-        showAlert(.petImportErrorTitle, .petImportErrorMessage)
+    private func thumbnails(for category: PetImageCategory) -> [NSImage] {
+        petImages[category].map { imageThumbnails[ObjectIdentifier($0)] ?? $0 }
     }
 
-    func showImageSaveError(_ error: Error) {
+    private func showPetImageImportError() async {
+        await showAlert(.petImportErrorTitle, .petImportErrorMessage)
+    }
+
+    func showImageSaveError(_ error: Error) async {
         guard !isShuttingDown else { return }
         if error is PetImageStorageError {
-            showAlert(.imagesErrorTitle, .imagesMemoryLimit)
+            await showAlert(.imagesErrorTitle, .imagesMemoryLimit)
         } else {
-            showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
+            await showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
         }
     }
 
-    func showAlert(_ titleKey: LocalizationKey, _ messageKey: LocalizationKey) {
+    func showAlert(_ titleKey: LocalizationKey, _ messageKey: LocalizationKey) async {
         let alert = NSAlert()
         alert.messageText = localizedString(titleKey)
         alert.informativeText = localizedString(messageKey)
         alert.alertStyle = .warning
-        alert.runModal()
+        _ = await presentImageAlert(alert)
     }
 
-    private func confirmPetImageImport(_ preview: NSImage, cellSize: Int) -> Bool {
+    private func confirmPetImageImport(_ preview: NSImage, cellSize: Int) async -> Bool {
         let alert = NSAlert()
         alert.messageText = localizedString(.petPreviewTitle)
         alert.informativeText = localizedString(.petPreviewPrompt)
@@ -120,7 +128,33 @@ extension AppDelegate {
         alert.accessoryView = accessory
         alert.addButton(withTitle: localizedString(.petImportConfirm))
         alert.addButton(withTitle: localizedString(.commonCancel))
-        return alert.runModal() == .alertFirstButtonReturn
+        return await presentImageAlert(alert) == .alertFirstButtonReturn
+    }
+
+    private func presentImageAlert(_ alert: NSAlert) async -> NSApplication.ModalResponse {
+        guard !isShuttingDown else { return .cancel }
+        let parent: NSWindow
+        let activeWindow = [imageSettingsWindow, setupWizardController?.window].compactMap(\.self)
+            .first(where: \.isKeyWindow)
+        if let window = activeWindow {
+            parent = window
+        } else if let window = imageSettingsWindow, window.isVisible {
+            parent = window
+        } else if let window = setupWizardController?.window, window.isVisible {
+            parent = window
+        } else if hasCompletePetImageSet {
+            parent = panel
+        } else {
+            showSetupWizard()
+            guard let window = setupWizardController?.window else { return .cancel }
+            parent = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        return await withCheckedContinuation { continuation in
+            alert.beginSheetModal(for: parent) { response in
+                continuation.resume(returning: response)
+            }
+        }
     }
 
     @objc func showImageSettings() {
@@ -149,7 +183,7 @@ extension AppDelegate {
             note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
             for category in PetImageCategory.allCases {
-                let row = PetImageCategoryRowView(category: category, images: petImages[category])
+                let row = PetImageCategoryRowView(category: category, images: thumbnails(for: category))
                 row.onAdd = { [weak self] in self?.chooseImages(for: category) }
                 row.onDrop = { [weak self] in self?.addImages($0, to: category) }
                 row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }

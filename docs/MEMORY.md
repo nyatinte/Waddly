@@ -89,11 +89,35 @@ Raw samples from one pair: [before](memory-baselines/image-pipeline-before.csv) 
 
 The new path thumbnails the preview to 480 px, directly encodes CGImage as PNG, eagerly decodes on workers, and owns each extracted frame independently. Independent buffers prevent a remaining cropped frame from retaining the complete original sheet. Atomic writes are staged and rolled back on failure; the main actor commits the new manifest before workers remove obsolete files. Reorders and removals reuse persisted filenames, and individual imports reuse their optimized PNG bytes. A main-actor queue serializes entire transactions, including worker waits and the manifest commit.
 
-Production image sets are limited to an estimated **40 MiB**, computed from each independently decoded frame's row stride × height plus **128 KiB per frame** reserved for image wrappers and view/codec metadata. The fixed per-frame allowance also bounds the number of tiny images (at most 319); it rounds up the approximately 0.95 MB warmed allocator overhead divided across the nine-frame sample. Pixel buffers use their actual depth and stride, including 16-bit PNGs, rather than assuming four bytes per pixel.
+Production image sets are limited to an estimated **40 MiB**, computed from each independently decoded frame's row stride × height plus **192 KiB per frame** reserved for image wrappers, view/codec metadata, and a settings thumbnail. This rounds up the approximately 0.95 MB warmed allocator overhead divided across nine frames plus at most 64 KiB for a 128 × 128 RGBA8 thumbnail. The fixed allowance bounds the number of tiny images to at most 213. Pixel buffers use their actual depth and stride, including 16-bit PNGs, rather than assuming four bytes per pixel.
 
-The nine-frame 1024 × 1024 RGBA8 case occupies about 37.1 MiB under this policy. A 40 MiB resident set, about 36 MiB for a replacement sheet, a sub-MiB preview, and the historical 12–13 MB app baseline leave room within the representative 100 MB footprint goal; the standalone probe's measured peak was about 89 MiB. This is a measured design target rather than a universal guarantee for every OS/framework configuration. Existing PNG file-size, transparency, source-dimension validation, category ordering, and animation timing remain intact.
+The nine-frame 1024 × 1024 RGBA8 case occupies about 37.7 MiB under this policy. The standalone probe's peak was about 89 MiB, but this does **not** establish the 100 MB whole-app goal: AppKit windows, layer textures, and runtime caches add substantial memory. The policy bounds decoded frame residency, not total process footprint or replacement peaks. Existing PNG file-size, transparency, source-dimension validation, category ordering, and animation timing remain intact.
 
 Budget checks run on worker snapshots before committing. An excessive addition leaves the current manifest and images unchanged. An oversized saved configuration fails loading with an explicit message and retains its files/manifest; category additions are blocked until the user confirms a replacement sheet, so a partial update cannot overwrite the inaccessible saved configuration. No automatic deletion or truncation is used to force a set under budget.
 
 
 A further diagnostic run used a temporary copy of the same optimized probe with 100 imports and a 30-second hold after the final sample, with `MallocStackLogging=1`. Retained physical footprint for imports 10–99 remained within 49.97–50.03 MiB (stack logging adds overhead). macOS `leaks` reported **0 leaks / 0 leaked bytes** with the final nine-frame set still alive. [Diagnostic details](memory-baselines/100-import-diagnostic.txt) record the temporary probe changes and results. This supports bounded retention for this scenario; it does not establish the absence of every possible ownership leak.
+
+## AppKit image-settings comparison
+
+The standalone probe understated whole-app rendering costs. Profiling a nine-frame set with image settings visible showed full-size frame textures in Core Animation: an initial diagnostic attributed about 37 MiB to that category. Settings now use independently rasterized thumbnails of at most 128 px, prepared on workers during staging/reload. Only the current set's thumbnail dictionary is retained. The original frames, persistence, and pet animation display keep their existing resolution. Confirmation and image-error dialogs await native window sheets instead of running nested synchronous modal loops inside main-actor tasks.
+
+Reproduce the UI comparison with:
+
+```sh
+./macos/profile-image-app.sh 3426fc4
+./macos/profile-image-app.sh
+```
+
+This compiles the actual AppDelegate and Core sources with `-O` into a temporary app with its own bundle identifier, a fresh preference suite, and a temporary image directory. It generates the deterministic transparent 3072 × 3072 sheet in a separate process (677,976 bytes; SHA-256 `73f012dc8add9366d821e9603addd680047414c34d6bdcd29737c2ac438727be`). It imports the sheet ten times through the real serialized staging/commit path, holds image settings open, waits 30 seconds, closes settings, and waits another 30 seconds. Preview preparation is included; interactive preview confirmation is bypassed to keep the workload consistent. It records physical footprint and the kernel peak ledger. It does not grant Input Monitoring permission or synthesize keyboard events. This probe supports historical revisions with the async image transaction API (`3426fc4` onward); use the standalone probe for older revisions.
+
+Three sequential paired runs on the same Apple Silicon / macOS 27.0.1 system produced these medians (MiB):
+
+| AppKit scenario | Peak physical footprint | Settings after 30 s | Closed settings after 30 s |
+| --- | ---: | ---: | ---: |
+| Before (`3426fc4`) | 193.00 | 120.13 | 120.19 |
+| With settings thumbnails | 127.67 | 98.61 | 98.72 |
+
+Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final footprint ranges were 120.11–122.03 MiB before and 96.72–99.50 MiB after. Later imports plateaued in each run. Raw samples: [before 1](memory-baselines/image-app-before-1.csv), [before 2](memory-baselines/image-app-before-2.csv), [before 3](memory-baselines/image-app-before-3.csv), [after 1](memory-baselines/image-app-after-1.csv), [after 2](memory-baselines/image-app-after-2.csv), [after 3](memory-baselines/image-app-after-3.csv).
+
+This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. Closing the settings window retains its controller/views for reuse, so it need not immediately return memory. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
