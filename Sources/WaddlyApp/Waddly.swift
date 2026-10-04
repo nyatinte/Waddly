@@ -159,8 +159,11 @@ final class KeyboardMonitor {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    let settings = AppSettings.standard
+    let settings: AppSettings
     let monitor = KeyboardMonitor()
+    var pendingImageUpdate: Task<Void, Never>?
+    var isShuttingDown = false
+    var imageLoadFailed = false
     var importedImages: PetImageSet?
     var petImages: PetImageSet {
         importedImages ?? PetImageSet()
@@ -211,28 +214,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings.displaySize
     }
 
-    var petImagesDirectoryURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("Waddly", isDirectory: true)
-            .appendingPathComponent("PetImages", isDirectory: true)
+    var petImagesDirectoryURL = FileManager.default.urls(
+        for: .applicationSupportDirectory, in: .userDomainMask
+    ).first?.appendingPathComponent("Waddly", isDirectory: true)
+        .appendingPathComponent("PetImages", isDirectory: true)
+
+    init(settings: AppSettings = .standard) {
+        self.settings = settings
+        super.init()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         settings.registerDefaults()
         settings.ensurePresenceIsVisible()
-        loadSavedPetImage()
         buildPanel()
         buildMenu()
         updatePresenceOptions()
-        petView.onFileDrop = { [weak self] in _ = self?.importPetImage(from: $0) }
+        petView.onFileDrop = { [weak self] url in
+            Task { _ = await self?.importPetImage(from: url) }
+        }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString(.petDropTooltip)
         monitor.onKeyDown = { [weak self] isEnter in self?.animationController.handleKeyDown(isEnter: isEnter) }
-        if hasCompletePetImageSet, settings.setupWizardSeen {
-            startMonitoring()
-            animationController.start()
-        } else {
-            showSetupWizard()
+        Task {
+            _ = await queueImageUpdate {
+                await self.loadSavedPetImage()
+                guard !self.isShuttingDown else { return false }
+                self.imageSetDidChange(resetActivity: true)
+                if self.hasCompletePetImageSet, self.settings.setupWizardSeen {
+                    self.startMonitoring()
+                    self.animationController.start()
+                } else {
+                    self.showSetupWizard()
+                }
+                return true
+            }
         }
     }
 
@@ -243,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        isShuttingDown = true
         animationController.shutdown()
         monitor.stop()
     }

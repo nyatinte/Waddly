@@ -2,14 +2,14 @@ import AppKit
 import ImageIO
 import UniformTypeIdentifiers
 
-public enum PetImageCategory: String, CaseIterable {
+public enum PetImageCategory: String, CaseIterable, Sendable {
     case idle
     case typing
     case sleep
     case enter
 }
 
-public struct PetImageSet {
+public struct PetImageSet: Sendable {
     private var images: [PetImageCategory: [NSImage]]
 
     public init(_ images: [PetImageCategory: [NSImage]] = [:]) {
@@ -21,12 +21,37 @@ public struct PetImageSet {
         set { images[category] = newValue }
     }
 
+    /// 40 MiB leaves room for the app, a replacement sheet, and its thumbnail.
+    public static let maximumResidentBytes = 40 * 1024 * 1024
+
+    public var estimatedResidentBytes: Int {
+        var cost = 0
+        for category in PetImageCategory.allCases {
+            for image in self[category] {
+                guard let raster = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+                      raster.height > 0, raster.bytesPerRow <= Self.maximumResidentBytes / raster.height
+                else {
+                    return Self.maximumResidentBytes + 1
+                }
+                cost += raster.bytesPerRow * raster.height + 128 * 1024
+                if cost > Self.maximumResidentBytes {
+                    return cost
+                }
+            }
+        }
+        return cost
+    }
+
+    public var isWithinMemoryBudget: Bool {
+        estimatedResidentBytes <= Self.maximumResidentBytes
+    }
+
     public var isComplete: Bool {
         PetImageCategory.allCases.allSatisfy { !self[$0].isEmpty }
     }
 }
 
-public struct OptimizedPetImage {
+public struct OptimizedPetImage: Sendable {
     public let image: NSImage
     public let pngData: Data
     public let wasDownsampled: Bool
@@ -38,7 +63,10 @@ public enum PetSpriteSheetImporter {
 
     public static func optimizedImage(from data: Data) -> OptimizedPetImage? {
         guard data.count <= maximumFileSize,
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let source = CGImageSourceCreateWithData(
+                  data as CFData,
+                  [kCGImageSourceShouldCache: false] as CFDictionary
+              ),
               let sourceType = CGImageSourceGetType(source),
               sourceType as String == UTType.png.identifier,
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
@@ -61,13 +89,35 @@ public enum PetSpriteSheetImporter {
         )
     }
 
+    public static func preview(from data: Data) -> NSImage? {
+        guard data.count <= maximumFileSize,
+              let source = CGImageSourceCreateWithData(
+                  data as CFData,
+                  [kCGImageSourceShouldCache: false] as CFDictionary
+              ),
+              CGImageSourceGetType(source) as String? == UTType.png.identifier,
+              let cgImage = image(from: source, maxDimension: 480), hasAlpha(cgImage) else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+    }
+
+    public static func readPNG(from url: URL) -> Data? {
+        guard url.pathExtension.lowercased() == "png",
+              let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let size = attributes[.size] as? NSNumber,
+              size.intValue <= maximumFileSize else { return nil }
+        return try? Data(contentsOf: url, options: .mappedIfSafe)
+    }
+
     public static func image(from data: Data) -> NSImage? {
         optimizedImage(from: data)?.image
     }
 
     public static func frames(from data: Data) -> PetImageSet? {
         guard data.count <= maximumFileSize,
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let source = CGImageSourceCreateWithData(
+                  data as CFData,
+                  [kCGImageSourceShouldCache: false] as CFDictionary
+              ),
               let sourceType = CGImageSourceGetType(source),
               sourceType as String == UTType.png.identifier,
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
@@ -92,7 +142,16 @@ public enum PetSpriteSheetImporter {
                     height: pointSize
                 )
                 guard let cell = image.cropping(to: rect) else { return nil }
-                cells.append(NSImage(cgImage: cell, size: NSSize(width: pointSize, height: pointSize)))
+                let space = cell.colorSpace?.model == .rgb ? cell.colorSpace : CGColorSpaceCreateDeviceRGB()
+                guard let space, let context = CGContext(
+                    data: nil, width: cell.width, height: cell.height,
+                    bitsPerComponent: cell.bitsPerComponent, bytesPerRow: 0,
+                    space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                ) else { return nil }
+                context.setBlendMode(.copy)
+                context.draw(cell, in: CGRect(x: 0, y: 0, width: cell.width, height: cell.height))
+                guard let raster = context.makeImage() else { return nil }
+                cells.append(NSImage(cgImage: raster, size: NSSize(width: pointSize, height: pointSize)))
             }
         }
         return PetImageSet([
@@ -119,9 +178,8 @@ public enum PetSpriteSheetImporter {
     }
 
     public static func pngData(for image: NSImage) -> Data? {
-        guard let tiff = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
-        return bitmap.representation(using: .png, properties: [:])
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return pngData(from: cgImage)
     }
 
     private static func hasAlpha(_ image: CGImage) -> Bool {
@@ -138,9 +196,12 @@ public enum PetSpriteSheetImporter {
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
         guard max(width, height) > maxDimension else {
-            return CGImageSourceCreateImageAtIndex(source, 0, nil)
+            return CGImageSourceCreateImageAtIndex(
+                source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
+            )
         }
         let options: [CFString: Any] = [
+            kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceThumbnailMaxPixelSize: maxDimension,
             kCGImageSourceCreateThumbnailWithTransform: false

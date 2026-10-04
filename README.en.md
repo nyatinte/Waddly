@@ -13,7 +13,7 @@
 
 ## Getting started
 
-Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask will be available after the first stable GitHub Release.
+Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask is available from the official tap.
 
 ```sh
 brew tap nyatinte/waddly
@@ -28,7 +28,7 @@ brew install --cask nyatinte/waddly/waddly-beta
 
 Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
-The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then Control-click it in Finder, choose Open, and confirm. If needed, allow it under System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
+The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then allow that app under System Settings → Privacy & Security → Open Anyway and confirm. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
 On first launch, use the setup wizard to import a transparent PNG sprite sheet with a 3×3 grid. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
 
@@ -87,6 +87,8 @@ The page also states that the prompt's CC BY-NC 4.0 license does not automatical
 ## Privacy
 
 Waddly observes key-down events through a listen-only `CGEventTap`. It uses event timing and checks whether the key is Enter while handling the event. It does not store typed text or key codes, write input logs, or send input data over the network. The app can run without Input Monitoring permission.
+
+Image decoding and persistence run sequentially in the background. Import previews are limited to 480 px. Image sets have a 40 MiB estimated memory budget, including each frame’s pixel buffer and 128 KiB of headroom. Additions exceeding the budget are rejected without saving, and failed loading does not delete existing files.
 
 ## Measured memory
 

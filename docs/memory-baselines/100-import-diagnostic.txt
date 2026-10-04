@@ -1,0 +1,24 @@
+Image pipeline ownership diagnostic, 2026-10-04
+
+Environment: Apple Silicon, macOS 27.0.1 (26A434), Swift 6, -O.
+Production core: eef157d. Input: deterministic generated transparent 3072 x 3072 PNG.
+Nine 1024 x 1024 frames remain alive at the final sample. No user files/preferences.
+
+Temporary probe changes relative to Tools/profile_image_pipeline.swift:
+  - Replace the import loop's upper bound 5 with 100.
+  - Flush stdout after the final CSV sample.
+  - Hold the final resident set with withExtendedLifetime and a 30-second sleep.
+Run with MallocStackLogging=1; run leaks on the PID during the final hold.
+
+Retained physical footprint, imports 10-99: 49.9696-50.0321 MiB.
+Final physical footprint: 52,396,896 bytes (49.9696 MiB).
+Peak physical footprint: 95,109,984 bytes (90.7039 MiB).
+Stack logging adds overhead; these figures are separate from the uninstrumented comparison.
+
+leaks Report Version: 4.0
+Process 46363: 4809 nodes malloced for 120286 KB
+Process 46363: 0 leaks for 0 total leaked bytes.
+Exit status: 0. Probe exit status: 0.
+
+This supports bounded retention in this scenario, not absence of every possible leak.
+The strict allocation-growth diagnostic's 13 blocks / 2,840 bytes remain unclassified.

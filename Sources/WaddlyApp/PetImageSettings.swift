@@ -2,54 +2,51 @@ import AppKit
 import WaddlyCore
 
 extension AppDelegate {
-    func loadSavedPetImage() {
+    func loadSavedPetImage() async {
         guard let directory = petImagesDirectoryURL else { return }
         let manifest = settings.petImageFiles
-        var loadedImages = PetImageSet()
-        for category in PetImageCategory.allCases {
-            let names = manifest[category.rawValue] ?? []
-            var validNames: [String] = []
-            let savedImages = names.compactMap { name -> NSImage? in
-                guard name.hasSuffix(".png"), UUID(uuidString: String(name.dropLast(4))) != nil else {
-                    return nil
-                }
-                guard let image = PetSpriteSheetImporter.load(
-                    from: directory.appendingPathComponent(name)
-                ) else { return nil }
-                validNames.append(name)
-                return image
+        do {
+            let loaded = try await Task.detached(priority: .userInitiated) {
+                try autoreleasepool { try PetImageStorage(directory: directory).load(manifest) }
+            }.value
+            guard !isShuttingDown else { return }
+            storedImageFiles = loaded.1
+            if !manifest.isEmpty {
+                importedImages = loaded.0
             }
-            if !savedImages.isEmpty {
-                loadedImages[category] = savedImages
-            }
-            storedImageFiles[category.rawValue] = validNames
-        }
-        if !manifest.isEmpty {
-            importedImages = loadedImages
+        } catch {
+            imageLoadFailed = true
+            storedImageFiles = manifest
+            showImageSaveError(error)
         }
     }
 
-    func importPetImage(from url: URL) -> Bool {
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
-              let fileSize = attributes[.size] as? NSNumber,
-              fileSize.intValue <= PetSpriteSheetImporter.maximumFileSize,
-              let data = try? Data(contentsOf: url),
-              let newImages = PetSpriteSheetImporter.frames(from: data)
-        else {
+    func importPetImage(from url: URL) async -> Bool {
+        await queueImageUpdate { await self.importPetImageInOrder(from: url) }
+    }
+
+    private func importPetImageInOrder(from url: URL) async -> Bool {
+        let prepared = await Task.detached(priority: .userInitiated) {
+            autoreleasepool { () -> (PetImageSet, NSImage)? in
+                guard let data = PetSpriteSheetImporter.readPNG(from: url),
+                      let images = PetSpriteSheetImporter.frames(from: data),
+                      let preview = PetSpriteSheetImporter.preview(from: data) else { return nil }
+                return (images, preview)
+            }
+        }.value
+        guard !isShuttingDown else { return false }
+        guard let (newImages, preview) = prepared else {
             showPetImageImportError()
             return false
         }
-        guard confirmPetImageImport(data, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
-
+        guard confirmPetImageImport(preview, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
         do {
-            try persistPetImages(newImages)
+            try await persistPetImages(newImages, resetActivity: true)
         } catch {
-            showImageSaveError()
+            showImageSaveError(error)
             return false
         }
-
-        importedImages = newImages
-        imageSetDidChange(resetActivity: true)
+        imageLoadFailed = false
         return true
     }
 
@@ -70,8 +67,13 @@ extension AppDelegate {
         showAlert(.petImportErrorTitle, .petImportErrorMessage)
     }
 
-    func showImageSaveError() {
-        showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
+    func showImageSaveError(_ error: Error) {
+        guard !isShuttingDown else { return }
+        if error is PetImageStorageError {
+            showAlert(.imagesErrorTitle, .imagesMemoryLimit)
+        } else {
+            showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
+        }
     }
 
     func showAlert(_ titleKey: LocalizationKey, _ messageKey: LocalizationKey) {
@@ -82,7 +84,7 @@ extension AppDelegate {
         alert.runModal()
     }
 
-    private func confirmPetImageImport(_ data: Data, cellSize: Int) -> Bool {
+    private func confirmPetImageImport(_ preview: NSImage, cellSize: Int) -> Bool {
         let alert = NSAlert()
         alert.messageText = localizedString(.petPreviewTitle)
         alert.informativeText = localizedString(.petPreviewPrompt)
@@ -92,7 +94,7 @@ extension AppDelegate {
         let detailsHeight: CGFloat = 72
         let accessory = NSView(frame: NSRect(x: 0, y: 0, width: previewSize, height: previewSize + detailsHeight))
         let imageView = NSImageView(frame: NSRect(x: 0, y: detailsHeight, width: previewSize, height: previewSize))
-        imageView.image = NSImage(data: data)
+        imageView.image = preview
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.wantsLayer = true
         imageView.layer?.borderColor = NSColor.separatorColor.cgColor

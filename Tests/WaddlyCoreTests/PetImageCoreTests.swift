@@ -84,6 +84,71 @@ import WaddlyCore
     #expect(PetSpriteSheetImporter.load(from: savedFile) != nil)
 }
 
+@Test func spritePreviewIsBoundedAtRetinaDisplaySize() throws {
+    let data = try #require(makePNG(width: 3072, height: 3072))
+    let preview = try #require(PetSpriteSheetImporter.preview(from: data))
+    #expect(preview.size == NSSize(width: 480, height: 480))
+    let frames = try #require(PetSpriteSheetImporter.frames(from: data))
+    #expect(frames[.idle][0].size == NSSize(width: 1024, height: 1024))
+    #expect(frames.isWithinMemoryBudget)
+}
+
+@Test func imageTransactionsReuseOrderedFilesAndDeleteOnlyAfterCommit() throws {
+    let data = try #require(makePNG(width: 6, height: 6))
+    let images = try #require(PetSpriteSheetImporter.frames(from: data))
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let storage = PetImageStorage(directory: directory)
+    let original = try storage.stage(images, replacing: PetImageSet(), files: [:])
+    let loaded = try storage.load(original)
+    #expect(loaded.0.isComplete)
+    #expect(loaded.1 == original)
+    var edited = loaded.0
+    edited[.idle].reverse()
+    edited[.typing].remove(at: 0)
+    let staged = try storage.stage(edited, replacing: loaded.0, files: original)
+    #expect(staged["idle"] == original["idle"]?.reversed().map(\.self))
+    #expect(staged["typing"] == original["typing"]?.dropFirst().map(\.self))
+    #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).count == 9)
+    storage.removeObsoleteFiles(from: original, keeping: staged)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).count == 8)
+    #expect(try storage.load(staged).0.isComplete)
+}
+
+@Test func failedImageStagingRollsBackNewFilesAndKeepsThePreviousSet() throws {
+    let data = try #require(makePNG(width: 6, height: 6))
+    let previous = try #require(PetSpriteSheetImporter.frames(from: data))
+    let replacement = try #require(PetSpriteSheetImporter.frames(from: data))
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let storage = PetImageStorage(directory: directory)
+    let original = try storage.stage(previous, replacing: PetImageSet(), files: [:])
+    let badData = Data(count: PetSpriteSheetImporter.maximumFileSize + 1)
+    #expect(throws: CocoaError.self) {
+        try storage.stage(
+            replacement, replacing: previous, files: original,
+            encodedImages: [ObjectIdentifier(replacement[.typing][0]): badData]
+        )
+    }
+    #expect(try Set(FileManager.default.contentsOfDirectory(atPath: directory.path))
+        == Set(original.values.flatMap(\.self)))
+    #expect(try storage.load(original).0.isComplete)
+}
+
+@Test func residentBudgetRejectsGrowthWithoutDeletingSavedFrames() throws {
+    let data = try #require(makePNG(width: 3072, height: 3072))
+    var images = try #require(PetSpriteSheetImporter.frames(from: data))
+    #expect(images.isWithinMemoryBudget)
+    images[.idle].append(images[.typing][0])
+    #expect(!images.isWithinMemoryBudget)
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let storage = PetImageStorage(directory: directory)
+    #expect(throws: PetImageStorageError.self) {
+        try storage.stage(images, replacing: PetImageSet(), files: [:])
+    }
+    #expect(!FileManager.default.fileExists(atPath: directory.path))
+}
+
 private func makeLargePNG(width: Int, height: Int) -> Data? {
     let bytesPerRow = width * 4
     let pixelBytes = UnsafeMutablePointer<UInt8>.allocate(capacity: bytesPerRow * height)
