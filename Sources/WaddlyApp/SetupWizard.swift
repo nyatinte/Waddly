@@ -153,8 +153,10 @@ extension SetupWizardController {
         )
         progressIndicator.doubleValue = Double(currentStep + 1)
         backButton.title = localizedString(.setupBack)
+        backButton.setAccessibilityLabel(localizedString(.setupBack))
         backButton.isEnabled = currentStep > 0
         skipButton.isHidden = currentStep != 0
+        skipButton.title = localizedString(.setupSkip)
         nextButton.title = localizedString(currentStep == 2 ? .setupFinish : .setupNext)
         nextButton.isEnabled = currentStep != 1 || hasCustomImage()
         window?.defaultButtonCell = nextButton.cell as? NSButtonCell
@@ -349,19 +351,6 @@ extension SetupWizardController {
         guard currentStep == 0 else { return }
         currentStep = 1
         renderCurrentStep()
-    }
-
-    static func loadPrompt() -> String {
-        let language = AppLanguage.active.localization
-        guard let url = Bundle.main.resourceURL?.appendingPathComponent("prompts/\(language).md"),
-              let markdown = try? String(contentsOf: url, encoding: .utf8),
-              let start = markdown.range(of: "```text\n"),
-              let end = markdown[start.upperBound...].range(of: "```")
-        else {
-            return ""
-        }
-        return String(markdown[start.upperBound ..< end.lowerBound])
-            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

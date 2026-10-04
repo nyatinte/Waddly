@@ -15,6 +15,10 @@ private enum MenuBarIconRenderer {
 func copyMenuTree(_ menu: NSMenu) -> NSMenu {
     let copy = NSMenu(title: menu.title)
     for item in menu.items {
+        if item.isSeparatorItem {
+            copy.addItem(.separator())
+            continue
+        }
         let itemCopy = NSMenuItem(title: item.title, action: item.action, keyEquivalent: item.keyEquivalent)
         itemCopy.target = item.target
         itemCopy.tag = item.tag
@@ -26,6 +30,31 @@ func copyMenuTree(_ menu: NSMenu) -> NSMenu {
         copy.addItem(itemCopy)
     }
     return copy
+}
+
+func synchronizeMenuSelection(in menus: [NSMenu], action: Selector, selectedTag: Int) {
+    func update(_ menu: NSMenu) {
+        for item in menu.items {
+            if item.action == action {
+                item.state = item.tag == selectedTag ? .on : .off
+            }
+            if let submenu = item.submenu {
+                update(submenu)
+            }
+        }
+    }
+    menus.forEach(update)
+}
+
+func updatePresenceMenuItems(dockItem: NSMenuItem, menuBarItem: NSMenuItem, showInDock: Bool, showInMenuBar: Bool) {
+    dockItem.state = showInDock ? .on : .off
+    menuBarItem.state = showInMenuBar ? .on : .off
+    dockItem.isEnabled = showInMenuBar
+    menuBarItem.isEnabled = showInDock
+}
+
+func pauseMenuTitleKey(isPaused: Bool) -> LocalizationKey {
+    isPaused ? .menuResume : .menuPause
 }
 
 extension AppDelegate {
@@ -53,7 +82,7 @@ extension AppDelegate {
         breathingItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-        pauseItem.title = localizedString(.menuPause)
+        pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
         pauseItem.action = #selector(togglePause)
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
@@ -66,6 +95,7 @@ extension AppDelegate {
         addBreathingMenuItem()
         addPresenceMenu()
         addWindowMenuItems()
+        updatePresenceMenuState()
 
         statusItem.button?.image = makeStatusIcon()
         statusItem.button?.setAccessibilityLabel(localizedString(.a11yMenuBar))
@@ -190,10 +220,18 @@ extension AppDelegate {
         let showInMenuBar = settings.showInMenuBar
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
         statusItem.isVisible = showInMenuBar
-        dockVisibilityItem.state = showInDock ? .on : .off
-        menuBarVisibilityItem.state = showInMenuBar ? .on : .off
-        dockVisibilityItem.isEnabled = showInMenuBar
-        menuBarVisibilityItem.isEnabled = showInDock
+        updatePresenceMenuState()
+    }
+
+    private func updatePresenceMenuState() {
+        let showInDock = settings.showInDock
+        let showInMenuBar = settings.showInMenuBar
+        updatePresenceMenuItems(
+            dockItem: dockVisibilityItem,
+            menuBarItem: menuBarVisibilityItem,
+            showInDock: showInDock,
+            showInMenuBar: showInMenuBar
+        )
     }
 
     @objc private func toggleDockVisibility() {
@@ -207,6 +245,7 @@ extension AppDelegate {
     }
 
     private func updateMenuStatus() {
+        pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         let statusKey: LocalizationKey = isPaused
             ? .tooltipPaused
@@ -220,14 +259,22 @@ extension AppDelegate {
         panel.setContentSize(NSSize(width: size, height: size))
         petView.frame = panel.contentView?.bounds ?? .zero
         panel.setFrameOrigin(clampedOrigin(panel.frame.origin))
-        sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
+        synchronizeMenuSelection(
+            in: [statusMenu, sender.menu].compactMap(\.self),
+            action: #selector(setSize(_:)),
+            selectedTag: sender.tag
+        )
         saveOrigin()
     }
 
     @objc private func setTypingMotion(_ sender: NSMenuItem) {
         guard let motion = TypingMotion(rawValue: sender.tag) else { return }
         settings.typingMotion = motion
-        sender.menu?.items.forEach { $0.state = $0 == sender ? .on : .off }
+        synchronizeMenuSelection(
+            in: [statusMenu, sender.menu].compactMap(\.self),
+            action: #selector(setTypingMotion(_:)),
+            selectedTag: sender.tag
+        )
         animationController.typingMotionDidChange(motion)
     }
 
