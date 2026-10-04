@@ -5,6 +5,7 @@ let package = Package(
     name: "Waddly",
     platforms: [.macOS(.v14)],
     products: [
+        .library(name: "WaddlyCore", targets: ["WaddlyCore"]),
         .executable(name: "Waddly", targets: ["WaddlyApp"])
     ],
     targets: [

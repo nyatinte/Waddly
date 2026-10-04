@@ -39,3 +39,26 @@ jobs:
 
       - name: Run full local validation
         run: mise run check
+
+  memory:
+    name: Release image memory budget
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install locked development tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.11
+
+      - name: Check performance source style
+        run: |
+          mise exec github:nicklockwood/SwiftFormat -- swiftformat Performance/Package.swift Performance/Tests --lint
+          TOOLCHAIN_DIR="$(xcode-select -p)" mise exec aqua:realm/SwiftLint -- swiftlint lint --strict Performance/Package.swift Performance/Tests
+
+      - name: Run serialized memory regression suite
+        run: mise run memory:test

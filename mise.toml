@@ -37,3 +37,7 @@ run = "./macos/package.sh"
 [tasks.check]
 description = "Run all local validation and build the Release app"
 run = ["mise run format:check", "mise run lint", "mise run test", "mise run build"]
+
+[tasks."memory:test"]
+description = "Run isolated Release memory regression tests (macOS 26+, Swift 6.2+)"
+run = "./macos/test.sh --package-path Performance -c release"

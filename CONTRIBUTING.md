@@ -83,6 +83,10 @@ WADDLY_PRINT_SNAPSHOTS=1 ./macos/test.sh --filter spriteSheetExtractionMatchesPi
 
 Copy the printed `expectedSpriteSheetSnapshots` value into `Tests/WaddlyCoreTests/PetImageSnapshotTests.swift`, then rerun `./macos/test.sh`.
 
+## Memory profiling
+
+See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activity states, repeated-import checks, measured baselines, and diagnostic commands. `mise run memory:test` runs the separate serialized Release suite on Swift 6.2 / macOS 26+. Its dependencies are isolated from the macOS 14 production app.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `mise run check`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
