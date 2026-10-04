@@ -17,6 +17,8 @@ Waddly requires an Apple Silicon Mac running macOS 14 or later. Homebrew install
 
 On first launch, use the setup wizard to import a transparent PNG sprite sheet with a 3×3 grid. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
 
+If the setup wizard appears after upgrading from an earlier beta, import your sprite sheet again.
+
 ## Features
 
 The pet reacts to key-down events. Waddly does not store typed text or key codes.
