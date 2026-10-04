@@ -3,6 +3,10 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
+if [ "$(uname -m)" != "arm64" ]; then
+  printf 'Waddly requires an Apple Silicon Mac.\n' >&2
+  exit 1
+fi
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
 if ! command -v mise >/dev/null 2>&1; then
@@ -27,6 +31,21 @@ cp "$ROOT/.build/release/Waddly" "$APP/Contents/MacOS/Waddly"
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
+# Remove the SVG tracing canvas and draw white fills before black details.
+sed 's/M 0 0 L 1254 0 L 1254 1254 L 0 1254 L 0 0 Z //' "$ROOT/assets/waddly-menubar.svg" \
+  | awk '
+    /^<svg / { header = $0; next }
+    /^<\/svg>/ { footer = $0; next }
+    /^<path fill="rgb\(254,253,254\)"/ { white[++whiteCount] = $0; next }
+    /^<path fill="rgb\(17,17,17\)"/ { black[++blackCount] = $0; next }
+    /^<path / { other[++otherCount] = $0; next }
+    END {
+      print header
+      for (i = 1; i <= whiteCount; i++) print white[i]
+      for (i = 1; i <= blackCount; i++) print black[i]
+      for (i = 1; i <= otherCount; i++) print other[i]
+      print footer
+    }' > "$APP/Contents/Resources/waddly-menubar.svg"
 
 ICONSET="$APP/Contents/Resources/Waddly.iconset"
 mkdir -p "$ICONSET"

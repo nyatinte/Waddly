@@ -3,20 +3,9 @@ import WaddlyCore
 
 extension AppDelegate {
     func loadSavedPetImage() {
-        let legacyImages = customPetImageURL.flatMap { url -> PetImageSet? in
-            guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
-                  let size = attributes[.size] as? NSNumber,
-                  size.intValue <= PetSpriteSheetImporter.maximumFileSize,
-                  let data = try? Data(contentsOf: url) else { return nil }
-            return PetSpriteSheetImporter.frames(from: data)
-        }
-        var loadedImages = legacyImages ?? PetImageSet()
-        guard let directory = petImagesDirectoryURL else {
-            importedImages = legacyImages
-            return
-        }
-
+        guard let directory = petImagesDirectoryURL else { return }
         let manifest = settings.petImageFiles
+        var loadedImages = PetImageSet()
         for category in PetImageCategory.allCases {
             let names = manifest[category.rawValue] ?? []
             var validNames: [String] = []
@@ -35,7 +24,7 @@ extension AppDelegate {
             }
             storedImageFiles[category.rawValue] = validNames
         }
-        if legacyImages != nil || !manifest.isEmpty {
+        if !manifest.isEmpty {
             importedImages = loadedImages
         }
     }

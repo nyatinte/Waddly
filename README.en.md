@@ -13,7 +13,7 @@
 
 ## Getting started
 
-After the first stable GitHub Release workflow completes and the Cask is added to the tap, install Waddly with Homebrew Cask. Homebrew distribution supports Apple Silicon Macs running macOS 14 or later.
+Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask will be available after the first stable GitHub Release.
 
 ```sh
 brew tap nyatinte/waddly
@@ -26,11 +26,13 @@ Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
 brew install --cask nyatinte/waddly/waddly-beta
 ```
 
-Update it with `brew upgrade --cask waddly`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
+Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
 The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then Control-click it in Finder, choose Open, and confirm. If needed, allow it under System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
 On first launch, use the setup wizard to import a transparent PNG sprite sheet with a 3×3 grid. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
+
+If the setup wizard appears after upgrading from an earlier beta, import your sprite sheet again.
 
 ## Features
 
@@ -43,6 +45,8 @@ You can drag the pet around the desktop, and Waddly saves its position. Choose S
 The app displays Japanese or English based on your preferred macOS language. It uses English for other languages. In the Language menu, choose whether to follow System Settings or use Japanese or English. Restart Waddly to apply a change.
 
 Waddly appears in both the Dock and menu bar. Use the Show in menu to change where it appears; at least one remains visible. Click the penguin icon in the menu bar or right-click the pet to open the menu. You can change the size and typing motion, configure images, pause reactions, and set the app to launch at login.
+
+The menu bar shows only the supplied penguin artwork, at 24 pt.
 
 The setup wizard opens on first launch. It guides you through the image-generation prompt, 3×3 PNG import, and Input Monitoring permission. You can drop a PNG anywhere on the image page. Import a custom image before continuing to the next page. You can reopen the wizard from the menu at any time.
 

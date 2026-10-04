@@ -204,12 +204,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings.displaySize
     }
 
-    var customPetImageURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("Waddly", isDirectory: true)
-            .appendingPathComponent("custom-pet.png")
-    }
-
     var petImagesDirectoryURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Waddly", isDirectory: true)
