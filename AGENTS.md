@@ -18,4 +18,4 @@ When user-visible behavior or setup instructions change, update both `README.md`
 
 ## Verification
 
-After changing Swift code, run the test suite with `swift test` and build with `./macos/build.sh`. The build script runs strict SwiftLint checks and creates the Release app.
+After changing Swift code, run `mise run test` and `mise run build`. Run `mise run check` when full format, lint, test, and build validation is appropriate.
