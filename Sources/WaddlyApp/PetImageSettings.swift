@@ -41,13 +41,12 @@ extension AppDelegate {
         }
         guard confirmPetImageImport(preview, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
         do {
-            try await persistPetImages(newImages)
+            try await persistPetImages(newImages, resetActivity: true)
         } catch {
             showImageSaveError(error)
             return false
         }
         imageLoadFailed = false
-        imageSetDidChange(resetActivity: true)
         return true
     }
 

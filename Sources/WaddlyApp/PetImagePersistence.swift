@@ -16,7 +16,15 @@ extension AppDelegate {
 
     func persistPetImages(
         _ updated: PetImageSet,
-        encodedImages: [ObjectIdentifier: Data] = [:]
+        encodedImages: [ObjectIdentifier: Data] = [:],
+        resetActivity: Bool = false,
+        cleanup: @Sendable (
+            PetImageStorage,
+            [String: [String]],
+            [String: [String]]
+        ) async -> Void = { storage, old, new in
+            await Task.detached { storage.removeObsoleteFiles(from: old, keeping: new) }.value
+        }
     ) async throws {
         guard let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
         let storage = PetImageStorage(directory: directory)
@@ -32,7 +40,8 @@ extension AppDelegate {
         settings.petImageFiles = newFiles
         storedImageFiles = newFiles
         importedImages = updated
-        await Task.detached { storage.removeObsoleteFiles(from: oldFiles, keeping: newFiles) }.value
+        imageSetDidChange(resetActivity: resetActivity)
+        await cleanup(storage, oldFiles, newFiles)
     }
 
     func addImages(_ urls: [URL], to category: PetImageCategory) {
@@ -66,7 +75,6 @@ extension AppDelegate {
                 let encoded = [ObjectIdentifier(optimized.image): optimized.pngData]
                 try await persistPetImages(updated, encodedImages: encoded)
                 addedCount += 1
-                imageSetDidChange()
             } catch {
                 showImageSaveError(error)
                 return false
@@ -82,10 +90,11 @@ extension AppDelegate {
         return true
     }
 
-    func removeImage(at index: Int, from category: PetImageCategory) {
-        guard petImages[category].indices.contains(index) else { return }
+    @discardableResult
+    func removeImage(at index: Int, from category: PetImageCategory) -> Task<Void, Never>? {
+        guard petImages[category].indices.contains(index) else { return nil }
         let target = petImages[category][index]
-        Task { [weak self] in
+        return Task { [weak self] in
             guard let self else { return }
             _ = await queueImageUpdate {
                 var updated = self.petImages
@@ -121,7 +130,6 @@ extension AppDelegate {
     private func saveImageEdit(_ updated: PetImageSet) async -> Bool {
         do {
             try await persistPetImages(updated)
-            imageSetDidChange()
             return true
         } catch {
             showImageSaveError(error)

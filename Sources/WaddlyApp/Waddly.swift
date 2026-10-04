@@ -159,7 +159,7 @@ final class KeyboardMonitor {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    let settings = AppSettings.standard
+    let settings: AppSettings
     let monitor = KeyboardMonitor()
     var pendingImageUpdate: Task<Void, Never>?
     var isShuttingDown = false
@@ -214,10 +214,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings.displaySize
     }
 
-    var petImagesDirectoryURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("Waddly", isDirectory: true)
-            .appendingPathComponent("PetImages", isDirectory: true)
+    var petImagesDirectoryURL = FileManager.default.urls(
+        for: .applicationSupportDirectory, in: .userDomainMask
+    ).first?.appendingPathComponent("Waddly", isDirectory: true)
+        .appendingPathComponent("PetImages", isDirectory: true)
+
+    init(settings: AppSettings = .standard) {
+        self.settings = settings
+        super.init()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

@@ -28,7 +28,7 @@ brew install --cask nyatinte/waddly/waddly-beta
 
 Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
-The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then Control-click it in Finder, choose Open, and confirm. If needed, allow it under System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
+The app is ad-hoc signed and is not notarized. If Gatekeeper warns on first launch, make sure the app came from the official GitHub Release, then allow that app under System Settings → Privacy & Security → Open Anyway and confirm. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). Do not disable Gatekeeper or remove the quarantine attribute. For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
 On first launch, use the setup wizard to import a transparent PNG sprite sheet with a 3×3 grid. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
 
