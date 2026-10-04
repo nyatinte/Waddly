@@ -1,6 +1,6 @@
 [settings]
 lockfile = true
-lockfile_platforms = ["macos-arm64", "macos-x64"]
+lockfile_platforms = ["macos-arm64"]
 
 [tools]
 hk = "2.4.0"

@@ -3,6 +3,10 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 APP="$ROOT/build/Waddly.app"
+if [ "$(uname -m)" != "arm64" ]; then
+  printf 'Waddly requires an Apple Silicon Mac.\n' >&2
+  exit 1
+fi
 BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$ROOT/macos/Info.plist")
 
 if ! command -v mise >/dev/null 2>&1; then

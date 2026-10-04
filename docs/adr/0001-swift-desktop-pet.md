@@ -12,7 +12,7 @@
 
 ### 対象環境
 
-- macOS 専用で、macOS 14 以降を対象にする。ビルド時に実行中の Mac の CPU アーキテクチャを選ぶ。
+- Apple Silicon搭載Mac専用で、macOS 14 以降を対象にする。配布ビルドは arm64 に固定する。
 - 開発環境は macOS 27.0、Apple Swift 6.4、macOS SDK 27.0。Xcode 本体ではなく Command Line Tools を使う。
 - `.app` と `.dmg` を生成する。Developer ID 証明書がないため、現状はバンドル ID を基準に ad-hoc 署名し、公証と App Store 対応は未実施。
 

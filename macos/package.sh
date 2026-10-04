@@ -6,8 +6,7 @@ APP="$ROOT/build/Waddly.app"
 DIST="$ROOT/dist"
 STAGING=$(mktemp -d "${TMPDIR:-/tmp}/waddly.XXXXXX")
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/macos/Info.plist")
-ARCH=$(uname -m)
-DMG="$DIST/Waddly-$VERSION-macos-$ARCH.dmg"
+DMG="$DIST/Waddly-$VERSION-macos-arm64.dmg"
 
 trap 'rm -rf "$STAGING"' EXIT HUP INT TERM
 "$ROOT/macos/build.sh"

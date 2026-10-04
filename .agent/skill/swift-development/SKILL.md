@@ -9,7 +9,7 @@ Adapted for this repository from [sammcj/agentic-coding's Swift development skil
 
 ## Project constraints
 
-- The app targets macOS 14 and uses Swift 6, AppKit, Core Graphics, and Core Animation. Check API availability against macOS 14 before using newer platform APIs.
+- The app targets Apple Silicon and macOS 14, and uses Swift 6, AppKit, Core Graphics, and Core Animation. Check API availability against macOS 14 before using newer platform APIs.
 - Keep runtime dependencies at zero. Use the existing frameworks and patterns before proposing a package.
 - Keyboard events are listen-only. Inspect the Enter key code transiently; never store, log, or transmit key codes or typed content.
 - Imported images and their processing stay on the device.

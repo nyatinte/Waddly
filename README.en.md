@@ -13,7 +13,7 @@
 
 ## Getting started
 
-Waddly requires macOS 14 or later. Homebrew installation is planned. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
+Waddly requires an Apple Silicon Mac running macOS 14 or later. Homebrew installation is planned. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
 On first launch, use the setup wizard to import a transparent PNG sprite sheet with a 3×3 grid. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys. See [Use your own pet](#use-your-own-pet) for image requirements.
 
