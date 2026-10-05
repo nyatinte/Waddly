@@ -86,14 +86,15 @@ extension AppDelegate {
         pauseItem.action = #selector(togglePause)
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
+        statusMenu.addItem(.separator())
 
         statusMenu.addItem(makeSizeMenuItem())
-
         statusMenu.addItem(makeMotionMenuItem())
-
-        addLanguageMenu()
         addBreathingMenuItem()
+        addLanguageMenu()
+        statusMenu.addItem(.separator())
         addPresenceMenu()
+        statusMenu.addItem(.separator())
         addWindowMenuItems()
         updatePresenceMenuState()
 

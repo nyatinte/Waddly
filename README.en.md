@@ -16,7 +16,8 @@
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
 - While idle, it breathes and blinks. After a while it sleeps and wakes when you type.
 - Drag your pet anywhere on the desktop; its position is saved between launches.
-- Add your own pet images and configure images and animations from the menu.
+- Add your own pet images and configure idle, typing, and other animations with “Animation Settings…”.
+- Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through the initial image import and Input Monitoring permission. The language item is labeled “Language / 言語”.
 
 ## Use your own pet
 
@@ -36,7 +37,7 @@ Import a transparent PNG sprite sheet during setup. Cells are read from top left
 - Both dimensions divisible by 3
 - Maximum file size: 20 MB; maximum side length: 4096 px
 
-Sheets larger than 3072 px on a side are reduced during import. You can also add multiple PNGs for each animation from Pet Images… in the menu. Individual images are reduced to a maximum side length of 1024 px.
+Sheets larger than 3072 px on a side are reduced during import. You can also add multiple PNGs for each animation from Animation Settings… in the menu. Individual images are reduced to a maximum side length of 1024 px.
 
 Images are stored on your Mac as individual PNG frames. The source files are not modified, and images are not uploaded. Older prompts may use a different cell order; use the current prompt for the expected order.
 
@@ -59,7 +60,7 @@ Update the stable app with `brew upgrade --cask waddly` and the beta app with `b
 
 The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper's first-launch confirmation normally does not appear for Homebrew installs. This does not replace notarization or Developer ID signing. A DMG downloaded directly retains quarantine, so Gatekeeper may block the first launch. Confirm that it came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
-On first launch, follow the setup wizard to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
+On first launch, follow Setup Guide… to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
 
 If the setup wizard appears after upgrading from an earlier beta, import your sprite sheet again.
 
