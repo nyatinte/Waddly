@@ -1,4 +1,5 @@
 import AppKit
+import Foundation
 import Testing
 @testable import WaddlyApp
 
@@ -21,6 +22,23 @@ import Testing
     #expect(AppLanguage.detectedLocalization(["fr-FR"]) == "en")
     #expect(AppLanguage.japanese.localization == "ja")
     #expect(AppLanguage.english.localization == "en")
+    #expect(AppLanguage.system.localization == AppLanguage.detectedLocalization(Bundle.main.preferredLocalizations))
+}
+
+@Test func localizationControllerUsesItsInjectedSettings() throws {
+    let suiteName = "WaddlyTests.localization.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let controller = LocalizationController(settings: AppSettings(defaults: defaults))
+    let standardLanguage = AppSettings.standard.appLanguage
+
+    #expect(controller.selectedLanguage == .system)
+    controller.changeLanguage(.japanese)
+    #expect(controller.selectedLanguage == .japanese)
+    #expect(controller.activeLocalization == "ja")
+    controller.changeLanguage(.english)
+    #expect(controller.activeLocalization == "en")
+    #expect(AppSettings.standard.appLanguage == standardLanguage)
 }
 
 @Test @MainActor func copiedMenusHaveIndependentItemsAndPreserveNestedCommandsAndState() {
@@ -91,6 +109,35 @@ import Testing
         menu.addItem(item)
     }
     return menu
+}
+
+@Test @MainActor func setupWizardPromptTracksTheInjectedLanguage() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.prompt.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resourcesURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let promptsURL = resourcesURL.appendingPathComponent("prompts", isDirectory: true)
+    try FileManager.default.createDirectory(at: promptsURL, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: resourcesURL) }
+    try Data("```text\nこんにちは\n```".utf8).write(to: promptsURL.appendingPathComponent("ja.md"))
+    try Data("```text\nHello\n```".utf8).write(to: promptsURL.appendingPathComponent("en.md"))
+
+    let localization = LocalizationController(settings: AppSettings(defaults: defaults))
+    localization.changeLanguage(.japanese)
+    let wizard = SetupWizardController(
+        localization: localization,
+        promptResourcesURL: resourcesURL,
+        onImportImage: { _ in false },
+        hasCustomImage: { false },
+        hasInputMonitoringPermission: { false },
+        requestInputMonitoringPermission: { false },
+        onClose: {}
+    )
+
+    #expect(wizard.prompt == "こんにちは")
+    localization.changeLanguage(.english)
+    #expect(wizard.prompt == "Hello")
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {

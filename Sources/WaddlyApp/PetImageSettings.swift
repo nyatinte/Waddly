@@ -199,7 +199,11 @@ extension AppDelegate {
         note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
         for category in PetImageCategory.allCases {
-            let row = PetImageCategoryRowView(category: category, images: thumbnails(for: category))
+            let row = PetImageCategoryRowView(
+                category: category,
+                images: thumbnails(for: category),
+                localization: localization
+            )
             row.onAdd = { [weak self] in self?.chooseImages(for: category) }
             row.onDrop = { [weak self] in self?.addImages($0, to: category) }
             row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }

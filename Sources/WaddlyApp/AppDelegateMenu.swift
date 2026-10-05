@@ -114,7 +114,11 @@ extension AppDelegate {
         let motionItem = NSMenuItem(title: localizedString(.menuTypingMotion), action: nil, keyEquivalent: "")
         let motionMenu = NSMenu()
         for motion in TypingMotion.allCases {
-            let item = NSMenuItem(title: motion.title, action: #selector(setTypingMotion(_:)), keyEquivalent: "")
+            let item = NSMenuItem(
+                title: motion.title(using: localization),
+                action: #selector(setTypingMotion(_:)),
+                keyEquivalent: ""
+            )
             item.target = self
             item.tag = motion.rawValue
             item.state = motion == typingMotion ? .on : .off
@@ -193,7 +197,7 @@ extension AppDelegate {
             )
             item.target = self
             item.tag = language.rawValue
-            item.state = language == AppLanguage.selected ? .on : .off
+            item.state = language == localization.selectedLanguage ? .on : .off
             languageMenu.addItem(item)
         }
         languageItem.submenu = languageMenu
@@ -287,8 +291,9 @@ extension AppDelegate {
     }
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
-        guard let language = AppLanguage(rawValue: sender.tag), language != AppLanguage.selected else { return }
-        settings.appLanguage = language
+        guard let language = AppLanguage(rawValue: sender.tag),
+              language != localization.selectedLanguage else { return }
+        localization.changeLanguage(language)
         pendingLocalizationRefresh = true
     }
 

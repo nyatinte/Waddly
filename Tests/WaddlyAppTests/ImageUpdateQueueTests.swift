@@ -118,7 +118,7 @@ private func makeImageFrames() throws -> [NSImage] {
     app.importedImages = previous
     let storage = PetImageStorage(directory: directory)
     app.storedImageFiles = try storage.stage(previous, replacing: PetImageSet(), files: [:])
-    let row = PetImageCategoryRowView(category: .idle, images: frames)
+    let row = PetImageCategoryRowView(category: .idle, images: frames, localization: app.localization)
     app.imageRows[.idle] = row
     return row
 }

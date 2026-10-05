@@ -3,7 +3,12 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate {
-    var prompt: String
+    let localization: LocalizationController
+    let promptResourcesURL: URL?
+    var prompt: String {
+        SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
+    }
+
     private let onImportImage: @MainActor (URL) async -> Bool
     private let hasCustomImage: @MainActor () -> Bool
     private let hasInputMonitoringPermission: @MainActor () -> Bool
@@ -24,13 +29,16 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     private var currentStep = 0
 
     init(
+        localization: LocalizationController,
+        promptResourcesURL: URL? = Bundle.main.resourceURL,
         onImportImage: @escaping @MainActor (URL) async -> Bool,
         hasCustomImage: @escaping @MainActor () -> Bool,
         hasInputMonitoringPermission: @escaping @MainActor () -> Bool,
         requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
         onClose: @escaping @MainActor () -> Void
     ) {
-        prompt = Self.loadPrompt()
+        self.localization = localization
+        self.promptResourcesURL = promptResourcesURL
         self.onImportImage = onImportImage
         self.hasCustomImage = hasCustomImage
         self.hasInputMonitoringPermission = hasInputMonitoringPermission
@@ -358,6 +366,7 @@ extension AppDelegate {
     @objc func showSetupWizard() {
         if setupWizardController == nil {
             setupWizardController = SetupWizardController(
+                localization: localization,
                 onImportImage: { [weak self] in await self?.importPetImage(from: $0) ?? false },
                 hasCustomImage: { [weak self] in self?.hasCompletePetImageSet ?? false },
                 hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },

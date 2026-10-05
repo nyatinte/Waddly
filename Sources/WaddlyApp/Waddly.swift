@@ -160,6 +160,7 @@ final class KeyboardMonitor {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     let settings: AppSettings
+    let localization: LocalizationController
     let monitor = KeyboardMonitor()
     var pendingImageUpdate: Task<Void, Never>?
     var isShuttingDown = false
@@ -224,7 +225,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     init(settings: AppSettings = .standard) {
         self.settings = settings
+        localization = LocalizationController(settings: settings)
         super.init()
+    }
+
+    func localizedString(_ key: LocalizationKey) -> String {
+        localization.string(for: key)
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

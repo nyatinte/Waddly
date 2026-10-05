@@ -6,14 +6,6 @@ enum AppLanguage: Int, CaseIterable {
     case japanese
     case english
 
-    static var selected: AppLanguage {
-        AppSettings.standard.appLanguage
-    }
-
-    static var active: AppLanguage {
-        selected
-    }
-
     var localization: String {
         switch self {
         case .system: Self.detectedLocalization(Bundle.main.preferredLocalizations)
@@ -35,15 +27,34 @@ enum AppLanguage: Int, CaseIterable {
     }
 }
 
-func localizedString(_ key: LocalizationKey) -> String {
-    let key = key.rawValue
-    let localization = AppLanguage.active.localization
-    guard let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
-          let bundle = Bundle(path: path)
-    else {
-        return NSLocalizedString(key, comment: "")
+final class LocalizationController: Sendable {
+    private let settings: AppSettings
+
+    init(settings: AppSettings) {
+        self.settings = settings
     }
-    return NSLocalizedString(key, bundle: bundle, comment: "")
+
+    var selectedLanguage: AppLanguage {
+        settings.appLanguage
+    }
+
+    var activeLocalization: String {
+        selectedLanguage.localization
+    }
+
+    func changeLanguage(_ language: AppLanguage) {
+        settings.appLanguage = language
+    }
+
+    func string(for key: LocalizationKey) -> String {
+        let key = key.rawValue
+        guard let path = Bundle.main.path(forResource: activeLocalization, ofType: "lproj"),
+              let bundle = Bundle(path: path)
+        else {
+            return NSLocalizedString(key, comment: "")
+        }
+        return NSLocalizedString(key, bundle: bundle, comment: "")
+    }
 }
 
 enum PetPhase: Equatable {
@@ -72,11 +83,11 @@ enum TypingMotion: Int, CaseIterable {
     case weak
     case strong
 
-    var title: String {
+    func title(using localization: LocalizationController) -> String {
         switch self {
-        case .off: localizedString(.motionOff)
-        case .weak: localizedString(.motionWeak)
-        case .strong: localizedString(.motionStrong)
+        case .off: localization.string(for: .motionOff)
+        case .weak: localization.string(for: .motionWeak)
+        case .strong: localization.string(for: .motionStrong)
         }
     }
 
@@ -90,12 +101,12 @@ enum TypingMotion: Int, CaseIterable {
 }
 
 extension PetImageCategory {
-    var title: String {
+    func title(using localization: LocalizationController) -> String {
         switch self {
-        case .idle: localizedString(.imagesCategoryIdle)
-        case .typing: localizedString(.imagesCategoryTyping)
-        case .enter: localizedString(.imagesCategoryEnter)
-        case .sleep: localizedString(.imagesCategorySleep)
+        case .idle: localization.string(for: .imagesCategoryIdle)
+        case .typing: localization.string(for: .imagesCategoryTyping)
+        case .enter: localization.string(for: .imagesCategoryEnter)
+        case .sleep: localization.string(for: .imagesCategorySleep)
         }
     }
 }
