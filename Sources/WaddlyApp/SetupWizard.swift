@@ -46,14 +46,14 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         self.onClose = onClose
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 680, height: 440),
+            contentRect: NSRect(x: 0, y: 0, width: 680, height: 480),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         super.init(window: window)
         window.title = localizedString(.setupWindowTitle)
-        window.minSize = NSSize(width: 680, height: 440)
+        window.minSize = NSSize(width: 680, height: 480)
         window.isReleasedWhenClosed = false
         window.delegate = self
         buildWindow()
@@ -93,7 +93,7 @@ extension SetupWizardController {
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             progressRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             pageContainer.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            pageContainer.heightAnchor.constraint(equalToConstant: 300),
+            pageContainer.heightAnchor.constraint(equalToConstant: 340),
             navigation.widthAnchor.constraint(equalTo: stack.widthAnchor),
             navigation.heightAnchor.constraint(equalToConstant: 32)
         ])
@@ -206,6 +206,8 @@ extension SetupWizardController {
         let title = makeTitle(.setupImageTitle)
         let description = makeDescription(.setupImageDescription)
         let dropZone = PetImageDropView(frame: .zero)
+        // The surrounding page owns imports; this nested card is only visual.
+        dropZone.unregisterDraggedTypes()
         dropZone.translatesAutoresizingMaskIntoConstraints = false
         dropZone.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         dropZone.layer?.cornerRadius = 12

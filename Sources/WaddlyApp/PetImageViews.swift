@@ -36,11 +36,6 @@ final class PetImageDropView: NSView {
         nil
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        guard let hit = super.hitTest(point) else { return nil }
-        return hit is NSButton ? hit : self
-    }
-
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard !fileURLs(from: sender).isEmpty else { return [] }
         layer?.borderColor = NSColor.controlAccentColor.cgColor
