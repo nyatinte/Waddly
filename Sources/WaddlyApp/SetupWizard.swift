@@ -63,10 +63,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         nil
     }
 
-    func localizedString(_ key: LocalizationKey) -> String {
-        localization.string(for: key)
-    }
-
     func refreshPermissionStatus() {
         let isGranted = hasInputMonitoringPermission()
         let statusKey: LocalizationKey = isGranted ? .setupPermissionGranted : .setupPermissionRequired

@@ -127,6 +127,7 @@ extension AppDelegate {
         motionItem.submenu = motionMenu
         return motionItem
     }
+
     private func addWindowMenuItems() {
         let imageSettingsItem = NSMenuItem(
             title: localizedString(.menuImageSettings),
@@ -290,7 +291,8 @@ extension AppDelegate {
     }
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
-        guard let language = AppLanguage(rawValue: sender.tag), language != localization.selectedLanguage else { return }
+        guard let language = AppLanguage(rawValue: sender.tag),
+              language != localization.selectedLanguage else { return }
         localization.changeLanguage(language)
         pendingLocalizationRefresh = true
     }

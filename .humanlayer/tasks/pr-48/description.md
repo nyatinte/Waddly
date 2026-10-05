@@ -6,7 +6,7 @@ Localization previously read language preferences from the global settings singl
 
 ## Special things to note
 
-- Language selection and fallback behavior are unchanged; this refactor does not change the existing restart prompt.
+- Runtime language refresh and fallback behavior from the base branch are preserved; this change injects their settings source.
 
 ## Change outline
 
