@@ -121,3 +121,17 @@ Three sequential paired runs on the same Apple Silicon / macOS 27.0.1 system pro
 Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final footprint ranges were 120.11–122.03 MiB before and 96.72–99.50 MiB after. Later imports plateaued in each run. Raw CSV samples are not retained in the repository.
 
 This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. Closing the settings window retains its controller/views for reuse, so it need not immediately return memory. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
+
+## Release E2E fixes comparison (#52, 2026-10-06)
+
+Three sequential before/after pairs compared `d810c9e` with `429f932` on the same arm64 Mac, macOS 27.0.1 (26A434), Apple Swift 6.4. Each revision used the same optimized AppDelegate probe and generated image, ten replacements, a 30-second hold with settings visible, and another 30 seconds after closing settings. Fresh preferences and image directories isolated every run. The probe now also records RSS and peak RSS through `task_info`; the application image pipeline is unchanged. These are state snapshots and kernel cumulative peaks, not interval averages.
+
+| Median of three runs (decimal MB) | Before | After | After − before |
+| --- | ---: | ---: | ---: |
+| Peak physical footprint | 133.84 | 134.14 | +0.29 |
+| Settings after 30 s | 103.47 | 103.88 | +0.41 |
+| Closed settings after 30 s | 103.61 | 104.07 | +0.46 |
+| Peak RSS | 283.41 | 283.64 | +0.23 |
+| Closed settings RSS after 30 s | 218.87 | 219.84 | +0.97 |
+
+No memory reduction was observed. After values were slightly higher in all three pairs, but this measurement alone does not identify the cause. Both revisions exceed the 100 MB physical-footprint goal. See the [release report](release-e2e-2026-10-05.md#2026-10-06-の-pr-前後比較) for individual runs, reproducible commands, and scope limitations. Raw CSVs and environment/tool hashes remain local under `dist/memory/pr-52-paired-20261006T105307Z/`.
