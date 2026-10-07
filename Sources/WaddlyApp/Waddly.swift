@@ -267,6 +267,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         startMonitoring()
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !hasCompletePetImageSet || setupWizardController?.window?.isVisible == true {
+            showSetupWizard()
+        } else {
+            showImageSettings()
+        }
+        return false
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         isShuttingDown = true
         animationController.shutdown()

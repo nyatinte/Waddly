@@ -18,6 +18,7 @@
 - Drag your pet anywhere on the desktop; its position is saved between launches.
 - Add your own pet images and configure idle, typing, and other animations with “Animation Settings…”.
 - Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through the initial image import and Input Monitoring permission. The language item is labeled “Language / 言語”.
+- Click the Dock icon to open setup before images are registered, or Animation Settings afterward. If setup is already open, it is brought to the front instead.
 
 ## Use your own pet
 
@@ -25,7 +26,7 @@
 
 Attach a photo of your pet in [ChatGPT](https://chatgpt.com/) and use the [English prompt](prompts/en.md) or [Japanese prompt](prompts/ja.md) to create a 3×3 sprite sheet. You can also create the sheet yourself.
 
-Import a transparent PNG sprite sheet during setup. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
+Import a transparent PNG sprite sheet during setup. Drop the PNG onto the image page or use “Choose PNG…” and check the preview. Canceling leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
 
 | Reference image | 3×3 sprite sheet |
 | --- | --- |
@@ -37,7 +38,7 @@ Import a transparent PNG sprite sheet during setup. Cells are read from top left
 - Both dimensions divisible by 3
 - Maximum file size: 20 MB; maximum side length: 4096 px
 
-Sheets larger than 3072 px on a side are reduced during import. You can also add multiple PNGs for each animation from Animation Settings… in the menu. Individual images are reduced to a maximum side length of 1024 px.
+Sheets larger than 3072 px on a side are reduced during import. You can also add multiple PNGs for each animation from Animation Settings… in the menu. Scroll horizontally to edit images that do not fit in a row. Individual images are reduced to a maximum side length of 1024 px.
 
 Images are stored on your Mac as individual PNG frames. The source files are not modified, and images are not uploaded. Older prompts may use a different cell order; use the current prompt for the expected order.
 

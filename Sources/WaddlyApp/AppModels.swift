@@ -29,9 +29,11 @@ enum AppLanguage: Int, CaseIterable {
 
 final class LocalizationController: Sendable {
     private let settings: AppSettings
+    private let resources: Bundle
 
-    init(settings: AppSettings) {
+    init(settings: AppSettings, resources: Bundle = .main) {
         self.settings = settings
+        self.resources = resources
     }
 
     var selectedLanguage: AppLanguage {
@@ -48,7 +50,7 @@ final class LocalizationController: Sendable {
 
     func string(for key: LocalizationKey) -> String {
         let key = key.rawValue
-        guard let path = Bundle.main.path(forResource: activeLocalization, ofType: "lproj"),
+        guard let path = resources.path(forResource: activeLocalization, ofType: "lproj"),
               let bundle = Bundle(path: path)
         else {
             return NSLocalizedString(key, comment: "")

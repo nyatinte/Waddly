@@ -29,7 +29,7 @@ struct ImageAppProbe {
 
     @MainActor private static func measure(_ delegate: AppDelegate, source: URL) async throws {
         try await Task.sleep(for: .seconds(2))
-        print("state,physical_footprint_bytes,peak_physical_footprint_bytes")
+        print("state,physical_footprint_bytes,peak_physical_footprint_bytes,rss_bytes,peak_rss_bytes")
         snapshot("launch")
         delegate.setupWizardController?.close()
         for iteration in 0 ..< 10 {
@@ -73,7 +73,10 @@ struct ImageAppProbe {
             }
         }
         guard result == KERN_SUCCESS else { exit(1) }
-        print("\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)")
+        print(
+            "\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)," +
+                "\(info.resident_size),\(info.resident_size_peak)"
+        )
         fflush(stdout)
     }
 }
