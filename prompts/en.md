@@ -39,5 +39,9 @@ Create a 3×3 animated sprite sheet for Waddly, using the attached pet or charac
 - In cell 7, make the Enter key visibly larger than the other keys. It may carry a simple “↵” symbol; do not write the word “Enter.”
 - Keep the keyboard and character entirely within their own cells and away from the cell edges.
 
+[Final inspection]
+- Inspect all nine cells separately on both light and dark backgrounds before outputting the sheet.
+- Check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, including single pixels, without removing intentional detached motion marks, sleep symbols, or Enter sparkles.
+
 Output only the sprite sheet image that meets these requirements.
 ```
