@@ -28,6 +28,8 @@ Attach a photo of your pet in [ChatGPT](https://chatgpt.com/) and use the [Engli
 
 Import a transparent PNG sprite sheet during setup. Drop the PNG onto the image page or use “Choose PNG…” and check the preview. Canceling leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
 
+Before importing, inspect each of the nine cells separately on both light and dark backgrounds. Check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, but keep intentional detached effects such as motion marks, sleep symbols, and Enter sparkles. To use the corrected example if you imported an older copy, download the updated sheet and import it again; saved frames do not update automatically.
+
 | Reference image | 3×3 sprite sheet |
 | --- | --- |
 | ![nyatinte-bot reference image](assets/examples/nyatinte-bot.png) | ![nyatinte-bot 3×3 transparent sprite sheet](assets/examples/nyatinte-bot-3x3.png) |

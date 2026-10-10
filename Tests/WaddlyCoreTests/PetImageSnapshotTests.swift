@@ -12,6 +12,13 @@ import WaddlyCore
         )
     )
     let data = try Data(contentsOf: fixtureURL)
+    let bitmap = try #require(NSBitmapImageRep(data: data))
+    // Enter sparkles must not bleed into the left edge of sleep-1.
+    for y in 652 ..< 710 {
+        for x in 256 ..< 258 {
+            #expect(bitmap.colorAt(x: x, y: y)?.alphaComponent == 0)
+        }
+    }
     let images = try #require(PetSpriteSheetImporter.frames(from: data))
 
     let snapshots = try PetImageCategory.allCases.flatMap { category in
@@ -44,7 +51,7 @@ private let expectedSpriteSheetSnapshots: [ImageSnapshot] = [
     snapshot("typing-2", "5bdb983904f5709db179f3ea0c59384dc7d9bfccc82d2de62467c0239a249740"),
     snapshot("typing-3", "c838526ead7d9b076923aa1f527b805f021631b5fcbe9bf280d4b71192f6aca6"),
     snapshot("typing-4", "2ad6784ae66ddec577fcd33341d2f6f2c4c1b12b95b77997715bbb2d341d2834"),
-    snapshot("sleep-1", "ae0e7d5373eec75c996519cd287656dbafe8ad7d79863114c4c2bb8540cbee2b"),
+    snapshot("sleep-1", "52f3d719ee294a0849dc0a1c009949a866db6b85df4d5cd219f375c5269a2e7d"),
     snapshot("sleep-2", "a18e0fa8341379d221424c2e5f7d36aa74acfc0a412be9f17c1be4cc04ebfcd5"),
     snapshot("enter-1", "fcd7fbf2e72c4ec789d739d3527bd6be7ef2157998303ad975742694c2422b68")
 ]
