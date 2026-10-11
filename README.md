@@ -1,82 +1,84 @@
 <div align="center">
-  <img src="assets/waddly-app-icon-rounded.png" alt="Waddlyのアプリアイコン" width="192" height="192">
+  <img src="assets/waddly-app-icon-rounded.png" alt="Waddly app icon" width="192" height="192">
   <h1>Waddly</h1>
 </div>
 
-<p align="center">自分のペットをデスクトップに表示し、キー入力に合わせて動かせるmacOSアプリです。</p>
+<p align="center">Put your pet on your Mac desktop and let it react to keyboard input.</p>
 
-<p align="center"><a href="README.en.md">English README</a></p>
+<p align="center"><a href="README.ja.md">日本語README</a></p>
 
 <p align="center">
-  <img src="assets/waddly-demo.gif" alt="Waddlyがキー入力に反応して動く様子" width="900">
+  <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
 </p>
 
-## Waddlyでできること
+## What Waddly does
 
-- キー入力に合わせてペットが動きます。入力した文字やキーコードは保存しません。
-- 待機中は呼吸やまばたきをし、時間がたつと眠ります。キー入力で目を覚まします。
-- ペットはデスクトップ上でドラッグでき、位置は次回起動時にも引き継がれます。
-- 自分のペットの画像を登録できます。「アニメーション設定…」で待機やタイピングなどの動きを変更できます。
-- メニューではサイズ、動き、表示先、言語を設定できます。「セットアップガイド…」では初回の画像登録や入力監視の準備を案内します。言語の項目名は「Language / 言語」です。
-- Dock のアイコンをクリックすると、画像未登録ならセットアップ、登録済みならアニメーション設定を開けます。セットアップが開いている場合は、その画面を手前に表示します。
+- Your pet reacts to keyboard input. Typed text and key codes are not stored.
+- While idle, it breathes and blinks. After a while it sleeps and wakes when you type.
+- Drag your pet anywhere on the desktop; its position is saved between launches.
+- Add your own pet images and configure idle, typing, and other animations with “Animation Settings…”.
+- Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through the initial image import and Input Monitoring permission. The language item is labeled “Language / 言語”.
+- Click the Dock icon to open setup before images are registered, or Animation Settings afterward. If setup is already open, it is brought to the front instead.
 
-## 自分のペットを使う
+## Use your own pet
 
-### 画像を用意する
+### Prepare a sprite sheet
 
-[ChatGPT](https://chatgpt.com/)にペットの画像を添付し、[日本語のプロンプト](prompts/ja.md)または[英語のプロンプト](prompts/en.md)を使って3×3のスプライトシートを作成できます。画像生成を使わず、手作業で作成したシートも登録できます。
+Attach a photo of your pet in [ChatGPT](https://chatgpt.com/) and use the [English prompt](prompts/en.md) or [Japanese prompt](prompts/ja.md) to create a 3×3 sprite sheet. You can also create the sheet yourself.
 
-初回起動時のセットアップで、透過PNGの3×3スプライトシートを読み込みます。画像ページにPNGをドロップするか、「PNGを選択…」から選び、プレビューを確認してください。キャンセルした場合、登録済みの画像は変更しません。各コマは左上から順に、待機2枚、タイピング4枚、Enter 1枚、スリープ2枚です。
+Import a transparent PNG sprite sheet during setup. Drop the PNG onto the image page or use “Choose PNG…” and check the preview. Canceling leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
 
-読み込む前に、9コマをそれぞれ切り出し、明るい背景と暗い背景の両方で確認してください。各コマの端に隣のポーズの断片や浮いた不要なピクセルがないかを調べ、混入した点や断片だけを除去します。意図した効果線、睡眠の記号、Enterのきらめきは残してください。古い作例を登録済みの場合は、修正版のシートをダウンロードして再度読み込んでください。保存済みのコマは自動では更新されません。
+Before importing, inspect each of the nine cells separately on both light and dark backgrounds. Check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, but keep intentional detached effects such as motion marks, sleep symbols, and Enter sparkles. To use the corrected example if you imported an older copy, download the updated sheet and import it again; saved frames do not update automatically.
 
-| 参照画像 | 3×3スプライトシート |
+| Reference image | 3×3 sprite sheet |
 | --- | --- |
-| ![参照用のnyatinte-bot画像](assets/examples/nyatinte-bot.png) | ![nyatinte-botの3×3透過スプライトシート](assets/examples/nyatinte-bot-3x3.png) |
+| ![nyatinte-bot reference image](assets/examples/nyatinte-bot.png) | ![nyatinte-bot 3×3 transparent sprite sheet](assets/examples/nyatinte-bot-3x3.png) |
 
-### 画像の条件
+### Image requirements
 
-- 透過PNGで、縦横が同じ長さの画像
-- 縦横のピクセル数が3で割り切れること
-- ファイルサイズは20 MB以下、各辺4096 px以下
+- Transparent PNG with a square canvas
+- Both dimensions divisible by 3
+- Maximum file size: 20 MB; maximum side length: 4096 px
 
-長辺が3072 pxを超えるシートは、読み込み時に縮小します。メニューの「アニメーション設定…」から、各動作に複数の画像を追加することもできます。画像が多い場合は横にスクロールして編集できます。個別画像は長辺1024 pxまで縮小されます。
+Sheets larger than 3072 px on a side are reduced during import. You can also add multiple PNGs for each animation from Animation Settings… in the menu. Scroll horizontally to edit images that do not fit in a row. Individual images are reduced to a maximum side length of 1024 px.
 
-画像はコマごとのPNGとして端末内に保存されます。元ファイルは変更せず、画像をネットワークへ送信しません。以前のプロンプトで作成した画像はコマの順番が異なる場合があるため、現在のプロンプトを使ってください。
+Images are stored on your Mac as individual PNG frames. The source files are not modified, and images are not uploaded. Older prompts may use a different cell order; use the current prompt for the expected order.
 
-## はじめる
+## Getting started
 
-WaddlyはApple Silicon搭載MacのmacOS 14以降に対応しています。安定版のHomebrew Caskは公式tapからインストールできます。
+Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask is available from the official tap.
 
 ```sh
 brew tap nyatinte/waddly
 brew install --cask waddly
 ```
 
-ベータ版 `0.1.0-beta.1` は安定版と別の `Waddly Beta.app` として試せます。
+Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
 
 ```sh
 brew install --cask nyatinte/waddly/waddly-beta
 ```
 
-安定版を更新するには `brew upgrade --cask waddly`、ベータ版は `brew upgrade --cask waddly-beta` を実行してください。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
+Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
-配布アプリは ad-hoc 署名で、公証していません。Homebrew Cask はインストールと更新の後に隔離属性を削除するため、Homebrew 経由では通常 Gatekeeper の初回起動確認は表示されません。この処理は公証や Developer ID 署名の代わりにはなりません。DMG を直接ダウンロードした場合は隔離属性が残るため、Gatekeeper が初回起動を止めることがあります。公式 GitHub Release から取得したことを確認し、「システム設定 → プライバシーとセキュリティ → このまま開く」からそのアプリを許可してください。macOS 15以降では Control キーを押しながらクリックして「開く」を選んでもこの警告を解除できません。[Appleの初回起動手順](https://support.apple.com/ja-jp/102445)を参照してください。DMG を直接使う場合は、同じ Release にある `.sha256` ファイルでチェックサムを確認します。
+The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper's first-launch confirmation normally does not appear for Homebrew installs. This does not replace notarization or Developer ID signing. A DMG downloaded directly retains quarantine, so Gatekeeper may block the first launch. Confirm that it came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
-初回起動時はセットアップガイドに沿って画像を登録してください。キー入力に反応させるには、「システム設定 → プライバシーとセキュリティ → 入力監視」でWaddlyを許可します。許可がなくてもアプリは起動できますが、キー入力には反応しません。
+On first launch, follow Setup Guide… to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
 
-## プライバシー
+If the setup wizard appears after upgrading from an earlier beta, import your sprite sheet again.
 
-入力イベントはアニメーションの制御に使います。入力内容やキーコードを保存・記録・送信しません。画像は端末内に保存します。
+## Privacy
 
-## メモリ実測
+Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac.
 
-メモリの目標は代表的な構成で物理フットプリント100 MB未満です。[再現可能な計測手順・実測基準・性能テスト](docs/MEMORY.md)を参照してください。ReleaseアプリのRSSと物理フットプリントを、起動・入力・大きな画像・繰り返しインポート・スリープ／静止状態で比較できます。`mise run memory:test`は別パッケージの回帰テストを実行します（Swift 6.2・macOS 26以降。本体はmacOS 14対応のままです）。
+## Measured memory
 
-## コントリビュート
+The memory goal is a physical footprint below 100 MB in representative configurations. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). Compare Release-app RSS and physical footprint across launch, typing, large images, repeated imports, and sleeping/frozen states. `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
 
-開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+## Contributing
 
-## ライセンス
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions.
 
-コードは[MIT License](LICENSE)で公開します。アプリアイコン、作例画像、デモGIFはMIT Licenseの対象ではありません。アイコンとGIFには作者のペンギン画像が含まれます。再利用する場合は作者に確認してください。
+## License
+
+The code is released under the [MIT License](LICENSE). The app icon, example images, and demo GIF are not covered by that license. The icon and GIF include the author's penguin artwork. Ask the author before reusing them.
