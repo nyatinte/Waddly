@@ -10,6 +10,12 @@
       "matchManagers": ["github-actions"],
       "minimumReleaseAge": "7 days",
       "internalChecksFilter": "strict"
+    },
+    {
+      "description": "Automerge GitHub Actions SHA updates after checks pass",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest"],
+      "automerge": true
     }
   ]
 }
