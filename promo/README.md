@@ -217,6 +217,13 @@ cd promo
 
 所要時間の目安: 1 言語あたり約 1 分 40 秒（Apple M5）。
 
+**完成品の MP4 はリポジトリに入れていません**（`out/` は .gitignore 済み）。
+これはアプリ本体のリポジトリなので、44 MB のバイナリを履歴に積むより、
+必要になったときに 3 分半で焼き直す方が安いという判断です。
+配りたいときは GitHub Release に置くか、`out/` のファイルを直接渡してください。
+見た目は [`docs/storyboard-ja.jpg`](docs/storyboard-ja.jpg) /
+[`docs/storyboard-en.jpg`](docs/storyboard-en.jpg) で確認できます（2 枚で 0.7 MB）。
+
 ---
 
 ## ファイル構成
@@ -244,6 +251,7 @@ promo/
   tools/with-lang.sh      lang を一時的に切り替えてコマンドを実行し、必ず元に戻す
   tools/render-langs.sh   両言語のレンダリング + 多重化
   tools/snapshot.sh       言語を指定して任意フレームを書き出す
+  out/                    完成品の MP4（**ローカルのみ**。.gitignore 済み）
   audio/
     CUE-SHEET.md          効果音キュー
     SUNO-PROMPT.md        BGM 生成プロンプト
