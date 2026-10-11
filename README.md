@@ -24,7 +24,7 @@
 
 ### Prepare a sprite sheet
 
-Attach a photo of your pet in [ChatGPT](https://chatgpt.com/) and use the [English prompt](prompts/en.md) or [Japanese prompt](prompts/ja.md) to create a 3×3 sprite sheet. You can also create the sheet yourself.
+You can attach a photo of your pet to [ChatGPT](https://chatgpt.com/) and use the [English prompt](prompts/en.md) or [Japanese prompt](prompts/ja.md) to create a 3×3 sprite sheet. This optional step sends the photo to ChatGPT under its terms and privacy policy; you can also create the sheet yourself without using an external service.
 
 Import a transparent PNG sprite sheet during setup. Drop the PNG onto the image page or use “Choose PNG…” and check the preview. Canceling leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
 
@@ -46,22 +46,29 @@ Images are stored on your Mac as individual PNG frames. The source files are not
 
 ## Getting started
 
-Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask is available from the official tap.
+Waddly requires an Apple Silicon Mac running macOS 14 or later. Its Homebrew Casks are distributed from Waddly's third-party tap. Homebrew 6.0 or later requires explicit trust for third-party Casks. The commands below trust only the Cask you install, not every current and future package or command in the tap.
+
+Install the stable app:
 
 ```sh
 brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
 Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
 
 ```sh
-brew install --cask nyatinte/waddly/waddly-beta
+brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly-beta
+brew install --cask waddly-beta
 ```
+
+Cask trust remains in effect for future upgrades. Revoke it with `brew untrust --cask nyatinte/waddly/waddly` or `brew untrust --cask nyatinte/waddly/waddly-beta`.
 
 Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
-The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper's first-launch confirmation normally does not appear for Homebrew installs. This does not replace notarization or Developer ID signing. A DMG downloaded directly retains quarantine, so Gatekeeper may block the first launch. Confirm that it came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
+The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper protection is reduced for Homebrew installs. This does not replace Developer ID signing or notarization. Directly downloaded DMGs retain quarantine, so Gatekeeper may block first launch. Confirm that the app came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
 On first launch, follow Setup Guide… to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
 
@@ -81,4 +88,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution in
 
 ## License
 
-The code is released under the [MIT License](LICENSE). The app icon, example images, and demo GIF are not covered by that license. The icon and GIF include the author's penguin artwork. Ask the author before reusing them.
+The software is released under the [MIT License](LICENSE), which is also included in the app bundle. Project artwork is not covered by that license: `assets/waddly-app-icon*.png`, `assets/waddly-menubar.svg`, `assets/waddly-demo.gif`, and `assets/examples/`. The icons and demo include penguin artwork. No reuse rights are granted for these assets; obtain permission from their respective copyright holders before reusing them. The adapted `.agent/skill/swift-development` is separately licensed under Apache-2.0; see its accompanying `LICENSE`.

@@ -29,6 +29,7 @@ swift build --package-path "$ROOT" --configuration release --product Waddly
 cp "$ROOT/.build/release/Waddly" "$APP/Contents/MacOS/Waddly"
 
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
+cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
 # Remove the SVG tracing canvas and draw white fills before black details.

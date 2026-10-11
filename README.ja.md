@@ -24,7 +24,7 @@
 
 ### 画像を用意する
 
-[ChatGPT](https://chatgpt.com/)にペットの画像を添付し、[日本語のプロンプト](prompts/ja.md)または[英語のプロンプト](prompts/en.md)を使って3×3のスプライトシートを作成できます。画像生成を使わず、手作業で作成したシートも登録できます。
+[ChatGPT](https://chatgpt.com/)にペットの画像を添付し、[日本語のプロンプト](prompts/ja.md)または[英語のプロンプト](prompts/en.md)を使って3×3のスプライトシートを作成できます。この方法を使うと、画像はChatGPTの利用規約とプライバシーポリシーに従ってChatGPTに送信されます。外部サービスを使わず、手作業でシートを作成することもできます。
 
 初回起動時のセットアップで、透過PNGの3×3スプライトシートを読み込みます。画像ページにPNGをドロップするか、「PNGを選択…」から選び、プレビューを確認してください。キャンセルした場合、登録済みの画像は変更しません。各コマは左上から順に、待機2枚、タイピング4枚、Enter 1枚、スリープ2枚です。
 
@@ -46,22 +46,29 @@
 
 ## はじめる
 
-WaddlyはApple Silicon搭載MacのmacOS 14以降に対応しています。安定版のHomebrew Caskは公式tapからインストールできます。
+WaddlyはApple Silicon搭載MacのmacOS 14以降に対応しています。Homebrew CaskはWaddlyのサードパーティtapから配布します。Homebrew 6.0以降ではサードパーティCaskを明示的に信頼する必要があります。以下のコマンドはインストールするCaskだけを信頼し、tap内の現在および将来の全パッケージやコマンドを信頼するものではありません。
+
+安定版をインストールするには:
 
 ```sh
 brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
-ベータ版 `0.1.0-beta.1` は安定版と別の `Waddly Beta.app` として試せます。
+ベータ版 `0.1.0-beta.1` は、安定版とは別の `Waddly Beta.app` として試せます:
 
 ```sh
-brew install --cask nyatinte/waddly/waddly-beta
+brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly-beta
+brew install --cask waddly-beta
 ```
+
+Caskへの信頼設定は今後の更新にも適用されます。取り消すには `brew untrust --cask nyatinte/waddly/waddly` または `brew untrust --cask nyatinte/waddly/waddly-beta` を実行してください。
 
 安定版を更新するには `brew upgrade --cask waddly`、ベータ版は `brew upgrade --cask waddly-beta` を実行してください。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
 
-配布アプリは ad-hoc 署名で、公証していません。Homebrew Cask はインストールと更新の後に隔離属性を削除するため、Homebrew 経由では通常 Gatekeeper の初回起動確認は表示されません。この処理は公証や Developer ID 署名の代わりにはなりません。DMG を直接ダウンロードした場合は隔離属性が残るため、Gatekeeper が初回起動を止めることがあります。公式 GitHub Release から取得したことを確認し、「システム設定 → プライバシーとセキュリティ → このまま開く」からそのアプリを許可してください。macOS 15以降では Control キーを押しながらクリックして「開く」を選んでもこの警告を解除できません。[Appleの初回起動手順](https://support.apple.com/ja-jp/102445)を参照してください。DMG を直接使う場合は、同じ Release にある `.sha256` ファイルでチェックサムを確認します。
+配布アプリは ad-hoc 署名で、公証していません。Homebrew Caskはインストールと更新の後に隔離属性を削除するため、Homebrew経由ではGatekeeperの保護が弱まります。この処理はDeveloper ID署名や公証の代わりにはなりません。DMGを直接ダウンロードした場合は隔離属性が残るため、Gatekeeperが初回起動を止めることがあります。公式GitHub Releaseから取得したことを確認し、「システム設定 → プライバシーとセキュリティ → このまま開く」からアプリを許可してください。macOS 15以降ではControlキーを押しながらクリックして「開く」を選んでも警告を解除できません。[Appleの初回起動手順](https://support.apple.com/ja-jp/102445)を参照してください。DMGを直接使う場合は、同じReleaseにある `.sha256` ファイルでチェックサムを確認します。
 
 初回起動時はセットアップガイドに沿って画像を登録してください。キー入力に反応させるには、「システム設定 → プライバシーとセキュリティ → 入力監視」でWaddlyを許可します。許可がなくてもアプリは起動できますが、キー入力には反応しません。
 
@@ -79,4 +86,4 @@ brew install --cask nyatinte/waddly/waddly-beta
 
 ## ライセンス
 
-コードは[MIT License](LICENSE)で公開します。アプリアイコン、作例画像、デモGIFはMIT Licenseの対象ではありません。アイコンとGIFには作者のペンギン画像が含まれます。再利用する場合は作者に確認してください。
+ソフトウェアは[MIT License](LICENSE)で公開し、アプリにもライセンス文を同梱します。プロジェクトのアートワークはMIT Licenseの対象外です: `assets/waddly-app-icon*.png`、`assets/waddly-menubar.svg`、`assets/waddly-demo.gif`、`assets/examples/`。アイコンとデモにはペンギンのアートワークが含まれます。これらの素材の再利用許可は付与していません。再利用する場合は、各著作権者の許可を得てください。`.agent/skill/swift-development` は別途Apache-2.0で公開しており、同梱の `LICENSE` を参照してください。

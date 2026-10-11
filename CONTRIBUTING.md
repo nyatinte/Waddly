@@ -108,7 +108,7 @@ The generator checks that both languages have matching keys and writes `Sources/
 mise run package
 ```
 
-The script writes an arm64 DMG to `dist/`. By design, release builds are ad-hoc signed and not notarized. The Homebrew Casks remove quarantine after install and upgrade; this does not replace Developer ID signing or notarization. A DMG downloaded directly retains quarantine, so Gatekeeper may block its first launch. Verify the DMG and, if needed, approve the app in System Settings → Privacy & Security. Do not remove quarantine from a directly downloaded app to bypass Gatekeeper.
+The script writes an arm64 DMG to `dist/`. Release builds are ad-hoc signed and not notarized. Homebrew Casks remove quarantine after install and upgrade, which reduces Gatekeeper protection but does not replace Developer ID signing or notarization. DMGs retain quarantine, so Gatekeeper may block first launch. Verify the DMG and, if needed, approve it in System Settings → Privacy & Security. Do not remove quarantine from a directly downloaded app to bypass Gatekeeper.
 
 ## Publish a release for Homebrew
 
@@ -130,3 +130,4 @@ Before the first stable release, create a fine-grained GitHub token restricted t
 - Update both the English `README.md` and Japanese `README.ja.md` when user-facing behavior or setup instructions change.
 - Preserve the input privacy boundary: key codes may be checked transiently to identify Enter, but must not be stored, logged, or transmitted. Keep imported images on-device.
 - Keep Swift changes compatible with Swift 6 and macOS 14, and avoid new dependencies unless they are needed.
+- By submitting a contribution, you confirm that you have the right to submit it and agree to license code contributions under the repository's MIT License. Do not submit artwork or other third-party material without permission and clear licensing terms.

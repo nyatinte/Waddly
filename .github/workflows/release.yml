@@ -233,7 +233,7 @@ jobs:
 
             app "Waddly.app"
 
-            # Match the Homebrew distribution behavior documented for this unsigned, unnotarized app.
+            # Match the documented Homebrew install behavior for this unsigned, unnotarized app.
             postflight_steps do
               run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/Waddly.app"]
             end
