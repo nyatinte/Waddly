@@ -39,6 +39,9 @@ jobs:
       - name: Run full local validation
         run: mise run check
 
+      - name: Validate release-note ranges and rendering
+        run: mise exec -- bash Tools/test_release_notes_range.sh
+
   memory:
     name: Release image memory budget
     runs-on: macos-26
