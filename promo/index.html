@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+    Waddly promo — one film, two languages.
+
+      lang="ja"  scripts/locales/ja.js   (default)
+      lang="en"  scripts/locales/en.js
+
+    The picture is identical in both: same camera, same beats, same motion.
+    Only the strings change, so a translation cannot drift out of sync with the
+    timing. Render either with --variables '{"lang":"en"}' — or, because
+    `snapshot` has no such flag, through tools/with-lang.sh.
+-->
+<html
+    lang="ja"
+    data-composition-variables='[
+        { "id": "lang", "type": "string", "label": "Language", "default": "ja" }
+    ]'
+>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=1920, height=1080" />
+        <title>Waddly プロモーション映像</title>
+        <link rel="stylesheet" href="styles/main.css" />
+        <script src="vendor/gsap.min.js"></script>
+    </head>
+    <body>
+        <div
+            id="root"
+            data-composition-id="waddly"
+            data-start="0"
+            data-duration="30"
+            data-fps="60"
+            data-width="1920"
+            data-height="1080"
+        >
+            <div id="app">
+                <!-- camera space: the code-drawn desktop -->
+                <div id="world"></div>
+                <!-- screen space: captions, pointer, lockup, effects -->
+                <div id="screen"></div>
+            </div>
+        </div>
+
+        <script src="scripts/engine.js"></script>
+        <script src="scripts/desktop.js"></script>
+        <script src="scripts/pets.js"></script>
+        <script src="scripts/graphics.js"></script>
+        <script src="scripts/locales/ja.js"></script>
+        <script src="scripts/locales/en.js"></script>
+        <script src="scripts/story.js"></script>
+        <script src="scripts/boot.js"></script>
+    </body>
+</html>

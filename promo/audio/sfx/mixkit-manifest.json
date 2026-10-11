@@ -1,0 +1,146 @@
+[
+ {
+  "slug": "key-single",
+  "id": "2541",
+  "name": "Single key press in a laptop",
+  "use": "key press, one keystroke"
+ },
+ {
+  "slug": "key-single-alt",
+  "id": "2533",
+  "name": "Single key type",
+  "use": "alternate single key, for variation"
+ },
+ {
+  "slug": "key-hard",
+  "id": "2542",
+  "name": "Hard single key press in a laptop",
+  "use": "harder key press, for Return"
+ },
+ {
+  "slug": "key-typing-bed",
+  "id": "2537",
+  "name": "Laptop keyboard typing sequence",
+  "use": "typing sequence bed"
+ },
+ {
+  "slug": "sparkle-appear",
+  "id": "871",
+  "name": "Fairy magic sparkle",
+  "use": "pet materialises"
+ },
+ {
+  "slug": "sparkle-touch",
+  "id": "3083",
+  "name": "Magic sparkle touch",
+  "use": "frames land in the app"
+ },
+ {
+  "slug": "glitter",
+  "id": "867",
+  "name": "Fairy glitter",
+  "use": "sparkle accent"
+ },
+ {
+  "slug": "whoosh-fast",
+  "id": "3115",
+  "name": "Fast transitions swoosh",
+  "use": "cells flying to the frame row"
+ },
+ {
+  "slug": "whoosh-fly",
+  "id": "3161",
+  "name": "Transition flying swoosh",
+  "use": "sheet carried into the app"
+ },
+ {
+  "slug": "pop-drop",
+  "id": "2364",
+  "name": "Hard pop click",
+  "use": "sheet dropped on the drop zone"
+ },
+ {
+  "slug": "ui-open",
+  "id": "2578",
+  "name": "Opening software interface",
+  "use": "a window appears"
+ },
+ {
+  "slug": "ui-select",
+  "id": "2573",
+  "name": "Interface option select",
+  "use": "UI select"
+ },
+ {
+  "slug": "thud-wood",
+  "id": "2182",
+  "name": "Wood hard hit",
+  "use": "pet lands after the drag"
+ },
+ {
+  "slug": "thud-soft",
+  "id": "3088",
+  "name": "Tv remote control or plastic toy drop",
+  "use": "lighter landing / plastic"
+ },
+ {
+  "slug": "reveal-marimba",
+  "id": "2820",
+  "name": "Magic marimba",
+  "use": "size + mode samples appear"
+ },
+ {
+  "slug": "confirm-positive",
+  "id": "951",
+  "name": "Positive notification",
+  "use": "the AI finishes generating"
+ },
+ {
+  "slug": "confirm-tone",
+  "id": "2867",
+  "name": "Confirmation tone",
+  "use": "confirmation"
+ },
+ {
+  "slug": "impact-big",
+  "id": "2900",
+  "name": "Movie logo intro impact",
+  "use": "Enter impact"
+ },
+ {
+  "slug": "hit-sub",
+  "id": "2300",
+  "name": "Knocking sub bass",
+  "use": "Enter sub-bass"
+ },
+ {
+  "slug": "riser-swell",
+  "id": "2674",
+  "name": "Heavenly swell",
+  "use": "riser into the finale"
+ },
+ {
+  "slug": "chime-achievement",
+  "id": "600",
+  "name": "Achievement bell",
+  "use": "the resolve"
+ },
+ {
+  "slug": "chime-winning",
+  "id": "2015",
+  "name": "Winning chimes",
+  "use": "lockup"
+ },
+ {
+  "slug": "impact-alt",
+  "id": "2902",
+  "name": "Movie impact intro presentation",
+  "use": "alternate Enter impact"
+ },
+ {
+  "slug": "impact-sub",
+  "id": "2300",
+  "name": "Knocking sub bass",
+  "use": "Enter sub layer (alternate)"
+ }
+]

@@ -1,0 +1,25 @@
+# Everything here is reproducible from the sources in this directory, so none of
+# it is committed: renders, QA frames, sliced sprite frames, key schedules.
+out/
+snapshots/
+node_modules/
+assets/frames/
+audio/keytimes-*.json
+
+# Re-fetch with tools/fetch-font.sh (OFL 1.1, ~9.6 MB).
+assets/fonts/*.ttf
+
+# Python bytecode from tools/
+__pycache__/
+
+# Audio: fetched on demand, never committed.
+#   Mixkit WAVs   -> audio/tools/fetch-mixkit-sfx.sh
+#   Suno BGM      -> audio/bgm/ (your own generation)
+audio/sfx/*.wav
+audio/sfx/*.mp3
+audio/sfx-norm/*.wav
+audio/sfx/*.freesound.json
+audio/bgm/*
+!audio/bgm/.gitkeep
+# Mixed masters are reproducible with audio/tools/build-mix.sh.
+audio/mix-*.wav

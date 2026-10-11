@@ -1,0 +1,1704 @@
+/* ==========================================================================
+   Waddly promo — visual design system.
+   Everything on screen is drawn here or in scripts/desktop.js.
+   No third-party wallpapers, icons, fonts or trademarks are used.
+   ========================================================================== */
+
+/* NOTE: the url() below is resolved relative to this stylesheet, not to
+   index.html, so "../assets/..." is correct here. */
+@font-face {
+    font-family: "Noto Sans JP";
+    src: url("../assets/fonts/NotoSansJP.ttf") format("truetype-variations");
+    font-weight: 100 900;
+    font-display: block;
+}
+
+/* The install command uses an OS-bundled monospace face; declaring it keeps
+   the renderer from substituting a proportional fallback. */
+@font-face {
+    font-family: "Waddly Mono";
+    src: local("SF Mono"), local("Menlo"), local("Courier New");
+    font-weight: 100 900;
+}
+
+:root {
+    --brand-blue: #4da3ff;
+    --brand-deep: #2f7fe0;
+    --glass: rgba(255, 255, 255, 0.14);
+    --glass-line: rgba(255, 255, 255, 0.22);
+    --ink: #0a1020;
+    --text: #f2f6ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #000;
+    font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+#app {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #06080f;
+}
+
+/* The camera: a scaled, translated view of a 1920x1080 "desktop". */
+#world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+/* ---------------------------------------------------------------- wallpaper */
+
+.wallpaper {
+    position: absolute;
+    inset: -700px;
+    background:
+        radial-gradient(72% 58% at 14% 6%, #8fb4ff 0%, rgba(143, 180, 255, 0) 58%),
+        radial-gradient(64% 56% at 88% 12%, #b98cff 0%, rgba(185, 140, 255, 0) 60%),
+        radial-gradient(84% 70% at 72% 102%, #35d6e6 0%, rgba(53, 214, 230, 0) 58%),
+        radial-gradient(56% 54% at 0% 86%, #3f74f0 0%, rgba(63, 116, 240, 0) 64%),
+        linear-gradient(158deg, #3a5cc8 0%, #2a3d97 44%, #1a2470 100%);
+}
+
+/* Slow aurora sweep — a pure function of time, driven from JS. */
+.aurora {
+    position: absolute;
+    inset: -40%;
+    background:
+        radial-gradient(38% 30% at 30% 40%, rgba(120, 190, 255, 0.28) 0%, rgba(120, 190, 255, 0) 70%),
+        radial-gradient(30% 26% at 70% 62%, rgba(180, 130, 255, 0.22) 0%, rgba(180, 130, 255, 0) 70%);
+    filter: blur(30px);
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+}
+
+.grain {
+    position: absolute;
+    inset: -700px;
+    opacity: 0.16;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' seed='7'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+}
+
+.desk-sheen {
+    position: absolute;
+    inset: -700px;
+    background: radial-gradient(120% 90% at 50% 118%, rgba(180, 220, 255, 0.16) 0%, rgba(180, 220, 255, 0) 58%);
+}
+
+/* ---------------------------------------------------------------- menu bar */
+
+.menubar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: rgba(20, 26, 48, 0.3);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.mb-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mb-waddly {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 6px;
+    border-radius: 5px;
+}
+
+.mb-waddly svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+
+.mb-halo {
+    position: absolute;
+    left: 8px;
+    top: 1px;
+    width: 26px;
+    height: 24px;
+    border-radius: 7px;
+    background: radial-gradient(closest-side, rgba(77, 163, 255, 0.9) 0%, rgba(77, 163, 255, 0) 100%);
+    opacity: 0;
+}
+
+.mb-app {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.mb-item {
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 500;
+}
+
+.mb-glyph {
+    display: block;
+    opacity: 0.82;
+}
+
+.mb-clock {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.mb-battery {
+    position: relative;
+    width: 24px;
+    height: 12px;
+    border: 1.4px solid rgba(255, 255, 255, 0.7);
+    border-radius: 3.5px;
+}
+
+.mb-battery::after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: 3.4px;
+    width: 2px;
+    height: 5px;
+    border-radius: 0 1.5px 1.5px 0;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.mb-battery i {
+    position: absolute;
+    inset: 1.8px;
+    right: 8px;
+    border-radius: 1.5px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+/* ---------------------------------------------------------------- dock */
+
+.dock {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    height: 62px;
+    padding: 7px 9px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 18px 40px rgba(4, 8, 20, 0.45);
+}
+
+.dock-item {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border-radius: 11px;
+    box-shadow: 0 3px 8px rgba(4, 8, 20, 0.35);
+    overflow: hidden;
+}
+
+.dock-item img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.dock-dot {
+    position: absolute;
+    left: 50%;
+    bottom: -7px;
+    width: 4px;
+    height: 4px;
+    margin-left: -2px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.dock-sep {
+    width: 1px;
+    height: 40px;
+    margin: 0 3px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---------------------------------------------------------------- pet */
+
+.pet {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    transform-origin: 50% 88%;
+    will-change: transform;
+}
+
+.pet img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    image-rendering: pixelated;
+    will-change: opacity;
+}
+
+.pet img.on {
+    opacity: 1;
+}
+
+.pet-shadow {
+    position: absolute;
+    width: 196px;
+    height: 30px;
+    margin-left: -98px;
+    margin-top: -15px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(3, 8, 20, 0.5) 0%, rgba(3, 8, 20, 0) 100%);
+    filter: blur(3px);
+    opacity: 0.75;
+    will-change: transform, opacity;
+}
+
+.zzz {
+    position: absolute;
+    font-weight: 700;
+    color: rgba(220, 236, 255, 0.95);
+    text-shadow: 0 2px 10px rgba(10, 30, 70, 0.7);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------- keyboard HUD
+
+   A full macOS-layout board, drawn from scratch, sitting flat at the bottom of
+   the frame and fully visible — the keyboard you are typing on. Screen space, so
+   it does not move when the camera pushes in. */
+
+.keyboard {
+    position: absolute;
+    left: 50%;
+    bottom: 30px;
+    width: 1180px;
+    margin-left: -590px;
+    transform-origin: 50% 100%;
+    will-change: transform, opacity;
+}
+
+.kb-persp {
+    transform: perspective(2200px) rotateX(26deg);
+    transform-style: preserve-3d;
+}
+
+.kb-plate {
+    position: absolute;
+    left: -14px;
+    top: -14px;
+    right: -14px;
+    bottom: -14px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #eef1f6 0%, #d3dae4 100%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+        0 26px 60px rgba(3, 8, 20, 0.55),
+        0 2px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.kb-rows {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 14px;
+}
+
+.kb-row {
+    display: flex;
+    gap: 5px;
+}
+
+.key {
+    position: relative;
+    height: 56px;
+    min-width: 0;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #ffffff 0%, #eef1f6 100%);
+    border: 1px solid #d2d8e2;
+    box-shadow: 0 1.5px 0 #c2c9d5;
+    will-change: transform, background-color, box-shadow;
+}
+
+.key .glyph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 500;
+    color: #4b5566;
+}
+
+.key.small .glyph {
+    font-size: 10px;
+    font-weight: 600;
+    color: #8b95a6;
+    letter-spacing: 0.01em;
+}
+
+.key .sub {
+    position: absolute;
+    left: 7px;
+    bottom: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8b95a6;
+    letter-spacing: 0.01em;
+}
+
+.key.sub-right .sub {
+    left: auto;
+    right: 7px;
+}
+
+.key.lock .glyph {
+    opacity: 0.55;
+}
+
+.key.tall .glyph {
+    font-size: 11px;
+}
+
+.key.lit {
+    background: linear-gradient(180deg, #bfe0ff 0%, #5aa8f5 100%);
+    border-color: #4a95e6;
+    box-shadow:
+        0 1px 0 #2f7fe0,
+        0 0 26px rgba(96, 176, 255, 0.95);
+}
+
+.key.lit .glyph,
+.key.lit .sub {
+    color: #10345f;
+}
+
+.kb-spill {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: -60px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(88, 168, 255, 0.65) 0%, rgba(88, 168, 255, 0) 100%);
+    filter: blur(26px);
+    opacity: 0;
+    will-change: opacity;
+}
+
+/* ---------------------------------------------------------------- AI chat
+
+   Generic assistant window — no third-party branding. It is where the 3x3
+   sheet in this film comes from. */
+
+.ai-window {
+    position: absolute;
+    width: 470px;
+    height: 340px;
+    margin-left: -235px;
+    margin-top: -170px;
+    border-radius: 14px;
+    background: rgba(30, 32, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 34px 70px rgba(3, 8, 20, 0.62);
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+.ai-titlebar {
+    position: relative;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(52, 54, 60, 0.96);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ai-dots {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    margin-top: -5px;
+    display: flex;
+    gap: 7px;
+}
+
+.ai-dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: block;
+}
+
+.ai-dots i:nth-child(1) {
+    background: #ff5f57;
+}
+.ai-dots i:nth-child(2) {
+    background: #febc2e;
+}
+.ai-dots i:nth-child(3) {
+    background: #28c840;
+}
+
+.ai-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.ai-spark {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.ai-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-row {
+    display: flex;
+}
+
+.ai-row.user {
+    justify-content: flex-end;
+}
+
+.ai-bubble {
+    border-radius: 13px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ai-bubble.user {
+    max-width: 420px;
+    padding: 11px 15px;
+    background: linear-gradient(180deg, #3f8ff0 0%, #2f7fe0 100%);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+}
+
+.ai-bubble.bot {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-left-radius: 4px;
+}
+
+.ai-avatar {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(140deg, #8fd0ff 0%, #7b7bff 100%);
+}
+
+.ai-gen {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 150px;
+    padding: 0 18px;
+}
+
+.ai-gen i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.72);
+    display: block;
+}
+
+.ai-sheet {
+    image-rendering: pixelated;
+    width: 150px;
+    height: 150px;
+    border-radius: 8px;
+    background-color: #fff;
+    background-image: url("../assets/pets/nyatinte-bot-3x3.png");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    will-change: transform, opacity;
+}
+
+/* the sheet once the pointer has picked it up */
+.png-file {
+    position: absolute;
+    image-rendering: pixelated;
+    width: 150px;
+    height: 150px;
+    margin-left: -75px;
+    margin-top: -75px;
+    border-radius: 10px;
+    background-color: #fff;
+    background-image: url("../assets/pets/nyatinte-bot-3x3.png");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 18px 40px rgba(3, 8, 20, 0.55);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------- code editor
+
+   A code-drawn editor standing in for "the app you are already using", so the
+   pet is shown reacting to real work instead of to a keyboard diagram. */
+
+.editor {
+    position: absolute;
+    width: 1280px;
+    height: 560px;
+    margin-left: -640px;
+    margin-top: -280px;
+    border-radius: 12px;
+    background: #1c1c26;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 40px 90px rgba(3, 8, 20, 0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    will-change: transform, opacity;
+}
+
+.ed-titlebar {
+    flex: 0 0 auto;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 14px;
+    background: #2a2a36;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ed-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.ed-dots i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: block;
+}
+
+.ed-dots i:nth-child(1) { background: #ff5f57; }
+.ed-dots i:nth-child(2) { background: #febc2e; }
+.ed-dots i:nth-child(3) { background: #28c840; }
+
+.ed-tab {
+    padding: 7px 18px 8px;
+    border-radius: 7px 7px 0 0;
+    background: #1c1c26;
+    font-family: "Waddly Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: #cfd6e6;
+}
+
+.ed-main {
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+}
+
+.ed-side {
+    flex: 0 0 auto;
+    width: 196px;
+    padding: 12px 0;
+    background: #23232e;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 12.5px;
+    color: #8b95a6;
+}
+
+.ed-side div {
+    padding: 5px 18px;
+    white-space: nowrap;
+}
+
+.ed-side .on {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e9f5;
+}
+
+.ed-code {
+    flex: 1 1 auto;
+    padding: 18px 0 0;
+    font-family: "Waddly Mono", ui-monospace, monospace;
+    font-size: 17px;
+    line-height: 1.5;
+    color: #c8d0e0;
+    overflow: hidden;
+}
+
+.ed-line {
+    display: flex;
+    gap: 18px;
+    padding: 0 20px;
+    white-space: pre;
+}
+
+.ed-ln {
+    flex: 0 0 auto;
+    width: 24px;
+    text-align: right;
+    color: #545e73;
+}
+
+.ed-src {
+    white-space: pre;
+}
+
+.ed-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 1px;
+    vertical-align: -0.16em;
+    background: #8fd0ff;
+}
+
+.tok-kw { color: #ff7bb0; }
+.tok-type { color: #7fd4ff; }
+.tok-str { color: #ffc46b; }
+.tok-num { color: #ffd479; }
+.tok-com { color: #67718a; font-style: italic; }
+.tok-fn { color: #a8e6a0; }
+
+/* ---------------------------------------------------------------- pet entrance */
+
+.pet-glow {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    margin-left: -260px;
+    margin-top: -260px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(160, 215, 255, 0.8) 0%, rgba(160, 215, 255, 0) 68%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* hero Return key — drawn the way a US Mac keyboard prints it: one wide key
+   with the legend in the lower right, not a square badge. */
+.hero-key {
+    position: absolute;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #eef1f6 72%, #dfe4ec 100%);
+    border: 1px solid #d2d8e2;
+    box-shadow:
+        0 9px 0 #c2c9d5,
+        0 22px 44px rgba(3, 8, 20, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    opacity: 0;
+    will-change: transform, opacity, box-shadow;
+}
+
+.hero-key {
+    left: 0;
+    top: 0;
+    width: 430px;
+    height: 188px;
+    margin-left: -215px;
+    margin-top: -94px;
+}
+
+.hero-key .rk-label {
+    position: absolute;
+    right: 26px;
+    bottom: 18px;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #8b95a6;
+}
+
+.hero-glow {
+    position: absolute;
+    inset: -90px;
+    border-radius: 70px;
+    background: radial-gradient(closest-side, rgba(255, 205, 90, 0.5) 0%, rgba(255, 205, 90, 0) 72%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hero-key.pressed {
+    background: linear-gradient(180deg, #fffaea 0%, #ffe9b4 72%, #ffd166 100%);
+    border-color: #f0c86a;
+    box-shadow:
+        0 3px 0 #c2c9d5,
+        0 0 110px rgba(255, 201, 77, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* ---------------------------------------------------------------- setup window
+
+   A code-drawn stand-in for the app's own "Waddlyのセットアップ" sheet, so the
+   film can show where a custom character actually comes from. */
+
+.setup-window {
+    position: absolute;
+    width: 700px;
+    height: 460px;
+    margin-left: -350px;
+    margin-top: -230px;
+    border-radius: 16px;
+    background: rgba(30, 32, 36, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 40px 90px rgba(3, 8, 20, 0.66);
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+.sw-titlebar {
+    position: relative;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(52, 54, 60, 0.96);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sw-dots {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    margin-top: -6px;
+    display: flex;
+    gap: 8px;
+}
+
+.sw-dots i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: block;
+}
+
+.sw-dots i:nth-child(1) {
+    background: #ff5f57;
+}
+.sw-dots i:nth-child(2) {
+    background: #febc2e;
+}
+.sw-dots i:nth-child(3) {
+    background: #28c840;
+}
+
+.sw-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sw-body {
+    padding: 18px 22px 0;
+}
+
+.sw-step {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.sw-progress {
+    position: absolute;
+    right: 22px;
+    top: 72px;
+    width: 150px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+}
+
+.sw-progress i {
+    display: block;
+    height: 100%;
+    width: 66%;
+    border-radius: 3px;
+    background: #2f7fe0;
+}
+
+.sw-h {
+    margin-top: 12px;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.96);
+}
+
+.sw-drop {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    top: 150px;
+    height: 210px;
+    border-radius: 12px;
+    background: rgba(16, 17, 20, 0.9);
+    border: 1.5px dashed rgba(255, 255, 255, 0.24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: none;
+}
+
+.sw-drop.hot {
+    border-color: rgba(120, 190, 255, 0.95);
+    background: rgba(30, 52, 92, 0.7);
+    box-shadow: 0 0 0 4px rgba(77, 163, 255, 0.22) inset;
+}
+
+.sw-hint {
+    font-size: 19px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.02em;
+}
+
+/* the dropped sheet, sitting inside the drop zone */
+.sheet {
+    position: absolute;
+    image-rendering: pixelated;
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+    background-image: url("../assets/pets/nyatinte-bot-3x3.png");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0.96);
+    will-change: transform, opacity;
+}
+
+.sheet-grid {
+    position: absolute;
+    inset: 0;
+}
+
+.sheet-grid line {
+    stroke: rgba(47, 127, 224, 0.9);
+    stroke-width: 1.4;
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+}
+
+.cell {
+    position: absolute;
+    image-rendering: pixelated;
+    width: 60px;
+    height: 60px;
+    left: 0;
+    top: 0;
+    border-radius: 5px;
+    background-image: url("../assets/pets/nyatinte-bot-3x3.png");
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* destination slot inside the window */
+.slot {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    will-change: transform, opacity, box-shadow;
+}
+
+.slot img {
+    position: absolute;
+    inset: 3px;
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+    opacity: 0;
+    image-rendering: pixelated;
+}
+
+.slot.lit {
+    box-shadow: 0 0 24px rgba(96, 176, 255, 0.9);
+    border-color: rgba(170, 215, 255, 0.95);
+    background: rgba(96, 176, 255, 0.22);
+}
+
+.slot-hint {
+    position: absolute;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(120, 190, 255, 0) 0%, rgba(120, 190, 255, 0.9) 50%, rgba(120, 190, 255, 0) 100%);
+    opacity: 0;
+}
+
+/* the PNG the user drags in */
+.png-file {
+    position: absolute;
+    width: 156px;
+    height: 156px;
+    margin-left: -78px;
+    margin-top: -78px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.97);
+    background-image: url("../assets/pets/nyatinte-bot-3x3.png");
+    background-size: 78% 78%;
+    background-position: 50% 44%;
+    background-repeat: no-repeat;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 18px 40px rgba(3, 8, 20, 0.5);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.png-file .tag {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(40, 60, 100, 0.75);
+}
+
+/* ---------------------------------------------------------------- gallery
+
+   Quick side-by-side beats: the three display sizes, then the three modes. */
+
+.gallery-pet {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    transform-origin: 50% 100%;
+    will-change: transform, opacity;
+}
+
+.gallery-pet img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    image-rendering: pixelated;
+    will-change: opacity;
+}
+
+.gallery-label {
+    position: absolute;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(244, 249, 255, 0.95);
+    text-shadow: 0 3px 16px rgba(4, 10, 26, 0.8);
+    opacity: 0;
+    will-change: opacity, transform;
+}
+
+
+/* ---------------------------------------------------------------- particles */
+
+.particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.98) 0%, rgba(140, 200, 255, 0.4) 55%, rgba(140, 200, 255, 0) 100%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.spark {
+    position: absolute;
+    width: 3px;
+    height: 22px;
+    margin-left: -1.5px;
+    margin-top: -11px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(210, 236, 255, 0.98) 50%, rgba(255, 255, 255, 0) 100%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+
+.dust {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    margin-left: -11px;
+    margin-top: -11px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(200, 224, 255, 0.55) 0%, rgba(200, 224, 255, 0) 100%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------- screen-space */
+
+#screen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 40px;
+    opacity: 0;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+    will-change: transform, opacity;
+}
+
+.cursor.click {
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+}
+
+.click-ring {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+    margin-top: -30px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    text-shadow:
+        0 2px 6px rgba(6, 14, 34, 0.9),
+        0 6px 28px rgba(6, 14, 34, 0.75);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.caption .plate {
+    display: inline-block;
+    padding: 0 20px;
+}
+
+/* ---------------------------------------------------------------- end lockup */
+
+.lockup {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    opacity: 0;
+    will-change: opacity;
+}
+
+.lockup-mark {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    will-change: transform, opacity;
+}
+
+.lockup-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+    box-shadow: 0 18px 44px rgba(3, 8, 20, 0.6);
+}
+
+.lockup-name {
+    font-size: 80px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    background: linear-gradient(180deg, #ffffff 0%, #cfe4ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lockup-tag {
+    margin-top: 24px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(238, 246, 255, 0.94);
+    text-shadow: 0 4px 22px rgba(4, 10, 26, 0.7);
+}
+
+.lockup-meta {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: rgba(214, 230, 250, 0.78);
+}
+
+.lockup-meta .sep {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(214, 230, 250, 0.5);
+}
+
+.lockup-link {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 28px 14px;
+    border-radius: 999px;
+    font-family: "Waddly Mono", ui-monospace, monospace;
+    font-size: 24px;
+    letter-spacing: 0.01em;
+    color: rgba(232, 243, 255, 0.95);
+    background: rgba(10, 18, 38, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.lockup-link svg {
+    display: block;
+    flex: 0 0 auto;
+}
+
+.lockup-link b {
+    color: #8fd0ff;
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- screen fx */
+
+.flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(60% 60% at 50% 52%, rgba(226, 240, 255, 0.95) 0%, rgba(150, 200, 255, 0.35) 42%, rgba(120, 180, 255, 0) 78%);
+    opacity: 0;
+    will-change: opacity;
+}
+
+.bloom {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1400px;
+    height: 1400px;
+    margin-left: -700px;
+    margin-top: -700px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(130, 190, 255, 0.32) 0%, rgba(130, 190, 255, 0) 70%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.shake {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+}
+
+.vignette {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(132% 112% at 50% 44%, rgba(0, 0, 0, 0) 60%, rgba(3, 7, 20, 0.4) 100%),
+        linear-gradient(180deg, rgba(3, 7, 20, 0.14) 0%, rgba(3, 7, 20, 0) 16%);
+}
+
+/* ==========================================================================
+   The film's own furniture.
+
+   Pictograms, the causality wire, the measuring bracket, the try-on picker,
+   the English/Japanese copy block. All of it is language-neutral; only the
+   strings change between the two cuts.
+   ========================================================================== */
+
+/* ---------------------------------------------------------- chapter badge
+
+   A pictogram that names the chapter instead of a caption. Fixed position so
+   the eye learns where to look, one icon per beat. */
+
+.chapter {
+    position: absolute;
+    /* top-right: the only corner the chat window, the setup sheet, the
+       keyboard and the gallery never reach */
+    right: 104px;
+    top: 96px;
+    width: 116px;
+    height: 116px;
+    border-radius: 28px;
+    display: grid;
+    place-items: center;
+    background: rgba(10, 18, 38, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 20px 44px rgba(3, 8, 20, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.chapter::after {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border-radius: 21px;
+    border: 1px solid rgba(143, 208, 255, 0.26);
+}
+
+.chapter svg {
+    width: 62px;
+    height: 62px;
+    display: block;
+}
+
+/* ------------------------------------------------- typing causality trace
+
+   A dotted line from the keyboard to the pet with a pulse travelling along it
+   on every key press: "your typing is what moves it", said without words. */
+
+.trace {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: visible;
+    opacity: 0;
+    will-change: opacity;
+}
+
+.trace .wire {
+    fill: none;
+    stroke: rgba(178, 224, 255, 0.9);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-dasharray: 3 14;
+    filter: drop-shadow(0 0 7px rgba(110, 185, 255, 0.85));
+}
+
+.trace .pulse {
+    fill: #eaf6ff;
+    filter: drop-shadow(0 0 9px rgba(150, 210, 255, 0.95));
+}
+
+/* ------------------------------------------------- AI chat, word free
+
+   The request bubble holds the picture the user wants turned into a pet and
+   the 3x3 sheet they want back — an arrow between them is the whole prompt. */
+
+.ai-bubble.user.req {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+}
+
+.ai-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 11px;
+    background-color: #ffffff;
+    background-position: 50% 46%;
+    background-size: 84% 84%;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.ai-arrow {
+    width: 26px;
+    height: 26px;
+    display: block;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.ai-grid {
+    width: 48px;
+    height: 48px;
+    display: block;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.ai-grid svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ------------------------------------------------- setup window, word free */
+
+.sw-steps {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sw-steps i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: block;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sw-steps i.on {
+    background: #4da3ff;
+    box-shadow: 0 0 16px rgba(77, 163, 255, 0.95);
+}
+
+.sw-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 17px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sw-brand img {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: block;
+}
+
+.drop-glyph {
+    display: grid;
+    place-items: center;
+    gap: 10px;
+}
+
+.drop-glyph svg {
+    display: block;
+    width: 118px;
+    height: 132px;
+}
+
+.drop-hint {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+/* the English cut's copy: right-aligned directly under the chapter pictogram,
+   so the two read as one labelled block — and so it never lands on the
+   keyboard, the two windows, the pet or the gallery */
+.caption.right {
+    left: auto;
+    right: 104px;
+    top: 240px;
+    max-width: 900px;
+    text-align: right;
+    font-size: 36px;
+    letter-spacing: 0.005em;
+}
+
+.caption.right .plate {
+    padding: 0;
+}
+
+/* ------------------------------------------------------------- gallery
+
+   Sizes are read off a measuring bracket and three dots that grow with the
+   samples; modes are read off a glyph under each sample. No labels. */
+
+.gallery-glyph {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    will-change: opacity, transform;
+}
+
+.gallery-glyph svg {
+    display: block;
+}
+
+.size-bracket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: visible;
+    opacity: 0;
+    will-change: opacity;
+}
+
+.size-bracket path {
+    fill: none;
+    stroke: rgba(178, 216, 255, 0.8);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 1400;
+    stroke-dashoffset: 1400;
+}
+
+.size-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #ffffff 0%, rgba(150, 205, 255, 0.85) 70%, rgba(150, 205, 255, 0) 100%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* ------------------------------------------------------- dock / menu bar
+
+   A ring pulse on the Waddly dock icon at the moment the pet lands on the
+   desktop: the app is where the pet comes from. */
+
+.dock-pulse {
+    position: absolute;
+    inset: -9px;
+    border-radius: 18px;
+    border: 2.5px solid rgba(150, 210, 255, 0.95);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* ------------------------------------------------------------ lockup
+
+   The wordless tagline: a keyboard, an arrow, and the pet bouncing. Same
+   sentence the captions used to say, drawn. */
+
+.lockup-diagram {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.lockup-diagram .ld-ic {
+    width: 56px;
+    height: 56px;
+    display: block;
+    opacity: 0.92;
+}
+
+.lockup-diagram .ld-ic svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.lockup-diagram .ld-arrow {
+    width: 48px;
+    height: 22px;
+    display: block;
+    opacity: 0.72;
+}
+
+.lockup-diagram .ld-pet {
+    width: 58px;
+    height: 58px;
+    display: block;
+    image-rendering: pixelated;
+    transform-origin: 50% 100%;
+    will-change: transform;
+}
+
+/* ==========================================================================
+   The 24 s SNS cut (scripts/story-v2.js)
+   ========================================================================== */
+
+/* the copy: lower third, centred, sized to survive a phone screen */
+.caption.v2 {
+    left: 0;
+    right: 0;
+    top: 890px;
+    text-align: center;
+    font-size: 54px;
+    letter-spacing: 0.005em;
+}
+
+.caption.v2 .plate {
+    padding: 0 24px;
+}
+
+/* the try-on carousel: every character on offer, and the ring that picks one */
+.chip-row {
+    position: absolute;
+    left: 0;
+    width: 1920px;
+    height: 120px;
+}
+
+.chip {
+    position: absolute;
+    top: 0;
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    background: rgba(10, 18, 38, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 14px 30px rgba(3, 8, 20, 0.45);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.chip img {
+    width: 78px;
+    height: 78px;
+    display: block;
+    image-rendering: pixelated;
+}
+
+.chip .ring {
+    position: absolute;
+    inset: -9px;
+    border-radius: 32px;
+    border: 3px solid #8fd0ff;
+    box-shadow: 0 0 26px rgba(120, 190, 255, 0.85);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* a soft key light on whatever the camera is looking at */
+.spot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1500px;
+    height: 1500px;
+    margin-left: -750px;
+    margin-top: -750px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(150, 200, 255, 0.2) 0%, rgba(150, 200, 255, 0) 62%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* the end card: the repo and the licence, not the feature list */
+.lockup-open {
+    margin-top: 26px;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #ffffff;
+    text-shadow: 0 4px 22px rgba(4, 10, 26, 0.75);
+    will-change: transform, opacity;
+}
+
+.lockup.card .lockup-link {
+    margin-top: 26px;
+    gap: 16px;
+    padding: 16px 40px 18px;
+    font-size: 30px;
+}
+
+.lockup.card .lockup-meta {
+    margin-top: 22px;
+    font-size: 24px;
+    color: rgba(214, 230, 250, 0.86);
+}
+
+/* the key caps that pop out of the pet while it types */
+.keycap {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    margin-left: -13px;
+    margin-top: -13px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #dfe6f0 100%);
+    border: 1px solid #c6cedb;
+    box-shadow:
+        0 3px 0 #b9c2d1,
+        0 9px 20px rgba(3, 8, 20, 0.45);
+    opacity: 0;
+    will-change: transform, opacity;
+}
