@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ contains(github.ref_name, '-beta.') && github.ref_name || 'stable' }}
+  group: release
   cancel-in-progress: false
 
 jobs:
@@ -32,7 +32,6 @@ jobs:
           version: 2026.9.11
 
       - name: Verify tag and Homebrew tap credentials
-        id: release_info
         shell: bash
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -40,24 +39,14 @@ jobs:
         run: |
           set -euo pipefail
           VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' macos/Info.plist)
-          if [ "$RELEASE_TAG" = "v$VERSION" ]; then
-            CHANNEL=stable
-            if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
-              printf '::error::Set the HOMEBREW_TAP_TOKEN Actions secret; see CONTRIBUTING.md.\n' >&2
-              exit 1
-            fi
-          elif [[ "$RELEASE_TAG" == "v$VERSION-beta."* ]]; then
-            BETA_NUMBER="${RELEASE_TAG#v$VERSION-beta.}"
-            if [[ ! "$BETA_NUMBER" =~ ^[0-9]+$ ]]; then
-              printf 'Invalid beta tag: %s (expected v%s-beta.N).\n' "$RELEASE_TAG" "$VERSION" >&2
-              exit 1
-            fi
-            CHANNEL=beta
-          else
-            printf 'Release tag %s must be v%s or v%s-beta.N.\n' "$RELEASE_TAG" "$VERSION" "$VERSION" >&2
+          if [ "$RELEASE_TAG" != "v$VERSION" ]; then
+            printf 'Release tag %s must be v%s.\n' "$RELEASE_TAG" "$VERSION" >&2
             exit 1
           fi
-          printf 'channel=%s\n' "$CHANNEL" >> "$GITHUB_OUTPUT"
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            printf '::error::Set the HOMEBREW_TAP_TOKEN Actions secret; see CONTRIBUTING.md.\n' >&2
+            exit 1
+          fi
 
       - name: Run tests
         run: mise run test
@@ -129,14 +118,9 @@ jobs:
       - name: Generate release notes
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
         run: |
           set -euo pipefail
-          if [ "$RELEASE_CHANNEL" = stable ]; then
-            TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+$'
-          else
-            TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
-          fi
+          TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+$'
           RELEASE_RANGE=$(bash Tools/release_notes_range.sh "$RELEASE_TAG" "$TAG_PATTERN")
           printf 'Generating notes for %s.\n' "$RELEASE_RANGE"
           mise exec -- git-cliff \
@@ -152,7 +136,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
           RELEASE_EXISTS: ${{ steps.package.outputs.release_exists }}
           UPLOAD_DMG: ${{ steps.package.outputs.upload_dmg }}
           UPLOAD_CHECKSUM: ${{ steps.package.outputs.upload_checksum }}
@@ -161,14 +144,10 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           DMG="dist/Waddly-$VERSION-macos-arm64.dmg"
           CHECKSUM="$DMG.sha256"
-          RELEASE_FLAGS=(--latest)
-          if [ "$RELEASE_CHANNEL" = beta ]; then
-            RELEASE_FLAGS=(--prerelease)
-          fi
           if [ "$RELEASE_EXISTS" = false ]; then
             gh release create "$RELEASE_TAG" \
               --verify-tag \
-              "${RELEASE_FLAGS[@]}" \
+              --latest \
               --notes-file "$RUNNER_TEMP/release-notes.md" \
               --title "Waddly $VERSION" \
               "$DMG" "$CHECKSUM"
@@ -185,13 +164,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_CHANNEL: ${{ steps.release_info.outputs.channel }}
         run: |
           set -euo pipefail
-          if [ "$RELEASE_CHANNEL" = beta ]; then
-            printf 'Skipping Homebrew tap update for prerelease %s.\n' "$RELEASE_TAG"
-            exit 0
-          fi
           VERSION="${RELEASE_TAG#v}"
           DMG="Waddly-$VERSION-macos-arm64.dmg"
           SHA256=$(shasum -a 256 "dist/$DMG" | awk '{ print $1 }')
