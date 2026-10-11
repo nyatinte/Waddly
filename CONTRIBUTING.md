@@ -4,7 +4,7 @@ Thanks for your interest in contributing. This guide covers local development an
 
 ## Requirements
 
-- Apple Silicon Mac with macOS 14 or later (CI runs build and tests on macOS 14, and full validation on macOS 26)
+- Apple Silicon Mac with macOS 14 or later (minimum supported OS; macOS 14 runtime execution is not verified by CI)
 - Xcode Command Line Tools with Swift 6
 - mise ([install and enable it in your shell](https://mise.jdx.dev/getting-started.html)) for the pinned development and release tools
 
@@ -90,7 +90,7 @@ See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activit
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-14` and `macos-26` for pull requests, pushes to `main`, and manual dispatches. The macOS 14 job installs the locked tools with mise-action and runs `mise run test` and `mise run build`; macOS 26 runs `mise run check`, including the complexity gate. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action and runs `mise run check`, including the complexity gate. The app targets macOS 14, but CI does not verify runtime execution on macOS 14: the macOS 14 runner image provides Xcode 16.2 / Swift 6.0, whose older SDK does not mark `NSImage` as `Sendable`, so the current Swift 6 sources fail to compile there. CI uses a newer SDK on macOS 26; actual runtime support on macOS 14 remains unverified. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
