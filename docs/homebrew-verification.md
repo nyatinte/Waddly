@@ -29,3 +29,7 @@ Run this checklist on an Apple Silicon Mac with the release version and its publ
 - [ ] Open the DMG, copy `Waddly.app` to `/Applications`, eject the DMG, and launch the copied app for the first time.
 - [ ] Record the actual macOS first-launch behavior and any Gatekeeper warning. The cask postflight only applies to Homebrew installs; do not assume it removes quarantine from a manually installed app.
 - [ ] If macOS blocks the app, verify the documented user-approved recovery path in Privacy & Security and record whether launch then succeeds. Do not disable Gatekeeper globally or remove quarantine with `xattr` as part of this test.
+
+## Recording results
+
+Record the completed checks (macOS and Homebrew versions, Waddly version, DMG checksum, and the outcome of each step) in issue #66 or the release E2E report. Keep #66 open until a release has verified these scenarios; this checklist by itself is not the verification.
