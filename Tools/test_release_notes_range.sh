@@ -47,10 +47,17 @@ add_tagged_commit 'fix: later stable' v0.3.0
 
 stable_pattern='^v[0-9]+\.[0-9]+\.[0-9]+$'
 beta_pattern='^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
-assert_range v0.1.0 "$stable_pattern" v0.1.0
-assert_range v0.2.0 "$stable_pattern" v0.1.0..v0.2.0
-assert_range v0.2.0-beta.2 "$beta_pattern" v0.2.0-beta.1..v0.2.0-beta.2
+first_stable_commit=$(git rev-parse v0.1.0^{commit})
+first_stable_to_beta_one=$(git rev-parse v0.1.0^{commit})..$(git rev-parse v0.2.0-beta.1^{commit})
+beta_one_to_beta_two=$(git rev-parse v0.2.0-beta.1^{commit})..$(git rev-parse v0.2.0-beta.2^{commit})
+first_stable_to_stable_two=$(git rev-parse v0.1.0^{commit})..$(git rev-parse v0.2.0^{commit})
+assert_range v0.1.0 "$stable_pattern" "$first_stable_commit"
+assert_range v0.2.0 "$stable_pattern" "$first_stable_to_stable_two"
+assert_range v0.2.0-beta.1 "$beta_pattern" "$first_stable_to_beta_one"
+assert_range v0.2.0-beta.2 "$beta_pattern" "$beta_one_to_beta_two"
+assert_notes v0.1.0 "$stable_pattern" 'First stable' 'Beta one'
 assert_notes v0.2.0 "$stable_pattern" 'Stable two' 'Later stable'
+assert_notes v0.2.0-beta.1 "$beta_pattern" 'Beta one' 'Stable two'
 assert_notes v0.2.0-beta.2 "$beta_pattern" 'Settings: beta two' 'Later beta'
 
 printf 'Release-note ranges and rendering passed.\n'
