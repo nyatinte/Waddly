@@ -46,18 +46,25 @@ Images are stored on your Mac as individual PNG frames. The source files are not
 
 ## Getting started
 
-Waddly requires an Apple Silicon Mac running macOS 14 or later. The stable Homebrew Cask is available from the official tap.
+Waddly requires an Apple Silicon Mac running macOS 14 or later. Its Homebrew Casks are distributed from Waddly's third-party tap. Homebrew 6.0 or later requires explicit trust for third-party Casks. The commands below trust only the Cask you install, not every current and future package or command in the tap.
+
+Install the stable app:
 
 ```sh
 brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
 Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
 
 ```sh
-brew install --cask nyatinte/waddly/waddly-beta
+brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly-beta
+brew install --cask waddly-beta
 ```
+
+Cask trust remains in effect for future upgrades. Revoke it with `brew untrust --cask nyatinte/waddly/waddly` or `brew untrust --cask nyatinte/waddly/waddly-beta`.
 
 Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 

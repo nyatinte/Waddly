@@ -46,18 +46,25 @@
 
 ## はじめる
 
-WaddlyはApple Silicon搭載MacのmacOS 14以降に対応しています。安定版のHomebrew Caskは公式tapからインストールできます。
+WaddlyはApple Silicon搭載MacのmacOS 14以降に対応しています。Homebrew CaskはWaddlyのサードパーティtapから配布します。Homebrew 6.0以降ではサードパーティCaskを明示的に信頼する必要があります。以下のコマンドはインストールするCaskだけを信頼し、tap内の現在および将来の全パッケージやコマンドを信頼するものではありません。
+
+安定版をインストールするには:
 
 ```sh
 brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
-ベータ版 `0.1.0-beta.1` は安定版と別の `Waddly Beta.app` として試せます。
+ベータ版 `0.1.0-beta.1` は、安定版とは別の `Waddly Beta.app` として試せます:
 
 ```sh
-brew install --cask nyatinte/waddly/waddly-beta
+brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly-beta
+brew install --cask waddly-beta
 ```
+
+Caskへの信頼設定は今後の更新にも適用されます。取り消すには `brew untrust --cask nyatinte/waddly/waddly` または `brew untrust --cask nyatinte/waddly/waddly-beta` を実行してください。
 
 安定版を更新するには `brew upgrade --cask waddly`、ベータ版は `brew upgrade --cask waddly-beta` を実行してください。ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
 
