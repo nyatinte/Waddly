@@ -134,4 +134,4 @@ Three sequential before/after pairs compared `d810c9e` with `429f932` on the sam
 | Peak RSS | 283.41 | 283.64 | +0.23 |
 | Closed settings RSS after 30 s | 218.87 | 219.84 | +0.97 |
 
-No memory reduction was observed. After values were slightly higher in all three pairs, but this measurement alone does not identify the cause. Both revisions exceed the 100 MB physical-footprint goal. See the [release report](release-e2e-2026-10-05.md#2026-10-06-の-pr-前後比較) for individual runs, reproducible commands, and scope limitations. Raw CSVs and environment/tool hashes remain local under `dist/memory/pr-52-paired-20261006T105307Z/`.
+No memory reduction was observed. After values were slightly higher in all three pairs, but this measurement alone does not identify the cause. Both revisions exceed the 100 MB physical-footprint goal. Raw CSVs and environment/tool hashes remain local under `dist/memory/pr-52-paired-20261006T105307Z/`.
