@@ -5,8 +5,9 @@
 #   ./tools/render-langs.sh en       # one of them
 #
 # Both languages are the same 30 second film, so they share audio/mix-30s.wav
-# (build it with ./audio/tools/build-mix.sh). Only the strings differ, which is
-# why the two renders are the same length to the frame.
+# (prepare it with ./audio/tools/build-mix.sh). Only the strings differ, which is
+# why the two renders are the same length to the frame. npm scripts resolve the
+# project's pinned HyperFrames version without a global install.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,7 +30,7 @@ for LANG_CODE in "${LANGS[@]}"; do
 
   echo "→ rendering the '$LANG_CODE' cut"
   ./tools/with-lang.sh "$LANG_CODE" -- \
-    hyperframes render . -f 60 -q looks --variables "{\"lang\":\"$LANG_CODE\"}" -o "$VIDEO"
+    npm run render -- . -f 60 -q looks --variables "{\"lang\":\"$LANG_CODE\"}" -o "$VIDEO"
 
   echo "→ muxing $AUDIO"
   ffmpeg -v error -y -i "$VIDEO" -i "$AUDIO" \

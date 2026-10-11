@@ -197,18 +197,32 @@ python3 tools/verify-mix.py ja   # 納品ファイルから音をデコードし
 
 ---
 
-## 再レンダリング
+## 初回セットアップと再レンダリング
+
+必要なツールを入れ、スプライトと音源を準備してから映像をレンダリングします（macOS）。
 
 ```sh
+brew install ffmpeg imagemagick node python
 cd promo
-./tools/fetch-font.sh          # 初回のみ（OFL フォントを取得）
-./tools/build-pets.sh          # スプライトシートを 9 コマに分割
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install numpy       # build-mix.sh / mix-30s.py に必要
 
-./tools/render-langs.sh        # 日本語版と英語版（音の多重化まで一括）
+./tools/fetch-font.sh             # OFL フォントを取得
+./tools/build-pets.sh             # スプライトシートを 9 コマに分割
+./audio/tools/fetch-mixkit-sfx.sh # 効果音を取得（インターネット接続が必要）
+./audio/tools/prepare-sfx.sh      # 効果音を正規化
+```
 
-./audio/tools/build-mix.sh 30  # 音を作り直す場合
+**BGM は別途用意する必要があります。** `Magical Motif.m4a` はSunoで生成した元音源で、権利確認が必要なためリポジトリには含めていません。元音源を利用できる場合は、次のように指定してミックスを作ります。92.4587秒から122.4587秒までを使うため、音源には少なくとも122.4587秒必要です。
+
+```sh
+BGMSRC="/path/to/Magical Motif.m4a" ./audio/tools/build-mix.sh 30
+./tools/render-langs.sh            # 日本語版と英語版をレンダリングし、同じ音を多重化
 ./tools/snapshot.sh ja --at 4.60,16.45,18.90,27.60 -o snapshots/ja
 ```
+
+元音源を入手できない場合は、利用権を確認した別のBGMを用意してください。その場合、元の映像と同じ音にはならず、固定された切り出し位置や拍との同期も再検証が必要です。`build-pets.sh` のゴミ画素除去は Pillow があれば実行されますが、省略してもレンダリングできます。
 
 `hyperframes` は HTML をヘッドレス Chrome で 1 フレームずつ描画して ffmpeg で結合します。
 **すべての見た目が時刻 `t` の純関数**として書かれているため（`Date.now()` も `Math.random()` も未使用）、
