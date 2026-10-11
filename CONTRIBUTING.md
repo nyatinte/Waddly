@@ -90,7 +90,7 @@ See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activit
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests targeting `main`, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `mise run check`. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action, then runs `mise run check`, including the complexity gate. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
