@@ -3,5 +3,13 @@
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
+  ],
+  "packageRules": [
+    {
+      "description": "Wait 7 days before updating GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "minimumReleaseAge": "7 days",
+      "internalChecksFilter": "strict"
+    }
   ]
 }
