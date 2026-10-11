@@ -65,24 +65,28 @@ public enum PetSpriteSheetImporter {
         var thumbnails: [ObjectIdentifier: NSImage] = [:]
         for category in PetImageCategory.allCases {
             for image in images[category] {
-                guard let raster = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
-                let scale = min(1, 128 / Double(max(raster.width, raster.height)))
-                let width = max(1, Int(Double(raster.width) * scale))
-                let height = max(1, Int(Double(raster.height) * scale))
-                let space = raster.colorSpace?.model == .rgb ? raster.colorSpace : CGColorSpaceCreateDeviceRGB()
-                guard let space, let context = CGContext(
-                    data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-                    space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-                ) else { continue }
-                context.interpolationQuality = .high
-                context.draw(raster, in: CGRect(x: 0, y: 0, width: width, height: height))
-                guard let thumbnail = context.makeImage() else { continue }
-                thumbnails[ObjectIdentifier(image)] = NSImage(
-                    cgImage: thumbnail, size: NSSize(width: width, height: height)
-                )
+                if let thumbnail = thumbnail(for: image) {
+                    thumbnails[ObjectIdentifier(image)] = thumbnail
+                }
             }
         }
         return thumbnails
+    }
+
+    private static func thumbnail(for image: NSImage) -> NSImage? {
+        guard let raster = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let scale = min(1, 128 / Double(max(raster.width, raster.height)))
+        let width = max(1, Int(Double(raster.width) * scale))
+        let height = max(1, Int(Double(raster.height) * scale))
+        let space = raster.colorSpace?.model == .rgb ? raster.colorSpace : CGColorSpaceCreateDeviceRGB()
+        guard let space, let context = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .high
+        context.draw(raster, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let thumbnail = context.makeImage() else { return nil }
+        return NSImage(cgImage: thumbnail, size: NSSize(width: width, height: height))
     }
 
     public static func optimizedImage(from data: Data) -> OptimizedPetImage? {
@@ -159,23 +163,10 @@ public enum PetSpriteSheetImporter {
         var cells: [NSImage] = []
         for row in 0 ..< 3 {
             for column in 0 ..< 3 {
-                let rect = CGRect(
-                    x: CGFloat(column * cellSize),
-                    y: CGFloat(row * cellSize),
-                    width: pointSize,
-                    height: pointSize
-                )
-                guard let cell = image.cropping(to: rect) else { return nil }
-                let space = cell.colorSpace?.model == .rgb ? cell.colorSpace : CGColorSpaceCreateDeviceRGB()
-                guard let space, let context = CGContext(
-                    data: nil, width: cell.width, height: cell.height,
-                    bitsPerComponent: cell.bitsPerComponent, bytesPerRow: 0,
-                    space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-                ) else { return nil }
-                context.setBlendMode(.copy)
-                context.draw(cell, in: CGRect(x: 0, y: 0, width: cell.width, height: cell.height))
-                guard let raster = context.makeImage() else { return nil }
-                cells.append(NSImage(cgImage: raster, size: NSSize(width: pointSize, height: pointSize)))
+                guard let cell = spriteFrame(from: image, row: row, column: column, size: pointSize) else {
+                    return nil
+                }
+                cells.append(cell)
             }
         }
         return PetImageSet([
@@ -184,6 +175,21 @@ public enum PetSpriteSheetImporter {
             .sleep: [cells[7], cells[8]],
             .enter: [cells[6]]
         ])
+    }
+
+    private static func spriteFrame(from image: CGImage, row: Int, column: Int, size: CGFloat) -> NSImage? {
+        let rect = CGRect(x: CGFloat(column) * size, y: CGFloat(row) * size, width: size, height: size)
+        guard let cell = image.cropping(to: rect) else { return nil }
+        let space = cell.colorSpace?.model == .rgb ? cell.colorSpace : CGColorSpaceCreateDeviceRGB()
+        guard let space, let context = CGContext(
+            data: nil, width: cell.width, height: cell.height,
+            bitsPerComponent: cell.bitsPerComponent, bytesPerRow: 0,
+            space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.setBlendMode(.copy)
+        context.draw(cell, in: CGRect(x: 0, y: 0, width: cell.width, height: cell.height))
+        guard let raster = context.makeImage() else { return nil }
+        return NSImage(cgImage: raster, size: NSSize(width: size, height: size))
     }
 
     public static func load(from url: URL) -> NSImage? {

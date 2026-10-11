@@ -128,7 +128,11 @@ final class PetAnimationController {
             return
         }
 
-        switch currentPhase {
+        restoreAnimation(for: currentPhase)
+    }
+
+    private func restoreAnimation(for phase: PetPhase) {
+        switch phase {
         case .typing:
             typingFrameIndex = 1
             show(petImages()[.typing][0])
