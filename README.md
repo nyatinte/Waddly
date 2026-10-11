@@ -76,7 +76,7 @@ Keyboard events are used only to control animation. Waddly does not store, log, 
 
 ## Measured memory
 
-The memory goal is a physical footprint below 100 MB in representative configurations. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). Compare Release-app RSS and physical footprint across launch, typing, large images, repeated imports, and sleeping/frozen states. `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
+The memory goal is a physical footprint below 100 MB in representative configurations. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target in the current release; this is a known, accepted exception for 1.0, while the app targets under 100 MB for typical use. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). Compare Release-app RSS and physical footprint across launch, typing, large images, repeated imports, and sleeping/frozen states. `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
 
 ## Contributing
 

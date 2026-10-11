@@ -2,6 +2,8 @@
 
 The production goal is **less than 100 MB of physical footprint** in representative supported configurations. Record RSS as context, too: it includes shared resident pages, while macOS physical footprint accounts for the process's charged physical memory (including compressed memory). Neither equals the allocator's live-byte delta used by the regression suite. A single startup reading does not establish a budget for arbitrary numbers of user images.
 
+**Accepted exception for 1.0:** importing a very large sheet (for example a transparent 3072 × 3072 sheet with nine 1024 × 1024 frames) exceeds the 100 MB footprint goal. The paired probe measured a peak of about 134 MB and a final plateau of about 104 MB on macOS 27.0.1, and the memory reduction work in #34 / #40 / #41 did not close the gap. The 1.0 release accepts this exception and keeps the under-100 MB goal for typical use. Revisit the residency policy before raising the supported image limits or claiming the footprint goal for large images.
+
 ## Release app workflow (macOS 14+, Apple Silicon)
 
 Use the same Mac, OS, input images, app settings, and sample duration for a before/after comparison. Quit other Waddly instances, build with `mise run build`, and launch `build/Waddly.app`. Get its PID with `pgrep -x Waddly`; use the single PID throughout the run. The sampler does not start/stop the app, change preferences, or synthesize keyboard events.
