@@ -90,7 +90,7 @@ See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activit
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action and runs `mise run check`, including the complexity gate. The app targets macOS 14, but CI does not verify runtime execution on macOS 14: the macOS 14 runner image provides Xcode 16.2 / Swift 6.0, whose older SDK does not mark `NSImage` as `Sendable`, so the current Swift 6 sources fail to compile there. CI uses a newer SDK on macOS 26; actual runtime support on macOS 14 remains unverified. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action and runs `mise run check`, including the complexity gate. The app targets macOS 14, but CI does not verify runtime execution on macOS 14: the macOS 14 runner image provides Xcode 16.2 / Swift 6.0, whose older SDK does not mark `NSImage` as `Sendable`, so the current Swift 6 sources fail to compile there. CI uses a newer SDK on macOS 26; actual runtime support on macOS 14 remains unverified. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared. See [docs/manual-verification.md](docs/manual-verification.md) for the v1.0 manual release verification plan.
 
 ## Localization keys
 
