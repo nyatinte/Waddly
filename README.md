@@ -46,9 +46,7 @@ Images are stored on your Mac as individual PNG frames. The source files are not
 
 ## Getting started
 
-Waddly requires an Apple Silicon Mac running macOS 14 or later. Its Homebrew Casks are distributed from Waddly's third-party tap. Homebrew 6.0 or later requires explicit trust for third-party Casks. The commands below trust only the Cask you install, not every current and future package or command in the tap.
-
-Install the stable app:
+Waddly requires an Apple Silicon Mac running macOS 14 or later. It is distributed from Waddly's third-party Homebrew tap. Homebrew 6.0 or later requires explicit trust for third-party Casks. The commands below trust only the Cask you install, not every current and future package or command in the tap.
 
 ```sh
 brew tap nyatinte/waddly
@@ -56,23 +54,13 @@ brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
-Beta `0.1.0-beta.1` is available separately as `Waddly Beta.app`:
+Cask trust remains in effect for future upgrades. Revoke it with `brew untrust --cask nyatinte/waddly/waddly`.
 
-```sh
-brew tap nyatinte/waddly
-brew trust --cask nyatinte/waddly/waddly-beta
-brew install --cask waddly-beta
-```
-
-Cask trust remains in effect for future upgrades. Revoke it with `brew untrust --cask nyatinte/waddly/waddly` or `brew untrust --cask nyatinte/waddly/waddly-beta`.
-
-Update the stable app with `brew upgrade --cask waddly` and the beta app with `brew upgrade --cask waddly-beta`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
+Update the app with `brew upgrade --cask waddly`. To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
 The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper protection is reduced for Homebrew installs. This does not replace Developer ID signing or notarization. Directly downloaded DMGs retain quarantine, so Gatekeeper may block first launch. Confirm that the app came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
 On first launch, follow Setup Guide… to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
-
-If the setup wizard appears after upgrading from an earlier beta, import your sprite sheet again.
 
 ## Privacy
 
