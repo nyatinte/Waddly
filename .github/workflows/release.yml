@@ -207,13 +207,32 @@ jobs:
 
             app "Waddly.app"
 
-            # Match the documented Homebrew install behavior for this unsigned, unnotarized app.
+            # Waddly is ad-hoc signed and not notarized; match the documented Homebrew behavior.
             postflight_steps do
               run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/Waddly.app"]
             end
           end
           EOF
           ruby -c "$TAP_DIR/Casks/waddly.rb"
+
+          # Homebrew audits casks through a tap; use a local tap so the generated file is checked.
+          VALIDATION_TAP="local/waddly-validation"
+          if ! brew tap-new --no-git "$VALIDATION_TAP"; then
+            printf '::error::Unable to create a local Homebrew validation tap. Check Homebrew setup and network access.\n' >&2
+            exit 1
+          fi
+          VALIDATION_CASK="$(brew --repository)/Library/Taps/local/homebrew-waddly-validation/Casks/waddly.rb"
+          mkdir -p "$(dirname "$VALIDATION_CASK")"
+          cp "$TAP_DIR/Casks/waddly.rb" "$VALIDATION_CASK"
+          if ! brew audit --cask --strict "$VALIDATION_TAP/waddly"; then
+            printf '::error::Homebrew strict cask audit failed (including any tap or network errors).\n' >&2
+            exit 1
+          fi
+          if ! brew style "$VALIDATION_CASK"; then
+            printf '::error::Homebrew Ruby style check failed for the generated cask.\n' >&2
+            exit 1
+          fi
+
           git -C "$TAP_DIR" add Casks/waddly.rb
           if git -C "$TAP_DIR" diff --cached --quiet; then
             exit 0
