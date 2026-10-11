@@ -14,9 +14,9 @@ import WaddlyCore
     let data = try Data(contentsOf: fixtureURL)
     let bitmap = try #require(NSBitmapImageRep(data: data))
     // Enter sparkles must not bleed into the left edge of sleep-1.
-    for y in 652 ..< 710 {
-        for x in 256 ..< 258 {
-            #expect(bitmap.colorAt(x: x, y: y)?.alphaComponent == 0)
+    for pixelY in 652 ..< 710 {
+        for pixelX in 256 ..< 258 {
+            #expect(bitmap.colorAt(x: pixelX, y: pixelY)?.alphaComponent == 0)
         }
     }
     let images = try #require(PetSpriteSheetImporter.frames(from: data))
