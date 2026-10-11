@@ -12,7 +12,7 @@ Trust this repository's mise configuration, then install its pinned tools:
 
 ```sh
 mise trust
-mise install aqua:realm/SwiftLint github:nicklockwood/SwiftFormat
+mise install aqua:realm/SwiftLint github:nicklockwood/SwiftFormat github:moznion/cccc
 ```
 
 Tool versions are pinned in `mise.toml` and their downloads are locked in `mise.lock`. Run `mise lock` after changing a tool version.
@@ -27,6 +27,7 @@ Use mise tasks for the common development commands:
 mise run format       # Format Swift source files
 mise run format:check # Check formatting without changing files
 mise run lint         # Check localization accessors and run strict SwiftLint
+mise run complexity   # Enforce cognitive complexity <= 15 and cyclomatic complexity <= 10 per function
 ```
 
 Format Swift source files with the version pinned in `mise.toml`:
@@ -52,7 +53,7 @@ mise install hk
 mise exec -- hk install
 ```
 
-hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is available on Apple Silicon. `hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, and strict SwiftLint before a commit. These are the checks `./macos/build.sh` performs before it compiles, so a change that would fail the build is reported at commit time. Run them without committing with `mise exec -- hk check`, apply fixes with `mise exec -- hk fix`, and remove the hooks with `mise exec -- hk uninstall`.
+hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is available on Apple Silicon. `hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, strict SwiftLint, and the complexity gate when Swift sources or tests change. The complexity limits match CI: no function may exceed cognitive complexity 15 or cyclomatic complexity 10. Run checks without committing with `mise exec -- hk check`, apply available fixes with `mise exec -- hk fix`, and remove the hooks with `mise exec -- hk uninstall`.
 
 ## Build and run
 
@@ -61,7 +62,7 @@ mise run build
 open build/Waddly.app
 ```
 
-The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, tests, and this Release build—the full local validation path used by CI.
+The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, complexity checks, tests, and this Release build—the full local validation path used by CI. `cccc` may print Swift parser warnings for syntax it cannot fully analyze; investigate these warnings because results for those files can be incomplete.
 
 ## Tests
 

@@ -6,6 +6,7 @@ lockfile_platforms = ["macos-arm64"]
 hk = "2.4.0"
 "aqua:realm/SwiftLint" = "0.65.1"
 "github:nicklockwood/SwiftFormat" = { version = "0.63.1", no_app = true }
+"github:moznion/cccc" = "1.8.0"
 
 [tasks.format]
 description = "Format Swift sources"
@@ -22,6 +23,10 @@ run = [
   "TOOLCHAIN_DIR=\"$(xcode-select -p)\" mise exec aqua:realm/SwiftLint -- swiftlint lint --strict Sources Tests macos Package.swift Tools",
 ]
 
+[tasks.complexity]
+description = "Enforce per-function cognitive and cyclomatic complexity limits"
+run = "cccc --lang swift --max-cognitive 15 --max-cyclomatic 10 --top-cognitive 10 Sources Tests"
+
 [tasks.test]
 description = "Run Swift Testing suites"
 run = "./macos/test.sh"
@@ -36,7 +41,7 @@ run = "./macos/package.sh"
 
 [tasks.check]
 description = "Run all local validation and build the Release app"
-run = ["mise run format:check", "mise run lint", "mise run test", "mise run build"]
+run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run test", "mise run build"]
 
 [tasks."memory:test"]
 description = "Run isolated Release memory regression tests (macOS 26+, Swift 6.2+)"

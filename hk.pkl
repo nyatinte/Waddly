@@ -18,6 +18,12 @@ steps {
     check = "TOOLCHAIN_DIR=\"$(xcode-select -p)\" mise exec aqua:realm/SwiftLint -- swiftlint lint --strict {{files}}"
   }
 
+  // Enforces the same per-function complexity limits as CI when Swift code changes.
+  ["complexity"] = new Step {
+    glob = List("Sources/**/*.swift", "Tests/**/*.swift")
+    check = "mise run complexity"
+  }
+
   // Verifies the typed localization accessors match both .lproj files. The
   // generator reads the whole repository, so the glob selects when the step
   // runs rather than passing files to it.
