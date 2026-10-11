@@ -14,7 +14,7 @@ Use key codes only while handling input events to identify Enter. Never store, l
 
 When adding or changing user-facing strings, update both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
 
-When user-visible behavior or setup instructions change, update both `README.md` and `README.en.md`.
+When user-visible behavior or setup instructions change, update both the English `README.md` and Japanese `README.ja.md`.
 
 ## Verification
 

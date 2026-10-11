@@ -127,6 +127,6 @@ Before the first stable release, create a fine-grained GitHub token restricted t
 ## Contribution notes
 
 - Add or update user-facing strings in both `macos/ja.lproj/Localizable.strings` and `macos/en.lproj/Localizable.strings`.
-- Update both `README.md` and `README.en.md` when user-facing behavior or setup instructions change.
+- Update both the English `README.md` and Japanese `README.ja.md` when user-facing behavior or setup instructions change.
 - Preserve the input privacy boundary: key codes may be checked transiently to identify Enter, but must not be stored, logged, or transmitted. Keep imported images on-device.
 - Keep Swift changes compatible with Swift 6 and macOS 14, and avoid new dependencies unless they are needed.
