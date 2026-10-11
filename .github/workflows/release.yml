@@ -137,11 +137,13 @@ jobs:
           else
             TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
           fi
+          RELEASE_RANGE=$(bash Tools/release_notes_range.sh "$RELEASE_TAG" "$TAG_PATTERN")
+          printf 'Generating notes for %s.\n' "$RELEASE_RANGE"
           mise exec -- git-cliff \
             --config cliff.toml \
-            --latest \
             --tag "$RELEASE_TAG" \
             --tag-pattern "$TAG_PATTERN" \
+            "$RELEASE_RANGE" \
             > "$RUNNER_TEMP/release-notes.md"
 
       - name: Publish versioned GitHub Release

@@ -3,7 +3,7 @@ body = """
 {% for entry in commits | commit_groups(groups=commit_parsers_groups) -%}
 ### {{ entry.group | striptags | trim | upper_first }}
 {% for commit in entry.commits -%}
-- {% if commit.breaking %}**Breaking:** {% endif %}{{ commit.message | split(pat=": ") | last | upper_first }}
+- {% if commit.breaking %}**Breaking:** {% endif %}{{ commit.message | split(pat="\n") | first | upper_first }}
 {% endfor %}
 {% endfor %}
 """
