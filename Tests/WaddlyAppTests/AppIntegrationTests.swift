@@ -121,11 +121,64 @@ import WaddlyCore
         let delegate: any NSApplicationDelegate = app
         let handled = delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: hasImages)
         #expect(handled == false)
-        if hasImages {
-            #expect(app.imageSettingsWindow?.isVisible == true)
-        } else {
-            #expect(app.setupWizardController?.window?.isVisible == true)
+        // Setup is not finished here, so the Dock icon must lead to setup in both cases.
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.setupWizardController?.window?.isVisible == true)
+    }
+
+    /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
+    @Test func dockReopenNeverOpensAnimationSettingsAfterSetup() async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        app.settings.setupWizardSeen = true
+        app.settings.setupStep = nil
+        app.settings.showInMenuBar = false
+
+        let delegate: any NSApplicationDelegate = app
+        #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.panel.isVisible == true)
+        // The menu stays the deliberate route to the editor once setup is finished. Opening the menu
+        // is when the app re-evaluates what it offers.
+        app.menuWillOpen(app.statusMenu)
+        #expect(try app.validateMenuItem(editorItem(of: app)))
+    }
+
+    /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
+    @Test func dockReopenResumesSetupWhenItWasLeftUnfinished() async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        app.settings.setupWizardSeen = true
+        app.settings.setupStep = SetupWizardController.Step.monitoring.rawValue
+        app.settings.showInMenuBar = false
+
+        let delegate: any NSApplicationDelegate = app
+        #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.setupWizardController?.window?.isVisible == true)
+        #expect(app.setupWizardController?.currentStep == .monitoring)
+        app.menuWillOpen(app.statusMenu)
+        #expect(try !app.validateMenuItem(editorItem(of: app)))
+    }
+
+    /// macOS asks for a restart before Input Monitoring works, so returning must land in setup.
+    @Test(arguments: LaunchCase.all)
+    func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        if scenario.hasImages {
+            try await app.persistPetImages(fixture.exampleImages())
         }
+        app.settings.setupWizardSeen = scenario.seen
+        app.settings.setupStep = scenario.step
+
+        #expect(app.shouldOpenSetupOnLaunch == scenario.expectsSetup, "\(scenario.name)")
+        #expect(app.isSetupComplete == !scenario.expectsSetup, "\(scenario.name)")
     }
 
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
@@ -152,6 +205,13 @@ import WaddlyCore
         throw CocoaError(.userCancelled)
     }
 
+    /// Validation is what the menu actually asks, so the tests ask it the same way.
+    private func editorItem(of app: AppDelegate) throws -> NSMenuItem {
+        try #require(menuItems(app.statusMenu).first {
+            $0.action == #selector(AppDelegate.showImageSettings)
+        })
+    }
+
     private func menuItems(_ menu: NSMenu) -> [NSMenuItem] {
         menu.items.flatMap { item in [item] + (item.submenu.map(menuItems) ?? []) }
     }
@@ -172,6 +232,8 @@ import WaddlyCore
             app.settings.registerDefaults()
             app.petImagesDirectoryURL = directory
             app.buildPanel()
+            // The app builds its menu at launch; the fixture must match that to assert on it.
+            app.buildMenu()
         }
 
         func exampleImages() throws -> PetImageSet {
@@ -196,4 +258,27 @@ import WaddlyCore
             try? FileManager.default.removeItem(at: directory)
         }
     }
+}
+
+/// The launch cases, named so a failure says which state broke.
+struct LaunchCase: Sendable {
+    let name: String
+    let hasImages: Bool
+    let seen: Bool
+    let step: Int?
+    let expectsSetup: Bool
+
+    static let all: [LaunchCase] = [
+        LaunchCase(name: "nothing yet", hasImages: false, seen: false, step: nil, expectsSetup: true),
+        LaunchCase(name: "no images", hasImages: false, seen: true, step: nil, expectsSetup: true),
+        LaunchCase(name: "images, never finished", hasImages: true, seen: false, step: nil, expectsSetup: true),
+        LaunchCase(
+            name: "images, permission step saved",
+            hasImages: true,
+            seen: true,
+            step: SetupWizardController.Step.monitoring.rawValue,
+            expectsSetup: true
+        ),
+        LaunchCase(name: "finished", hasImages: true, seen: true, step: nil, expectsSetup: false)
+    ]
 }

@@ -319,6 +319,11 @@ extension AppDelegate {
         updateMenuStatus()
     }
 
+    func menuWillOpen(_ menu: NSMenu) {
+        // Setup state changes while the app runs, so re-evaluate what the menu offers.
+        updateMenuStatus()
+    }
+
     func menuDidClose(_ menu: NSMenu) {
         if pendingLocalizationRefresh {
             pendingLocalizationRefresh = false
@@ -333,5 +338,19 @@ extension AppDelegate {
         alert.messageText = localizedString(.menuLoginError)
         alert.alertStyle = .warning
         alert.beginSheetModal(for: panel)
+    }
+}
+
+/// Keeps the image editor out of reach until setup is finished.
+extension AppDelegate: NSMenuItemValidation {
+    /// `isEnabled` cannot do this: with automatic enabling on, which is the default, AppKit asks the
+    /// item's target instead and re-enables anything whose action it finds. The pet's right-click
+    /// menu is a copy of the status menu, and validation is what covers both.
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(showImageSettings) {
+            // The image editor is not something to offer during a first run.
+            return isSetupComplete
+        }
+        return true
     }
 }
