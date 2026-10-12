@@ -117,10 +117,7 @@ extension AppDelegate {
         statusItem.button?.setAccessibilityLabel(localizedString(.a11yMenuBar))
         statusItem.menu = statusMenu
         petView.contextMenuProvider = { [weak self] in
-            guard let self else { return nil }
-            let menu = copyMenuTree(statusMenu)
-            menu.delegate = self
-            return menu
+            self?.makePetContextMenu()
         }
         updateMenuStatus()
     }
@@ -346,6 +343,7 @@ extension AppDelegate {
             petView.toolTip = localizedString(.petDropTooltip)
             setupWizardController?.refreshLocalization()
             refreshImageSettingsLocalization()
+            shareWindowController?.refreshLocalization()
         }
         guard pendingMenuError else { return }
         pendingMenuError = false
@@ -366,6 +364,9 @@ extension AppDelegate: NSMenuItemValidation {
     /// surface the user can reach.
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let action = menuItem.action
+        if action == #selector(showPetShare) {
+            return hasCompletePetImageSet
+        }
         if action == #selector(showImageSettings) {
             // The image editor is not something to offer during a first run.
             return isSetupComplete
