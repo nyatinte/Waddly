@@ -49,8 +49,23 @@ func synchronizeMenuSelection(in menus: [NSMenu], action: Selector, selectedTag:
 func updatePresenceMenuItems(dockItem: NSMenuItem, menuBarItem: NSMenuItem, showInDock: Bool, showInMenuBar: Bool) {
     dockItem.state = showInDock ? .on : .off
     menuBarItem.state = showInMenuBar ? .on : .off
-    dockItem.isEnabled = showInMenuBar
-    menuBarItem.isEnabled = showInDock
+    // What a menu shows when it is displayed is decided by validation; this is the state until then.
+    // Both ask the same two functions below, so they cannot disagree.
+    dockItem.isEnabled = canToggleDock(showInDock: showInDock, showInMenuBar: showInMenuBar)
+    menuBarItem.isEnabled = canToggleMenuBar(showInDock: showInDock, showInMenuBar: showInMenuBar)
+}
+
+/// The Dock icon and the menu bar item are the two ways back into the app, so neither switch may be
+/// the one that leaves it with none.
+///
+/// An option that is already off stays available. That is how someone who somehow ended up with both
+/// off gets out again, and it keeps the state recoverable.
+func canToggleDock(showInDock: Bool, showInMenuBar: Bool) -> Bool {
+    showInMenuBar || !showInDock
+}
+
+func canToggleMenuBar(showInDock: Bool, showInMenuBar: Bool) -> Bool {
+    showInDock || !showInMenuBar
 }
 
 func pauseMenuTitleKey(isPaused: Bool) -> LocalizationKey {
@@ -343,13 +358,23 @@ extension AppDelegate {
 
 /// Keeps the image editor out of reach until setup is finished.
 extension AppDelegate: NSMenuItemValidation {
-    /// `isEnabled` cannot do this: with automatic enabling on, which is the default, AppKit asks the
-    /// item's target instead and re-enables anything whose action it finds. The pet's right-click
-    /// menu is a copy of the status menu, and validation is what covers both.
+    /// What the app offers, in the place AppKit asks for it.
+    ///
+    /// Automatic enabling is on for these menus, and it does not read `isEnabled`: the menu asks the
+    /// item's target instead, which is why the guard in `updatePresenceMenuItems` cannot be the only
+    /// one. The pet's right-click menu is a copy of the status menu, so this one answer covers every
+    /// surface the user can reach.
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        if menuItem.action == #selector(showImageSettings) {
+        let action = menuItem.action
+        if action == #selector(showImageSettings) {
             // The image editor is not something to offer during a first run.
             return isSetupComplete
+        }
+        if action == #selector(toggleDockVisibility) {
+            return canToggleDock(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
+        }
+        if action == #selector(toggleMenuBarVisibility) {
+            return canToggleMenuBar(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
         }
         return true
     }

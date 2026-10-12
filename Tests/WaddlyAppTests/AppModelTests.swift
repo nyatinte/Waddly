@@ -91,8 +91,12 @@ import WaddlyCore
         )
         #expect(dockItem.state == (showDock ? .on : .off))
         #expect(menuBarItem.state == (showMenuBar ? .on : .off))
-        #expect(dockItem.isEnabled == showMenuBar)
-        #expect(menuBarItem.isEnabled == showDock)
+        // The switch that would leave nothing else on is held back, and an option that is already
+        // off stays available.
+        #expect(dockItem.isEnabled == (showMenuBar || !showDock))
+        #expect(menuBarItem.isEnabled == (showDock || !showMenuBar))
+        // Whatever the combination, one way back into the app stays available.
+        #expect(dockItem.isEnabled || menuBarItem.isEnabled)
     }
 }
 
