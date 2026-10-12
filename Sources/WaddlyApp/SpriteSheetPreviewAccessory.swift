@@ -73,13 +73,14 @@ final class SpriteSheetPreviewAccessory: NSView {
     }
 
     private func makeBackgroundControl() -> NSButton {
-        let control = NSButton(
-            checkboxWithTitle: localization.string(for: .petPreviewBackground),
-            target: self,
-            action: #selector(changeBackground)
-        )
-        control.frame = NSRect(x: 0, y: 272, width: 240, height: 24)
-        return control
+        // The displayed control has to be the one `apply` and `changeBackground` read, otherwise the
+        // checkbox shows one state and the preview keeps another.
+        backgroundControl.setButtonType(.switch)
+        backgroundControl.title = localization.string(for: .petPreviewBackground)
+        backgroundControl.target = self
+        backgroundControl.action = #selector(changeBackground)
+        backgroundControl.frame = NSRect(x: 0, y: 272, width: 240, height: 24)
+        return backgroundControl
     }
 
     private func makeImageView(_ preview: NSImage) -> NSImageView {
