@@ -24,20 +24,14 @@ fi
 SUPPORT="$HOME/Library/Application Support"
 # Matches PetImageLocation: the whole suffix after the shipping identifier.
 STATE_DIR="$SUPPORT/Waddly-$SUFFIX"
-WANTED=${WADDLY_DEVELOPMENT_DIR:-/Applications}
-
-# The process is matched by its path rather than by name, so a custom installation directory is
-# covered and a differently named variant is not caught by mistake. Both directories the installer
-# can use are checked, and each path is quoted: they contain a space and a parenthesis.
+# The process is matched by the one part of the path that cannot vary: an app's command line starts
+# with its own executable. Comparing directories would miss a differently spelled or resolved
+# installation path, and missing a live app here means deleting its state underneath it.
 running_pids() {
   ps -Ao pid=,command= | while read -r pid command; do
-    for app in "$WANTED/$NAME.app" "$HOME/Applications/$NAME.app"; do
-      # An app's command line starts with its own executable, so this cannot pick up an unrelated
-      # process that merely mentions the path.
-      case "$command" in
-        "$app/Contents/MacOS/"*) printf '%s\n' "$pid" ;;
-      esac
-    done
+    case "$command" in
+      *"/$NAME.app/Contents/MacOS/"*) printf '%s\n' "$pid" ;;
+    esac
   done
 }
 

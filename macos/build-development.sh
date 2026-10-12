@@ -26,6 +26,25 @@ else
   NAME="Waddly ($SUFFIX)"
 fi
 WANTED=${WADDLY_DEVELOPMENT_DIR:-/Applications}
+
+# The installer and `dev:reset` must agree on where the bundle lives, and a running app reports an
+# absolute executable path, so a relative or `~` spelling is resolved once, here.
+absolute_dir() {
+  case "$1" in
+    "~") printf '%s\n' "$HOME" ;;
+    "~/"*) printf '%s\n' "$HOME/${1#"~/"}" ;;
+    *)
+      if [ -d "$1" ]; then
+        (CDPATH= cd -- "$1" && pwd -P)
+      else
+        printf '%s\n' "$1"
+      fi
+      ;;
+  esac
+}
+
+mkdir -p "$WANTED" 2>/dev/null || true
+WANTED=$(absolute_dir "$WANTED")
 DESTINATION=$WANTED
 
 "$ROOT/macos/build.sh"
