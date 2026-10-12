@@ -141,6 +141,8 @@ import WaddlyCore
         #expect(app.imageSettingsWindow?.isVisible != true)
         #expect(app.panel.isVisible == true)
         // The menu stays the deliberate route to the editor once setup is finished.
+        // Opening the menu is when the app re-evaluates what it offers.
+        app.menuWillOpen(app.statusMenu)
         #expect(app.imageSettingsItem?.isEnabled == true)
     }
 
@@ -159,6 +161,7 @@ import WaddlyCore
         #expect(app.imageSettingsWindow?.isVisible != true)
         #expect(app.setupWizardController?.window?.isVisible == true)
         #expect(app.setupWizardController?.currentStep == .monitoring)
+        app.menuWillOpen(app.statusMenu)
         #expect(app.imageSettingsItem?.isEnabled == false)
     }
 
@@ -206,6 +209,8 @@ import WaddlyCore
             app.settings.registerDefaults()
             app.petImagesDirectoryURL = directory
             app.buildPanel()
+            // The app builds its menu at launch; the fixture must match that to assert on it.
+            app.buildMenu()
         }
 
         func exampleImages() throws -> PetImageSet {

@@ -37,6 +37,7 @@ enum SetupWizardFixture {
         previewResult: PetImageSet? = nil,
         confirmResult: Bool = false,
         requestPermission: @escaping @MainActor () -> Bool = { false },
+        onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {}
     ) throws -> SetupWizardController {
@@ -47,6 +48,16 @@ enum SetupWizardFixture {
         settings.appLanguage = language
         state.previewResult = previewResult
         state.confirmResult = confirmResult
+        // The wizard no longer knows about CGPreflight or event taps; the service does.
+        let permission = PermissionService(
+            hasPermission: { state.granted },
+            isReceivingKeys: { state.granted },
+            requestAccess: { requestPermission() },
+            restartTap: { state.tapRestarted += 1 },
+            openSettings: { state.settingsOpened += 1 }
+        )
+        state.granted = granted
+        onPermissionService(permission)
         let resources = try #require(Bundle(url: root().appendingPathComponent("macos")))
         return SetupWizardController(
             localization: LocalizationController(settings: settings, resources: resources),
@@ -60,9 +71,7 @@ enum SetupWizardFixture {
                 return state.confirmResult
             },
             currentPetImages: { state.images },
-            hasInputMonitoringPermission: { granted },
-            isInputMonitoringActive: { granted },
-            requestInputMonitoringPermission: requestPermission,
+            permission: permission,
             savedStep: savedStep,
             onStepChange: onStepChange,
             onShowOnDesktop: onShowOnDesktop,
@@ -103,5 +112,8 @@ enum SetupWizardFixture {
         /// What `onPreviewImage` returns; `nil` models an unreadable file.
         var previewResult: PetImageSet?
         var confirmResult = false
+        var granted = false
+        var tapRestarted = 0
+        var settingsOpened = 0
     }
 }

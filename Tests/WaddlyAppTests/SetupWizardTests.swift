@@ -65,8 +65,13 @@ typealias Fixture = SetupWizardFixture
             wizard.currentStep = variant.step
             wizard.isShowingChatGPTGuide = variant.isGuide
             wizard.isShowingTroubleshooting = variant.troubleshooting
-            wizard.isShowingDropGuide = variant.dropGuide
-            wizard.isShowingManualSteps = variant.manualSteps
+            if variant.dropGuide {
+                // Drive the real state machine instead of poking a flag.
+                wizard.permission.beginGuiding()
+                if variant.manualSteps {
+                    wizard.permission.toggleManualSteps()
+                }
+            }
             wizard.didRegisterPet = variant.hasImages
             wizard.renderCurrentStep()
             let window = try #require(wizard.window)

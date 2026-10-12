@@ -2,6 +2,37 @@ import AppKit
 import WaddlyCore
 
 extension AppDelegate {
+    var permissionService: PermissionService {
+        if let existing = permissionServiceStorage {
+            return existing
+        }
+        let service = PermissionService(
+            hasPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
+            isReceivingKeys: { [weak self] in
+                guard let self else { return false }
+                // Pausing stops the tap on purpose; that is not a permission failure.
+                return isPaused || monitor.isRunning
+            },
+            requestAccess: { [weak self] in
+                guard let self else { return false }
+                let granted = monitor.requestPermission()
+                if granted, !isPaused {
+                    startMonitoring()
+                }
+                return granted
+            },
+            restartTap: { [weak self] in
+                guard let self else { return }
+                monitor.stop()
+                if !isPaused {
+                    startMonitoring()
+                }
+            }
+        )
+        permissionServiceStorage = service
+        return service
+    }
+
     @objc func showSetupWizard() {
         if setupWizardController == nil {
             setupWizardController = SetupWizardController(
@@ -9,27 +40,7 @@ extension AppDelegate {
                 onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
                 onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
                 currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
-                hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
-                isInputMonitoringActive: { [weak self] in
-                    guard let self else { return false }
-                    // Pausing stops the tap on purpose; that is not a permission failure.
-                    return isPaused || monitor.isRunning
-                },
-                requestInputMonitoringPermission: { [weak self] in
-                    guard let self else { return false }
-                    let granted = monitor.requestPermission()
-                    if granted, !isPaused {
-                        startMonitoring()
-                    }
-                    return granted
-                },
-                restartInputMonitoring: { [weak self] in
-                    guard let self else { return }
-                    monitor.stop()
-                    if !isPaused {
-                        startMonitoring()
-                    }
-                },
+                permission: permissionService,
                 savedStep: settings.setupStep,
                 onStepChange: { [weak settings] step in settings?.setupStep = step },
                 onShowOnDesktop: { [weak self] in self?.revealPetOnDesktop() },

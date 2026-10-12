@@ -143,8 +143,12 @@ import WaddlyCore
         onPreviewImage: { _ in nil },
         onConfirmImage: { _ in false },
         currentPetImages: { PetImageSet() },
-        hasInputMonitoringPermission: { false },
-        requestInputMonitoringPermission: { false },
+        permission: PermissionService(
+            hasPermission: { false },
+            isReceivingKeys: { false },
+            requestAccess: { false },
+            restartTap: {}
+        ),
         onClose: {}
     )
 

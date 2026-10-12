@@ -206,6 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var pendingMenuError = false
     var pendingLocalizationRefresh = false
     var setupWizardController: SetupWizardController?
+    var permissionServiceStorage: PermissionService?
     var imageSettingsWindow: NSWindow?
     var imageSettingsItem: NSMenuItem?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]

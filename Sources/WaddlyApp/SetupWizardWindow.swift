@@ -24,6 +24,7 @@ extension SetupWizardController {
         previewPane.setContentHuggingPriority(.defaultLow, for: .horizontal)
         buildCompletionStage()
 
+        bindPermission()
         window?.contentView = contentView
         renderCurrentStep()
     }

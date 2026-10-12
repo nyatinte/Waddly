@@ -33,12 +33,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     /// Commits the reviewed set.
     let onConfirmImage: @MainActor (PetImageSet) async -> Bool
     let currentPetImages: @MainActor () -> PetImageSet
-    let hasInputMonitoringPermission: @MainActor () -> Bool
-    /// Granted is not the same as working: the event tap must actually be running.
-    let isInputMonitoringActive: @MainActor () -> Bool
-    let requestInputMonitoringPermission: @MainActor () -> Bool
-    /// Restarts the event tap without touching System Settings; used by "Try again".
-    let restartInputMonitoring: @MainActor () -> Void
+    /// Owns the permission rules, the waiting, and the System Settings hand-off.
+    let permission: PermissionService
+
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
     let onShowOnDesktop: @MainActor () -> Void
@@ -65,16 +62,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     var currentStep = Step.pet
     var isShowingChatGPTGuide = false
     var didRegisterPet = false
-    var didDeferMonitoring = false
     var didAttemptPermission = false
     var importedFileName: String?
     var didFailCopy = false
     var didAttemptCopy = false
     var isShowingTroubleshooting = false
-    /// The wizard itself becomes the drag guide, so it never has to hide or hand off to a panel.
-    var isShowingDropGuide = false
-    var isShowingManualSteps = false
-    var permissionTimer: Timer?
 
     init(
         localization: LocalizationController,
@@ -83,10 +75,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
         onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
-        hasInputMonitoringPermission: @escaping @MainActor () -> Bool,
-        isInputMonitoringActive: @escaping @MainActor () -> Bool = { false },
-        requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
-        restartInputMonitoring: @escaping @MainActor () -> Void = {},
+        permission: PermissionService,
         savedStep: Int? = nil,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
@@ -98,10 +87,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
-        self.hasInputMonitoringPermission = hasInputMonitoringPermission
-        self.isInputMonitoringActive = isInputMonitoringActive
-        self.requestInputMonitoringPermission = requestInputMonitoringPermission
-        self.restartInputMonitoring = restartInputMonitoring
+        self.permission = permission
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
@@ -137,21 +123,32 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     }
 
     var isMonitoringGranted: Bool {
-        hasInputMonitoringPermission()
+        permission.isGranted
     }
 
     /// True only when permission is granted and the keyboard is genuinely reaching Waddly.
     var isMonitoringReady: Bool {
-        isMonitoringGranted && isInputMonitoringActive()
+        permission.isReady
+    }
+
+    /// The wizard itself is the drag guide, so it never hands off to a floating panel.
+    var isShowingDropGuide: Bool {
+        permission.isGuiding
+    }
+
+    var isShowingManualSteps: Bool {
+        permission.isShowingManualSteps
     }
 
     func refreshPermissionStatus() {
+        permission.refresh()
         guard currentStep != .pet else { return }
         renderCurrentStep()
     }
 
     func windowWillClose(_ notification: Notification) {
-        stopPermissionPolling()
+        permission.stop()
+        window?.level = .normal
         previewPane.stopPlayback()
         completionPlayer.stop()
         onClose()
