@@ -62,7 +62,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     var currentStep = Step.pet
     var isShowingChatGPTGuide = false
     var didRegisterPet = false
-    var didAttemptPermission = false
     var importedFileName: String?
     var didFailCopy = false
     var didAttemptCopy = false

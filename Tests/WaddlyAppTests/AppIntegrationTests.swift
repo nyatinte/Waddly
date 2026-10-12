@@ -165,6 +165,22 @@ import WaddlyCore
         #expect(app.imageSettingsItem?.isEnabled == false)
     }
 
+    /// macOS asks for a restart before Input Monitoring works, so returning must land in setup.
+    @Test(arguments: LaunchCase.all)
+    func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        if scenario.hasImages {
+            try await app.persistPetImages(fixture.exampleImages())
+        }
+        app.settings.setupWizardSeen = scenario.seen
+        app.settings.setupStep = scenario.step
+
+        #expect(app.shouldOpenSetupOnLaunch == scenario.expectsSetup, "\(scenario.name)")
+        #expect(app.isSetupComplete == !scenario.expectsSetup, "\(scenario.name)")
+    }
+
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
         let fixture = try Fixture()
         defer { fixture.close() }
@@ -235,4 +251,27 @@ import WaddlyCore
             try? FileManager.default.removeItem(at: directory)
         }
     }
+}
+
+/// The launch cases, named so a failure says which state broke.
+struct LaunchCase: Sendable {
+    let name: String
+    let hasImages: Bool
+    let seen: Bool
+    let step: Int?
+    let expectsSetup: Bool
+
+    static let all: [LaunchCase] = [
+        LaunchCase(name: "nothing yet", hasImages: false, seen: false, step: nil, expectsSetup: true),
+        LaunchCase(name: "no images", hasImages: false, seen: true, step: nil, expectsSetup: true),
+        LaunchCase(name: "images, never finished", hasImages: true, seen: false, step: nil, expectsSetup: true),
+        LaunchCase(
+            name: "images, permission step saved",
+            hasImages: true,
+            seen: true,
+            step: SetupWizardController.Step.monitoring.rawValue,
+            expectsSetup: true
+        ),
+        LaunchCase(name: "finished", hasImages: true, seen: true, step: nil, expectsSetup: false)
+    ]
 }

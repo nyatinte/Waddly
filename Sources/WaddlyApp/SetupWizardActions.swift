@@ -58,7 +58,6 @@ extension SetupWizardController {
 
     /// First attempt: ask macOS, then turn the wizard into the drag guide.
     @objc func enableMonitoring() {
-        didAttemptPermission = true
         permission.request()
     }
 

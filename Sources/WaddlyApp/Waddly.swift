@@ -258,11 +258,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
                 await self.loadSavedPetImage()
                 guard !self.isShuttingDown else { return false }
                 self.imageSetDidChange(resetActivity: true)
-                if self.hasCompletePetImageSet, self.settings.setupWizardSeen {
+                if self.shouldOpenSetupOnLaunch {
+                    // Setup is unfinished, including the restart macOS asks for after granting
+                    // Input Monitoring: come back where the user left off.
+                    self.showSetupWizard()
+                } else {
                     self.startMonitoring()
                     self.animationController.start()
-                } else {
-                    self.showSetupWizard()
                 }
                 return true
             }
@@ -290,6 +292,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func bringPetToFront() {
         guard hasCompletePetImageSet else { return }
         panel.orderFrontRegardless()
+    }
+
+    /// Setup runs until it is finished, so an unfinished setup reopens on the next launch
+    /// instead of silently starting with a pet the user never confirmed.
+    var shouldOpenSetupOnLaunch: Bool {
+        !isSetupComplete
     }
 
     /// Setup counts as finished only when it ran to the end: the saved step is cleared there.

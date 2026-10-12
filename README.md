@@ -60,7 +60,15 @@ Update the app with `brew upgrade --cask waddly`. To try Waddly from source, fol
 
 The app is ad-hoc signed and is not notarized. The Homebrew Cask removes the quarantine attribute after each install and upgrade, so Gatekeeper protection is reduced for Homebrew installs. This does not replace Developer ID signing or notarization. Directly downloaded DMGs retain quarantine, so Gatekeeper may block first launch. Confirm that the app came from the official GitHub Release, then allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open cannot override this warning; see [Apple’s first-launch instructions](https://support.apple.com/en-us/102445). For a manually downloaded DMG, verify it with the `.sha256` file attached to the same release.
 
-On first launch, follow Setup Guide… to import your images. To make the pet react to keyboard input, allow Waddly under System Settings → Privacy & Security → Input Monitoring. The app launches without permission but does not respond to keys.
+On first launch, follow Setup Guide… to import your images.
+
+### Turning on keyboard reactions
+
+The second step asks for Input Monitoring. Waddly opens System Settings, parks itself beside it, and turns its own preview into a drag guide: drag the icon into the list, then switch Waddly on. If your macOS version does not accept the drop, use “Add it another way” for the manual steps.
+
+![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
+
+macOS applies the permission only after the app restarts. Waddly keeps the setup step it was on, so it returns to the same screen on the next launch instead of starting over. The app also runs without the permission; it simply does not respond to keys, and the menu bar says so.
 
 ## Privacy
 
