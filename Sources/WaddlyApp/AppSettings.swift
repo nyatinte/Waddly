@@ -9,6 +9,7 @@ final class AppSettings: @unchecked Sendable {
         static let panelOrigin = "panelOrigin"
         static let petImageFiles = "petImageFiles"
         static let setupWizardSeen = "setupWizardSeen"
+        static let setupStep = "setupStep"
         static let showInDock = "showInDock"
         static let showInMenuBar = "showInMenuBar"
         static let typingMotion = "typingMotion"
@@ -54,13 +55,13 @@ final class AppSettings: @unchecked Sendable {
     }
 
     var breathingEnabled: Bool {
-        get { defaults.object(forKey: Key.breathingEnabled) as? Bool ?? Default.breathingEnabled }
+        get { (defaults.object(forKey: Key.breathingEnabled) as? Bool) ?? Default.breathingEnabled }
         set { defaults.set(newValue, forKey: Key.breathingEnabled) }
     }
 
     var displaySize: CGFloat {
         get {
-            let value = defaults.object(forKey: Key.displaySize) as? Double ?? Double(Default.displaySize)
+            let value = (defaults.object(forKey: Key.displaySize) as? Double) ?? Default.displaySize
             return value == 0 ? Default.displaySize : CGFloat(value)
         }
         set { defaults.set(Double(newValue), forKey: Key.displaySize) }
@@ -78,22 +79,22 @@ final class AppSettings: @unchecked Sendable {
     }
 
     var petImageFiles: [String: [String]] {
-        get { defaults.dictionary(forKey: Key.petImageFiles) as? [String: [String]] ?? Default.petImageFiles }
+        get { (defaults.dictionary(forKey: Key.petImageFiles) as? [String: [String]]) ?? Default.petImageFiles }
         set { defaults.set(newValue, forKey: Key.petImageFiles) }
     }
 
     var setupWizardSeen: Bool {
-        get { defaults.object(forKey: Key.setupWizardSeen) as? Bool ?? Default.setupWizardSeen }
+        get { (defaults.object(forKey: Key.setupWizardSeen) as? Bool) ?? Default.setupWizardSeen }
         set { defaults.set(newValue, forKey: Key.setupWizardSeen) }
     }
 
     var showInDock: Bool {
-        get { defaults.object(forKey: Key.showInDock) as? Bool ?? Default.showInDock }
+        get { (defaults.object(forKey: Key.showInDock) as? Bool) ?? Default.showInDock }
         set { defaults.set(newValue, forKey: Key.showInDock) }
     }
 
     var showInMenuBar: Bool {
-        get { defaults.object(forKey: Key.showInMenuBar) as? Bool ?? Default.showInMenuBar }
+        get { (defaults.object(forKey: Key.showInMenuBar) as? Bool) ?? Default.showInMenuBar }
         set { defaults.set(newValue, forKey: Key.showInMenuBar) }
     }
 
@@ -113,5 +114,18 @@ final class AppSettings: @unchecked Sendable {
 
     func removeSetupWizardSeen() {
         defaults.removeObject(forKey: Key.setupWizardSeen)
+    }
+
+    /// Setup resumes here after a restart, which macOS requires once Input Monitoring is granted.
+    /// `nil` means "no setup in progress".
+    var setupStep: Int? {
+        get { defaults.object(forKey: Key.setupStep) as? Int }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: Key.setupStep)
+            } else {
+                defaults.removeObject(forKey: Key.setupStep)
+            }
+        }
     }
 }
