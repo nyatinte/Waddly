@@ -146,6 +146,43 @@ import WaddlyCore
         #expect(try app.validateMenuItem(editorItem(of: app)))
     }
 
+    /// Re-showing an already open guide must not recenter it: the app's own move would look like a
+    /// user drag to `GuideFollowing` and stop the guide from following System Settings (#79).
+    @Test func reShowingAnOpenGuideKeepsItFollowing() async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        app.settings.setupWizardSeen = true
+        app.settings.setupStep = SetupWizardController.Step.monitoring.rawValue
+        app.showSetupWizard()
+        let wizard = try #require(app.setupWizardController)
+        // The manual fallback is the same guiding phase without opening System Settings in tests.
+        app.permissionService.toggleManualSteps()
+        #expect(wizard.isShowingGuide)
+
+        let parked = NSPoint(x: 120, y: 80)
+        wizard.recordProgrammaticGuideOrigin(parked)
+        wizard.window?.setFrameOrigin(parked)
+        #expect(wizard.isFollowingSystemSettings)
+
+        app.showSetupWizard()
+        wizard.windowDidMove(Notification(name: NSWindow.didMoveNotification))
+        #expect(wizard.isFollowingSystemSettings)
+        #expect(wizard.window?.frame.origin == parked)
+
+        // Showing the retained guide again is app-owned movement, not a drag.
+        wizard.window?.orderOut(nil)
+        app.showSetupWizard()
+        wizard.windowDidMove(Notification(name: NSWindow.didMoveNotification))
+        #expect(wizard.isFollowingSystemSettings)
+
+        // A real drag still stops the guide from following.
+        wizard.window?.setFrameOrigin(NSPoint(x: 300, y: 220))
+        wizard.windowDidMove(Notification(name: NSWindow.didMoveNotification))
+        #expect(!wizard.isFollowingSystemSettings)
+    }
+
     /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
     @Test func dockReopenResumesSetupWhenItWasLeftUnfinished() async throws {
         let fixture = try Fixture()
@@ -165,7 +202,8 @@ import WaddlyCore
         #expect(try !app.validateMenuItem(editorItem(of: app)))
     }
 
-    /// macOS asks for a restart before Input Monitoring works, so returning must land in setup.
+    /// Setup opens on launch only while it is unfinished: a configured user with a leftover step
+    /// (for example, after closing the guide early) must not get setup back on the next launch.
     @Test(arguments: LaunchCase.all)
     func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
         let fixture = try Fixture()
@@ -177,8 +215,8 @@ import WaddlyCore
         app.settings.setupWizardSeen = scenario.seen
         app.settings.setupStep = scenario.step
 
-        #expect(app.shouldOpenSetupOnLaunch == scenario.expectsSetup, "\(scenario.name)")
-        #expect(app.isSetupComplete == !scenario.expectsSetup, "\(scenario.name)")
+        #expect(app.shouldOpenSetupOnLaunch == scenario.expectsSetupOnLaunch, "\(scenario.name)")
+        #expect(app.isSetupComplete == scenario.isComplete, "\(scenario.name)")
     }
 
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
@@ -193,27 +231,6 @@ import WaddlyCore
         #expect(app.setupWizardController === wizard)
         #expect(wizard.window?.isVisible == true)
         #expect(app.imageSettingsWindow == nil)
-    }
-
-    private func waitForSheet(_ app: AppDelegate) async throws -> NSWindow {
-        for _ in 0 ..< 200 {
-            if let sheet = app.setupWizardController?.window?.attachedSheet {
-                return sheet
-            }
-            try await Task.sleep(for: .milliseconds(10))
-        }
-        throw CocoaError(.userCancelled)
-    }
-
-    /// Validation is what the menu actually asks, so the tests ask it the same way.
-    private func editorItem(of app: AppDelegate) throws -> NSMenuItem {
-        try #require(menuItems(app.statusMenu).first {
-            $0.action == #selector(AppDelegate.showImageSettings)
-        })
-    }
-
-    private func menuItems(_ menu: NSMenu) -> [NSMenuItem] {
-        menu.items.flatMap { item in [item] + (item.submenu.map(menuItems) ?? []) }
     }
 
     @MainActor private final class Fixture {
@@ -266,19 +283,72 @@ struct LaunchCase: Sendable {
     let hasImages: Bool
     let seen: Bool
     let step: Int?
-    let expectsSetup: Bool
+    let expectsSetupOnLaunch: Bool
+    let isComplete: Bool
 
     static let all: [LaunchCase] = [
-        LaunchCase(name: "nothing yet", hasImages: false, seen: false, step: nil, expectsSetup: true),
-        LaunchCase(name: "no images", hasImages: false, seen: true, step: nil, expectsSetup: true),
-        LaunchCase(name: "images, never finished", hasImages: true, seen: false, step: nil, expectsSetup: true),
         LaunchCase(
-            name: "images, permission step saved",
+            name: "nothing yet",
+            hasImages: false,
+            seen: false,
+            step: nil,
+            expectsSetupOnLaunch: true,
+            isComplete: false
+        ),
+        LaunchCase(
+            name: "no images",
+            hasImages: false,
+            seen: true,
+            step: nil,
+            expectsSetupOnLaunch: true,
+            isComplete: false
+        ),
+        LaunchCase(
+            name: "images, never finished",
+            hasImages: true,
+            seen: false,
+            step: nil,
+            expectsSetupOnLaunch: true,
+            isComplete: false
+        ),
+        LaunchCase(
+            name: "images, closed the guide early",
             hasImages: true,
             seen: true,
             step: SetupWizardController.Step.monitoring.rawValue,
-            expectsSetup: true
+            expectsSetupOnLaunch: false,
+            isComplete: false
         ),
-        LaunchCase(name: "finished", hasImages: true, seen: true, step: nil, expectsSetup: false)
+        LaunchCase(
+            name: "finished",
+            hasImages: true,
+            seen: true,
+            step: nil,
+            expectsSetupOnLaunch: false,
+            isComplete: true
+        )
     ]
+}
+
+private extension AppIntegrationTests {
+    func waitForSheet(_ app: AppDelegate) async throws -> NSWindow {
+        for _ in 0 ..< 200 {
+            if let sheet = app.setupWizardController?.window?.attachedSheet {
+                return sheet
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        throw CocoaError(.userCancelled)
+    }
+
+    /// Validation is what the menu actually asks, so the tests ask it the same way.
+    func editorItem(of app: AppDelegate) throws -> NSMenuItem {
+        try #require(menuItems(app.statusMenu).first {
+            $0.action == #selector(AppDelegate.showImageSettings)
+        })
+    }
+
+    func menuItems(_ menu: NSMenu) -> [NSMenuItem] {
+        menu.items.flatMap { item in [item] + (item.submenu.map(menuItems) ?? []) }
+    }
 }

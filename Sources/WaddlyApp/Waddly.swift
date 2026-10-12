@@ -294,14 +294,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         panel.orderFrontRegardless()
     }
 
-    /// Setup runs until it is finished, so an unfinished setup reopens on the next launch
-    /// instead of silently starting with a pet the user never confirmed.
+    /// Setup opens on launch only while it is genuinely unfinished: no registered pet, or the user
+    /// has never closed the wizard. A leftover `setupStep` from closing the guide early must not
+    /// reopen setup for a user who already has a complete pet.
     var shouldOpenSetupOnLaunch: Bool {
-        !isSetupComplete
+        Self.opensSetupOnLaunch(
+            hasCompleteImageSet: hasCompletePetImageSet,
+            setupWizardSeen: settings.setupWizardSeen
+        )
+    }
+
+    static func opensSetupOnLaunch(hasCompleteImageSet: Bool, setupWizardSeen: Bool) -> Bool {
+        !(hasCompleteImageSet && setupWizardSeen)
     }
 
     /// Setup counts as finished only when it ran to the end: the saved step is cleared there.
-    /// Closing the wizard part-way keeps the step, so the next entry resumes it.
+    /// Closing the wizard part-way keeps the step, so a deliberate Dock reopen resumes it.
     var isSetupComplete: Bool {
         hasCompletePetImageSet && settings.setupWizardSeen && settings.setupStep == nil
     }

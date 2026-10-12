@@ -30,10 +30,26 @@ enum PermissionGuidePlacement {
         let fitsAndClear = candidates.first {
             fits($0, size: windowSize, into: visible) && !overlaps($0, size: windowSize, relevantOwn)
         }
-        let chosen = fitsAndClear
-            ?? candidates.first { !overlaps($0, size: windowSize, relevantOwn) }
-            ?? below
-        return clamped(chosen, size: windowSize, into: visible)
+        if let fitsAndClear {
+            return fitsAndClear
+        }
+
+        // Nothing fit cleanly. Clamp first, then prefer the placement that hides the least of System
+        // Settings so its app list stays reachable, while still avoiding Waddly's own windows.
+        let clampedCandidates = candidates.map { clamped($0, size: windowSize, into: visible) }
+        let clearOfOwn = clampedCandidates.filter { !overlaps($0, size: windowSize, relevantOwn) }
+        let pool = clearOfOwn.isEmpty ? clampedCandidates : clearOfOwn
+        let leastCovering = pool.min { first, second in
+            let firstCoverage = overlapArea(first, size: windowSize, with: settings)
+            let secondCoverage = overlapArea(second, size: windowSize, with: settings)
+            return firstCoverage < secondCoverage
+        }
+        return leastCovering ?? clamped(below, size: windowSize, into: visible)
+    }
+
+    static func overlapArea(_ origin: NSPoint, size: NSSize, with rect: CGRect) -> CGFloat {
+        let intersection = NSRect(origin: origin, size: size).intersection(rect)
+        return intersection.isNull ? 0 : intersection.width * intersection.height
     }
 
     static func fits(_ origin: NSPoint, size: NSSize, into visible: NSRect) -> Bool {
@@ -93,5 +109,35 @@ enum PermissionGuidePlacement {
         let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
         guard let url else { return }
         NSWorkspace.shared.open(url)
+    }
+}
+
+/// Tracks whether the guide still follows System Settings. A user move stops the following so the
+/// window can be repositioned freely; programmatic moves are recorded so they are not mistaken for
+/// user moves.
+struct GuideFollowing {
+    private(set) var isActive = true
+    private var lastProgrammaticOrigin: NSPoint?
+
+    mutating func begin() {
+        isActive = true
+        lastProgrammaticOrigin = nil
+    }
+
+    mutating func recordProgrammaticMove(to origin: NSPoint) {
+        lastProgrammaticOrigin = origin
+    }
+
+    /// A move that does not match the last programmatic origin is the user's. Before the app has
+    /// moved the window once, any move is the user's.
+    mutating func recordMove(to origin: NSPoint) {
+        guard isActive else { return }
+        if let last = lastProgrammaticOrigin {
+            let matchesRecorded = abs(last.x - origin.x) <= 1 && abs(last.y - origin.y) <= 1
+            if matchesRecorded {
+                return
+            }
+        }
+        isActive = false
     }
 }

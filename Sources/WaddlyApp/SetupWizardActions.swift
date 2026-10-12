@@ -82,6 +82,7 @@ extension SetupWizardController {
     func bindPermission() {
         permission.onUpdate = { [weak self] in
             guard let self else { return }
+            refreshGuideFollowing()
             applyGuideWindowLevel()
             renderCurrentStep()
             if !isShowingGuide {
@@ -102,7 +103,8 @@ extension SetupWizardController {
 
     /// Called by the service's ticks, and once when the guide opens.
     func parkBesideSystemSettings() {
-        guard isShowingGuide,
+        guard isFollowingSystemSettings,
+              isShowingGuide,
               let window,
               let settings = PermissionGuidePlacement.systemSettingsWindowFrame(),
               let visible = (NSScreen.screens.first { $0.frame.intersects(settings) } ?? NSScreen.main)?
@@ -117,7 +119,9 @@ extension SetupWizardController {
             visible: visible,
             ownWindows: ownWindows
         )
-        window.setFrameOrigin(origin)
+        moveWindowProgrammatically {
+            window.setFrameOrigin(origin)
+        }
         window.orderFrontRegardless()
     }
 
