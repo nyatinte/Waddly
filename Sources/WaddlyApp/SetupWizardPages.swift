@@ -165,11 +165,13 @@ extension SetupWizardController {
         return page
     }
 
-    /// Not granted yet. After the first attempt the wizard itself becomes the drag guide.
+    /// Not granted yet. After the first attempt the wizard itself becomes the guide: the drag route,
+    /// or the manual steps when the drag does not work.
     private func makeMonitoringRequestPage() -> NSView {
-        let isGuide = isShowingDropGuide
+        let isGuide = isShowingGuide
+        let isManual = isShowingManualSteps
         // The manual card explains itself, so the guide body is only shown for the drag route.
-        let showsBody = !isGuide || !isShowingManualSteps
+        let showsBody = !isGuide || !isManual
         let body = makeBody(isGuide ? .setupDropGuideBody : .setupMonitoringBody)
         var views: [NSView] = [makeTitle(.setupMonitoringTitle)]
         var fullWidth: [NSView] = []
@@ -190,7 +192,7 @@ extension SetupWizardController {
         }
         views.append(makeStatus(.setupMonitoringStatusOff, isPositive: false))
 
-        if isGuide, isShowingManualSteps {
+        if isManual {
             let manual = makeManualCard()
             views.append(manual)
             fullWidth.append(manual)

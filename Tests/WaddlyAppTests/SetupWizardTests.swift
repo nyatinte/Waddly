@@ -100,7 +100,7 @@ typealias Fixture = SetupWizardFixture
         try Fixture.button("toggleTroubleshooting", in: content).performClick(nil)
         #expect(wizard.isShowingTroubleshooting)
         // The regression: this used to hide the wizard and open a floating panel, losing the window.
-        #expect(!wizard.isShowingDropGuide)
+        #expect(!wizard.isShowingGuide)
         let actions = Fixture.descendants(of: content).compactMap { $0 as? NSButton }
             .filter { !$0.isHidden }
             .compactMap(\.action)
@@ -234,13 +234,42 @@ typealias Fixture = SetupWizardFixture
         try Fixture.button("goNext", in: content).performClick(nil)
 
         // The guide lives inside the wizard, so the window never disappears or hands off.
-        #expect(!wizard.isShowingDropGuide)
+        #expect(!wizard.isShowingGuide)
         #expect(!Fixture.descendants(of: content).contains { $0 is DraggableAppIconView })
         try Fixture.button("enableMonitoring", in: content).performClick(nil)
-        #expect(wizard.isShowingDropGuide)
+        #expect(wizard.isShowingGuide)
         #expect(Fixture.descendants(of: content).contains { $0 is DraggableAppIconView })
         let pane = try #require(Fixture.descendants(of: content).compactMap { $0 as? SetupPreviewPane }.first)
         #expect(pane.isShowingGuide)
+    }
+
+    /// The alternative route is a real page: the drag guide offers it, and following it has to show
+    /// the manual steps rather than loop back to the button that opened the guide.
+    @Test func theManualFallbackShowsTheStepsInsteadOfTheEnableButton() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(state: state, requestPermission: { false })
+        defer { wizard.close() }
+        let content = try #require(wizard.window?.contentView)
+        try Fixture.button("goNext", in: content).performClick(nil)
+        try Fixture.button("enableMonitoring", in: content).performClick(nil)
+
+        try Fixture.button("toggleManualSteps", in: content).performClick(nil)
+
+        #expect(wizard.isShowingManualSteps)
+        #expect(wizard.isShowingGuide)
+        // The manual steps and their way out to Finder are on screen, and the primary action that
+        // started the guide is gone.
+        #expect(try !Fixture.button("revealInFinder", in: content).isHidden)
+        let enableButtons = Fixture.descendants(of: content).compactMap { $0 as? NSButton }
+            .filter { $0.action == NSSelectorFromString("enableMonitoring") && !$0.isHidden }
+        #expect(enableButtons.isEmpty)
+
+        // And the link back actually returns to the drag guide.
+        try Fixture.button("toggleManualSteps", in: content).performClick(nil)
+        #expect(wizard.isShowingGuide)
+        #expect(!wizard.isShowingManualSteps)
+        #expect(Fixture.descendants(of: content).contains { $0 is DraggableAppIconView })
     }
 
     @Test func monitoringStepKeepsNextOutOfThePrimaryFlowUntilGranted() throws {

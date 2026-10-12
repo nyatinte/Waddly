@@ -84,7 +84,7 @@ extension SetupWizardController {
             guard let self else { return }
             applyGuideWindowLevel()
             renderCurrentStep()
-            if !isShowingDropGuide {
+            if !isShowingGuide {
                 window?.level = .normal
                 window?.center()
             }
@@ -97,12 +97,12 @@ extension SetupWizardController {
     /// The guide parks next to System Settings. Waddly is not the active app there, and an inactive
     /// app's window cannot sit above it, so guiding is the one time the window floats.
     func applyGuideWindowLevel() {
-        window?.level = isShowingDropGuide ? .floating : .normal
+        window?.level = isShowingGuide ? .floating : .normal
     }
 
     /// Called by the service's ticks, and once when the guide opens.
     func parkBesideSystemSettings() {
-        guard isShowingDropGuide,
+        guard isShowingGuide,
               let window,
               let settings = PermissionGuidePlacement.systemSettingsWindowFrame(),
               let visible = (NSScreen.screens.first { $0.frame.intersects(settings) } ?? NSScreen.main)?

@@ -131,7 +131,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     }
 
     /// The wizard itself is the drag guide, so it never hands off to a floating panel.
-    var isShowingDropGuide: Bool {
+    var isShowingGuide: Bool {
         permission.isGuiding
     }
 
@@ -250,7 +250,7 @@ extension SetupWizardController {
             updateCompletionPreview()
             return
         }
-        if isShowingDropGuide {
+        if isShowingGuide {
             previewPane.showDropGuide()
             return
         }

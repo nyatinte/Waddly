@@ -63,10 +63,13 @@ final class PermissionService {
         isGranted && isReceivingKeys()
     }
 
+    /// The guide is on screen and waiting for the grant. Both presentations count: the drag route
+    /// and the manual steps are the same wait, and only the rendering differs.
     var isGuiding: Bool {
-        phase == .guiding
+        phase == .guiding || phase == .manual
     }
 
+    /// The guide's fallback presentation: add Waddly to the list by hand.
     var isShowingManualSteps: Bool {
         phase == .manual
     }
@@ -122,13 +125,13 @@ final class PermissionService {
 
     /// Re-read the permission state, finishing the guide if the grant arrived.
     func refresh() {
-        guard isGranted, phase == .guiding || phase == .manual else { return }
+        guard isGranted, isGuiding else { return }
         finishGuiding()
     }
 
     /// One polling step. Internal so tests can drive it without waiting on a timer.
     func tick() {
-        guard phase == .guiding else { return }
+        guard isGuiding else { return }
         guard !isGranted else {
             finishGuiding()
             return

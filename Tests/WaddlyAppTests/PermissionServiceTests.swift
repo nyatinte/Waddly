@@ -94,11 +94,32 @@ import Testing
         service.toggleManualSteps()
         #expect(service.phase == .manual)
         #expect(service.isShowingManualSteps)
+        // The manual steps are still the guide: the window keeps floating and keeps watching.
+        #expect(service.isGuiding)
 
         service.toggleManualSteps()
         #expect(service.phase == .guiding)
         // Going back to the drag route reopens the pane it points at.
         #expect(fake.settingsOpened == 2)
+    }
+
+    /// The manual steps are instructions to follow elsewhere, so the guide has to keep watching:
+    /// the user adds the app by hand and macOS grants it while this page is still on screen.
+    @Test func theManualStepsKeepWaitingForTheGrant() {
+        let fake = Fake()
+        let service = fake.makeService()
+        service.request()
+        service.toggleManualSteps()
+
+        var ticks = 0
+        service.onTick = { ticks += 1 }
+        service.tick()
+        #expect(ticks == 1)
+
+        fake.granted = true
+        service.tick()
+        #expect(service.phase == .idle)
+        #expect(!service.isGuiding)
     }
 
     @Test func deferringIsRemembered() {
