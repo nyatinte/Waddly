@@ -343,6 +343,7 @@ extension AppDelegate {
             petView.toolTip = localizedString(.petDropTooltip)
             setupWizardController?.refreshLocalization()
             refreshImageSettingsLocalization()
+            shareWindowController?.refreshLocalization()
         }
         guard pendingMenuError else { return }
         pendingMenuError = false

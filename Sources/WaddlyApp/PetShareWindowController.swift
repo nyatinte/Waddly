@@ -62,6 +62,11 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
+    func refreshLocalization() {
+        window?.title = localization.string(for: .shareTitle)
+        shareView.refreshLocalization()
+    }
+
     func prepareAssets() {
         guard generationTask == nil else { return }
         generationTask = Task { [weak self, images] in

@@ -72,34 +72,35 @@ public enum PetShareExporter {
     }
 
     public static func spriteSheetPNG(from images: PetImageSet) -> Data? {
+        guard images.isComplete else { return nil }
         let frames = frameOrder.compactMap { category, index -> CGImage? in
-            guard images[category].indices.contains(index) else { return nil }
-            return images[category][index].cgImage(forProposedRect: nil, context: nil, hints: nil)
+            let categoryImages = images[category]
+            guard let image = categoryImages[min(index, categoryImages.count - 1)]
+                .cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+            return image
         }
         guard frames.count == frameOrder.count,
-              let first = frames.first,
-              frames.allSatisfy({ $0.width == first.width && $0.height == first.height }),
+              let cellSize = frames.map({ max($0.width, $0.height) }).max(),
               let context = CGContext(
                   data: nil,
-                  width: first.width * 3,
-                  height: first.height * 3,
+                  width: cellSize * 3,
+                  height: cellSize * 3,
                   bitsPerComponent: 8,
                   bytesPerRow: 0,
                   space: CGColorSpaceCreateDeviceRGB(),
                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
               ) else { return nil }
+        context.clear(CGRect(x: 0, y: 0, width: cellSize * 3, height: cellSize * 3))
 
         for (index, frame) in frames.enumerated() {
-            context.setBlendMode(.copy)
-            context.draw(
-                frame,
-                in: CGRect(
-                    x: (index % 3) * first.width,
-                    y: (2 - index / 3) * first.height,
-                    width: first.width,
-                    height: first.height
-                )
+            let cell = CGRect(
+                x: (index % 3) * cellSize,
+                y: (2 - index / 3) * cellSize,
+                width: cellSize,
+                height: cellSize
             )
+            context.setBlendMode(.copy)
+            context.draw(frame, in: aspectFitRect(for: frame, inside: cell))
         }
         guard let sheet = context.makeImage() else { return nil }
         let data = NSMutableData()
@@ -121,14 +122,14 @@ public enum PetShareExporter {
             ShotDefinition(category: .sleep, index: 0, duration: 1.2),
             ShotDefinition(category: .sleep, index: 1, duration: 1.6)
         ]
+        guard images.isComplete else { throw PetShareExportError.incompleteImageSet }
         let shots = order.compactMap { shot -> ScheduledShot? in
-            guard images[shot.category].indices.contains(shot.index),
-                  let image = images[shot.category][shot.index]
-                  .cgImage(forProposedRect: nil, context: nil, hints: nil)
-            else { return nil }
+            let categoryImages = images[shot.category]
+            guard let image = categoryImages[min(shot.index, categoryImages.count - 1)]
+                .cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
             return ScheduledShot(image: image, duration: shot.duration)
         }
-        guard images.isComplete, shots.count == order.count else { throw PetShareExportError.incompleteImageSet }
+        guard shots.count == order.count else { throw PetShareExportError.incompleteImageSet }
         return shots
     }
 
@@ -203,8 +204,20 @@ public enum PetShareExporter {
         context.setFillColor(CGColor(red: 0.91, green: 0.93, blue: 0.95, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: movieSize, height: movieSize))
         context.interpolationQuality = .none
-        context.draw(frame, in: CGRect(x: 48, y: 48, width: movieSize - 96, height: movieSize - 96))
+        let contentRect = CGRect(x: 48, y: 48, width: movieSize - 96, height: movieSize - 96)
+        context.draw(frame, in: aspectFitRect(for: frame, inside: contentRect))
         return buffer
+    }
+
+    private static func aspectFitRect(for image: CGImage, inside rect: CGRect) -> CGRect {
+        let scale = min(rect.width / CGFloat(image.width), rect.height / CGFloat(image.height))
+        let size = CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
+        return CGRect(
+            x: rect.midX - size.width / 2,
+            y: rect.midY - size.height / 2,
+            width: size.width,
+            height: size.height
+        )
     }
 }
 

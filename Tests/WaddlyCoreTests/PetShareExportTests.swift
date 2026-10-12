@@ -58,6 +58,50 @@ import WaddlyCore
     }
 }
 
+@Test func shareExportsSupportReducedFrameCountsAndMixedDimensions() async throws {
+    let fixtureURL = try #require(
+        Bundle.module.url(
+            forResource: "nyatinte-bot-3x3",
+            withExtension: "png",
+            subdirectory: "Fixtures"
+        )
+    )
+    var images = try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
+    let context = try #require(CGContext(
+        data: nil,
+        width: 96,
+        height: 48,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ))
+    context.setFillColor(NSColor.systemBlue.cgColor)
+    context.fill(CGRect(x: 0, y: 0, width: 96, height: 48))
+    let nonSquareImage = try NSImage(
+        cgImage: #require(context.makeImage()),
+        size: NSSize(width: 96, height: 48)
+    )
+    images[.idle] = [images[.idle][0]]
+    images[.typing] = [nonSquareImage]
+    images[.sleep] = [images[.sleep][0]]
+
+    let spriteData = try #require(PetShareExporter.spriteSheetPNG(from: images))
+    let spriteImages = try #require(PetSpriteSheetImporter.frames(from: spriteData))
+    #expect(spriteImages.isComplete)
+    #expect(spriteImages[.idle].count == 2)
+    #expect(spriteImages[.typing].count == 4)
+    let idleRaster = try #require(spriteImages[.idle][0].cgImage(forProposedRect: nil, context: nil, hints: nil))
+    let typingRaster = try #require(spriteImages[.typing][0].cgImage(forProposedRect: nil, context: nil, hints: nil))
+    #expect(typingRaster.width == idleRaster.width)
+
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    try PetShareExporter.writeMovie(from: images, to: movieURL)
+    let duration = try await AVURLAsset(url: movieURL).load(.duration)
+    #expect(abs(CMTimeGetSeconds(duration) - 5) < 0.1)
+}
+
 private func rgbaSHA256(_ image: NSImage) throws -> String {
     let raster = try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
     let bytesPerRow = raster.width * 4

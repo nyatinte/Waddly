@@ -55,6 +55,25 @@ import Testing
     Issue.record("share dialog did not prepare both preview assets")
 }
 
+@Test @MainActor func openShareDialogRefreshesLabelsWhenLanguageChanges() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-dialog-localization.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let settings = AppSettings(defaults: defaults)
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let localization = LocalizationController(settings: settings, resources: resources)
+    localization.changeLanguage(.japanese)
+    let view = PetShareDialogView(localization: localization)
+    let copyButtons = SetupWizardFixture.descendants(of: view).compactMap { $0 as? NSButton }
+        .filter { $0.title == "コピー" }
+
+    #expect(copyButtons.count == 2)
+    localization.changeLanguage(.english)
+    view.refreshLocalization()
+    #expect(copyButtons.allSatisfy { $0.title == "Copy" })
+}
+
 @MainActor private func descendants(of view: NSView) -> [NSView] {
     [view] + view.subviews.flatMap(descendants(of:))
 }
