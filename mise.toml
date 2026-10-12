@@ -40,6 +40,14 @@ run = "./macos/build.sh"
 description = "Build and package the app as a DMG"
 run = "./macos/package.sh"
 
+[tasks."dev:install"]
+description = "Build and install the development app (own bundle id, own data)"
+run = "./macos/build-development.sh"
+
+[tasks."dev:reset"]
+description = "Clear the development app's images and preferences"
+run = "./macos/reset-development.sh"
+
 [tasks.check]
 description = "Run all local validation and build the Release app"
 run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run test", "mise run build"]

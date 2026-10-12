@@ -218,10 +218,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         settings.displaySize
     }
 
-    var petImagesDirectoryURL = FileManager.default.urls(
-        for: .applicationSupportDirectory, in: .userDomainMask
-    ).first?.appendingPathComponent("Waddly", isDirectory: true)
-        .appendingPathComponent("PetImages", isDirectory: true)
+    var petImagesDirectoryURL: URL? = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        .first
+        .map { PetImageLocation.directoryURL(for: Bundle.main.bundleIdentifier, applicationSupport: $0) }
 
     init(settings: AppSettings = .standard) {
         self.settings = settings
