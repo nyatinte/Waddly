@@ -90,4 +90,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution in
 
 ## License
 
-The software is released under the [MIT License](LICENSE), which is also included in the app bundle. Project artwork is not covered by that license: `assets/waddly-app-icon*.png`, `assets/waddly-menubar.svg`, `assets/waddly-demo.gif`, and `assets/examples/`. The icons and demo include penguin artwork. No reuse rights are granted for these assets; obtain permission from their respective copyright holders before reusing them. The adapted `.agent/skill/swift-development` is separately licensed under Apache-2.0; see its accompanying `LICENSE`.
+The software is released under the [MIT License](LICENSE), which is also included in the app bundle. Project artwork is not covered by that license: `assets/waddly-app-icon*.png`, `assets/waddly-menubar.svg`, `assets/waddly-demo.gif`, and `assets/examples/`. The icons and demo include penguin artwork. No reuse rights are granted for these assets; obtain permission from their respective copyright holders before reusing them.
