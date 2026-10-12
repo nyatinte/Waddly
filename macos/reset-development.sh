@@ -24,13 +24,14 @@ fi
 SUPPORT="$HOME/Library/Application Support"
 # Matches PetImageLocation: the whole suffix after the shipping identifier.
 STATE_DIR="$SUPPORT/Waddly-$SUFFIX"
-# The process is matched by the one part of the path that cannot vary: an app's command line starts
-# with its own executable. Comparing directories would miss a differently spelled or resolved
-# installation path, and missing a live app here means deleting its state underneath it.
+# The process is matched by the one part of the path that cannot vary: the executable an app runs is
+# `…/<name>.app/Contents/MacOS/Waddly`, wherever it was installed and however that path was spelled
+# when it was started. `comm` is that path without the arguments, so a process that merely mentions
+# the bundle in its arguments (a debugger, an editor, a shell command) is not mistaken for the app.
 running_pids() {
-  ps -Ao pid=,command= | while read -r pid command; do
-    case "$command" in
-      *"/$NAME.app/Contents/MacOS/"*) printf '%s\n' "$pid" ;;
+  ps -Ao pid=,comm= | while read -r pid comm; do
+    case "$comm" in
+      */"$NAME.app/Contents/MacOS/"*) printf '%s\n' "$pid" ;;
     esac
   done
 }
