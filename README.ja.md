@@ -11,6 +11,12 @@
   <img src="assets/waddly-demo.gif" alt="Waddlyがキー入力に反応して動く様子" width="900">
 </p>
 
+<p align="center">
+  <a href="https://github.com/nyatinte/Waddly/releases/latest">ダウンロード（GitHub Releases）</a> ·
+  <a href="#はじめる">Homebrewでインストール</a> ·
+  <a href="#キー入力への反応を有効にする">初回設定</a>
+</p>
+
 ## Waddlyでできること
 
 - キー入力に合わせてペットが動きます。入力した文字やキーコードは保存しません。

@@ -11,6 +11,12 @@
   <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
 </p>
 
+<p align="center">
+  <a href="https://github.com/nyatinte/Waddly/releases/latest">Download (GitHub Releases)</a> ·
+  <a href="#getting-started">Install with Homebrew</a> ·
+  <a href="README.ja.md#はじめる">日本語の手順</a>
+</p>
+
 ## What Waddly does
 
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
