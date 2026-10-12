@@ -54,6 +54,39 @@ extension AppDelegate {
         return true
     }
 
+    /// Reads a sheet for review only. Nothing is written until `confirmPetImage` is called,
+    /// so the wizard can show the nine cells before anything is committed.
+    func previewPetImage(from url: URL) async -> PetImageSet? {
+        let images = await Task.detached(priority: .userInitiated) {
+            autoreleasepool { () -> PetImageSet? in
+                guard let data = PetSpriteSheetImporter.readPNG(from: url) else { return nil }
+                return PetSpriteSheetImporter.frames(from: data)
+            }
+        }.value
+        guard !isShuttingDown else { return nil }
+        guard let images else {
+            await showPetImageImportError()
+            return nil
+        }
+        return images
+    }
+
+    /// Commits a set the user already reviewed.
+    func confirmPetImage(_ images: PetImageSet) async -> Bool {
+        await queueImageUpdate { await self.confirmPetImageInOrder(images) }
+    }
+
+    private func confirmPetImageInOrder(_ images: PetImageSet) async -> Bool {
+        do {
+            try await persistPetImages(images, resetActivity: true)
+        } catch {
+            await showImageSaveError(error)
+            return false
+        }
+        imageLoadFailed = false
+        return true
+    }
+
     func imageSetDidChange(resetActivity: Bool = false) {
         for category in PetImageCategory.allCases {
             imageRows[category]?.setImages(thumbnails(for: category))
@@ -89,66 +122,54 @@ extension AppDelegate {
         alert.messageText = localizedString(titleKey)
         alert.informativeText = localizedString(messageKey)
         alert.alertStyle = .warning
-        _ = await presentImageAlert(alert)
+        _ = await presentImageAlertWithDefaultParent(alert)
     }
 
     private func confirmPetImageImport(_ preview: NSImage, cellSize: Int) async -> Bool {
+        guard let parent = imageAlertParent() else { return false }
         let alert = NSAlert()
         alert.messageText = localizedString(.petPreviewTitle)
         alert.informativeText = localizedString(.petPreviewPrompt)
         alert.alertStyle = .informational
-
-        let previewSize: CGFloat = 240
-        let detailsHeight: CGFloat = 72
-        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: previewSize, height: previewSize + detailsHeight))
-        let imageView = NSImageView(frame: NSRect(x: 0, y: detailsHeight, width: previewSize, height: previewSize))
-        imageView.image = preview
-        imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.wantsLayer = true
-        imageView.layer?.borderColor = NSColor.separatorColor.cgColor
-        imageView.layer?.borderWidth = 1
-        imageView.setAccessibilityLabel(localizedString(.a11ySpritePreview))
-
-        let grid = SpriteSheetGridOverlay(frame: imageView.bounds)
-        grid.autoresizingMask = [.width, .height]
-        imageView.addSubview(grid)
-        accessory.addSubview(imageView)
-
-        let imageSize = cellSize * 3
-        let details = [
-            "\(localizedString(.petPreviewImageSize)) \(imageSize) × \(imageSize) px",
-            "\(localizedString(.petPreviewCellSize)) \(cellSize) × \(cellSize) px",
-            "\(localizedString(.petPreviewDisplaySize)) \(Int(displaySize)) px",
-            localizedString(.petPreviewPosition)
-        ].joined(separator: "\n")
-        let detailsLabel = NSTextField(wrappingLabelWithString: details)
-        detailsLabel.frame = NSRect(x: 0, y: 0, width: previewSize, height: detailsHeight)
-        accessory.addSubview(detailsLabel)
-
-        alert.accessoryView = accessory
+        alert.accessoryView = SpriteSheetPreviewAccessory(
+            preview: preview,
+            cellSize: cellSize,
+            displaySize: displaySize,
+            localization: localization,
+            prefersDarkBackground: parent.isUsingDarkAppearance
+        )
         alert.addButton(withTitle: localizedString(.petImportConfirm))
         alert.addButton(withTitle: localizedString(.commonCancel))
-        return await presentImageAlert(alert) == .alertFirstButtonReturn
+        return await presentImageAlert(alert, in: parent) == .alertFirstButtonReturn
     }
 
-    private func presentImageAlert(_ alert: NSAlert) async -> NSApplication.ModalResponse {
-        guard !isShuttingDown else { return .cancel }
-        let parent: NSWindow
+    private func imageAlertParent() -> NSWindow? {
+        guard !isShuttingDown else { return nil }
         let activeWindow = [imageSettingsWindow, setupWizardController?.window].compactMap(\.self)
             .first(where: \.isKeyWindow)
         if let window = activeWindow {
-            parent = window
-        } else if let window = imageSettingsWindow, window.isVisible {
-            parent = window
-        } else if let window = setupWizardController?.window, window.isVisible {
-            parent = window
-        } else if hasCompletePetImageSet {
-            parent = panel
-        } else {
-            showSetupWizard()
-            guard let window = setupWizardController?.window else { return .cancel }
-            parent = window
+            return window
         }
+        if let window = imageSettingsWindow, window.isVisible {
+            return window
+        }
+        if let window = setupWizardController?.window, window.isVisible {
+            return window
+        }
+        if hasCompletePetImageSet {
+            return panel
+        }
+        showSetupWizard()
+        return setupWizardController?.window
+    }
+
+    private func presentImageAlertWithDefaultParent(_ alert: NSAlert) async -> NSApplication.ModalResponse {
+        guard let parent = imageAlertParent() else { return .cancel }
+        return await presentImageAlert(alert, in: parent)
+    }
+
+    private func presentImageAlert(_ alert: NSAlert, in parent: NSWindow) async -> NSApplication.ModalResponse {
+        guard !isShuttingDown else { return .cancel }
         NSApp.activate(ignoringOtherApps: true)
         return await withCheckedContinuation { continuation in
             alert.beginSheetModal(for: parent) { response in

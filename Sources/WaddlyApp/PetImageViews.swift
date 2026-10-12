@@ -20,16 +20,25 @@ final class SpriteSheetGridOverlay: NSView {
 }
 
 @MainActor
-final class PetImageDropView: NSView {
+class PetImageDropView: NSView {
     var onDrop: (([URL]) -> Void)?
+
+    /// Border drawn while no drag is in progress. The wizard uses a borderless variant.
+    var idleBorderColor: NSColor = .separatorColor {
+        didSet { restoreDropAppearance() }
+    }
+
+    var idleBorderWidth: CGFloat = 1 {
+        didSet { restoreDropAppearance() }
+    }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         registerForDraggedTypes([.fileURL])
         wantsLayer = true
         layer?.cornerRadius = 8
-        layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.cgColor
+        layer?.borderWidth = idleBorderWidth
+        layer?.borderColor = idleBorderColor.cgColor
     }
 
     required init?(coder: NSCoder) {
@@ -56,8 +65,8 @@ final class PetImageDropView: NSView {
     }
 
     private func restoreDropAppearance() {
-        layer?.borderColor = NSColor.separatorColor.cgColor
-        layer?.borderWidth = 1
+        layer?.borderColor = idleBorderColor.cgColor
+        layer?.borderWidth = idleBorderWidth
     }
 
     private func fileURLs(from sender: NSDraggingInfo) -> [URL] {
@@ -83,7 +92,7 @@ private final class PetImageTileView: NSView {
         wantsLayer = true
         layer?.cornerRadius = 6
 
-        let imageView = NSImageView()
+        let imageView = PixelImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.image = image
         imageView.imageScaling = .scaleProportionallyUpOrDown

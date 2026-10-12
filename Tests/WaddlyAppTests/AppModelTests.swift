@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import Testing
 @testable import WaddlyApp
+import WaddlyCore
 
 @Test func petPhasesChangeAtTheirExistingThresholds() {
     #expect(PetPhase.after(0) == .typing)
@@ -111,6 +112,17 @@ import Testing
     return menu
 }
 
+@Test func localizationFilesUseLiteralCharactersInsteadOfUnicodeEscapes() throws {
+    let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
+    for language in ["en", "ja"] {
+        let url = root.appendingPathComponent("macos/\(language).lproj/Localizable.strings")
+        let text = try String(contentsOf: url, encoding: .utf8)
+        // Foundation reads these files as old-style plists, which do not accept lowercase \u escapes.
+        #expect(!text.contains("\\u"), "\(language).lproj contains a \\u escape")
+    }
+}
+
 @Test @MainActor func setupWizardPromptTracksTheInjectedLanguage() throws {
     _ = NSApplication.shared
     let suiteName = "WaddlyTests.prompt.\(UUID().uuidString)"
@@ -128,8 +140,9 @@ import Testing
     let wizard = SetupWizardController(
         localization: localization,
         promptResourcesURL: resourcesURL,
-        onImportImage: { _ in false },
-        hasCustomImage: { false },
+        onPreviewImage: { _ in nil },
+        onConfirmImage: { _ in false },
+        currentPetImages: { PetImageSet() },
         hasInputMonitoringPermission: { false },
         requestInputMonitoringPermission: { false },
         onClose: {}

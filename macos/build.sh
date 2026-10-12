@@ -32,6 +32,8 @@ cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
+# Demo sprite sheet shown while no pet is registered. It is never imported automatically.
+cp "$ROOT/assets/examples/nyatinte-bot-3x3.png" "$APP/Contents/Resources/demo-pet.png"
 # Remove the SVG tracing canvas and draw white fills before black details.
 sed 's/M 0 0 L 1254 0 L 1254 1254 L 0 1254 L 0 0 Z //' "$ROOT/assets/waddly-menubar.svg" \
   | awk '

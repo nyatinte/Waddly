@@ -15,9 +15,15 @@ final class PetWindow: NSPanel {
 }
 
 @MainActor
-final class DraggableImageView: NSImageView {
+final class DraggableImageView: PixelImageView {
     var contextMenuProvider: (() -> NSMenu?)?
     var onFileDrop: ((URL) -> Void)?
+
+    override func draw(_ dirtyRect: NSRect) {
+        // Pixel art: never smooth the pet's outlines when it is scaled to the display size.
+        NSGraphicsContext.current?.imageInterpolation = .none
+        super.draw(dirtyRect)
+    }
 
     func acceptPNGFileDrops() {
         registerForDraggedTypes([.fileURL])
@@ -201,6 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var pendingLocalizationRefresh = false
     var setupWizardController: SetupWizardController?
     var imageSettingsWindow: NSWindow?
+    var imageSettingsItem: NSMenuItem?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
     var isPaused: Bool {
         animationController.isPaused
@@ -268,12 +275,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !hasCompletePetImageSet || setupWizardController?.window?.isVisible == true {
-            showSetupWizard()
+        // The Dock icon never opens a window on its own: setup comes first, and afterwards the
+        // animation editor is reached deliberately from the menu.
+        if isSetupComplete {
+            bringPetToFront()
         } else {
-            showImageSettings()
+            showSetupWizard()
         }
         return false
+    }
+
+    /// A Dock click after setup just puts the pet back in view.
+    func bringPetToFront() {
+        guard hasCompletePetImageSet else { return }
+        panel.orderFrontRegardless()
+    }
+
+    /// Setup counts as finished only when it ran to the end: the saved step is cleared there.
+    /// Closing the wizard part-way keeps the step, so the next entry resumes it.
+    var isSetupComplete: Bool {
+        hasCompletePetImageSet && settings.setupWizardSeen && settings.setupStep == nil
     }
 
     func applicationWillTerminate(_ notification: Notification) {

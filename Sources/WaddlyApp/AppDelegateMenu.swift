@@ -135,6 +135,7 @@ extension AppDelegate {
             keyEquivalent: ""
         )
         imageSettingsItem.target = self
+        self.imageSettingsItem = imageSettingsItem
         statusMenu.addItem(imageSettingsItem)
 
         let setupItem = NSMenuItem(
@@ -251,6 +252,8 @@ extension AppDelegate {
 
     private func updateMenuStatus() {
         pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
+        // The image editor is not something to offer during a first run.
+        imageSettingsItem?.isEnabled = isSetupComplete
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         let statusKey: LocalizationKey = isPaused
             ? .tooltipPaused
@@ -316,6 +319,11 @@ extension AppDelegate {
         } catch {
             pendingMenuError = true
         }
+        updateMenuStatus()
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        // Setup state changes while the app runs, so re-evaluate what the menu offers.
         updateMenuStatus()
     }
 

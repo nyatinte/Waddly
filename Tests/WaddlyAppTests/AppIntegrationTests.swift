@@ -121,11 +121,45 @@ import WaddlyCore
         let delegate: any NSApplicationDelegate = app
         let handled = delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: hasImages)
         #expect(handled == false)
-        if hasImages {
-            #expect(app.imageSettingsWindow?.isVisible == true)
-        } else {
-            #expect(app.setupWizardController?.window?.isVisible == true)
-        }
+        // Setup is not finished here, so the Dock icon must lead to setup in both cases.
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.setupWizardController?.window?.isVisible == true)
+    }
+
+    /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
+    @Test func dockReopenNeverOpensAnimationSettingsAfterSetup() async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        app.settings.setupWizardSeen = true
+        app.settings.setupStep = nil
+        app.settings.showInMenuBar = false
+
+        let delegate: any NSApplicationDelegate = app
+        #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.panel.isVisible == true)
+        // The menu stays the deliberate route to the editor once setup is finished.
+        #expect(app.imageSettingsItem?.isEnabled == true)
+    }
+
+    /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
+    @Test func dockReopenResumesSetupWhenItWasLeftUnfinished() async throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        app.settings.setupWizardSeen = true
+        app.settings.setupStep = SetupWizardController.Step.monitoring.rawValue
+        app.settings.showInMenuBar = false
+
+        let delegate: any NSApplicationDelegate = app
+        #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
+        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.setupWizardController?.window?.isVisible == true)
+        #expect(app.setupWizardController?.currentStep == .monitoring)
+        #expect(app.imageSettingsItem?.isEnabled == false)
     }
 
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {

@@ -1,60 +1,129 @@
 import AppKit
 import UniformTypeIdentifiers
+import WaddlyCore
 
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate {
+    /// Two setup steps, then a completion screen that hands the pet over to the desktop.
+    enum Step: Int, CaseIterable {
+        case pet
+        case monitoring
+        case completed
+
+        static let visibleSteps: [Step] = [.pet, .monitoring]
+
+        var titleKey: LocalizationKey {
+            switch self {
+            case .pet: .setupStepPet
+            case .monitoring, .completed: .setupStepMonitoring
+            }
+        }
+    }
+
     let localization: LocalizationController
     let promptResourcesURL: URL?
+    let demoPetURL: URL?
+
     var prompt: String {
         SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
     }
 
-    private let onImportImage: @MainActor (URL) async -> Bool
-    private let hasCustomImage: @MainActor () -> Bool
-    private let hasInputMonitoringPermission: @MainActor () -> Bool
-    private let requestInputMonitoringPermission: @MainActor () -> Bool
-    private let onClose: @MainActor () -> Void
-    private let progressLabel = NSTextField(labelWithString: "")
-    private let progressIndicator = NSProgressIndicator()
-    private let pageContainer = NSView()
-    private let copyPromptButton = NSButton(title: "", target: nil, action: nil)
-    private let imageStatusLabel = NSTextField(labelWithString: "")
-    private let permissionStatusLabel = NSTextField(labelWithString: "")
-    private var appDragCard: NSView?
-    private let requestPermissionButton = NSButton(title: "", target: nil, action: nil)
-    private let settingsButton = NSButton(title: "", target: nil, action: nil)
-    private let backButton = NSButton(title: "", target: nil, action: nil)
-    private let skipButton = NSButton(title: "", target: nil, action: nil)
-    private let nextButton = NSButton(title: "", target: nil, action: nil)
-    private var currentStep = 0
+    /// Reads a sheet without saving it, so the wizard can review it first.
+    let onPreviewImage: @MainActor (URL) async -> PetImageSet?
+    /// Commits the reviewed set.
+    let onConfirmImage: @MainActor (PetImageSet) async -> Bool
+    let currentPetImages: @MainActor () -> PetImageSet
+    let hasInputMonitoringPermission: @MainActor () -> Bool
+    /// Granted is not the same as working: the event tap must actually be running.
+    let isInputMonitoringActive: @MainActor () -> Bool
+    let requestInputMonitoringPermission: @MainActor () -> Bool
+    /// Restarts the event tap without touching System Settings; used by "Try again".
+    let restartInputMonitoring: @MainActor () -> Void
+    /// Records the step so a relaunch lands where the user left off. `nil` clears it.
+    let onStepChange: @MainActor (Int?) -> Void
+    let onShowOnDesktop: @MainActor () -> Void
+    let onClose: @MainActor () -> Void
+
+    let stepIndicator = SetupStepIndicator(frame: .zero)
+    let leftContainer = NSView()
+    let previewPane = SetupPreviewPane(frame: .zero)
+    let completionStage = NSView()
+    let completionPetView = PixelImageView()
+    lazy var completionPlayer = PetPreviewPlayer(imageView: completionPetView)
+    let backButton = NSButton(title: "", target: nil, action: nil)
+    let laterButton = NSButton(title: "", target: nil, action: nil)
+    let nextButton = NSButton(title: "", target: nil, action: nil)
+
+    var leftLeadingConstraint: NSLayoutConstraint?
+    var leftCenterConstraint: NSLayoutConstraint?
+    var leftWidthConstraint: NSLayoutConstraint?
+    var previewWidthConstraint: NSLayoutConstraint?
+    var previewHorizontalConstraints: [NSLayoutConstraint] = []
+    private var lastRenderedStep: Step?
+    var demoImages: PetImageSet?
+
+    var currentStep = Step.pet
+    var isShowingChatGPTGuide = false
+    var didRegisterPet = false
+    var didDeferMonitoring = false
+    var didAttemptPermission = false
+    var importedFileName: String?
+    var didFailCopy = false
+    var didAttemptCopy = false
+    var isShowingTroubleshooting = false
+    /// The wizard itself becomes the drag guide, so it never has to hide or hand off to a panel.
+    var isShowingDropGuide = false
+    var isShowingManualSteps = false
+    var permissionTimer: Timer?
 
     init(
         localization: LocalizationController,
         promptResourcesURL: URL? = Bundle.main.resourceURL,
-        onImportImage: @escaping @MainActor (URL) async -> Bool,
-        hasCustomImage: @escaping @MainActor () -> Bool,
+        demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
+        onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
+        onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
+        currentPetImages: @escaping @MainActor () -> PetImageSet,
         hasInputMonitoringPermission: @escaping @MainActor () -> Bool,
+        isInputMonitoringActive: @escaping @MainActor () -> Bool = { false },
         requestInputMonitoringPermission: @escaping @MainActor () -> Bool,
+        restartInputMonitoring: @escaping @MainActor () -> Void = {},
+        savedStep: Int? = nil,
+        onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
+        onShowOnDesktop: @escaping @MainActor () -> Void = {},
         onClose: @escaping @MainActor () -> Void
     ) {
         self.localization = localization
         self.promptResourcesURL = promptResourcesURL
-        self.onImportImage = onImportImage
-        self.hasCustomImage = hasCustomImage
+        self.demoPetURL = demoPetURL
+        self.onPreviewImage = onPreviewImage
+        self.onConfirmImage = onConfirmImage
+        self.currentPetImages = currentPetImages
         self.hasInputMonitoringPermission = hasInputMonitoringPermission
+        self.isInputMonitoringActive = isInputMonitoringActive
         self.requestInputMonitoringPermission = requestInputMonitoringPermission
+        self.restartInputMonitoring = restartInputMonitoring
+        self.onStepChange = onStepChange
+        self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
+        demoImages = SetupWizardController.loadDemoImages(from: demoPetURL)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 680, height: 480),
+            contentRect: NSRect(origin: .zero, size: SetupMetrics.contentSize),
+            // The layout is designed for one fixed size; letting it stretch only distorted the columns.
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         super.init(window: window)
+        if let savedStep, let restored = Step(rawValue: savedStep) {
+            currentStep = restored
+        }
         window.title = localizedString(.setupWindowTitle)
-        window.minSize = NSSize(width: 680, height: 480)
+        window.contentMinSize = SetupMetrics.contentSize
         window.isReleasedWhenClosed = false
+        // AppKit state restoration can hand back a frame that was resized in an earlier session,
+        // which would break the fixed layout every state depends on.
+        window.isRestorable = false
         window.delegate = self
         buildWindow()
     }
@@ -63,338 +132,166 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         nil
     }
 
+    var hasImage: Bool {
+        currentPetImages().isComplete
+    }
+
+    var isMonitoringGranted: Bool {
+        hasInputMonitoringPermission()
+    }
+
+    /// True only when permission is granted and the keyboard is genuinely reaching Waddly.
+    var isMonitoringReady: Bool {
+        isMonitoringGranted && isInputMonitoringActive()
+    }
+
     func refreshPermissionStatus() {
-        let isGranted = hasInputMonitoringPermission()
-        let statusKey: LocalizationKey = isGranted ? .setupPermissionGranted : .setupPermissionRequired
-        permissionStatusLabel.stringValue = localizedString(statusKey)
-        appDragCard?.isHidden = isGranted
-        requestPermissionButton.isHidden = isGranted
-        settingsButton.isHidden = isGranted
+        guard currentStep != .pet else { return }
+        renderCurrentStep()
     }
 
     func windowWillClose(_ notification: Notification) {
+        stopPermissionPolling()
+        previewPane.stopPlayback()
+        completionPlayer.stop()
         onClose()
     }
+
+    private static func loadDemoImages(from url: URL?) -> PetImageSet? {
+        guard let url, let data = try? Data(contentsOf: url),
+              let frames = PetSpriteSheetImporter.frames(from: data),
+              frames.isComplete
+        else { return nil }
+        return frames
+    }
 }
 
 extension SetupWizardController {
-    private func buildWindow() {
-        let contentView = NSView()
-        let navigation = makeNavigation()
-        let progressRow = makeProgressRow()
-        let stack = makeStack([progressRow, pageContainer, navigation])
-        stack.spacing = 20
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
-            progressRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            pageContainer.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            pageContainer.heightAnchor.constraint(equalToConstant: 340),
-            navigation.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            navigation.heightAnchor.constraint(equalToConstant: 32)
-        ])
-        window?.contentView = contentView
-        renderCurrentStep()
-    }
-
-    private func makeProgressRow() -> NSStackView {
-        progressLabel.font = .systemFont(ofSize: 12, weight: .medium)
-        progressLabel.textColor = .secondaryLabelColor
-        progressIndicator.style = .bar
-        progressIndicator.controlSize = .small
-        progressIndicator.isIndeterminate = false
-        progressIndicator.minValue = 0
-        progressIndicator.maxValue = 3
-        progressIndicator.widthAnchor.constraint(equalToConstant: 120).isActive = true
-
-        let row = NSStackView(views: [progressLabel, NSView(), progressIndicator])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 12
-        row.translatesAutoresizingMaskIntoConstraints = false
-        return row
-    }
-
-    private func makeNavigation() -> NSStackView {
-        backButton.target = self
-        backButton.action = #selector(goBack)
-        backButton.setAccessibilityLabel(localizedString(.setupBack))
-
-        skipButton.title = localizedString(.setupSkip)
-        skipButton.target = self
-        skipButton.action = #selector(skipPrompt)
-        let spacer = NSView()
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        nextButton.target = self
-        nextButton.action = #selector(goNext)
-
-        let navigation = makeStack([backButton, skipButton, spacer, nextButton])
-        navigation.orientation = .horizontal
-        navigation.alignment = .centerY
-        navigation.distribution = .fill
-        return navigation
-    }
-
     func renderCurrentStep() {
         let page: NSView = switch currentStep {
-        case 0: makePromptPage()
-        case 1: makeImagePage()
-        default: makePermissionPage()
+        case .pet: makePetPage()
+        case .monitoring: makeMonitoringPage()
+        case .completed: makeCompletedPage()
         }
+        leftContainer.subviews.forEach { $0.removeFromSuperview() }
         page.translatesAutoresizingMaskIntoConstraints = false
-        pageContainer.subviews.forEach { $0.removeFromSuperview() }
-        pageContainer.addSubview(page)
+        leftContainer.addSubview(page)
         NSLayoutConstraint.activate([
-            page.leadingAnchor.constraint(equalTo: pageContainer.leadingAnchor),
-            page.trailingAnchor.constraint(equalTo: pageContainer.trailingAnchor),
-            page.widthAnchor.constraint(equalTo: pageContainer.widthAnchor),
-            page.topAnchor.constraint(equalTo: pageContainer.topAnchor),
-            page.bottomAnchor.constraint(equalTo: pageContainer.bottomAnchor)
+            page.leadingAnchor.constraint(equalTo: leftContainer.leadingAnchor),
+            page.trailingAnchor.constraint(equalTo: leftContainer.trailingAnchor),
+            page.topAnchor.constraint(equalTo: leftContainer.topAnchor),
+            page.bottomAnchor.constraint(lessThanOrEqualTo: leftContainer.bottomAnchor)
         ])
-        progressLabel.stringValue = String(
-            format: localizedString(.setupProgress),
-            currentStep + 1
+        applyColumnLayout()
+        updateHeader()
+        updateFooter()
+        updatePreview()
+        fadeInPageIfStepChanged()
+    }
+
+    /// A short cross-fade between steps; skipped when the system asks for reduced motion.
+    private func fadeInPageIfStepChanged() {
+        let stepChanged = lastRenderedStep != currentStep
+        let isFirstRender = lastRenderedStep == nil
+        lastRenderedStep = currentStep
+        guard stepChanged, !isFirstRender, !MotionPreference.isReduced else { return }
+        leftContainer.alphaValue = 0
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.18
+            leftContainer.animator().alphaValue = 1
+        }
+    }
+
+    /// The completion screen is centred and compact instead of keeping the two-column split.
+    private func applyColumnLayout() {
+        let isCompact = currentStep == .completed
+        previewPane.isHidden = isCompact
+        leftLeadingConstraint?.isActive = !isCompact
+        leftCenterConstraint?.isActive = isCompact
+        // The pane keeps a fixed 330pt only while it is visible; the compact screen frees it.
+        previewHorizontalConstraints.forEach { $0.isActive = !isCompact }
+        leftWidthConstraint?.constant = isCompact ? 440 : SetupMetrics.leftColumnWidth
+    }
+
+    private func updateHeader() {
+        stepIndicator.isHidden = currentStep == .completed
+        guard currentStep != .completed else { return }
+        stepIndicator.configure(
+            titles: Step.visibleSteps.map { localizedString($0.titleKey) },
+            currentIndex: currentStep.rawValue
         )
-        progressIndicator.doubleValue = Double(currentStep + 1)
+    }
+
+    private func updateFooter() {
         backButton.title = localizedString(.setupBack)
-        backButton.setAccessibilityLabel(localizedString(.setupBack))
-        backButton.isEnabled = currentStep > 0
-        skipButton.isHidden = currentStep != 0
-        skipButton.title = localizedString(.setupSkip)
-        nextButton.title = localizedString(currentStep == 2 ? .setupFinish : .setupNext)
-        nextButton.isEnabled = currentStep != 1 || hasCustomImage()
-        window?.defaultButtonCell = nextButton.cell as? NSButtonCell
-        if currentStep == 2 {
-            refreshPermissionStatus()
+        backButton.isHidden = currentStep == .pet
+        switch currentStep {
+        case .pet:
+            nextButton.title = localizedString(.setupNext)
+            nextButton.isEnabled = hasImage
+            nextButton.isHidden = false
+        case .monitoring:
+            // While reactions are not working, the column owns the primary action and the footer only
+            // offers the escape, so Next never competes with "Enable Input Monitoring".
+            nextButton.isHidden = !isMonitoringReady
+            nextButton.title = localizedString(.setupNext)
+            nextButton.isEnabled = true
+            laterButton.isHidden = isMonitoringReady
+        case .completed:
+            nextButton.isHidden = false
+            nextButton.title = localizedString(.setupShowOnDesktop)
+            nextButton.isEnabled = true
+            laterButton.isHidden = true
         }
-    }
-}
-
-extension SetupWizardController {
-    private func makePromptPage() -> NSView {
-        let title = makeTitle(.setupPromptTitle)
-        let description = makeDescription(.setupPromptDescription)
-        let promptCard = makeInfoCard(
-            symbol: "doc.text",
-            titleKey: .setupPromptCardTitle,
-            detailKey: .setupPromptCardDescription
-        )
-        copyPromptButton.title = localizedString(.setupCopyPrompt)
-        copyPromptButton.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
-        copyPromptButton.imagePosition = .imageLeading
-        copyPromptButton.target = self
-        copyPromptButton.action = #selector(copyPrompt)
-        copyPromptButton.isEnabled = !prompt.isEmpty
-        let chatGPTButton = NSButton(
-            title: localizedString(.setupOpenChatGPT),
-            target: self,
-            action: #selector(openChatGPT)
-        )
-        chatGPTButton.image = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: nil)
-        chatGPTButton.imagePosition = .imageLeading
-        let actions = makeStack([copyPromptButton, chatGPTButton])
-        actions.orientation = .horizontal
-        actions.alignment = .centerY
-        return makeStack([title, description, promptCard, actions], fullWidth: [description, promptCard])
-    }
-
-    private func makeImagePage() -> NSView {
-        let title = makeTitle(.setupImageTitle)
-        let description = makeDescription(.setupImageDescription)
-        let dropZone = PetImageDropView(frame: .zero)
-        // The surrounding page owns imports; this nested card is only visual.
-        dropZone.unregisterDraggedTypes()
-        dropZone.translatesAutoresizingMaskIntoConstraints = false
-        dropZone.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-        dropZone.layer?.cornerRadius = 12
-        dropZone.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        let dropLabel = NSTextField(wrappingLabelWithString: localizedString(.setupImageDrop))
-        dropLabel.translatesAutoresizingMaskIntoConstraints = false
-        dropLabel.alignment = .center
-        dropLabel.setAccessibilityLabel(localizedString(.setupImageDrop))
-        let chooseButton = NSButton(
-            title: localizedString(.setupChooseImage),
-            target: self,
-            action: #selector(chooseImage)
-        )
-        chooseButton.translatesAutoresizingMaskIntoConstraints = false
-        dropZone.addSubview(dropLabel)
-        dropZone.addSubview(chooseButton)
-        NSLayoutConstraint.activate([
-            dropLabel.centerXAnchor.constraint(equalTo: dropZone.centerXAnchor),
-            dropLabel.centerYAnchor.constraint(equalTo: dropZone.centerYAnchor, constant: -22),
-            dropLabel.leadingAnchor.constraint(greaterThanOrEqualTo: dropZone.leadingAnchor, constant: 16),
-            dropLabel.trailingAnchor.constraint(lessThanOrEqualTo: dropZone.trailingAnchor, constant: -16),
-            chooseButton.centerXAnchor.constraint(equalTo: dropZone.centerXAnchor),
-            chooseButton.topAnchor.constraint(equalTo: dropLabel.bottomAnchor, constant: 14)
-        ])
-        imageStatusLabel.font = .systemFont(ofSize: 13)
-        imageStatusLabel.textColor = .secondaryLabelColor
-        imageStatusLabel.stringValue = localizedString(
-            hasCustomImage() ? .setupImageAlreadyConfigured : .setupImageRequired
-        )
-        let content = makeStack(
-            [title, description, dropZone, imageStatusLabel],
-            fullWidth: [description, dropZone, imageStatusLabel]
-        )
-        return makeImageDropTarget(content)
-    }
-
-    private func makeImageDropTarget(_ content: NSView) -> NSView {
-        let dropTarget = PetImageDropView(frame: .zero)
-        dropTarget.translatesAutoresizingMaskIntoConstraints = false
-        dropTarget.layer?.cornerRadius = 14
-        dropTarget.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
+        if currentStep == .pet {
+            laterButton.isHidden = true
         }
-        dropTarget.addSubview(content)
-        NSLayoutConstraint.activate([
-            content.leadingAnchor.constraint(equalTo: dropTarget.leadingAnchor, constant: 16),
-            content.trailingAnchor.constraint(equalTo: dropTarget.trailingAnchor, constant: -16),
-            content.topAnchor.constraint(equalTo: dropTarget.topAnchor, constant: 16),
-            content.bottomAnchor.constraint(lessThanOrEqualTo: dropTarget.bottomAnchor, constant: -16)
-        ])
-        return dropTarget
+        window?.defaultButtonCell = nextButton.isHidden ? nil : nextButton.cell as? NSButtonCell
     }
 
-    private func makePermissionPage() -> NSView {
-        let title = makeTitle(.setupPermissionTitle)
-        let description = makeDescription(.setupPermissionDescription)
-        let privacyNote = makeDescription(.setupPrivacyNote)
-        let appDragCard = makeDraggableAppCard()
-        self.appDragCard = appDragCard
-        requestPermissionButton.title = localizedString(.setupRequestPermission)
-        requestPermissionButton.target = self
-        requestPermissionButton.action = #selector(requestPermission)
-        settingsButton.title = localizedString(.setupOpenSettings)
-        settingsButton.target = self
-        settingsButton.action = #selector(openInputMonitoringSettings)
-        permissionStatusLabel.font = .systemFont(ofSize: 13)
-        permissionStatusLabel.textColor = .secondaryLabelColor
-        let actions = makeStack([requestPermissionButton, settingsButton])
-        actions.orientation = .horizontal
-        actions.alignment = .centerY
-        let page = makeStack(
-            [title, description, appDragCard, privacyNote, permissionStatusLabel, actions],
-            fullWidth: [description, appDragCard, privacyNote, permissionStatusLabel]
-        )
-        page.spacing = 8
-        return page
-    }
-}
-
-extension SetupWizardController {
-    private func importImage(from url: URL) {
-        Task { [weak self] in
-            guard let self else { return }
-            let imported = await onImportImage(url)
-            imageStatusLabel.stringValue = imported
-                ? String(format: localizedString(.setupImageImported), url.lastPathComponent)
-                : localizedString(.setupImageNotImported)
-            if currentStep == 1 {
-                nextButton.isEnabled = hasCustomImage()
-            }
-        }
-    }
-
-    @objc private func chooseImage() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.png]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        panel.prompt = localizedString(.setupChooseImage)
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        importImage(from: url)
-    }
-
-    @objc private func copyPrompt() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        guard pasteboard.setString(prompt, forType: .string) else {
-            NSSound.beep()
+    private func updatePreview() {
+        guard currentStep != .completed else {
+            updateCompletionPreview()
             return
         }
-        copyPromptButton.title = localizedString(.setupPromptCopiedShort)
-        copyPromptButton.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: nil)
-    }
-
-    @objc private func openChatGPT() {
-        guard let url = URL(string: "https://chatgpt.com/") else { return }
-        NSWorkspace.shared.open(url)
-    }
-
-    @objc private func requestPermission() {
-        _ = requestInputMonitoringPermission()
-        refreshPermissionStatus()
-    }
-
-    @objc private func openInputMonitoringSettings() {
-        let settingsURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
-        guard let url = URL(string: settingsURL) else {
+        if isShowingDropGuide {
+            previewPane.showDropGuide()
             return
         }
-        NSWorkspace.shared.open(url)
-    }
-
-    @objc private func goBack() {
-        guard currentStep > 0 else { return }
-        currentStep -= 1
-        renderCurrentStep()
-    }
-
-    @objc private func goNext() {
-        guard currentStep != 1 || hasCustomImage() else { return }
-        guard currentStep < 2 else {
-            window?.close()
-            return
-        }
-        currentStep += 1
-        renderCurrentStep()
-    }
-
-    @objc private func skipPrompt() {
-        guard currentStep == 0 else { return }
-        currentStep = 1
-        renderCurrentStep()
-    }
-}
-
-extension AppDelegate {
-    @objc func showSetupWizard() {
-        if setupWizardController == nil {
-            setupWizardController = SetupWizardController(
-                localization: localization,
-                onImportImage: { [weak self] in await self?.importPetImage(from: $0) ?? false },
-                hasCustomImage: { [weak self] in self?.hasCompletePetImageSet ?? false },
-                hasInputMonitoringPermission: { [weak self] in self?.monitor.permissionGranted ?? false },
-                requestInputMonitoringPermission: { [weak self] in
-                    guard let self else { return false }
-                    let granted = monitor.requestPermission()
-                    if granted, !isPaused {
-                        startMonitoring()
-                    }
-                    return granted
-                },
-                onClose: { [weak self] in
-                    guard let self else { return }
-                    if !hasCompletePetImageSet {
-                        settings.removeSetupWizardSeen()
-                    } else {
-                        settings.setupWizardSeen = true
-                    }
-                    if hasCompletePetImageSet, monitor.permissionGranted, !isPaused {
-                        startMonitoring()
-                    }
-                }
+        let images = currentPetImages()
+        if images.isComplete {
+            previewPane.showPet(images, caption: previewCaption, sleeping: shouldSleepInPreview)
+        } else if let demoImages {
+            previewPane.showDemo(demoImages, caption: localizedString(.setupDemoCaption))
+        } else {
+            previewPane.showPlaceholder(
+                symbol: "pawprint",
+                message: localizedString(.setupImageMissing),
+                caption: ""
             )
         }
-        NSApp.activate(ignoringOtherApps: true)
-        setupWizardController?.showWindow(nil)
-        setupWizardController?.window?.center()
+    }
+
+    private func updateCompletionPreview() {
+        let images = currentPetImages()
+        if images.isComplete {
+            completionPlayer.setImages(images)
+            completionPlayer.playLoop()
+        } else {
+            completionPlayer.stop()
+            completionPetView.image = images[.idle].first
+        }
+    }
+
+    /// While reactions are missing, the pet sleeps on the permission step.
+    private var shouldSleepInPreview: Bool {
+        currentStep == .monitoring && !isMonitoringReady
+    }
+
+    /// The completion screen states the outcome, so the stage carries no repeated caption.
+    private var previewCaption: String {
+        guard currentStep == .monitoring else { return "" }
+        // The ready page already says this in the column; only the failure state needs a caption.
+        return isMonitoringReady ? "" : localizedString(.setupPreviewMonitoringOff)
     }
 }

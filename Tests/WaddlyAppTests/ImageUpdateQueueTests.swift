@@ -11,7 +11,7 @@ import WaddlyCore
     let first = Task {
         await app.queueImageUpdate {
             events.append(1)
-            startSignal.yield(())
+            startSignal.yield()
             for await _ in release {
                 break
             }
@@ -29,7 +29,7 @@ import WaddlyCore
     }
     await Task.yield()
     #expect(events == [1])
-    releaseSignal.yield(())
+    releaseSignal.yield()
     #expect(await first.value)
     #expect(await second.value)
     #expect(events == [1, 2, 3])
@@ -62,7 +62,7 @@ import WaddlyCore
         await app.queueImageUpdate {
             do {
                 try await app.persistPetImages(updated, cleanup: { storage, old, new in
-                    startSignal.yield(())
+                    startSignal.yield()
                     for await _ in release {
                         break
                     }
@@ -83,7 +83,7 @@ import WaddlyCore
     #expect(thumbnails.first?.image === visibleB)
     let visibleBIndex = try #require(thumbnails.firstIndex { $0.image === visibleB })
     let removal = try #require(app.removeImage(at: visibleBIndex, from: .idle))
-    releaseSignal.yield(())
+    releaseSignal.yield()
     #expect(await first.value)
     await removal.value
     #expect(app.petImages[.idle].count == 1)

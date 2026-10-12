@@ -1,6 +1,17 @@
 import AppKit
 import WaddlyCore
 
+extension NSWindow {
+    var isUsingDarkAppearance: Bool {
+        switch effectiveAppearance.name {
+        case .darkAqua, .vibrantDark, .accessibilityHighContrastDarkAqua, .accessibilityHighContrastVibrantDark:
+            true
+        default:
+            false
+        }
+    }
+}
+
 extension AppDelegate {
     func buildPanel() {
         panel.level = .floating
@@ -42,6 +53,18 @@ extension AppDelegate {
     func saveOrigin() {
         let origin = panel.frame.origin
         settings.panelOrigin = [origin.x, origin.y]
+    }
+
+    /// Fades the pet in when setup hands it over, so the first appearance reads as an arrival.
+    func revealPetOnDesktop() {
+        guard hasCompletePetImageSet else { return }
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.4
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+        }
     }
 
     private func placeAtDefaultPosition() {
