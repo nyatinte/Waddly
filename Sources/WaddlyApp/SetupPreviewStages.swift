@@ -55,9 +55,11 @@ extension SetupPreviewPane {
         let header = NSTextField(labelWithString: localization.string(for: .setupDropGuideListTitle))
         header.font = .systemFont(ofSize: 11, weight: .semibold)
 
+        // Nameless rows on purpose: naming real apps inside our own UI would imply they are
+        // registered, and it has no business borrowing other products' names.
         let rows = NSStackView(views: [
-            makeMockRow(symbol: "bubble.left", name: "ChatGPT"),
-            makeMockRow(symbol: "gamecontroller", name: "Discord"),
+            makePlaceholderRow(nameWidth: 74),
+            makePlaceholderRow(nameWidth: 58),
             makeDropSlot(),
             makeMockTools()
         ])
@@ -83,34 +85,32 @@ extension SetupPreviewPane {
         return card
     }
 
-    private func makeMockRow(symbol: String, name: String) -> NSStackView {
-        let icon = NSImageView()
-        icon.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
-        icon.contentTintColor = .tertiaryLabelColor
-        icon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
-        icon.translatesAutoresizingMaskIntoConstraints = false
-
-        let label = NSTextField(labelWithString: name)
-        label.font = .systemFont(ofSize: 11)
-        label.textColor = .tertiaryLabelColor
-
-        let toggle = NSView()
-        toggle.translatesAutoresizingMaskIntoConstraints = false
-        toggle.wantsLayer = true
-        toggle.layer?.cornerRadius = 7
-        toggle.layer?.backgroundColor = NSColor.tertiaryLabelColor.withAlphaComponent(0.35).cgColor
-        NSLayoutConstraint.activate([
-            toggle.widthAnchor.constraint(equalToConstant: 24),
-            toggle.heightAnchor.constraint(equalToConstant: 14)
-        ])
+    /// A grey stand-in for one row of the settings list.
+    private func makePlaceholderRow(nameWidth: CGFloat) -> NSStackView {
+        let icon = makePlaceholder(width: 11, height: 11, radius: 3)
+        let name = makePlaceholder(width: nameWidth, height: 7, radius: 3.5)
+        let toggle = makePlaceholder(width: 24, height: 14, radius: 7)
 
         let spacer = NSView()
-        let row = NSStackView(views: [icon, label, spacer, toggle])
+        let row = NSStackView(views: [icon, name, spacer, toggle])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 6
         row.translatesAutoresizingMaskIntoConstraints = false
         return row
+    }
+
+    private func makePlaceholder(width: CGFloat, height: CGFloat, radius: CGFloat) -> NSView {
+        let view = NSView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.wantsLayer = true
+        view.layer?.cornerRadius = radius
+        view.layer?.backgroundColor = NSColor.tertiaryLabelColor.withAlphaComponent(0.3).cgColor
+        NSLayoutConstraint.activate([
+            view.widthAnchor.constraint(equalToConstant: width),
+            view.heightAnchor.constraint(equalToConstant: height)
+        ])
+        return view
     }
 
     private func makeDropSlot() -> DashedDropSlotView {

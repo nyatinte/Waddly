@@ -146,6 +146,12 @@
     font-size: 10px; color: #fff;
   }
   .row-name { flex: 1; }
+  /* Nameless rows: borrowing real product names would imply they are registered here. */
+  .row-icon.placeholder { background: var(--faint); opacity: .55; }
+  .row-name.placeholder {
+    flex: none; height: 8px; border-radius: 4px;
+    background: var(--faint); opacity: .55;
+  }
   .row-tools {
     display: flex; align-items: center; gap: 14px;
     padding: 6px 12px 8px;
@@ -292,18 +298,18 @@
 
     <div class="list">
       <div class="row">
-        <span class="row-icon" style="background:#10a37f">◍</span>
-        <span class="row-name">ChatGPT.app</span>
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:104px"></span>
         <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
       </div>
       <div class="row">
-        <span class="row-icon" style="background:#5865f2">◍</span>
-        <span class="row-name">Discord.app</span>
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:82px"></span>
         <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
       </div>
       <div class="row">
-        <span class="row-icon" style="background:#9aa0a6">⌨</span>
-        <span class="row-name">KeyCastr.app</span>
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:68px"></span>
         <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
       </div>
       <div class="row waddly-row">
