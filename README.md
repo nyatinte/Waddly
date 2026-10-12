@@ -72,7 +72,7 @@ On first launch, follow Setup Guide… to import your images.
 
 The second step asks for Input Monitoring. Waddly opens System Settings, parks itself beside it, and turns its own preview into a drag guide: drag the icon into the list, then switch Waddly on. If your macOS version does not accept the drop, use “Add it another way” for the manual steps.
 
-![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
+![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.en.gif)
 
 macOS applies the permission only after the app restarts. Waddly keeps the setup step it was on, so it returns to the same screen on the next launch instead of starting over. The app also runs without the permission; it simply does not respond to keys, and the menu bar says so.
 

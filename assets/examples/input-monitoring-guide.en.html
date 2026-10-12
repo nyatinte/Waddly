@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Input Monitoring guide — Waddly</title>
+<style>
+  :root {
+    --page: #d8d8dc;
+    --window: #2b2b2e;
+    --window-edge: #1a1a1c;
+    --sidebar: #242427;
+    --content: #1e1e20;
+    --card: #37373b;
+    --row-line: #46464b;
+    --text: #f2f3f5;
+    --muted: #a7a9b0;
+    --faint: #7c7f87;
+    --accent: #0a84ff;
+    --toggle-off: #5a5c62;
+    --radius: 12px;
+    --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --page: #c9cad0;
+      --window: #f4f4f6;
+      --window-edge: #bcbdc4;
+      --sidebar: #e8e8ec;
+      --content: #ffffff;
+      --card: #f1f1f4;
+      --row-line: #dcdce0;
+      --text: #1c1c1e;
+      --muted: #5d6066;
+      --faint: #8b8e95;
+      --toggle-off: #c5c6cb;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 40px 20px;
+    background: var(--page);
+    font-family: var(--sans);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- window ---------- */
+  .window {
+    width: 760px;
+    border-radius: var(--radius);
+    background: var(--window);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .38), 0 0 0 1px var(--window-edge);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 198px 1fr;
+    grid-template-rows: 34px 1fr;
+  }
+  .titlebar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    background: var(--window);
+    border-bottom: 1px solid var(--row-line);
+  }
+  .light { width: 12px; height: 12px; border-radius: 50%; }
+  .light.close { background: #ff5f57; }
+  .light.min { background: #febc2e; }
+  .light.zoom { background: #28c840; }
+
+  /* ---------- sidebar ---------- */
+  .sidebar {
+    background: var(--sidebar);
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-right: 1px solid var(--row-line);
+  }
+  .search {
+    display: flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 8px; margin-bottom: 6px;
+    border-radius: 6px; background: var(--card);
+    color: var(--faint); font-size: 11.5px;
+  }
+  .side-row {
+    display: flex; align-items: center; gap: 8px;
+    height: 26px; padding: 0 8px;
+    border-radius: 6px;
+    font-size: 12px; color: var(--text);
+  }
+  .side-row.highlight { background: var(--accent); color: #fff; }
+  .side-row.dim { color: var(--muted); }
+  .side-icon {
+    width: 16px; height: 16px; border-radius: 4px; flex: none;
+    display: grid; place-items: center;
+    font-size: 9px; color: #fff;
+  }
+  .side-avatar {
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    background: linear-gradient(160deg, #7c8cff, #4a5bd0);
+  }
+  .side-gap { height: 10px; }
+
+  /* ---------- content ---------- */
+  .content {
+    background: var(--content);
+    padding: 12px 16px 20px;
+    position: relative;
+  }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .navpill {
+    display: flex; align-items: center; gap: 12px;
+    height: 24px; padding: 0 10px; border-radius: 6px;
+    background: var(--card); color: var(--muted); font-size: 12px;
+  }
+  .content-title { font-size: 14px; font-weight: 600; }
+  .lede { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
+
+  .list {
+    background: var(--card);
+    border-radius: 9px;
+    overflow: hidden;
+    position: relative;
+  }
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-top: 1px solid var(--row-line);
+    font-size: 12px;
+  }
+  .row:first-child { border-top: none; }
+  .row-icon {
+    width: 18px; height: 18px; border-radius: 4px; flex: none;
+    background: #6b6d75;
+    display: grid; place-items: center;
+    font-size: 10px; color: #fff;
+  }
+  .row-name { flex: 1; }
+  /* Nameless rows: borrowing real product names would imply they are registered here. */
+  .row-icon.placeholder { background: var(--faint); opacity: .55; }
+  .row-name.placeholder {
+    flex: none; height: 8px; border-radius: 4px;
+    background: var(--faint); opacity: .55;
+  }
+  .row-tools {
+    display: flex; align-items: center; gap: 14px;
+    padding: 6px 12px 8px;
+    color: var(--faint); font-size: 13px;
+    border-top: 1px solid var(--row-line);
+  }
+
+  /* ---------- toggle ---------- */
+  .toggle {
+    width: 32px; height: 19px; border-radius: 10px; flex: none;
+    background: var(--toggle-off);
+    position: relative;
+  }
+  .knob {
+    position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  }
+
+  /* ---------- the animated part ---------- */
+  .waddly-row { opacity: 0; }
+  .waddly-row .row-icon { background: transparent; padding: 0; }
+  .waddly-row .row-icon img { width: 18px; height: 18px; border-radius: 4px; display: block; }
+
+  .ghost {
+    position: absolute;
+    left: 24px; bottom: 20px;
+    width: 44px; height: 44px;
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .ghost .app {
+    width: 44px; height: 44px; border-radius: 10px; display: block;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+  }
+  .ghost .cursor {
+    position: absolute; right: -6px; bottom: -6px;
+    width: 16px; height: 20px;
+  }
+
+  /* Drop target: where the ghost lands inside the list. */
+  /* Sits exactly where the new row will appear. */
+  .drop-slot {
+    position: absolute;
+    left: 6px; right: 6px; bottom: 34px; height: 33px;
+    border-radius: 7px;
+    border: 1.5px dashed var(--accent);
+    opacity: 0;
+  }
+
+  @keyframes drag {
+    0%, 6%    { transform: translate(0, 0) scale(1); opacity: 0; }
+    10%       { transform: translate(0, 0) scale(1); opacity: 1; }
+    30%       { transform: translate(var(--dx), var(--dy)) scale(1.06); opacity: 1; }
+    36%       { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 1; }
+    44%, 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+  }
+  @keyframes slot {
+    0%, 8%    { opacity: 0; }
+    14%       { opacity: .9; }
+    32%       { opacity: .9; }
+    36%, 100% { opacity: 0; }
+  }
+  @keyframes appear {
+    0%, 30%   { opacity: 0; transform: translateY(-4px); }
+    38%, 100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes switchOn {
+    0%, 44%   { transform: translateX(0); }
+    54%, 100% { transform: translateX(13px); }
+  }
+  @keyframes trackOn {
+    0%, 44%   { background: var(--toggle-off); }
+    54%, 100% { background: var(--accent); }
+  }
+
+  .stage { --dx: 236px; --dy: -186px; }
+  .ghost          { animation: drag 7s cubic-bezier(.5, 0, .3, 1) infinite; }
+  .drop-slot      { animation: slot 7s ease-in-out infinite; }
+  .waddly-row     { animation: appear 7s ease-out infinite; }
+  .waddly-toggle  { animation: trackOn 7s ease-in-out infinite; }
+  .waddly-knob    { animation: switchOn 7s cubic-bezier(.3, 1.4, .5, 1) infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ghost, .drop-slot, .waddly-row, .waddly-toggle, .waddly-knob { animation: none; }
+    .waddly-row { opacity: 1; }
+    .ghost { opacity: 0; }
+    .waddly-toggle { background: var(--accent); }
+    .waddly-knob { transform: translateX(13px); }
+  }
+
+  .caption {
+    max-width: 760px;
+    font-size: 12px;
+    color: #3b3c42;
+    text-align: center;
+    line-height: 1.6;
+  }
+  @media (prefers-color-scheme: dark) { .caption { color: #51535a; } }
+  .caption strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="window stage" id="stage">
+  <div class="titlebar">
+    <span class="light close"></span><span class="light min"></span><span class="light zoom"></span>
+  </div>
+
+  <div class="sidebar">
+    <div class="search">
+      <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <line x1="7.8" y1="7.8" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Search
+    </div>
+    <div class="side-row"><span class="side-avatar"></span> Apple Account</div>
+    <div class="side-gap"></div>
+    <div class="side-row"><span class="side-icon" style="background:#3f8cff">◉</span> Wi-Fi</div>
+    <div class="side-row"><span class="side-icon" style="background:#3f8cff">✦</span> Bluetooth</div>
+    <div class="side-row"><span class="side-icon" style="background:#5a5c62">◍</span> Network</div>
+    <div class="side-row"><span class="side-icon" style="background:#3f8cff">⌂</span> VPN</div>
+    <div class="side-row"><span class="side-icon" style="background:#32c25a">▤</span> Battery</div>
+    <div class="side-gap"></div>
+    <div class="side-row"><span class="side-icon" style="background:#8a8c93">⚙</span> General</div>
+    <div class="side-row"><span class="side-icon" style="background:#3f8cff">◈</span> Accessibility</div>
+    <div class="side-row"><span class="side-icon" style="background:#ff5fa2">◐</span> Siri</div>
+    <div class="side-row"><span class="side-icon" style="background:#8a8c93">⌕</span> Spotlight</div>
+    <div class="side-row highlight"><span class="side-icon" style="background:#3f8cff">⌨</span> Input Monitoring</div>
+    <div class="side-row dim"><span class="side-icon" style="background:#8a8c93">▣</span> Wallpaper</div>
+  </div>
+
+  <div class="content">
+    <div class="toolbar">
+      <span class="navpill">‹ ›</span>
+      <span class="content-title">Input Monitoring</span>
+    </div>
+    <p class="lede">
+      Allow the applications below to monitor keyboard input even while using other apps.
+    </p>
+
+    <div class="list">
+      <div class="row">
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:104px"></span>
+        <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
+      </div>
+      <div class="row">
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:82px"></span>
+        <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
+      </div>
+      <div class="row">
+        <span class="row-icon placeholder"></span>
+        <span class="row-name placeholder" style="width:68px"></span>
+        <span class="toggle"><span class="knob" style="transform:translateX(13px)"></span></span>
+      </div>
+      <div class="row waddly-row">
+        <span class="row-icon"><img src="../waddly-app-icon-rounded.png" alt=""></span>
+        <span class="row-name">Waddly.app</span>
+        <span class="toggle waddly-toggle"><span class="knob waddly-knob"></span></span>
+      </div>
+      <div class="drop-slot"></div>
+      <div class="row-tools">＋ &nbsp; −</div>
+    </div>
+
+    <div class="ghost">
+      <img class="app" src="../waddly-app-icon-rounded.png" alt="">
+      <svg class="cursor" viewBox="0 0 16 20" aria-hidden="true">
+        <path d="M1 1 L1 16 L5 12.5 L7.5 18.5 L10 17.4 L7.6 11.6 L13 11.2 Z"
+              fill="#fff" stroke="#111" stroke-width="1.2" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<p class="caption">
+  <strong>Illustration</strong>: Not an actual System Settings screenshot. Drag Waddly's app icon into the Input Monitoring list, then turn on its switch.
+</p>
+
+<script>
+  // Freeze the loop at a given second for reproducible stills:
+  //   input-monitoring-guide.html?freeze=1.9
+  const freeze = new URLSearchParams(location.search).get('freeze');
+  if (freeze !== null) {
+    const seconds = Number(freeze) || 0;
+    document.querySelectorAll('.ghost, .drop-slot, .waddly-row, .waddly-toggle, .waddly-knob').forEach((el) => {
+      el.style.animationDelay = `-${seconds}s`;
+      el.style.animationPlayState = 'paused';
+    });
+  }
+</script>
+</body>
+</html>
