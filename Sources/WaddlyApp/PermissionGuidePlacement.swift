@@ -57,7 +57,7 @@ enum PermissionGuidePlacement {
         let pids = identifiers.flatMap { identifier in
             NSRunningApplication.runningApplications(withBundleIdentifier: identifier).map(\.processIdentifier)
         }
-        guard !pids.isEmpty else { return nil }
+        guard !pids.isEmpty, let primaryFrame = NSScreen.screens.first?.frame else { return nil }
         let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
         guard let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
             return nil
@@ -70,8 +70,23 @@ enum PermissionGuidePlacement {
                   let rect = CGRect(dictionaryRepresentation: bounds as CFDictionary),
                   rect.width > 320, rect.height > 240
             else { return nil }
-            return rect
+            return appKitRect(quartz: rect, primaryFrame: primaryFrame)
         }.max { $0.width * $0.height < $1.width * $1.height }
+    }
+
+    /// `kCGWindowBounds` measures from the top-left corner of the primary display, while `NSScreen`
+    /// and `NSWindow` measure from its bottom-left. Everything downstream compares this rectangle
+    /// with screen frames and passes the result to `setFrameOrigin`, so convert it once, here.
+    ///
+    /// The primary display's frame is what does the flipping, not the active display's: a display
+    /// above the primary one has negative coordinates, which the conversion has to preserve.
+    static func appKitRect(quartz rect: CGRect, primaryFrame: CGRect) -> CGRect {
+        CGRect(
+            x: rect.minX,
+            y: primaryFrame.maxY - rect.maxY,
+            width: rect.width,
+            height: rect.height
+        )
     }
 
     static func openInputMonitoringSettings() {

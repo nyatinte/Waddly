@@ -2,7 +2,7 @@ import AppKit
 import Testing
 @testable import WaddlyApp
 
-/// The helper panel must stay clear of the System Settings window and of Waddly's own windows.
+/// The guide window must stay clear of the System Settings window and of Waddly's own windows.
 struct PermissionGuidePlacementTests {
     private let visible = NSRect(x: 0, y: 0, width: 1710, height: 1010)
     private let panel = NSSize(width: 300, height: 236)
@@ -77,5 +77,27 @@ struct PermissionGuidePlacementTests {
                 "escaped the visible frame for \(settings)"
             )
         }
+    }
+
+    /// Quartz measures downwards from the primary display's top edge, AppKit upwards from its
+    /// bottom edge. A settings window in the top half has to end up in the top half.
+    @Test func convertsQuartzBoundsIntoAppKitCoordinates() {
+        let primary = CGRect(x: 0, y: 0, width: 1710, height: 1010)
+        let topOfTheDisplay = CGRect(x: 200, y: 0, width: 800, height: 500)
+        let converted = PermissionGuidePlacement.appKitRect(
+            quartz: topOfTheDisplay,
+            primaryFrame: primary
+        )
+        #expect(converted == CGRect(x: 200, y: 510, width: 800, height: 500))
+        #expect(converted.maxY == primary.maxY)
+    }
+
+    /// A display placed above the primary one has negative AppKit coordinates, and the conversion
+    /// must not fold it onto the primary display.
+    @Test func keepsNegativeCoordinatesForADisplayAboveThePrimary() {
+        let primary = CGRect(x: 0, y: 0, width: 1710, height: 1010)
+        let above = CGRect(x: 40, y: -900, width: 1512, height: 900)
+        let converted = PermissionGuidePlacement.appKitRect(quartz: above, primaryFrame: primary)
+        #expect(converted == CGRect(x: 40, y: 1010, width: 1512, height: 900))
     }
 }
