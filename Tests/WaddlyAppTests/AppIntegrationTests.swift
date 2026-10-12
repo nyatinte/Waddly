@@ -140,10 +140,10 @@ import WaddlyCore
         #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
         #expect(app.imageSettingsWindow?.isVisible != true)
         #expect(app.panel.isVisible == true)
-        // The menu stays the deliberate route to the editor once setup is finished.
-        // Opening the menu is when the app re-evaluates what it offers.
+        // The menu stays the deliberate route to the editor once setup is finished. Opening the menu
+        // is when the app re-evaluates what it offers.
         app.menuWillOpen(app.statusMenu)
-        #expect(app.imageSettingsItem?.isEnabled == true)
+        #expect(try app.validateMenuItem(editorItem(of: app)))
     }
 
     /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
@@ -162,7 +162,7 @@ import WaddlyCore
         #expect(app.setupWizardController?.window?.isVisible == true)
         #expect(app.setupWizardController?.currentStep == .monitoring)
         app.menuWillOpen(app.statusMenu)
-        #expect(app.imageSettingsItem?.isEnabled == false)
+        #expect(try !app.validateMenuItem(editorItem(of: app)))
     }
 
     /// macOS asks for a restart before Input Monitoring works, so returning must land in setup.
@@ -203,6 +203,13 @@ import WaddlyCore
             try await Task.sleep(for: .milliseconds(10))
         }
         throw CocoaError(.userCancelled)
+    }
+
+    /// Validation is what the menu actually asks, so the tests ask it the same way.
+    private func editorItem(of app: AppDelegate) throws -> NSMenuItem {
+        try #require(menuItems(app.statusMenu).first {
+            $0.action == #selector(AppDelegate.showImageSettings)
+        })
     }
 
     private func menuItems(_ menu: NSMenu) -> [NSMenuItem] {

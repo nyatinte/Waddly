@@ -208,8 +208,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
     var imageSettingsWindow: NSWindow?
-    var imageSettingsItem: NSMenuItem?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
+
     var isPaused: Bool {
         animationController.isPaused
     }

@@ -135,7 +135,6 @@ extension AppDelegate {
             keyEquivalent: ""
         )
         imageSettingsItem.target = self
-        self.imageSettingsItem = imageSettingsItem
         statusMenu.addItem(imageSettingsItem)
 
         let setupItem = NSMenuItem(
@@ -252,8 +251,6 @@ extension AppDelegate {
 
     private func updateMenuStatus() {
         pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
-        // The image editor is not something to offer during a first run.
-        imageSettingsItem?.isEnabled = isSetupComplete
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         let statusKey: LocalizationKey = isPaused
             ? .tooltipPaused
@@ -341,5 +338,19 @@ extension AppDelegate {
         alert.messageText = localizedString(.menuLoginError)
         alert.alertStyle = .warning
         alert.beginSheetModal(for: panel)
+    }
+}
+
+/// Keeps the image editor out of reach until setup is finished.
+extension AppDelegate: NSMenuItemValidation {
+    /// `isEnabled` cannot do this: with automatic enabling on, which is the default, AppKit asks the
+    /// item's target instead and re-enables anything whose action it finds. The pet's right-click
+    /// menu is a copy of the status menu, and validation is what covers both.
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(showImageSettings) {
+            // The image editor is not something to offer during a first run.
+            return isSetupComplete
+        }
+        return true
     }
 }
