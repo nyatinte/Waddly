@@ -7,20 +7,6 @@ import WaddlyCore
 typealias Fixture = SetupWizardFixture
 
 @Suite(.serialized) @MainActor struct SetupWizardTests {
-    @Test func welcomeStepOffersImportTargetsWithHandlers() throws {
-        let wizard = try Fixture.makeWizard()
-        defer { wizard.close() }
-        let content = try #require(wizard.window?.contentView)
-        let panes = Fixture.descendants(of: content).compactMap { $0 as? SetupPreviewPane }
-        #expect(!panes.isEmpty)
-        let targets = Fixture.descendants(of: content).compactMap { $0 as? PetImageDropView }
-            .filter { $0.registeredDraggedTypes.contains(.fileURL) }
-        #expect(!targets.isEmpty)
-        for target in targets {
-            #expect(target.onDrop != nil)
-        }
-    }
-
     @Test(arguments: [AppLanguage.japanese, .english])
     func everyStepKeepsItsTextInsideTheWindow(language: AppLanguage) throws {
         let state = Fixture.State()

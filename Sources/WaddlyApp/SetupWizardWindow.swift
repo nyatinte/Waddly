@@ -2,7 +2,15 @@ import AppKit
 
 extension SetupWizardController {
     func buildWindow() {
-        let contentView = NSView()
+        // A PNG can be dropped anywhere in the window, which is what the hint under the options
+        // promises. The preview pane registers as well; being the deeper view it keeps its own
+        // highlight and takes the drops that land on it.
+        let contentView = PetImageDropView()
+        contentView.idleBorderWidth = 0
+        contentView.onDrop = { [weak self] urls in
+            guard let url = urls.first else { return }
+            self?.importImage(from: url)
+        }
         let bodyContainer = NSView()
         let footer = makeFooter()
         bodyContainer.translatesAutoresizingMaskIntoConstraints = false
