@@ -90,4 +90,4 @@ macOSが許可を反映するのはアプリの再起動後です。セットア
 
 ## ライセンス
 
-ソフトウェアは[MIT License](LICENSE)で公開し、アプリにもライセンス文を同梱します。プロジェクトのアートワークはMIT Licenseの対象外です: `assets/waddly-app-icon*.png`、`assets/waddly-menubar.svg`、`assets/waddly-demo.gif`、`assets/examples/`。アイコンとデモにはペンギンのアートワークが含まれます。これらの素材の再利用許可は付与していません。再利用する場合は、各著作権者の許可を得てください。`.agent/skill/swift-development` は別途Apache-2.0で公開しており、同梱の `LICENSE` を参照してください。
+ソフトウェアは[MIT License](LICENSE)で公開し、アプリにもライセンス文を同梱します。プロジェクトのアートワークはMIT Licenseの対象外です: `assets/waddly-app-icon*.png`、`assets/waddly-menubar.svg`、`assets/waddly-demo.gif`、`assets/examples/`。アイコンとデモにはペンギンのアートワークが含まれます。これらの素材の再利用許可は付与していません。再利用する場合は、各著作権者の許可を得てください。
