@@ -51,7 +51,12 @@ macOS applies the permission only after the app restarts.
 
 ### Prepare a sprite sheet
 
-Send a photo or a prompt describing the motif you want to [ChatGPT or another image generator](https://chatgpt.com/) together with the [prompt](prompts/en.md) to create a 3×3 sprite sheet. You can also create it by hand.
+Send the [sprite sheet prompt](prompts/en.md) to [ChatGPT or another image generator](https://chatgpt.com/) to create a 3×3 sprite sheet.
+
+- If you have an image of a pet or character you want to use, attach it along with the prompt.
+- If you don't have an image, describe the character in words, such as “a small penguin with a round body.” No image attachment is needed.
+
+You can also create the sprite sheet by hand.
 
 | Reference image | 3×3 sprite sheet |
 | --- | --- |

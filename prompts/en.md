@@ -1,13 +1,21 @@
 # Pet Sprite Sheet Prompt for Waddly
 
-Attach an image of the pet or character you want to use, then give the prompt below to an image-generation model. You may also attach the action reference image for the Enter-key pose.
+Copy the prompt below and send it to an image-generation model.
+
+- If you have an image of a pet or character you want to use, attach it along with the prompt.
+- If you don't have an image, replace the “Character description” in the prompt with your own. Leave it as is to create a small penguin with a round body. No image attachment is needed.
+
+You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
 
 ```text
-Create a 3×3 animated sprite sheet for Waddly, using the attached pet or character image as the reference.
+Create a 3×3 animated sprite sheet for Waddly. If a pet or character reference image is attached, use it as the basis. Otherwise, use the description below.
+
+Character description: A small penguin with a round body.
 
 [Character]
-- Depict the same individual as in the reference. Preserve its species, coat or feather colors and patterns, face, body shape, ears, tail, wings, and other identifying features.
-- Do not add clothes, hats, or accessories that are not in the reference.
+- If a reference image is provided, depict the same individual. Preserve its species, coat or feather colors and patterns, face, body shape, ears, tail, wings, and other identifying features.
+- If no reference image is provided, design the character from the description and keep its features consistent across all cells.
+- Do not add clothes, hats, or accessories that are not in the reference image or description.
 - Do not give the character human limbs or hands. Use natural paws, wings, or other features appropriate to the animal.
 
 [Art style]
@@ -30,7 +38,7 @@ Create a 3×3 animated sprite sheet for Waddly, using the attached pet or charac
 4. Typing slowly with natural paws, wings, or other animal features.
 5. Typing in a slightly different pose from cell 4.
 6. Leaning forward slightly and typing rapidly.
-7. The instant the character forcefully presses the Enter key. Use the attached action reference for the comedic, decisive energy of dramatically striking a key. The character leans forward confidently and presses a large, clearly recognizable Enter key with a natural paw, wing, or other animal feature. Show the key being pushed down, with a small pixel-art impact burst or star-shaped spark to convey a satisfying “THUNK!” Do not copy the human, clothing, or exact composition from the reference. Keep the animal’s natural body shape.
+7. The instant the character forcefully presses the Enter key, with the comedic, decisive energy of dramatically striking a key. If an action reference image is attached, use it as inspiration for that energy. The character leans forward confidently and presses a large, clearly recognizable Enter key with a natural paw, wing, or other animal feature. Show the key being pushed down, with a small pixel-art impact burst or star-shaped spark to convey a satisfying “THUNK!” Do not copy the human, clothing, or exact composition from the reference. Keep the animal’s natural body shape.
 8. Drowsy, with heavy eyelids.
 9. Sleeping peacefully with eyes closed.
 
