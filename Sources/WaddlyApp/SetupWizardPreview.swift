@@ -64,6 +64,12 @@ final class SetupPreviewPane: PetImageDropView {
         images.isComplete
     }
 
+    /// Whether the stage is animating. Closing setup stops it, so this is what tells a reopened
+    /// screen apart from one that quietly gave up.
+    var isPlayingPreview: Bool {
+        player.isPlaying
+    }
+
     func configure(localization: LocalizationController, showsControls: Bool) {
         self.localization = localization
         self.showsControls = showsControls
@@ -118,15 +124,19 @@ final class SetupPreviewPane: PetImageDropView {
 
         let poseChanged = isSleeping != sleeping
         isSleeping = sleeping
-        guard framesChanged || poseChanged else { return }
-        if sleeping {
-            player.playSleeping()
-        } else if poseChanged {
-            // Waking up is an event: sleep → blink → typing, then the normal loop.
-            player.playWakeUp()
-        } else {
-            player.playLoop()
+        if framesChanged || poseChanged {
+            if sleeping {
+                player.playSleeping()
+            } else if poseChanged {
+                // Waking up is an event: sleep → blink → typing, then the normal loop.
+                player.playWakeUp()
+            } else {
+                player.playLoop()
+            }
         }
+        // A rerender can find the stage silent without anything having changed: closing the wizard
+        // stops playback, and reopening it draws this same step again. `applyMode` starts a stopped
+        // player and leaves a running one alone, so it has to run on every render.
         applyMode()
     }
 

@@ -92,6 +92,43 @@ import WaddlyCore
         #expect(try !Fixture.button("goNext", in: content).isEnabled)
     }
 
+    /// Closing setup stops the preview, and reopening reuses this pane with the same frames and the
+    /// same caption. That used to look like "nothing changed", which left the pet frozen on the
+    /// reopened screen until the user touched a control.
+    @Test func rerenderingTheSameFramesResumesPlayback() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let content = try #require(wizard.window?.contentView)
+        let pane = try #require(Fixture.descendants(of: content).compactMap { $0 as? SetupPreviewPane }.first)
+        let images = try Fixture.sheetImages()
+        pane.showPet(images, caption: "ready")
+        #expect(pane.isPlayingPreview)
+
+        // What closing the window does on the way out.
+        pane.stopPlayback()
+        #expect(!pane.isPlayingPreview)
+
+        pane.showPet(images, caption: "ready")
+        #expect(pane.isPlayingPreview)
+    }
+
+    /// The cells view is an inspection, so a rerender must not quietly start the loop behind it.
+    @Test func rerenderingInCellsModeLeavesPlaybackStopped() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let content = try #require(wizard.window?.contentView)
+        let pane = try #require(Fixture.descendants(of: content).compactMap { $0 as? SetupPreviewPane }.first)
+        let images = try Fixture.sheetImages()
+        pane.showPet(images, caption: "ready")
+
+        pane.modeControl.selectedSegment = 1
+        _ = pane.modeControl.sendAction(pane.modeControl.action, to: pane.modeControl.target)
+        #expect(!pane.isPlayingPreview)
+
+        pane.showPet(images, caption: "ready")
+        #expect(!pane.isPlayingPreview)
+    }
+
     @Test func copyFeedbackStaysSilentUntilTheCopyIsAttempted() throws {
         let wizard = try Fixture.makeWizard()
         defer { wizard.close() }
