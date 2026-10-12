@@ -246,6 +246,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         settings.ensurePresenceIsVisible()
         buildPanel()
         buildMenu()
+        // A disconnected or resized display can leave the pet off screen; realign it when the
+        // display configuration changes. Registered here so test fixtures that only build the
+        // panel do not create observers.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screenParametersDidChange(_:)),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
         updatePresenceOptions()
         petView.onFileDrop = { [weak self] url in
             Task { _ = await self?.importPetImage(from: url) }
