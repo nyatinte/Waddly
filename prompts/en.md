@@ -3,53 +3,55 @@
 Copy the prompt below and send it to an image-generation model.
 
 - If you have an image of a pet or character you want to use, attach it along with the prompt.
-- If you don't have an image, replace the “Character description” in the prompt with your own. Leave it as is to create a small penguin with a round body. No image attachment is needed.
-
-You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
+- If you don't have an image, replace “Character to draw” on the first line with your own description (for example `A small penguin with a round body. Short legs, black back and white belly.`). If you send it unchanged, the image model asks what you want to create.
+- You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
 
 ```text
-Create a 3×3 animated sprite sheet for Waddly. If a pet or character reference image is attached, use it as the basis. Otherwise, use the description below.
+Character to draw: <replace this line>
 
-Character description: A small penguin with a round body.
+If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
+
+Using that character, create a 3×3 animated sprite sheet for Waddly. If a reference image is attached, depict the individual in that image.
 
 [Character]
-- If a reference image is provided, depict the same individual. Preserve its species, coat or feather colors and patterns, face, body shape, ears, tail, wings, and other identifying features.
-- If no reference image is provided, design the character from the description and keep its features consistent across all cells.
-- Do not add clothes, hats, or accessories that are not in the reference image or description.
-- Do not give the character human limbs or hands. Use natural paws, wings, or other features appropriate to the animal.
+- Keep the individual's features (species, colors, patterns, body shape) in every cell.
 
 [Art style]
-- Crisp pixel art reminiscent of a 16-bit-era game character.
-- Draw each cell on the same 64×64-pixel logical grid. Keep the palette, outlines, pixel scale, and shading consistent across all cells.
-- Do not use anti-aliasing, blur, gradients, glow, or photorealistic textures.
-- Keep the same character, facing direction, camera angle, and character scale in every cell. Keep ears, tail, and other features inside each cell; nothing may overlap a neighboring cell.
-- Leave about 10% transparent padding on every side of each cell. Fit the character, keyboard, and effects inside the central 80% safe area instead of filling the cell edge to edge. Keep ears, tails, the keyboard, and Enter impact effects well away from cell boundaries.
+- Pixel art in the style of a 16-bit-era game. Few colors, thick outlines, two or three shades of shading.
+- Do not use blur, anti-aliasing, gradients, glow, or photorealistic rendering.
+- Keep the same size, facing direction, and camera position in all nine cells. Line up the top of the head, the bottom of the body, and the left-right centre at the same position in every cell, and do not change them between poses.
 
-[Sheet format]
-- Output one transparent PNG.
-- Use exactly 3 columns and 3 rows for 9 equally sized square cells, with no divider lines or gaps between cells.
-- Use real transparency. Do not draw a checkerboard or any background color.
-- Do not add numbers, captions, logos, or watermarks. Do not include text except for the optional Enter-key symbol.
+[Sheet and placement]
+- Output one transparent PNG. Nine cells in a 3×3 grid. Make all cells equally sized squares, and make the side length divisible by 3.
+- Use real transparency, with alpha 0 outside the character's silhouette. Do not draw a checkerboard, white, grey, a colored backdrop, a gradient, a floor, or shadows.
+- Fit the whole character inside the central 50% of each cell (a 25% margin on every side). Keep ears, tails, wings, the keyboard, and effects inside that area too.
+- A cell that touches its own boundary or a neighboring cell by even one pixel is an invalid output.
+- If it does not fit, moderate the pose or the effects instead of shrinking the character.
+- Do not draw divider lines, frames, numbers, captions, logos, or watermarks. No text except the optional Enter-key symbol.
 
-[Cell order: left to right, then top to bottom]
-1. Relaxed, with a natural expression.
-2. Almost the same pose as cell 1, but blinking.
-3. Focused and facing a keyboard, just before typing.
-4. Typing slowly with natural paws, wings, or other animal features.
-5. Typing in a slightly different pose from cell 4.
-6. Leaning forward slightly and typing rapidly.
-7. The instant the character forcefully presses the Enter key, with the comedic, decisive energy of dramatically striking a key. If an action reference image is attached, use it as inspiration for that energy. The character leans forward confidently and presses a large, clearly recognizable Enter key with a natural paw, wing, or other animal feature. Show the key being pushed down, with a small pixel-art impact burst or star-shaped spark to convey a satisfying “THUNK!” Do not copy the human, clothing, or exact composition from the reference. Keep the animal’s natural body shape.
-8. Drowsy, with heavy eyelids.
-9. Sleeping peacefully with eyes closed.
+[The nine cells: left to right, then top to bottom]
+1. Sitting relaxed
+2. The same pose as cell 1, but blinking
+3. Focused, facing the keyboard
+4. Typing slowly
+5. Typing in a pose slightly different from cell 4
+6. Leaning forward and typing quickly
+7. The instant it presses a large Enter key forcefully. If a reference image is attached, take that energy from it
+8. Drowsy, with heavy eyelids
+9. Curled up and sleeping peacefully
 
-[Keyboard]
-- Show the same small keyboard or laptop only in cells 3–7.
-- In cell 7, make the Enter key visibly larger than the other keys. It may carry a simple “↵” symbol; do not write the word “Enter.”
-- Keep the keyboard and character entirely within their own cells and away from the cell edges.
-
-[Final inspection]
-- Inspect all nine cells separately on both light and dark backgrounds before outputting the sheet.
-- Check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, including single pixels, without removing intentional detached motion marks, sleep symbols, or Enter sparkles.
+[Keyboard and effects]
+- Draw the keyboard only in cells 3–7, the same shape and size in all nine cells. Keep it narrower than 40% of the cell width.
+- In cell 7, draw the Enter key larger than the other keys, and within 30% of the cell width. It may carry a “↵” symbol; do not write the word “Enter”.
+- In cell 7, place the star-shaped spark and the impact lines right next to the body. Use at most two short strokes, and do not let them reach more than 5% of the cell width beyond the body. Keep their tips at least 30% inside the cell's right and bottom edges.
 
 Output only the sprite sheet image that meets these requirements.
 ```
+
+## Checking the generated image
+
+An image-generation model cannot verify its own output, so the person who generated the image does the checking. Asking the model to check its work has little effect, and the longer the instructions get, the less it follows the other requirements. Check these three things.
+
+- To confirm real transparency, put the image on a dark background or in a dark-mode window. If white or a checkerboard is baked in, it is not transparent.
+- Waddly's preview can switch between a light and a dark background. Look at the four edges of each of the nine cells for fragments of a neighboring pose or anything touching a boundary.
+- If you find a single-pixel speck or a fragment from another cell, generate another option that fits better, or fix just that cell in an image editor. Keep the intentional motion marks, sleep symbols, and Enter sparkles.
