@@ -17,8 +17,8 @@
 - While idle, it breathes and blinks. After a while it sleeps and wakes when you type.
 - Drag your pet anywhere on the desktop; its position is saved between launches.
 - Add your own pet images and configure idle, typing, and other animations with “Animation Settings…”.
-- Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through the initial image import and Input Monitoring permission. The language item is labeled “Language / 言語”.
-- Click the Dock icon to open setup before images are registered, or Animation Settings afterward. If setup is already open, it is brought to the front instead.
+- Configure size, motion, display location, and language from the menu. “Setup Guide…” walks you through adding your first pet and turning on keyboard reactions. The language item is labeled “Language / 言語”.
+- Click the Dock icon to open setup before images are registered; afterwards it only brings your pet back to the front. Animation Settings is opened from the menu. If setup is already open, it is brought to the front instead.
 
 ## Use your own pet
 
@@ -26,9 +26,9 @@
 
 You can attach a photo of your pet to [ChatGPT](https://chatgpt.com/) and use the [English prompt](prompts/en.md) or [Japanese prompt](prompts/ja.md) to create a 3×3 sprite sheet. This optional step sends the photo to ChatGPT under its terms and privacy policy; you can also create the sheet yourself without using an external service.
 
-Import a transparent PNG sprite sheet during setup. Drop the PNG onto the image page or use “Choose PNG…” and check the preview. Canceling leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
+Setup asks for your pet first and for permission second, and keeps a preview of the pet on the right of every screen. The first step offers two ways in: “Create an image with ChatGPT” copies the prompt and opens ChatGPT, and “Choose a PNG file” imports a sheet you already have. You can also drop the PNG anywhere on the window. Choosing a PNG registers it straight away; nothing changes until you pick a file. The pet then loops through all nine poses in the preview, where you can switch between Animation and 9 cells and play each pose back. Canceling the file picker leaves any previously registered images unchanged. Cells are read from top left to bottom right: two idle poses, four typing poses, one Enter pose, and two sleep poses.
 
-Before importing, inspect each of the nine cells separately on both light and dark backgrounds. Check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, but keep intentional detached effects such as motion marks, sleep symbols, and Enter sparkles. To use the corrected example if you imported an older copy, download the updated sheet and import it again; saved frames do not update automatically.
+The confirmation sheet can show the nine cells on a light or a dark background, so switch between them and check every cell edge for fragments from neighboring poses and stray floating pixels. Remove accidental specks, but keep intentional detached effects such as motion marks, sleep symbols, and Enter sparkles. To use the corrected example if you imported an older copy, download the updated sheet and import it again; saved frames do not update automatically.
 
 | Reference image | 3×3 sprite sheet |
 | --- | --- |
