@@ -40,14 +40,18 @@ extension AppDelegate {
     }
 
     func clampedOrigin(_ origin: NSPoint) -> NSPoint {
-        let frame = NSRect(origin: origin, size: panel.frame.size)
-        let screen = NSScreen.screens.first(where: { $0.visibleFrame.intersects(frame) })
-            ?? NSScreen.main
-            ?? NSScreen.screens.first
-        guard let visible = screen?.visibleFrame else { return origin }
-        let maxX = max(visible.minX, visible.maxX - frame.width)
-        let maxY = max(visible.minY, visible.maxY - frame.height)
-        return NSPoint(x: min(max(origin.x, visible.minX), maxX), y: min(max(origin.y, visible.minY), maxY))
+        PetWindowPlacement.clampedOrigin(
+            origin,
+            size: panel.frame.size,
+            visibleFrames: NSScreen.screens.map(\.visibleFrame),
+            mainVisibleFrame: NSScreen.main?.visibleFrame
+        )
+    }
+
+    /// Pulls the pet back onto a screen that still exists after the display configuration changes.
+    @objc func screenParametersDidChange(_ notification: Notification) {
+        panel.setFrameOrigin(clampedOrigin(panel.frame.origin))
+        saveOrigin()
     }
 
     func saveOrigin() {
