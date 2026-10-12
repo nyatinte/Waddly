@@ -76,8 +76,14 @@ mise run dev:reset     # clears its images and preferences, back to a first run
 It uses the bundle identifier `dev.nyatinte.waddly.development`, which gives it its own
 preferences, its own Input Monitoring entry, and its own image folder
 (`~/Library/Application Support/Waddly-development`, see `PetImageLocation`). Running it therefore
-cannot touch the app installed from Homebrew. `WADDLY_DEVELOPMENT_SUFFIX` keeps several variants
-side by side; `WADDLY_DEVELOPMENT_DIR` changes where it is installed.
+cannot touch the app installed from Homebrew.
+
+macOS keeps an Input Monitoring grant until it is revoked, so `mise run dev:reset` clears that
+entry too (scoped to the development identifier). That is what makes the permission flow
+repeatable.
+
+`WADDLY_DEVELOPMENT_SUFFIX` keeps several variants side by side; `WADDLY_DEVELOPMENT_DIR` changes
+where it is installed.
 
 The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, complexity checks, tests, and this Release build—the full local validation path used by CI. `cccc` may print Swift parser warnings for syntax it cannot fully analyze; investigate these warnings because results for those files can be incomplete.
 
