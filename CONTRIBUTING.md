@@ -62,6 +62,32 @@ mise run build
 open build/Waddly.app
 ```
 
+### The development app
+
+Testing the setup flow needs an app whose Input Monitoring permission starts ungranted and whose
+pet images are separate from the installed copy. `mise run dev:install` builds and installs exactly
+that:
+
+```sh
+mise run dev:install   # installs /Applications/Waddly (development).app
+mise run dev:reset     # clears its images and preferences, back to a first run
+```
+
+It uses the bundle identifier `dev.nyatinte.waddly.development`, which gives it its own
+preferences, its own Input Monitoring entry, and its own image folder
+(`~/Library/Application Support/Waddly-development`, see `PetImageLocation`). Running it therefore
+cannot touch the app installed from Homebrew.
+
+macOS keeps an Input Monitoring grant until it is revoked, so `mise run dev:reset` clears that
+entry too (scoped to the development identifier). That is what makes the permission flow
+repeatable.
+
+`WADDLY_DEVELOPMENT_SUFFIX` keeps several variants side by side: each suffix gets its own bundle
+identifier, app name, and image folder (`Waddly-<suffix>`, dots included), so `setup.development` and
+`acceptance.development` do not share anything. `mise run dev:reset` takes the same suffix and
+refuses to touch state while that variant is still running. `WADDLY_DEVELOPMENT_DIR` changes where
+the app is installed.
+
 The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, complexity checks, tests, and this Release build—the full local validation path used by CI. `cccc` may print Swift parser warnings for syntax it cannot fully analyze; investigate these warnings because results for those files can be incomplete.
 
 ## Tests
