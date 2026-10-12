@@ -122,9 +122,7 @@ import Testing
         #expect(service.phase == .guiding)
 
         fake.granted = true
-        for _ in 0 ..< 40 where service.phase != .idle {
-            try await Task.sleep(for: .milliseconds(25))
-        }
+        try await waitUntil(timeout: .seconds(3)) { service.phase == .idle }
 
         #expect(service.phase == .idle)
     }
@@ -137,13 +135,30 @@ import Testing
 
         var ticks = 0
         service.onTick = { ticks += 1 }
-        try await Task.sleep(for: .milliseconds(150))
+        // A busy main actor can delay a Timer well past its interval, so wait for the first tick
+        // instead of assuming it lands within a fixed window.
+        try await waitUntil(timeout: .seconds(3)) { ticks > 0 }
         #expect(ticks > 0)
 
         service.stop()
         let afterStop = ticks
-        try await Task.sleep(for: .milliseconds(150))
+        try await Task.sleep(for: .milliseconds(300))
         #expect(ticks == afterStop)
+    }
+
+    /// Yields to the main actor while waiting, so the timer can actually fire.
+    private func waitUntil(
+        timeout: Duration,
+        _ condition: () -> Bool
+    ) async throws {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if condition() {
+                return
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        Issue.record("timed out waiting for the condition")
     }
 
     @MainActor
