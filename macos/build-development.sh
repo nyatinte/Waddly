@@ -8,8 +8,23 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SUFFIX=${WADDLY_DEVELOPMENT_SUFFIX:-development}
+# The suffix becomes a folder name and a bundle identifier. Dots are allowed and every suffix keeps
+# its own state, but nothing else may end up in a path.
+case "$SUFFIX" in
+  "" | *[!A-Za-z0-9.-]*)
+    printf 'error: WADDLY_DEVELOPMENT_SUFFIX may only contain letters, digits, dots and dashes.\n' >&2
+    exit 1
+    ;;
+esac
+
 BUNDLE_ID="dev.nyatinte.waddly.$SUFFIX"
-NAME="Waddly (development)"
+# Variants have to be able to sit next to each other, so the app name follows the suffix; a fixed
+# name meant installing a second variant deleted the first one.
+if [ "$SUFFIX" = development ]; then
+  NAME="Waddly (development)"
+else
+  NAME="Waddly ($SUFFIX)"
+fi
 WANTED=${WADDLY_DEVELOPMENT_DIR:-/Applications}
 DESTINATION=$WANTED
 

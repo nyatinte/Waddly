@@ -14,9 +14,20 @@ struct PetImageLocationTests {
         ("dev.nyatinte.waddly.acceptance", "Waddly-acceptance"),
         // Anything that is not the shipping identifier gets a folder of its own, even if it
         // does not follow our naming.
-        ("com.example.Waddly", "Waddly-Waddly")
+        ("com.example.Waddly", "Waddly-com-example-Waddly")
     ])
     func otherIdentifiersGetTheirOwnFolder(identifier: String, expected: String) {
+        #expect(PetImageLocation.directoryName(for: identifier) == expected)
+    }
+
+    /// Suffixes may contain dots, and two of them may share their last component. Keeping the whole
+    /// suffix is what stops those variants from sharing imported images.
+    @Test(arguments: [
+        ("dev.nyatinte.waddly.setup.development", "Waddly-setup.development"),
+        ("dev.nyatinte.waddly.acceptance.development", "Waddly-acceptance.development"),
+        ("dev.nyatinte.waddly.development", "Waddly-development")
+    ])
+    func dottedSuffixesStayApart(identifier: String, expected: String) {
         #expect(PetImageLocation.directoryName(for: identifier) == expected)
     }
 

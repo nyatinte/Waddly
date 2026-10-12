@@ -8,14 +8,22 @@ enum PetImageLocation {
     static let shippingBundleIdentifier = "dev.nyatinte.waddly"
 
     /// `Waddly` for the shipping app, `Waddly-<suffix>` for anything else.
+    ///
+    /// The whole suffix after the shipping identifier is kept. Taking only the last dotted component
+    /// mapped `dev.nyatinte.waddly.setup.development` and `dev.nyatinte.waddly.development` to the
+    /// same folder, while the variants exist precisely to be kept apart.
     static func directoryName(for bundleIdentifier: String?) -> String {
         guard let bundleIdentifier, !bundleIdentifier.isEmpty,
               bundleIdentifier != shippingBundleIdentifier
         else {
             return "Waddly"
         }
-        let suffix = bundleIdentifier.split(separator: ".").last.map(String.init) ?? "development"
-        return "Waddly-\(suffix)"
+        let prefix = shippingBundleIdentifier + "."
+        let suffix = bundleIdentifier.hasPrefix(prefix)
+            ? String(bundleIdentifier.dropFirst(prefix.count))
+            // An identifier of someone else's making still gets a folder of its own.
+            : bundleIdentifier.replacingOccurrences(of: ".", with: "-")
+        return "Waddly-" + (suffix.isEmpty ? "development" : suffix)
     }
 
     static func directoryURL(
