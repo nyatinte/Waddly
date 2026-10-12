@@ -145,6 +145,44 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         renderCurrentStep()
     }
 
+    /// The guide follows System Settings until the user moves it.
+    private var following = GuideFollowing()
+    private var wasShowingGuide = false
+    private var isMovingProgrammatically = false
+
+    var isFollowingSystemSettings: Bool {
+        following.isActive
+    }
+
+    /// Re-enables following whenever the guide opens, and remembers the transition.
+    func refreshGuideFollowing() {
+        let guiding = isShowingGuide
+        if guiding, !wasShowingGuide {
+            following.begin()
+        }
+        wasShowingGuide = guiding
+    }
+
+    func recordProgrammaticGuideOrigin(_ origin: NSPoint) {
+        following.recordProgrammaticMove(to: origin)
+    }
+
+    /// Runs an app-owned window move and records where it landed, so neither the move notification
+    /// raised during the move nor a later one is mistaken for a user drag.
+    func moveWindowProgrammatically(_ move: () -> Void) {
+        isMovingProgrammatically = true
+        move()
+        isMovingProgrammatically = false
+        if let window {
+            following.recordProgrammaticMove(to: window.frame.origin)
+        }
+    }
+
+    func windowDidMove(_ notification: Notification) {
+        guard !isMovingProgrammatically, isShowingGuide, let window else { return }
+        following.recordMove(to: window.frame.origin)
+    }
+
     func windowWillClose(_ notification: Notification) {
         permission.stop()
         window?.level = .normal

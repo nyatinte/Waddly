@@ -74,7 +74,7 @@ The second step asks for Input Monitoring. Waddly opens System Settings, parks i
 
 ![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.en.gif)
 
-macOS applies the permission only after the app restarts. Waddly keeps the setup step it was on, so it returns to the same screen on the next launch instead of starting over. The app also runs without the permission; it simply does not respond to keys, and the menu bar says so.
+macOS applies the permission only after the app restarts. If you leave Setup Guide open, Waddly keeps the step it was on and returns to the same screen on the next launch instead of starting over. After you close Setup Guide with your pet images registered, later launches go straight to your pet; reopen the wizard from “Setup Guide…” in the menu or from the Dock icon to resume the saved step. The app also runs without the permission; it simply does not respond to keys, and the menu bar says so.
 
 ## Privacy
 

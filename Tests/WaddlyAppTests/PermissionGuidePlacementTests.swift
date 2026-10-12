@@ -100,4 +100,39 @@ struct PermissionGuidePlacementTests {
         let converted = PermissionGuidePlacement.appKitRect(quartz: above, primaryFrame: primary)
         #expect(converted == CGRect(x: 40, y: 1010, width: 1512, height: 900))
     }
+
+    /// When nothing fits cleanly, the guide covers as little of System Settings as possible so its
+    /// app list stays reachable.
+    @Test func coversTheLeastOfSettingsWhenNothingFits() {
+        let settings = CGRect(x: 200, y: 200, width: 1300, height: 600)
+        let origin = PermissionGuidePlacement.origin(
+            windowSize: panel,
+            settings: settings,
+            visible: visible,
+            ownWindows: []
+        )
+        #expect(origin == NSPoint(x: 430, y: 12))
+        #expect(PermissionGuidePlacement.fits(origin, size: panel, into: visible))
+    }
+
+    @Test func guideFollowingStopsOnAUserMoveAndResumesOnBegin() {
+        var following = GuideFollowing()
+        following.begin()
+        following.recordProgrammaticMove(to: NSPoint(x: 10, y: 20))
+        following.recordMove(to: NSPoint(x: 10, y: 20))
+        #expect(following.isActive)
+        following.recordMove(to: NSPoint(x: 40, y: 60))
+        #expect(!following.isActive)
+        following.begin()
+        #expect(following.isActive)
+    }
+
+    /// Before the app has parked the window once, any move is the user's, so a drag during the
+    /// first polling interval stops the guide instead of being overridden by the next tick.
+    @Test func guideFollowingTreatsAMoveBeforeTheFirstParkAsTheUsers() {
+        var following = GuideFollowing()
+        following.begin()
+        following.recordMove(to: NSPoint(x: 40, y: 60))
+        #expect(!following.isActive)
+    }
 }

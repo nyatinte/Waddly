@@ -35,39 +35,55 @@ extension AppDelegate {
 
     @objc func showSetupWizard() {
         if setupWizardController == nil {
-            setupWizardController = SetupWizardController(
-                localization: localization,
-                onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
-                onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
-                currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
-                permission: permissionService,
-                savedStep: settings.setupStep,
-                onStepChange: { [weak settings] step in settings?.setupStep = step },
-                onShowOnDesktop: { [weak self] in self?.revealPetOnDesktop() },
-                onClose: { [weak self] in
-                    guard let self else { return }
-                    if !hasCompletePetImageSet {
-                        settings.removeSetupWizardSeen()
-                    } else {
-                        settings.setupWizardSeen = true
-                    }
-                    if hasCompletePetImageSet, monitor.permissionGranted, !isPaused {
-                        startMonitoring()
-                    }
-                }
-            )
+            setupWizardController = makeSetupWizardController()
         }
         // Opening the wizard must also make monitoring live, otherwise "granted but not receiving"
         // would be reported as "restart required" when the tap simply had not been started yet.
-        if hasCompletePetImageSet, monitor.permissionGranted, !isPaused, !monitor.isRunning {
-            startMonitoring()
-        }
+        startMonitoringIfPossible()
+        guard let controller = setupWizardController, let window = controller.window else { return }
         // The status shown on step 2 depends on the tap above, and showWindow does not redraw.
-        setupWizardController?.renderCurrentStep()
+        controller.renderCurrentStep()
+        let wasVisible = window.isVisible
         NSApp.activate(ignoringOtherApps: true)
-        setupWizardController?.showWindow(nil)
-        // Re-assert the designed size; a restored frame must never win here.
-        setupWizardController?.window?.setContentSize(SetupMetrics.contentSize)
-        setupWizardController?.window?.center()
+        controller.moveWindowProgrammatically {
+            controller.showWindow(nil)
+            // Re-assert the designed size; a restored frame must never win here.
+            window.setContentSize(SetupMetrics.contentSize)
+            // Only a freshly shown window is centered. Re-centering an already open guide would
+            // fight its parked position and look like a user move to `GuideFollowing`.
+            if !wasVisible {
+                window.center()
+            }
+        }
+    }
+
+    private func makeSetupWizardController() -> SetupWizardController {
+        SetupWizardController(
+            localization: localization,
+            onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
+            onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
+            currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
+            permission: permissionService,
+            savedStep: settings.setupStep,
+            onStepChange: { [weak settings] step in settings?.setupStep = step },
+            onShowOnDesktop: { [weak self] in self?.revealPetOnDesktop() },
+            onClose: { [weak self] in self?.handleSetupWizardClose() }
+        )
+    }
+
+    /// Records the finished setup and restarts monitoring when the wizard closes.
+    private func handleSetupWizardClose() {
+        if hasCompletePetImageSet {
+            settings.setupWizardSeen = true
+        } else {
+            settings.removeSetupWizardSeen()
+        }
+        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused else { return }
+        startMonitoring()
+    }
+
+    private func startMonitoringIfPossible() {
+        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused, !monitor.isRunning else { return }
+        startMonitoring()
     }
 }
