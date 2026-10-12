@@ -208,6 +208,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
     var imageSettingsWindow: NSWindow?
+    var shareWindowController: PetShareWindowController?
     var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
 
     var isPaused: Bool {
@@ -327,6 +328,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         isShuttingDown = true
         animationController.shutdown()
         monitor.stop()
+        shareWindowController?.close()
     }
 
     func windowDidMove(_ notification: Notification) {

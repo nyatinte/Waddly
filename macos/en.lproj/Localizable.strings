@@ -2,6 +2,17 @@
 "motion.weak" = "Low";
 "motion.strong" = "High";
 "menu.pause" = "Pause reactions";
+"share.menu" = "Share Pet";
+"share.title" = "Share Pet";
+"share.video" = "5-second video";
+"share.sprite" = "3×3 sprite sheet";
+"share.copy" = "Copy";
+"share.copied" = "Copied";
+"share.post" = "Post";
+"share.xCreate" = "Post on X";
+"share.xDraft" = "Copy the video and image, then attach them to your post.";
+"share.loading" = "Preparing share assets…";
+"share.error" = "Could not create the share assets. Please try again.";
 "menu.resume" = "Resume reactions";
 "menu.displaySize" = "Display size";
 "size.small" = "Small";

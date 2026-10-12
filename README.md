@@ -18,40 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. Waddly does not force it above a fullscreen app, and it pulls the pet back into view when a display is disconnected or changed.
-
-## Getting started
-
-Waddly runs on Apple Silicon Macs with macOS 14 or later. There are two ways to install it.
-
-### Install with Homebrew
-
-Use this when you also want Homebrew to handle updates. Homebrew 6.0 or later requires explicit trust for third-party Casks, so the commands below trust only the Cask you install.
-
-```sh
-brew tap nyatinte/waddly
-brew trust --cask nyatinte/waddly/waddly
-brew install --cask waddly
-```
-
-Update with `brew upgrade --cask waddly`. To revoke the trust, run `brew untrust --cask nyatinte/waddly/waddly`.
-
-### Install from GitHub Releases
-
-Download `Waddly-<version>-macos-arm64.dmg` from the [latest release](https://github.com/nyatinte/Waddly/releases/latest), open it, and drag Waddly into your Applications folder. Verify the download with the `.sha256` file in the same release.
-
-The app is ad-hoc signed and not notarized, so Gatekeeper may block the first launch. Allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open no longer clears the warning.
-
-To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
-
-On first launch, follow Setup Guide… to import your images.
-
-### Turning on keyboard reactions
-
-The second step asks for Input Monitoring. Drag the icon into the list, then switch Waddly on.
-
-![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.en.gif)
-
-macOS applies the permission only after the app restarts.
+- Right-click the pet and choose “Share Pet” to create a five-second video and a 3×3 sprite sheet. Copy either asset to the clipboard, or click the X logo or “Post on X” to open a composer prefilled only with “Copy the video and image, then attach them to your post.”
 
 ## Use your own pet
 
@@ -127,18 +94,11 @@ Images are stored on your Mac as individual PNG frames. Source files are not mod
 
 ## Privacy
 
-Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac.
+Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (prefilled with “Copy the video and image, then attach them to your post.”); attach the asset and post it yourself.
 
 ## Measured memory
 
-The app targets a physical memory footprint below 100 MB in typical use.
-
-| Usage | Memory |
-| --- | --- |
-| Launch, typing, ordinary images | Under 100 MB (target) |
-| Importing a very large sheet (for example 3072 × 3072 with nine frames) | Can exceed 100 MB (known exception for 1.0) |
-
-See [memory profiling](docs/MEMORY.md) for the measurement procedure and baselines.
+The app targets a physical memory footprint below 100 MB in typical use. One share-dialog sample settled at 53.5 MB while open and 90.5 MB after closing, with a transient 105.0 MB peak during generation; repeat runs are needed before claiming the peak target is met. Importing a very large sheet (for example 3072 × 3072 with nine frames) can also exceed the target (known exception for 1.0). See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
 
 ## Contributing
 

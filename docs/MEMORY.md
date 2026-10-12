@@ -124,6 +124,17 @@ Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final
 
 This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. Closing the settings window retains its controller/views for reuse, so it need not immediately return memory. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
 
+## Share dialog profile (2026-10-13)
+
+One 30-second sample used the isolated `dev.nyatinte.waddly.sharepreview` Release app, macOS 27.0.1 on arm64, and the existing nine 418 × 418 pet frames. The dialog generated the 3 × 3 PNG and a 384 × 384, five-second MP4. The poster is shown without constructing an `AVPlayerView`; the player view is created only after the user presses Play.
+
+| State | RSS mean / peak | Physical footprint | Kernel peak |
+| --- | ---: | ---: | ---: |
+| Share dialog open, after generation | 88.30 / 88.31 MiB | 53.53 MB | 105.01 MB |
+| 30 seconds after closing dialog | 94.98 / 95.75 MiB | 90.52 MB | 105.01 MB |
+
+The settled open and closed samples were below 100 MB. The cumulative peak during on-demand generation exceeded the goal by about 5 MB in this single run. This is a transient measurement, not a three-run baseline; repeat the scenario before claiming the peak target is met. Raw captures are in `dist/memory/20261012T155906Z-share-open-player-deferred/` and `dist/memory/20261012T160016Z-share-closed-player-deferred/` when available locally.
+
 ## Release E2E fixes comparison (#52, 2026-10-06)
 
 Three sequential before/after pairs compared `d810c9e` with `429f932` on the same arm64 Mac, macOS 27.0.1 (26A434), Apple Swift 6.4. Each revision used the same optimized AppDelegate probe and generated image, ten replacements, a 30-second hold with settings visible, and another 30 seconds after closing settings. Fresh preferences and image directories isolated every run. The probe now also records RSS and peak RSS through `task_info`; the application image pipeline is unchanged. These are state snapshots and kernel cumulative peaks, not interval averages.
