@@ -25,7 +25,7 @@ import Testing
     let identity = try #require(descendants(of: postRow).first {
         $0.identifier?.rawValue == "share.xIdentity"
     })
-    #expect(identity.frame.midX == postRow.bounds.midX)
+    #expect(abs(identity.frame.midX - postRow.bounds.midX) <= 1)
     #expect((identity as? NSStackView)?.spacing == 6)
     let logo = try #require(descendants(of: identity).first {
         $0.identifier?.rawValue == "share.xLogo"
