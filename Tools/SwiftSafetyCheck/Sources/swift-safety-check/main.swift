@@ -70,7 +70,7 @@ final class SafetyVisitor: SyntaxVisitor {
         if called == "unsafeBitCast" || called.hasSuffix(".unsafeBitCast") {
             add("unsafe-cast", node, "Avoid unsafeBitCast.")
         }
-        if called.contains("Unsafe") && called.contains("Pointer") {
+        if called.contains("Unsafe"), called.contains("Pointer") {
             add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
         }
         if called == "MainActor.assumeIsolated" {
