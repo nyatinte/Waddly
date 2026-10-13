@@ -15,4 +15,6 @@ opt_in_rules:
   - unowned_variable_capture
 
 excluded:
+  - Tools/SwiftSafetyCheck/.build
+  - Tools/SwiftSafetyCheck/.swiftpm
   - Tools/SwiftSafetyCheck/Fixtures

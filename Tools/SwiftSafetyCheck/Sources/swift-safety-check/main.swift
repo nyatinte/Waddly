@@ -51,6 +51,13 @@ final class SafetyVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    override func visit(_ node: ExtensionDeclSyntax) -> SyntaxVisitorContinueKind {
+        if node.inheritanceClause?.trimmedDescription.contains("@unchecked Sendable") == true {
+            add("unchecked-sendable", node, "Review @unchecked Sendable and document the synchronization invariant.")
+        }
+        return .visitChildren
+    }
+
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
         if node.modifiers.contains(where: { $0.trimmedDescription.contains("nonisolated(unsafe)") }) {
             add("unsafe-isolation", node, "Avoid nonisolated(unsafe); isolate or synchronize mutable state.")
@@ -63,6 +70,9 @@ final class SafetyVisitor: SyntaxVisitor {
         if called == "unsafeBitCast" || called.hasSuffix(".unsafeBitCast") {
             add("unsafe-cast", node, "Avoid unsafeBitCast.")
         }
+        if called.contains("Unsafe") && called.contains("Pointer") {
+            add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
+        }
         if called == "MainActor.assumeIsolated" {
             add("actor-assumption", node, "Review MainActor.assumeIsolated and document the executor guarantee.")
         }
@@ -74,6 +84,14 @@ final class SafetyVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: IdentifierTypeSyntax) -> SyntaxVisitorContinueKind {
+        let name = node.name.text
+        if name == "Unmanaged" || (name.hasPrefix("Unsafe") && name.contains("Pointer")) {
+            add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: MemberTypeSyntax) -> SyntaxVisitorContinueKind {
         let name = node.name.text
         if name == "Unmanaged" || (name.hasPrefix("Unsafe") && name.contains("Pointer")) {
             add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
