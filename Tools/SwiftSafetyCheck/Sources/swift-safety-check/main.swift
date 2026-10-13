@@ -35,7 +35,7 @@ final class SafetyVisitor: SyntaxVisitor {
         if node.inheritanceClause?.trimmedDescription.contains("@unchecked Sendable") == true {
             add("unchecked-sendable", node, "Review @unchecked Sendable and document the synchronization invariant.")
         }
-        if node.modifiers.contains(where: { $0.trimmedDescription == "nonisolated(unsafe)" }) {
+        if node.modifiers.contains(where: { $0.trimmedDescription.contains("nonisolated(unsafe)") }) {
             add("unsafe-isolation", node, "Avoid nonisolated(unsafe); isolate or synchronize mutable state.")
         }
         return .visitChildren
@@ -45,14 +45,14 @@ final class SafetyVisitor: SyntaxVisitor {
         if node.inheritanceClause?.trimmedDescription.contains("@unchecked Sendable") == true {
             add("unchecked-sendable", node, "Review @unchecked Sendable and document the synchronization invariant.")
         }
-        if node.modifiers.contains(where: { $0.trimmedDescription == "nonisolated(unsafe)" }) {
+        if node.modifiers.contains(where: { $0.trimmedDescription.contains("nonisolated(unsafe)") }) {
             add("unsafe-isolation", node, "Avoid nonisolated(unsafe); isolate or synchronize mutable state.")
         }
         return .visitChildren
     }
 
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
-        if node.modifiers.contains(where: { $0.trimmedDescription == "nonisolated(unsafe)" }) {
+        if node.modifiers.contains(where: { $0.trimmedDescription.contains("nonisolated(unsafe)") }) {
             add("unsafe-isolation", node, "Avoid nonisolated(unsafe); isolate or synchronize mutable state.")
         }
         return .visitChildren
