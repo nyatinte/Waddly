@@ -85,9 +85,8 @@ final class SafetyVisitor: SyntaxVisitor {
         if called == "MainActor.assumeIsolated" {
             add("actor-assumption", node, "Review MainActor.assumeIsolated and document the executor guarantee.")
         }
-        if let member = node.calledExpression.as(MemberAccessExprSyntax.self),
-           member.declName.baseName.text == "wait",
-           node.arguments.isEmpty {
+        let memberName = node.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.text
+        if memberName == "wait", node.arguments.isEmpty {
             add("semaphore-wait", node, "Avoid unbounded wait(); use bounded, cancellable async coordination.")
         }
         return .visitChildren
@@ -109,7 +108,7 @@ final class SafetyVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
-    private func add<Node: SyntaxProtocol>(_ rule: String, _ node: Node, _ message: String) {
+    private func add(_ rule: String, _ node: some SyntaxProtocol, _ message: String) {
         let location = locations.location(for: node.positionAfterSkippingLeadingTrivia)
         diagnostics.append(Diagnostic(rule: rule, file: file, line: location.line, message: message))
     }
@@ -181,7 +180,7 @@ do {
     let files = arguments.dropFirst().flatMap(swiftFiles(in:))
     var violations: [Diagnostic] = []
     for file in files {
-        violations.append(contentsOf: try scan(file))
+        try violations.append(contentsOf: scan(file))
     }
 
     let actionable = violations.filter { diagnostic in
