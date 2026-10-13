@@ -21,6 +21,7 @@
     ],
     "unsafe-pointer": [
       "Sources/WaddlyApp/Waddly.swift:104",
+      "Sources/WaddlyApp/Waddly.swift:147",
       "Sources/WaddlyApp/Waddly.swift:148",
       "Sources/WaddlyApp/Waddly.swift:162",
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:154",
