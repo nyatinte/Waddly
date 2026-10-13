@@ -24,25 +24,6 @@ final class SafetyVisitor: SyntaxVisitor {
         super.init(viewMode: .sourceAccurate)
     }
 
-    override func visit(_ node: AsExprSyntax) -> SyntaxVisitorContinueKind {
-        if node.trimmedDescription.contains("as!") {
-            add("force-cast", node, "Avoid forced casts; use a checked cast with an explicit failure path.")
-        }
-        return .visitChildren
-    }
-
-    override func visit(_ node: TryExprSyntax) -> SyntaxVisitorContinueKind {
-        if node.questionOrExclamationMark?.tokenKind == .exclamationMark {
-            add("force-try", node, "Avoid try!; handle or propagate the error.")
-        }
-        return .visitChildren
-    }
-
-    override func visit(_ node: ForceUnwrapExprSyntax) -> SyntaxVisitorContinueKind {
-        add("force-unwrap", node, "Avoid forced unwraps; handle the optional explicitly.")
-        return .visitChildren
-    }
-
     override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
         if node.attributeName.trimmedDescription == "preconcurrency" {
             add("preconcurrency", node, "Review @preconcurrency escape hatches and document the audited boundary.")
