@@ -103,7 +103,7 @@ final class SafetyVisitor: SyntaxVisitor {
     override func visit(_ node: SwitchCaseSyntax) -> SyntaxVisitorContinueKind {
         let label = node.label.trimmedDescription
         if label.hasPrefix("default") {
-            add("switch-default", node, "Avoid switch defaults that mask new cases; enumerate cases or use @unknown default.")
+            add("switch-default", node, "Avoid catch-all cases; enumerate cases or use @unknown default.")
         }
         return .visitChildren
     }
