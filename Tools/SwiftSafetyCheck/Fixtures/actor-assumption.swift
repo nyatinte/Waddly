@@ -1,0 +1,1 @@
+MainActor.assumeIsolated { print("unsafe") }

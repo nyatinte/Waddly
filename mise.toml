@@ -50,7 +50,15 @@ run = "./macos/reset-development.sh"
 
 [tasks.check]
 description = "Run all local validation and build the Release app"
-run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run test", "mise run build"]
+run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run safety", "mise run safety:test", "mise run test", "mise run build"]
+
+[tasks.safety]
+description = "Run AST-aware Swift safety checks"
+run = "swift run --package-path Tools/SwiftSafetyCheck swift-safety-check --check Sources Tests"
+
+[tasks."safety:test"]
+description = "Prove Swift safety rules reject dangerous fixtures"
+run = "bash Tools/test_swift_safety.sh"
 
 [tasks."memory:test"]
 description = "Run isolated Release memory regression tests (macOS 26+, Swift 6.2+)"
