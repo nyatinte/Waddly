@@ -73,6 +73,9 @@ final class SafetyVisitor: SyntaxVisitor {
         if called.contains("Unsafe"), called.contains("Pointer") {
             add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
         }
+        if called.split(separator: ".").contains("Unmanaged") {
+            add("unsafe-pointer", node, "Review Unmanaged ownership and lifetime; document the audited boundary.")
+        }
         if called == "MainActor.assumeIsolated" {
             add("actor-assumption", node, "Review MainActor.assumeIsolated and document the executor guarantee.")
         }
