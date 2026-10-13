@@ -25,7 +25,7 @@ final class SafetyVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: AsExprSyntax) -> SyntaxVisitorContinueKind {
-        if node.questionOrExclamationMark?.tokenKind == .exclamationMark {
+        if node.trimmedDescription.contains("as!") {
             add("force-cast", node, "Avoid forced casts; use a checked cast with an explicit failure path.")
         }
         return .visitChildren
