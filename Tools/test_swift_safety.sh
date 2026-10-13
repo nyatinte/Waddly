@@ -23,3 +23,5 @@ done
 for rule in actor-assumption preconcurrency semaphore-wait switch-default unchecked-sendable unsafe-cast unsafe-isolation unsafe-pointer; do
     "$checker" --expect-rule "$rule" "$package_path/Fixtures/$rule.swift"
 done
+
+"$checker" --expect-rule unsafe-pointer "$package_path/Fixtures/unsafe-unmanaged-generic.swift"
