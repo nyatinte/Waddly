@@ -18,6 +18,10 @@
     ],
     "semaphore-wait": [
       "Sources/WaddlyCore/PetShareExporter.swift:164"
+    ],
+    "unsafe-pointer": [
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:154",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:169"
     ]
   }
 }

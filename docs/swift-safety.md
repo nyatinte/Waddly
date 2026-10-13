@@ -6,7 +6,7 @@ The required `mise run check` validation runs SwiftLint in strict mode and the S
 
 `Tools/SwiftSafetyCheck/Allowlist.json` contains only existing source locations that were reviewed while introducing the check. Each entry is tied to a rule and exact line; moving the code requires reviewing and updating the entry. New uses fail CI. Keep any new exception narrow, explain the invariant in the change, and require review.
 
-The current semaphore wait and pixel-buffer ownership path are already tracked for remediation in [#96](https://github.com/nyatinte/Waddly/issues/96). This allowlist keeps the guardrail PR green while that behavior is fixed and regression-tested.
+The current semaphore wait and pixel-buffer ownership path are already tracked for remediation in [#96](https://github.com/nyatinte/Waddly/issues/96). The image test helper also has two exact pointer-use exceptions: it allocates a buffer and releases it with `defer`, and passes that buffer to Core Graphics.
 
 ## What static checks cannot prove
 
