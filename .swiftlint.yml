@@ -13,3 +13,6 @@ opt_in_rules:
   - prefer_key_path
   - redundant_nil_coalescing
   - unowned_variable_capture
+
+excluded:
+  - Tools/SwiftSafetyCheck/Fixtures

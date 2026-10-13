@@ -103,7 +103,7 @@ final class SafetyVisitor: SyntaxVisitor {
     override func visit(_ node: SwitchCaseSyntax) -> SyntaxVisitorContinueKind {
         let label = node.label.trimmedDescription
         if label.hasPrefix("default") {
-            add("switch-default", node, "Avoid default masking for switches; enumerate owned enum cases or use @unknown default for framework enums.")
+            add("switch-default", node, "Avoid switch defaults that mask new cases; enumerate cases or use @unknown default.")
         }
         return .visitChildren
     }
@@ -196,7 +196,7 @@ do {
     if actionable.isEmpty {
         print("Swift safety checks passed (\(files.count) files scanned).")
     } else {
-        fputs("\(actionable.count) Swift safety violation(s). Review Tools/SwiftSafetyCheck/Allowlist.json only for narrow, documented interoperability exceptions.\n", stderr)
+        fputs("Swift safety violations. See the allowlist policy in docs/swift-safety.md.\n", stderr)
         exit(1)
     }
 } catch {
