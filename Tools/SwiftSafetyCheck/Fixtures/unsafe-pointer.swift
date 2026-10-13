@@ -1,2 +1,1 @@
-func use(_ pointer: Swift.UnsafePointer<Int>) {}
-let allocated = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+func use(_ pointer: Swift.UnsafePointer<Int>) {}\nlet allocated = UnsafeMutablePointer<Int>.allocate(capacity: 1)\n\nfinal class Box {}\nlet retained = Unmanaged.passRetained(Box())\n
