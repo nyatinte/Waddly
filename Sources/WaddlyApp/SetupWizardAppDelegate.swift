@@ -78,6 +78,7 @@ extension AppDelegate {
         } else {
             settings.removeSetupWizardSeen()
         }
+        setupWizardController = nil
         guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused else { return }
         startMonitoring()
     }

@@ -102,6 +102,7 @@ import WaddlyCore
         app.showSetupWizard()
         app.setupWizardController?.close()
         #expect(!app.settings.setupWizardSeen)
+        #expect(app.setupWizardController == nil)
     }
 
     @Test(arguments: [false, true])
@@ -118,6 +119,19 @@ import WaddlyCore
         #expect(handled == false)
         #expect(app.imageSettingsWindow?.isVisible != true)
         #expect(app.setupWizardController?.window?.isVisible == true)
+    }
+
+    @Test func closingAnimationSettingsReleasesItsHostedContentAndRows() throws {
+        let fixture = try Fixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        app.showImageSettings()
+        let window = try #require(app.imageSettingsWindow)
+        #expect(!app.imageRows.isEmpty)
+        window.close()
+        #expect(app.imageSettingsWindow == nil)
+        #expect(app.imageRows.isEmpty)
+        #expect(window.contentView == nil)
     }
 
     /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
