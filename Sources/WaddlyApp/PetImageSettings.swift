@@ -191,6 +191,7 @@ extension AppDelegate {
             window.isReleasedWhenClosed = false
 
             imageSettingsWindow = window
+            window.delegate = self
             window.center()
             window.contentView = makeImageSettingsContent()
         }
@@ -241,6 +242,13 @@ extension AppDelegate {
             stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -20)
         ])
         return content
+    }
+
+    func closeImageSettingsWindow() {
+        imageSettingsWindow?.contentView = nil
+        imageSettingsWindow?.delegate = nil
+        imageSettingsWindow = nil
+        imageRows.removeAll()
     }
 
     private func chooseImages(for category: PetImageCategory) {

@@ -332,6 +332,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func windowDidMove(_ notification: Notification) {
+        guard notification.object as? NSWindow === panel else { return }
         saveOrigin()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === imageSettingsWindow else { return }
+        closeImageSettingsWindow()
     }
 }
