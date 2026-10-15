@@ -92,14 +92,26 @@ private func fixtureImages() throws -> PetImageSet {
     return try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
 }
 
-@Test func stalledMovieExportTimesOutInsteadOfBlockingForever() throws {
+@Test func stalledWriterDeadlineReturnsWithoutWaitingForTheWriter() throws {
     let images = try fixtureImages()
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
+    let stalled = DispatchSemaphore(value: 0)
+    let began = Date()
 
     #expect(throws: PetShareExportError.timedOut) {
-        try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(0))
+        // Model an encoder that never calls back: the deadline has to return on its own.
+        try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(50)) { _, queue, block in
+            queue.asyncAfter(deadline: .now() + .milliseconds(500)) {
+                block()
+                stalled.signal()
+            }
+        }
     }
+
+    #expect(Date().timeIntervalSince(began) < 0.3)
+    #expect(stalled.wait(timeout: .now() + 5) == .success)
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
 }
 
 @Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {
