@@ -169,7 +169,6 @@ extension SetupWizardController {
         guard let next = Step(rawValue: currentStep.rawValue + 1) else {
             if isMonitoringReady {
                 previewPane.celebrate()
-                completionPlayer.stop()
             }
             permission.stop()
             // Setup is finished, so there is nothing left to resume.
@@ -177,9 +176,6 @@ extension SetupWizardController {
             onShowOnDesktop()
             window?.close()
             return
-        }
-        if next == .completed {
-            completionPlayer.playLoop()
         }
         setStep(next)
     }

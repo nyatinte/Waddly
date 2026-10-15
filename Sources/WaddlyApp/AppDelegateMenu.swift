@@ -252,16 +252,14 @@ extension AppDelegate {
     }
 
     @objc private func toggleDockVisibility() {
-        settings.showInDock.toggle()
-        updatePresenceOptions()
+        setDockVisibility(!settings.showInDock)
     }
 
     @objc private func toggleMenuBarVisibility() {
-        settings.showInMenuBar.toggle()
-        updatePresenceOptions()
+        setMenuBarVisibility(!settings.showInMenuBar)
     }
 
-    private func updateMenuStatus() {
+    func updateMenuStatus() {
         pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         let statusKey: LocalizationKey = isPaused
@@ -271,35 +269,16 @@ extension AppDelegate {
     }
 
     @objc private func setSize(_ sender: NSMenuItem) {
-        let size = CGFloat(sender.tag)
-        settings.displaySize = size
-        panel.setContentSize(NSSize(width: size, height: size))
-        petView.frame = panel.contentView?.bounds ?? .zero
-        panel.setFrameOrigin(clampedOrigin(panel.frame.origin))
-        synchronizeMenuSelection(
-            in: [statusMenu, sender.menu].compactMap(\.self),
-            action: #selector(setSize(_:)),
-            selectedTag: sender.tag
-        )
-        saveOrigin()
+        setDisplaySize(CGFloat(sender.tag))
     }
 
     @objc private func setTypingMotion(_ sender: NSMenuItem) {
         guard let motion = TypingMotion(rawValue: sender.tag) else { return }
-        settings.typingMotion = motion
-        synchronizeMenuSelection(
-            in: [statusMenu, sender.menu].compactMap(\.self),
-            action: #selector(setTypingMotion(_:)),
-            selectedTag: sender.tag
-        )
-        animationController.typingMotionDidChange(motion)
+        applyTypingMotion(motion)
     }
 
     @objc private func toggleBreathing() {
-        let enabled = !isBreathingEnabled
-        settings.breathingEnabled = enabled
-        breathingItem.state = enabled ? .on : .off
-        animationController.breathingPreferenceDidChange()
+        setBreathingEnabled(!isBreathingEnabled)
     }
 
     @objc private func setAppLanguage(_ sender: NSMenuItem) {
