@@ -138,13 +138,17 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func openX() {
-        var components = URLComponents(string: "https://twitter.com/intent/tweet")
-        components?.queryItems = [URLQueryItem(
-            name: "text",
-            value: localization.string(for: .shareXDraft)
-        )]
-        if let url = components?.url {
+        if let url = Self.xPostURL(text: localization.string(for: .shareXDraft)) {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    static func xPostURL(text: String) -> URL? {
+        var components = URLComponents(string: "https://twitter.com/intent/tweet")
+        components?.queryItems = [
+            URLQueryItem(name: "text", value: text),
+            URLQueryItem(name: "hashtags", value: "ShareMyWaddly")
+        ]
+        return components?.url
     }
 }

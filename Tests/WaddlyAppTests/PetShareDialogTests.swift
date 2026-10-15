@@ -55,6 +55,15 @@ import Testing
     Issue.record("share dialog did not prepare both preview assets")
 }
 
+@Test @MainActor func xPostURLIncludesReminderAndShareHashtag() throws {
+    let reminder = "動画と画像をコピーしてポストに添付してください"
+    let url = try #require(PetShareWindowController.xPostURL(text: reminder))
+    let queryItems = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+
+    #expect(queryItems.first { $0.name == "text" }?.value == reminder)
+    #expect(queryItems.first { $0.name == "hashtags" }?.value == "ShareMyWaddly")
+}
+
 @Test @MainActor func openShareDialogRefreshesLabelsWhenLanguageChanges() throws {
     _ = NSApplication.shared
     let suiteName = "WaddlyTests.share-dialog-localization.\(UUID().uuidString)"
