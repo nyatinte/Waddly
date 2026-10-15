@@ -69,7 +69,8 @@ public enum PetShareExporter {
     ]
 
     public static func writeMovie(from images: PetImageSet, to url: URL) throws {
-        try writeMovie(from: images, to: url, timeout: .seconds(30), scheduleMediaData: scheduleMediaData)
+        // Only a wedged encoder reaches this bound; a full export takes about a second here.
+        try writeMovie(from: images, to: url, timeout: .seconds(120), scheduleMediaData: scheduleMediaData)
     }
 
     /// `timeout` bounds the wait for a stalled writer, and `scheduleMediaData` lets tests stall the media-data queue.

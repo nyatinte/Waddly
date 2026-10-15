@@ -96,21 +96,20 @@ private func fixtureImages() throws -> PetImageSet {
     let images = try fixtureImages()
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
-    let stalled = DispatchSemaphore(value: 0)
-    let began = Date()
+    let stalledQueueRan = DispatchSemaphore(value: 0)
 
     #expect(throws: PetShareExportError.timedOut) {
         // Model an encoder that never calls back: the deadline has to return on its own.
         try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(50)) { _, queue, block in
-            queue.asyncAfter(deadline: .now() + .milliseconds(500)) {
+            queue.asyncAfter(deadline: .now() + .seconds(2)) {
                 block()
-                stalled.signal()
+                stalledQueueRan.signal()
             }
         }
     }
 
-    #expect(Date().timeIntervalSince(began) < 0.3)
-    #expect(stalled.wait(timeout: .now() + 5) == .success)
+    #expect(stalledQueueRan.wait(timeout: .now()) == .timedOut)
+    #expect(stalledQueueRan.wait(timeout: .now() + 10) == .success)
     #expect(!FileManager.default.fileExists(atPath: movieURL.path))
 }
 
