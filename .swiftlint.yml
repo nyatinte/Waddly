@@ -6,9 +6,15 @@ opt_in_rules:
   - empty_count
   - fatal_error_message
   - first_where
+  - force_try
   - force_unwrapping
   - implicitly_unwrapped_optional
   - modifier_order
   - prefer_key_path
   - redundant_nil_coalescing
   - unowned_variable_capture
+
+excluded:
+  - Tools/SwiftSafetyCheck/.build
+  - Tools/SwiftSafetyCheck/.swiftpm
+  - Tools/SwiftSafetyCheck/Fixtures
