@@ -29,8 +29,8 @@ description = "Enforce per-function cognitive and cyclomatic complexity limits"
 run = "cccc --lang swift --max-cognitive 15 --max-cyclomatic 10 --top-cognitive 10 Sources Tests"
 
 [tasks.test]
-description = "Run Swift Testing suites"
-run = "./macos/test.sh"
+description = "Run Swift Testing suites serially"
+run = "./macos/test.sh --no-parallel"
 
 [tasks.build]
 description = "Build the signed Release app"
