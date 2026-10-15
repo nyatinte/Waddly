@@ -12,8 +12,7 @@ import WaddlyCore
         )
         defer { wizard.close() }
         let url = try Fixture.sheetURL()
-        wizard.importImage(from: url)
-        try await Fixture.waitUntil { wizard.hasImage }
+        await wizard.importImage(from: url).value
         #expect(wizard.didRegisterPet)
         #expect(wizard.importedFileName == url.lastPathComponent)
         #expect(wizard.previewPane.hasPet)
@@ -22,8 +21,7 @@ import WaddlyCore
     @Test func unreadableSheetLeavesThePreviousSetAlone() async throws {
         let wizard = try Fixture.makeWizard(previewResult: nil)
         defer { wizard.close() }
-        try wizard.importImage(from: Fixture.sheetURL())
-        try await Task.sleep(for: .milliseconds(50))
+        try await wizard.importImage(from: Fixture.sheetURL()).value
         #expect(!wizard.hasImage)
         #expect(!wizard.didRegisterPet)
         #expect(wizard.currentStep == .pet)

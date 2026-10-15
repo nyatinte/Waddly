@@ -87,18 +87,6 @@ enum SetupWizardFixture {
         [view] + view.subviews.flatMap { descendants(of: $0) }
     }
 
-    /// Waits for an async wizard action to settle without hard-coding a delay.
-    @MainActor
-    static func waitUntil(_ condition: () -> Bool, attempts: Int = 400) async throws {
-        for _ in 0 ..< attempts {
-            if condition() {
-                return
-            }
-            try await Task.sleep(for: .milliseconds(5))
-        }
-        Issue.record("condition never became true")
-    }
-
     @MainActor
     static func root() -> URL {
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()

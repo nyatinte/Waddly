@@ -33,6 +33,8 @@ typealias Fixture = SetupWizardFixture
         wizard.goNext()
         #expect(wizard.currentStep == .monitoring)
         #expect(recorded.last == SetupWizardController.Step.monitoring.rawValue)
+        wizard.goNext()
+        #expect(wizard.currentStep == .monitoring)
         wizard.deferMonitoring()
         #expect(wizard.currentStep == .completed)
         #expect(!wizard.isMonitoringReady)
@@ -75,21 +77,29 @@ typealias Fixture = SetupWizardFixture
         )
         defer { wizard.close() }
         let sheetURL = try Fixture.sheetURL()
-        wizard.importImage(from: sheetURL)
-        try await Fixture.waitUntil { wizard.hasImage }
+        await wizard.importImage(from: sheetURL).value
         #expect(wizard.currentStep == .pet)
         #expect(wizard.didRegisterPet)
         #expect(wizard.importedFileName == sheetURL.lastPathComponent)
         #expect(wizard.previewPane.hasPet)
     }
 
-    @Test func closingStopsPreviewAndReopeningCanResumeIt() throws {
-        let wizard = try Fixture.makeWizard(demoURL: Fixture.sheetURL())
+    @Test func closingTheWindowStopsPreviewAndAReopenedWizardCanResumeIt() throws {
+        let state = Fixture.State()
+        let wizard = try Fixture.makeWizard(state: state, demoURL: Fixture.sheetURL())
         defer { wizard.close() }
+        let firstWindow = try #require(wizard.window)
+        wizard.showWindow(nil)
         #expect(wizard.previewPane.isPlayingPreview)
-        wizard.previewPane.stopPlayback()
+
+        firstWindow.close()
+        #expect(state.closed)
         #expect(!wizard.previewPane.isPlayingPreview)
-        wizard.renderCurrentStep()
-        #expect(wizard.previewPane.isPlayingPreview)
+        #expect(firstWindow.contentView == nil)
+
+        let reopened = try Fixture.makeWizard(demoURL: Fixture.sheetURL())
+        defer { reopened.close() }
+        reopened.showWindow(nil)
+        #expect(reopened.previewPane.isPlayingPreview)
     }
 }

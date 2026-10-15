@@ -169,7 +169,8 @@ private extension SetupWizardScreen {
 
     private var troubleshootingContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            bodyText(.setupTroubleshootingTitle)
+            title(.setupTroubleshootingTitle)
+            bodyText(.setupTroubleshootingBody)
             Button(controller.localizedString(.setupRestartNow), action: controller.relaunchApp)
                 .accessibilityLabel(controller.localizedString(.setupRestartNow))
                 .accessibilityIdentifier("relaunchApp")
@@ -205,7 +206,9 @@ private extension SetupWizardScreen {
     private var missingPermissionContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             title(.setupMonitoringTitle)
-            bodyText(controller.isShowingGuide ? .setupDropGuideBody : .setupMonitoringBody)
+            bodyText(controller.isShowingGuide && !controller.isShowingManualSteps
+                ? .setupDropGuideBody
+                : .setupMonitoringBody)
             GroupBox {
                 VStack(alignment: .leading, spacing: 6) {
                     Label(controller.localizedString(.setupPrivacyTitle), systemImage: "lock.shield")
@@ -325,7 +328,10 @@ private extension SetupWizardScreen {
             .accessibilityElement(children: .combine)
             .accessibilityLabel(Text(verbatim: controller.localizedString(nextButtonKey)))
             .buttonStyle(.borderedProminent)
-            .disabled(controller.currentStep == .pet && !controller.hasImage)
+            .disabled(
+                (controller.currentStep == .pet && !controller.hasImage)
+                    || (controller.currentStep == .monitoring && !controller.isMonitoringReady)
+            )
             .keyboardShortcut(.defaultAction)
             .accessibilityIdentifier("goNext")
         }

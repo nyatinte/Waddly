@@ -6,7 +6,8 @@ import UniformTypeIdentifiers
 extension SetupWizardController {
     /// Reading and saving happen in one step: choosing a file is already the user's decision.
     /// Cancelling the picker leaves everything untouched, and "画像を変更" is always available.
-    func importImage(from url: URL) {
+    @discardableResult
+    func importImage(from url: URL) -> Task<Void, Never> {
         Task { [weak self] in
             guard let self else { return }
             guard let images = await onPreviewImage(url) else {
@@ -166,6 +167,7 @@ extension SetupWizardController {
 
     @objc func goNext() {
         guard currentStep != .pet || hasImage else { return }
+        guard currentStep != .monitoring || isMonitoringReady else { return }
         guard let next = Step(rawValue: currentStep.rawValue + 1) else {
             if isMonitoringReady {
                 previewPane.celebrate()
