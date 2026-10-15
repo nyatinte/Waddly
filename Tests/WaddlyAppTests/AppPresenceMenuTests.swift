@@ -27,8 +27,6 @@ struct AppPresenceMenuTests {
                 let menuBar = try item("toggleMenuBarVisibility", in: menu)
                 #expect(app.validateMenuItem(dock) == dockIsAvailable)
                 #expect(app.validateMenuItem(menuBar) == menuBarIsAvailable)
-                // The state `updatePresenceMenuItems` set has to agree with what validation answers,
-                // or the menu would say one thing and do another.
                 #expect(dock.isEnabled == app.validateMenuItem(dock))
                 #expect(menuBar.isEnabled == app.validateMenuItem(menuBar))
             }

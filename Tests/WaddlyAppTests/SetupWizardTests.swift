@@ -20,7 +20,6 @@ typealias Fixture = SetupWizardFixture
             wizard.renderCurrentStep()
             window.setContentSize(SetupMetrics.contentSize)
             window.layoutIfNeeded()
-            // The window must not grow between states.
             #expect(window.contentView?.bounds.height == SetupMetrics.contentSize.height)
             #expect(window.contentView?.bounds.width == SetupMetrics.contentSize.width)
             content.layoutSubtreeIfNeeded()
@@ -206,7 +205,6 @@ typealias Fixture = SetupWizardFixture
         try Fixture.button("goNext", in: content).performClick(nil)
         #expect(recorded.last == SetupWizardController.Step.completed.rawValue)
         try Fixture.button("goNext", in: content).performClick(nil)
-        // Finishing clears the saved step so the next launch is normal use, not setup again.
         #expect(recorded.last == .some(nil))
         #expect(revealed)
     }
@@ -244,14 +242,11 @@ typealias Fixture = SetupWizardFixture
 
         #expect(wizard.isShowingManualSteps)
         #expect(wizard.isShowingGuide)
-        // The manual steps and their way out to Finder are on screen, and the primary action that
-        // started the guide is gone.
         #expect(try !Fixture.button("revealInFinder", in: content).isHidden)
         let enableButtons = Fixture.descendants(of: content).compactMap { $0 as? NSButton }
             .filter { $0.action == NSSelectorFromString("enableMonitoring") && !$0.isHidden }
         #expect(enableButtons.isEmpty)
 
-        // And the link back actually returns to the drag guide.
         try Fixture.button("toggleManualSteps", in: content).performClick(nil)
         #expect(wizard.isShowingGuide)
         #expect(!wizard.isShowingManualSteps)

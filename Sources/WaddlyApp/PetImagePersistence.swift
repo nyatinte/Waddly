@@ -110,13 +110,14 @@ extension AppDelegate {
         }
     }
 
-    func moveImage(from source: Int, to destination: Int, in category: PetImageCategory) {
+    @discardableResult
+    func moveImage(from source: Int, to destination: Int, in category: PetImageCategory) -> Task<Void, Never>? {
         let images = petImages[category]
         guard source != destination,
-              images.indices.contains(source), images.indices.contains(destination) else { return }
+              images.indices.contains(source), images.indices.contains(destination) else { return nil }
         let target = images[source]
         let anchor = images[destination]
-        Task { [weak self] in
+        return Task { [weak self] in
             guard let self else { return }
             _ = await queueImageUpdate {
                 let current = self.petImages[category]

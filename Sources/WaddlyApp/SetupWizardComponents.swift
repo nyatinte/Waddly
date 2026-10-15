@@ -221,7 +221,6 @@ final class SetupOptionCard: NSView {
         bounds
     }
 
-    /// Runs the same action a click would, so tests exercise the real path.
     func activate() {
         _ = target?.perform(actionSelector, with: self)
     }

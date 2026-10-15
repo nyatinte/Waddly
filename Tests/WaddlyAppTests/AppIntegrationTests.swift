@@ -14,12 +14,7 @@ import WaddlyCore
         let data = try fixture.savedData()
         #expect(app.hasCompletePetImageSet)
         #expect(app.panel.isVisible)
-        app.moveImage(from: 0, to: 1, in: .idle)
-        await app.pendingImageUpdate?.value
-        // moveImage enqueues from its own task; wait for that task to enter the queue.
-        for _ in 0 ..< 200 where app.settings.petImageFiles["idle"] == original["idle"] {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        await app.moveImage(from: 0, to: 1, in: .idle)?.value
         #expect(app.settings.petImageFiles["idle"] == original["idle"]?.reversed().map(\.self))
         #expect(try fixture.savedData() == data)
         let removal = try #require(app.removeImage(at: 0, from: .idle))
@@ -121,7 +116,6 @@ import WaddlyCore
         let delegate: any NSApplicationDelegate = app
         let handled = delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: hasImages)
         #expect(handled == false)
-        // Setup is not finished here, so the Dock icon must lead to setup in both cases.
         #expect(app.imageSettingsWindow?.isVisible != true)
         #expect(app.setupWizardController?.window?.isVisible == true)
     }
@@ -171,13 +165,11 @@ import WaddlyCore
         #expect(wizard.isFollowingSystemSettings)
         #expect(wizard.window?.frame.origin == parked)
 
-        // Showing the retained guide again is app-owned movement, not a drag.
         wizard.window?.orderOut(nil)
         app.showSetupWizard()
         wizard.windowDidMove(Notification(name: NSWindow.didMoveNotification))
         #expect(wizard.isFollowingSystemSettings)
 
-        // A real drag still stops the guide from following.
         wizard.window?.setFrameOrigin(NSPoint(x: 300, y: 220))
         wizard.windowDidMove(Notification(name: NSWindow.didMoveNotification))
         #expect(!wizard.isFollowingSystemSettings)
@@ -249,7 +241,6 @@ import WaddlyCore
             app.settings.registerDefaults()
             app.petImagesDirectoryURL = directory
             app.buildPanel()
-            // The app builds its menu at launch; the fixture must match that to assert on it.
             app.buildMenu()
         }
 

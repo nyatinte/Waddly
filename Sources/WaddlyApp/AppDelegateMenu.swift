@@ -368,7 +368,6 @@ extension AppDelegate: NSMenuItemValidation {
             return hasCompletePetImageSet
         }
         if action == #selector(showImageSettings) {
-            // The image editor is not something to offer during a first run.
             return isSetupComplete
         }
         if action == #selector(toggleDockVisibility) {
