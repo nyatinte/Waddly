@@ -92,25 +92,54 @@ private func fixtureImages() throws -> PetImageSet {
     return try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
 }
 
-@Test func stalledWriterDeadlineReturnsWithoutWaitingForTheWriter() throws {
+private func exportMovie(from images: PetImageSet, to url: URL, timeout: DispatchTimeInterval) throws {
+    try PetShareExporter.writeMovie(from: images, to: url, timeout: timeout) { input, queue, block in
+        input.requestMediaDataWhenReady(on: queue, using: block)
+    }
+}
+
+private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) -> Bool {
+    let deadline = Date().addingTimeInterval(seconds)
+    while Date() < deadline {
+        if condition() {
+            return true
+        }
+        Thread.sleep(forTimeInterval: 0.02)
+    }
+    return condition()
+}
+
+@Test func deadlineCleansUpWithoutAResultingReadinessCallback() throws {
     let images = try fixtureImages()
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
-    let stalledQueueRan = DispatchSemaphore(value: 0)
+    let readinessCallbackRan = DispatchSemaphore(value: 0)
 
     #expect(throws: PetShareExportError.timedOut) {
-        // Model an encoder that never calls back: the deadline has to return on its own.
+        // Model an encoder whose readiness callback arrives long after the deadline: cleanup cannot depend on one.
         try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(50)) { _, queue, block in
             queue.asyncAfter(deadline: .now() + .seconds(2)) {
                 block()
-                stalledQueueRan.signal()
+                readinessCallbackRan.signal()
             }
         }
     }
 
-    #expect(stalledQueueRan.wait(timeout: .now()) == .timedOut)
-    #expect(stalledQueueRan.wait(timeout: .now() + 10) == .success)
+    #expect(readinessCallbackRan.wait(timeout: .now()) == .timedOut)
+    #expect(readinessCallbackRan.wait(timeout: .now() + 10) == .success)
     #expect(!FileManager.default.fileExists(atPath: movieURL.path))
+}
+
+@Test func deadlineDuringEncodingLeavesNoPartialMovie() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+
+    #expect(throws: PetShareExportError.timedOut) {
+        try exportMovie(from: images, to: movieURL, timeout: .milliseconds(0))
+    }
+
+    #expect(waitUntil({ !FileManager.default.fileExists(atPath: movieURL.path) }, within: 10))
 }
 
 @Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {

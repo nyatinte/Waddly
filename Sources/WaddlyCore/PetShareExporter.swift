@@ -22,8 +22,7 @@ private final class MovieWriterState: @unchecked Sendable {
     var frameIndex = 0
     var error: Error?
     var isTerminal = false
-    private let lock = NSLock()
-    private var cancelled = false
+    var didCancel = false
 
     init(
         writer: AVAssetWriter,
@@ -35,19 +34,6 @@ private final class MovieWriterState: @unchecked Sendable {
         self.input = input
         self.adaptor = adaptor
         self.shots = shots
-    }
-
-    /// Records a deadline without touching the writer; the media-data queue owns every writer call.
-    func requestCancellation() {
-        lock.lock()
-        defer { lock.unlock() }
-        cancelled = true
-    }
-
-    var isCancelled: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return cancelled
     }
 }
 
@@ -178,15 +164,19 @@ public enum PetShareExporter {
     ) throws {
         let finished = DispatchSemaphore(value: 0)
         let queue = DispatchQueue(label: "dev.nyatinte.waddly.share-video")
-        scheduleMediaData(state.input, queue) {
-            // The media-data queue owns the writer, so cancellation can never overlap an append.
-            let cancelOnQueue = {
-                state.isTerminal = true
+        // Only the media-data queue touches the writer, so cancellation can never overlap an append.
+        let cancelOnQueue: @Sendable () -> Void = {
+            guard !state.didCancel else { return }
+            state.didCancel = true
+            state.isTerminal = true
+            if state.writer.status == .writing {
                 state.writer.cancelWriting()
-                finished.signal()
             }
+            finished.signal()
+        }
+        scheduleMediaData(state.input, queue) {
             guard !state.isTerminal else { return }
-            while state.input.isReadyForMoreMediaData, state.frameIndex < movieFrameCount, !state.isCancelled {
+            while state.input.isReadyForMoreMediaData, state.frameIndex < movieFrameCount {
                 let appended = autoreleasepool {
                     let frame = frameForExport(state)
                     guard let buffer = makeVideoPixelBuffer(frame: frame, adaptor: state.adaptor) else {
@@ -205,18 +195,14 @@ public enum PetShareExporter {
                 }
                 state.frameIndex += 1
             }
-            guard !state.isCancelled else {
-                cancelOnQueue()
-                return
-            }
             guard state.frameIndex == movieFrameCount else { return }
             state.isTerminal = true
             state.input.markAsFinished()
             state.writer.finishWriting { finished.signal() }
         }
         guard finished.wait(timeout: .now() + timeout) == .success else {
-            // Report the deadline now; the media-data queue cancels the writer once it stops appending.
-            state.requestCancellation()
+            // Cleanup goes to the queue that owns the writer, without blocking here or waiting for readiness.
+            queue.async(execute: cancelOnQueue)
             throw PetShareExportError.timedOut
         }
         if let error = state.error {
