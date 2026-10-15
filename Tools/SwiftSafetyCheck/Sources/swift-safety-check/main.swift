@@ -51,6 +51,13 @@ final class SafetyVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
+        if node.inheritanceClause?.trimmedDescription.contains("@unchecked Sendable") == true {
+            add("unchecked-sendable", node, "Review @unchecked Sendable and document the synchronization invariant.")
+        }
+        return .visitChildren
+    }
+
     override func visit(_ node: ExtensionDeclSyntax) -> SyntaxVisitorContinueKind {
         if node.inheritanceClause?.trimmedDescription.contains("@unchecked Sendable") == true {
             add("unchecked-sendable", node, "Review @unchecked Sendable and document the synchronization invariant.")
@@ -67,8 +74,8 @@ final class SafetyVisitor: SyntaxVisitor {
 
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         let called = node.calledExpression.trimmedDescription
-        if called == "unsafeBitCast" || called.hasSuffix(".unsafeBitCast") {
-            add("unsafe-cast", node, "Avoid unsafeBitCast.")
+        if ["unsafeBitCast", "unsafeDowncast"].contains(where: { called == $0 || called.hasSuffix(".\($0)") }) {
+            add("unsafe-cast", node, "Avoid unsafe casts.")
         }
         if called.contains("Unsafe"), called.contains("Pointer") {
             add("unsafe-pointer", node, "Review pointer ownership and lifetime; document the audited boundary.")
@@ -138,6 +145,13 @@ func swiftFiles(in path: String) -> [String] {
 func scan(_ path: String) throws -> [Diagnostic] {
     let source = try String(contentsOfFile: path, encoding: .utf8)
     let tree = Parser.parse(source: source)
+    guard !tree.hasError else {
+        throw NSError(
+            domain: "SwiftSafetyCheck",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "SwiftSyntax could not parse \(path)"]
+        )
+    }
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).standardizedFileURL.path
     let fullPath = URL(fileURLWithPath: path).standardizedFileURL.path
     let relative = fullPath.hasPrefix(cwd + "/") ? String(fullPath.dropFirst(cwd.count + 1)) : path
@@ -183,6 +197,15 @@ do {
     var violations: [Diagnostic] = []
     for file in files {
         try violations.append(contentsOf: scan(file))
+    }
+
+    let detectedLocations = Set(violations.map { "\($0.rule):\($0.file):\($0.line)" })
+    let staleExceptions = allowlist.rules.flatMap { rule, entries in
+        entries.filter { !detectedLocations.contains("\(rule):\($0)") }.map { "\(rule):\($0)" }
+    }.sorted()
+    guard staleExceptions.isEmpty else {
+        fputs("Stale Swift safety allowlist entries:\n\(staleExceptions.joined(separator: "\n"))\n", stderr)
+        exit(2)
     }
 
     let actionable = violations.filter { diagnostic in

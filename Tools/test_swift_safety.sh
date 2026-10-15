@@ -24,4 +24,18 @@ for rule in actor-assumption preconcurrency semaphore-wait switch-default unchec
     "$checker" --expect-rule "$rule" "$package_path/Fixtures/$rule.swift"
 done
 
+"$checker" --expect-rule unchecked-sendable "$package_path/Fixtures/unchecked-sendable-enum.swift"
+"$checker" --expect-rule unsafe-cast "$package_path/Fixtures/unsafe-downcast.swift"
 "$checker" --expect-rule unsafe-pointer "$package_path/Fixtures/unsafe-unmanaged-generic.swift"
+
+syntax_error_fixture=$(mktemp)
+trap 'rm -f "$syntax_error_fixture"' EXIT
+printf 'let broken = (\n' > "$syntax_error_fixture"
+if output=$("$checker" --expect-rule unsafe-cast "$syntax_error_fixture" 2>&1); then
+    printf 'Swift safety checker accepted malformed Swift syntax.\n' >&2
+    exit 1
+fi
+if ! grep -q "SwiftSyntax could not parse" <<< "$output"; then
+    printf 'Swift safety checker failed for an unexpected reason:\n%s\n' "$output" >&2
+    exit 1
+fi
