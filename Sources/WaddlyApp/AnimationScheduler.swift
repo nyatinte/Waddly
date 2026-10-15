@@ -57,7 +57,6 @@ final class ContinuousAnimationScheduler: AnimationScheduling {
                     }
                 } while repeats && !Task.isCancelled
             } catch is CancellationError {
-                // Cancellation is the normal pause/replacement/shutdown path.
             } catch {
                 assertionFailure("Animation clock failed: \(error)")
             }

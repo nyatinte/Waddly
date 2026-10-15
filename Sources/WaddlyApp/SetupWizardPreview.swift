@@ -95,7 +95,6 @@ final class SetupPreviewPane: PetImageDropView {
         stageLabel.isHidden = true
         categoryRow.isHidden = true
         backgroundControl.isHidden = true
-        // The preview controls are irrelevant while the stage is a drag instruction.
         modeControl.isHidden = true
         guideStack.isHidden = false
         captionLabel.stringValue = ""
@@ -340,7 +339,6 @@ extension SetupPreviewPane {
         if isCells {
             player.stop()
         } else if hasFrames, !player.isPlaying {
-            // Never restart playback that is already running; only fill a silent stage.
             if isSleeping {
                 player.playSleeping()
             } else {
@@ -367,7 +365,6 @@ extension SetupPreviewPane {
         modeControl.trackingMode = .selectOne
         modeControl.selectedSegment = Mode.animation.rawValue
 
-        // These used to be set during build(), before localization was injected, so they stayed blank.
         backgroundControl.segmentCount = 2
         backgroundControl.setLabel(text(.setupPreviewLight), forSegment: 0)
         backgroundControl.setLabel(text(.setupPreviewDark), forSegment: 1)

@@ -94,12 +94,10 @@ import Testing
         service.toggleManualSteps()
         #expect(service.phase == .manual)
         #expect(service.isShowingManualSteps)
-        // The manual steps are still the guide: the window keeps floating and keeps watching.
         #expect(service.isGuiding)
 
         service.toggleManualSteps()
         #expect(service.phase == .guiding)
-        // Going back to the drag route reopens the pane it points at.
         #expect(fake.settingsOpened == 2)
     }
 

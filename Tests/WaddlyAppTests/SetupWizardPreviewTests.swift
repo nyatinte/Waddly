@@ -22,7 +22,6 @@ import WaddlyCore
         #expect(try Fixture.button("goNext", in: content).isEnabled)
         #expect(Fixture.descendants(of: content).compactMap { $0 as? NSTextField }
             .contains { $0.stringValue == wizard.localizedString(.setupRegisteredTitle) })
-        // The 3x3 facts are shown without asking for a second confirmation.
         #expect(Fixture.descendants(of: content).compactMap { $0 as? NSTextField }
             .contains { $0.stringValue.contains("768") })
     }
@@ -87,7 +86,6 @@ import WaddlyCore
         let content = try #require(wizard.window?.contentView)
         let pane = try #require(Fixture.descendants(of: content).compactMap { $0 as? SetupPreviewPane }.first)
         #expect(pane.hasPet)
-        // The demo is a preview only: no image is registered, so setup still cannot continue.
         #expect(!wizard.hasImage)
         #expect(try !Fixture.button("goNext", in: content).isEnabled)
     }
@@ -104,7 +102,6 @@ import WaddlyCore
         pane.showPet(images, caption: "ready")
         #expect(pane.isPlayingPreview)
 
-        // What closing the window does on the way out.
         pane.stopPlayback()
         #expect(!pane.isPlayingPreview)
 
