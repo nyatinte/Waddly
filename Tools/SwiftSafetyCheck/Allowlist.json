@@ -16,9 +16,6 @@
       "Sources/WaddlyApp/Waddly.swift:153",
       "Sources/WaddlyApp/PermissionService.swift:155"
     ],
-    "semaphore-wait": [
-      "Sources/WaddlyCore/PetShareExporter.swift:164"
-    ],
     "unsafe-pointer": [
       "Sources/WaddlyApp/Waddly.swift:104",
       "Sources/WaddlyApp/Waddly.swift:147",

@@ -21,6 +21,7 @@ private final class MovieWriterState: @unchecked Sendable {
     let shots: [ScheduledShot]
     var frameIndex = 0
     var error: Error?
+    var didRequestFinish = false
 
     init(
         writer: AVAssetWriter,
@@ -46,6 +47,11 @@ public enum PetShareExporter {
     ]
 
     public static func writeMovie(from images: PetImageSet, to url: URL) throws {
+        try writeMovie(from: images, to: url, timeout: .seconds(30))
+    }
+
+    /// `timeout` bounds the wait for a stalled writer so a wedged encoder cannot block the caller forever.
+    static func writeMovie(from images: PetImageSet, to url: URL, timeout: DispatchTimeInterval) throws {
         let shots = try scheduledShots(from: images)
         try? FileManager.default.removeItem(at: url)
         let writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
@@ -68,7 +74,10 @@ public enum PetShareExporter {
         writer.add(input)
         guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
         writer.startSession(atSourceTime: .zero)
-        try appendMovieFrames(MovieWriterState(writer: writer, input: input, adaptor: adaptor, shots: shots))
+        try appendMovieFrames(
+            MovieWriterState(writer: writer, input: input, adaptor: adaptor, shots: shots),
+            timeout: timeout
+        )
     }
 
     public static func spriteSheetPNG(from images: PetImageSet) -> Data? {
@@ -133,10 +142,11 @@ public enum PetShareExporter {
         return shots
     }
 
-    private static func appendMovieFrames(_ state: MovieWriterState) throws {
+    private static func appendMovieFrames(_ state: MovieWriterState, timeout: DispatchTimeInterval) throws {
         let finished = DispatchSemaphore(value: 0)
         let queue = DispatchQueue(label: "dev.nyatinte.waddly.share-video")
         state.input.requestMediaDataWhenReady(on: queue) {
+            guard !state.didRequestFinish else { return }
             while state.input.isReadyForMoreMediaData, state.frameIndex < movieFrameCount {
                 let appended = autoreleasepool {
                     let frame = frameForExport(state)
@@ -149,6 +159,7 @@ public enum PetShareExporter {
                     )
                 }
                 guard appended else {
+                    state.didRequestFinish = true
                     state.error = state.writer.error ?? PetShareExportError.frameEncodingFailed
                     state.input.markAsFinished()
                     state.writer.cancelWriting()
@@ -158,10 +169,14 @@ public enum PetShareExporter {
                 state.frameIndex += 1
             }
             guard state.frameIndex == movieFrameCount else { return }
+            state.didRequestFinish = true
             state.input.markAsFinished()
             state.writer.finishWriting { finished.signal() }
         }
-        finished.wait()
+        guard finished.wait(timeout: .now() + timeout) == .success else {
+            state.writer.cancelWriting()
+            throw PetShareExportError.timedOut
+        }
         if let error = state.error {
             throw error
         }
@@ -180,7 +195,7 @@ public enum PetShareExporter {
         }?.image ?? state.shots[0].image
     }
 
-    private static func makeVideoPixelBuffer(
+    static func makeVideoPixelBuffer(
         frame: CGImage,
         adaptor: AVAssetWriterInputPixelBufferAdaptor
     ) -> CVPixelBuffer? {
@@ -188,8 +203,10 @@ public enum PetShareExporter {
         var optionalBuffer: CVPixelBuffer?
         guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &optionalBuffer) == kCVReturnSuccess,
               let buffer = optionalBuffer,
-              CVPixelBufferLockBaseAddress(buffer, []) == kCVReturnSuccess,
-              let baseAddress = CVPixelBufferGetBaseAddress(buffer),
+              CVPixelBufferLockBaseAddress(buffer, []) == kCVReturnSuccess
+        else { return nil }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+        guard let baseAddress = CVPixelBufferGetBaseAddress(buffer),
               let context = CGContext(
                   data: baseAddress,
                   width: movieSize,
@@ -200,7 +217,6 @@ public enum PetShareExporter {
                   bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue
                       | CGImageAlphaInfo.premultipliedFirst.rawValue
               ) else { return nil }
-        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
         context.setFillColor(CGColor(red: 0.91, green: 0.93, blue: 0.95, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: movieSize, height: movieSize))
         context.interpolationQuality = .none
@@ -225,4 +241,5 @@ public enum PetShareExportError: Error {
     case incompleteImageSet
     case writerUnavailable
     case frameEncodingFailed
+    case timedOut
 }

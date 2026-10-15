@@ -4,17 +4,10 @@ import CryptoKit
 import ImageIO
 import Testing
 import UniformTypeIdentifiers
-import WaddlyCore
+@testable import WaddlyCore
 
 @Test func shareMovieExportsFiveSecondsOfThePetAnimation() async throws {
-    let fixtureURL = try #require(
-        Bundle.module.url(
-            forResource: "nyatinte-bot-3x3",
-            withExtension: "png",
-            subdirectory: "Fixtures"
-        )
-    )
-    let images = try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
+    let images = try fixtureImages()
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
 
@@ -29,14 +22,7 @@ import WaddlyCore
 }
 
 @Test func shareSpriteSheetExportsTheCanonicalNineFramesAsTransparentPNG() throws {
-    let fixtureURL = try #require(
-        Bundle.module.url(
-            forResource: "nyatinte-bot-3x3",
-            withExtension: "png",
-            subdirectory: "Fixtures"
-        )
-    )
-    let images = try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
+    let images = try fixtureImages()
     let png = try #require(PetShareExporter.spriteSheetPNG(from: images))
     let source = try #require(CGImageSourceCreateWithData(png as CFData, nil))
     let properties = try #require(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
@@ -59,14 +45,7 @@ import WaddlyCore
 }
 
 @Test func shareExportsSupportReducedFrameCountsAndMixedDimensions() async throws {
-    let fixtureURL = try #require(
-        Bundle.module.url(
-            forResource: "nyatinte-bot-3x3",
-            withExtension: "png",
-            subdirectory: "Fixtures"
-        )
-    )
-    var images = try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
+    var images = try fixtureImages()
     let context = try #require(CGContext(
         data: nil,
         width: 96,
@@ -100,6 +79,43 @@ import WaddlyCore
     try PetShareExporter.writeMovie(from: images, to: movieURL)
     let duration = try await AVURLAsset(url: movieURL).load(.duration)
     #expect(abs(CMTimeGetSeconds(duration) - 5) < 0.1)
+}
+
+private func fixtureImages() throws -> PetImageSet {
+    let fixtureURL = try #require(
+        Bundle.module.url(
+            forResource: "nyatinte-bot-3x3",
+            withExtension: "png",
+            subdirectory: "Fixtures"
+        )
+    )
+    return try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
+}
+
+@Test func stalledMovieExportTimesOutInsteadOfBlockingForever() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+
+    #expect(throws: PetShareExportError.timedOut) {
+        try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(0))
+    }
+}
+
+@Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {
+    let frame = try #require(fixtureImages()[.idle].first?.cgImage(forProposedRect: nil, context: nil, hints: nil))
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+        assetWriterInput: AVAssetWriterInput(mediaType: .video, outputSettings: [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: 384,
+            AVVideoHeightKey: 384
+        ]),
+        sourcePixelBufferAttributes: [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+    )
+
+    #expect(PetShareExporter.makeVideoPixelBuffer(frame: frame, adaptor: adaptor) == nil)
 }
 
 private func rgbaSHA256(_ image: NSImage) throws -> String {
