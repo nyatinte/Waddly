@@ -35,7 +35,7 @@ extension AppDelegate {
             placeAtDefaultPosition()
         }
         if hasCompletePetImageSet {
-            panel.orderFrontRegardless()
+            presenter.reveal(panel)
         }
     }
 
@@ -65,21 +65,10 @@ extension AppDelegate {
         // Reduced motion, or any interrupted animation, must never leave the pet invisible.
         guard !MotionPreference.isReduced else {
             panel.alphaValue = 1
-            panel.orderFrontRegardless()
+            presenter.reveal(panel)
             return
         }
-        panel.alphaValue = 0
-        panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.4
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            panel.animator().alphaValue = 1
-        } completionHandler: { [weak self] in
-            // The handler is not main-actor isolated, so hop back before touching the panel.
-            Task { @MainActor in
-                self?.panel.alphaValue = 1
-            }
-        }
+        presenter.revealFadingIn(panel, 0.4)
     }
 
     private func placeAtDefaultPosition() {

@@ -17,12 +17,16 @@ extension AppDelegate {
 
     @objc func showPetShare() {
         guard hasCompletePetImageSet else { return }
-        if let shareWindowController, shareWindowController.window?.isVisible == true {
+        if let shareWindowController, let window = shareWindowController.window, window.isVisible {
             shareWindowController.showWindow(nil)
-            shareWindowController.window?.makeKeyAndOrderFront(nil)
+            presenter.focus(window)
             return
         }
-        let controller = PetShareWindowController(images: petImages, localization: localization)
+        let controller = PetShareWindowController(
+            images: petImages,
+            localization: localization,
+            presenter: presenter
+        )
         controller.onClose = { [weak self] in self?.shareWindowController = nil }
         shareWindowController = controller
         controller.showWindow(nil)

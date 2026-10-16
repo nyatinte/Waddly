@@ -102,6 +102,8 @@ The script adds the Swift Testing macro plugin path when Command Line Tools inst
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames.
 
+AppKit suites run in a real process, so they build the app with `makeTestApp(...)`, which installs the `.invisible` `WindowPresenter`: windows still open, become visible, host sheets, and close as they do in the app, but nothing is drawn. That keeps `mise run test` from painting the pet or the setup wizard over whatever is on screen. Behavior that leaves the app instead—System Settings, Finder, a relaunch—goes through `NSWorkspace` and is not covered by the presenter.
+
 If a deliberate sprite-sheet visual change breaks `spriteSheetExtractionMatchesPixelSnapshots`, run:
 
 ```sh

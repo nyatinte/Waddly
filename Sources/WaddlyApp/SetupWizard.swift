@@ -26,6 +26,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
+    /// The only way this window reaches the screen. Tests pass one that draws nothing.
+    let presenter: WindowPresenter
 
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
@@ -51,6 +53,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
+        presenter: WindowPresenter = .live,
         savedStep: Int? = nil,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
@@ -62,6 +65,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
         self.permission = permission
+        self.presenter = presenter
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
@@ -151,6 +155,13 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         if let window {
             following.recordProgrammaticMove(to: window.frame.origin)
         }
+    }
+
+    /// The wizard is shown from the app and from tests, so the one window it owns goes through the
+    /// presenter here instead of `super`, which would order a real window onto the desktop.
+    override func showWindow(_ sender: Any?) {
+        guard let window else { return }
+        presenter.focus(window)
     }
 
     func windowDidMove(_ notification: Notification) {
