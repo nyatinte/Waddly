@@ -47,7 +47,6 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
             defer: false
         )
         window.title = localization.string(for: .shareTitle)
-        window.appearance = NSAppearance(named: .aqua)
         window.contentView = shareView
         window.center()
         super.init(window: window)

@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. Waddly does not force it above a fullscreen app, and it pulls the pet back into view when a display is disconnected or changed.
-- Right-click the pet and choose “Share Pet” to create a five-second video and a 3×3 sprite sheet. Copy either asset to the clipboard, or click the X logo or “Post on X” to open a composer prefilled with “Copy the video and image, then attach them to your post.” and the `#ShareMyWaddly` hashtag
+- Right-click the pet and choose “Share Pet” to create a five-second video and a 3×3 sprite sheet. Copy either asset to the clipboard, or click the X logo or “Post on X” to open a composer prefilled with “Copy the video and image, then attach them to your post.” and the `#ShareMyWaddly` hashtag. The share window follows macOS light and dark appearance.
 
 ## Use your own pet
 

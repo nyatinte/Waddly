@@ -15,9 +15,9 @@ import Testing
     let window = try #require(app.shareWindowController?.window)
     defer { app.shareWindowController?.close() }
     #expect(window.isVisible)
-    #expect(window.appearance?.name == .aqua)
+    #expect(window.appearance == nil)
     let contentView = try #require(window.contentView)
-    contentView.layoutSubtreeIfNeeded()
+    try assertShareDialogUsesDarkAppearance(window: window, contentView: contentView)
     let postRow = try #require(descendants(of: contentView).first {
         $0.identifier?.rawValue == "share.postRow"
     })
@@ -81,6 +81,16 @@ import Testing
     localization.changeLanguage(.english)
     view.refreshLocalization()
     #expect(copyButtons.allSatisfy { $0.title == "Copy" })
+}
+
+@MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {
+    window.appearance = NSAppearance(named: .darkAqua)
+    contentView.layoutSubtreeIfNeeded()
+    let card = try #require(contentView.subviews.compactMap { $0 as? NSStackView }.first?.arrangedSubviews.first)
+    let cardBackground = try #require(card.layer?.backgroundColor)
+    let cardColor = try #require(NSColor(cgColor: cardBackground))
+    let rgbColor = try #require(cardColor.usingColorSpace(.deviceRGB))
+    #expect(rgbColor.redComponent < 0.5)
 }
 
 @MainActor private func descendants(of view: NSView) -> [NSView] {
