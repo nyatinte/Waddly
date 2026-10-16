@@ -15,8 +15,9 @@ struct Allowlist: Decodable {
 
 /// File mutations whose failure a `try?` silently discards. Names are the called
 /// member, so `removeItem` matches `FileManager.default.removeItem(at:)` and
-/// `write` matches `data.write(to:)`. The check is deliberately syntactic; a
-/// same-named non-file method is a review prompt, not an automatic failure.
+/// `write` matches `data.write(to:)`. The check is deliberately syntactic, so a
+/// same-named non-file method still fails `mise run safety` until it is renamed
+/// or given a reviewed allowlist entry.
 let fileMutationNames: Set<String> = [
     "copyItem", "createDirectory", "createFile", "linkItem", "moveItem",
     "remove", "removeItem", "replaceItemAt", "setAttributes", "trashItem", "write"
@@ -163,8 +164,20 @@ final class SafetyVisitor: SyntaxVisitor {
     }
 
     private func calledMemberName(_ expression: ExprSyntax) -> String? {
+        if let awaitExpr = expression.as(AwaitExprSyntax.self) {
+            return calledMemberName(awaitExpr.expression)
+        }
+        if let inner = singleElementTuple(expression) {
+            return calledMemberName(inner)
+        }
         guard let call = expression.as(FunctionCallExprSyntax.self) else { return nil }
         return call.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.text
+    }
+
+    private func singleElementTuple(_ expression: ExprSyntax) -> ExprSyntax? {
+        guard let tuple = expression.as(TupleExprSyntax.self) else { return nil }
+        guard tuple.elements.count == 1, let element = tuple.elements.first else { return nil }
+        return element.expression
     }
 
     private func add(_ rule: String, _ node: some SyntaxProtocol, _ message: String) {
