@@ -13,6 +13,25 @@ struct Allowlist: Decodable {
     let rules: [String: [String]]
 }
 
+/// File mutations whose failure a `try?` silently discards. Names are the called
+/// member, so `removeItem` matches `FileManager.default.removeItem(at:)` and
+/// `write` matches `data.write(to:)`. The check is deliberately syntactic; a
+/// same-named non-file method is a review prompt, not an automatic failure.
+let fileMutationNames: Set<String> = [
+    "copyItem", "createDirectory", "createFile", "linkItem", "moveItem",
+    "remove", "removeItem", "replaceItemAt", "setAttributes", "trashItem", "write"
+]
+
+/// Compiler flag fragments that disable a Swift safety guarantee. Only
+/// `Package.swift` manifests can carry them today, but the check runs over every
+/// scanned source so a manifest is covered once it is in the scan path.
+let unsafeCompilerFlagFragments = [
+    "-Ounchecked",
+    "-enforce-exclusivity=unchecked",
+    "-strict-concurrency=minimal",
+    "-suppress-warnings"
+]
+
 final class SafetyVisitor: SyntaxVisitor {
     private let file: String
     private let locations: SourceLocationConverter
@@ -83,6 +102,9 @@ final class SafetyVisitor: SyntaxVisitor {
         if called.contains("Unmanaged") {
             add("unsafe-pointer", node, "Review Unmanaged ownership and lifetime; document the audited boundary.")
         }
+        if called == "unsafeFlags" || called.hasSuffix(".unsafeFlags") {
+            add("unsafe-compiler-flags", node, "Review unsafeFlags; they bypass SwiftPM safety checks.")
+        }
         if called == "MainActor.assumeIsolated" {
             add("actor-assumption", node, "Review MainActor.assumeIsolated and document the executor guarantee.")
         }
@@ -117,6 +139,34 @@ final class SafetyVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    override func visit(_ node: CatchClauseSyntax) -> SyntaxVisitorContinueKind {
+        if node.body.statements.isEmpty {
+            add("empty-catch", node, "Handle the error; an empty catch discards it silently.")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: TryExprSyntax) -> SyntaxVisitorContinueKind {
+        guard node.questionOrExclamationMark?.text == "?" else { return .visitChildren }
+        if let name = calledMemberName(node.expression), fileMutationNames.contains(name) {
+            add("silenced-file-mutation", node, "Handle the failed file mutation; try? discards the error.")
+        }
+        return .visitChildren
+    }
+
+    override func visit(_ node: StringLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+        let literal = node.trimmedDescription
+        if let fragment = unsafeCompilerFlagFragments.first(where: { literal.contains($0) }) {
+            add("unsafe-compiler-flags", node, "Review compiler flag \(fragment); it weakens safety.")
+        }
+        return .visitChildren
+    }
+
+    private func calledMemberName(_ expression: ExprSyntax) -> String? {
+        guard let call = expression.as(FunctionCallExprSyntax.self) else { return nil }
+        return call.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.text
+    }
+
     private func add(_ rule: String, _ node: some SyntaxProtocol, _ message: String) {
         let location = locations.location(for: node.positionAfterSkippingLeadingTrivia)
         diagnostics.append(Diagnostic(rule: rule, file: file, line: location.line, message: message))
@@ -129,6 +179,10 @@ func printUsage() {
 
 func swiftFiles(in path: String) -> [String] {
     let url = URL(fileURLWithPath: path, relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+    var isDirectory: ObjCBool = false
+    if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), !isDirectory.boolValue {
+        return url.pathExtension == "swift" ? [url.path] : []
+    }
     guard let enumerator = FileManager.default.enumerator(
         at: url,
         includingPropertiesForKeys: [.isRegularFileKey],
