@@ -6,24 +6,14 @@ import WaddlyCore
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate, ObservableObject {
     /// Two setup steps, then a completion screen that hands the pet over to the desktop.
-    enum Step: Int, CaseIterable {
+    enum Step: Int {
         case pet
         case monitoring
         case completed
-
-        static let visibleSteps: [Step] = [.pet, .monitoring]
-
-        var titleKey: LocalizationKey {
-            switch self {
-            case .pet: .setupStepPet
-            case .monitoring, .completed: .setupStepMonitoring
-            }
-        }
     }
 
     let localization: LocalizationController
     let promptResourcesURL: URL?
-    let demoPetURL: URL?
 
     var prompt: String {
         SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
@@ -68,7 +58,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     ) {
         self.localization = localization
         self.promptResourcesURL = promptResourcesURL
-        self.demoPetURL = demoPetURL
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
@@ -76,7 +65,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
-        demoImages = SetupWizardController.loadDemoImages(from: demoPetURL)
+        demoImages = Self.loadDemoImages(from: demoPetURL)
 
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: SetupMetrics.contentSize),

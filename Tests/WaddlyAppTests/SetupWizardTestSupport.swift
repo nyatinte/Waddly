@@ -16,12 +16,6 @@ enum SetupWizardFixture {
     }
 
     @MainActor
-    static func optionCard(_ action: String, in content: NSView) throws -> SetupOptionCard {
-        try #require(descendants(of: content).compactMap { $0 as? SetupOptionCard }
-            .first { $0.actionSelector == NSSelectorFromString(action) })
-    }
-
-    @MainActor
     static func button(_ action: String, in content: NSView) throws -> NSButton {
         try #require(descendants(of: content).compactMap { $0 as? NSButton }
             .first { $0.action == NSSelectorFromString(action) })
