@@ -1,28 +1,19 @@
 import AppKit
+import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
 
 @MainActor
-final class SetupWizardController: NSWindowController, NSWindowDelegate {
+final class SetupWizardController: NSWindowController, NSWindowDelegate, ObservableObject {
     /// Two setup steps, then a completion screen that hands the pet over to the desktop.
-    enum Step: Int, CaseIterable {
+    enum Step: Int {
         case pet
         case monitoring
         case completed
-
-        static let visibleSteps: [Step] = [.pet, .monitoring]
-
-        var titleKey: LocalizationKey {
-            switch self {
-            case .pet: .setupStepPet
-            case .monitoring, .completed: .setupStepMonitoring
-            }
-        }
     }
 
     let localization: LocalizationController
     let promptResourcesURL: URL?
-    let demoPetURL: URL?
 
     var prompt: String {
         SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
@@ -41,31 +32,16 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     let onShowOnDesktop: @MainActor () -> Void
     let onClose: @MainActor () -> Void
 
-    let stepIndicator = SetupStepIndicator(frame: .zero)
-    let leftContainer = NSView()
     let previewPane = SetupPreviewPane(frame: .zero)
-    let completionStage = NSView()
-    let completionPetView = PixelImageView()
-    lazy var completionPlayer = PetPreviewPlayer(imageView: completionPetView)
-    let backButton = NSButton(title: "", target: nil, action: nil)
-    let laterButton = NSButton(title: "", target: nil, action: nil)
-    let nextButton = NSButton(title: "", target: nil, action: nil)
-
-    var leftLeadingConstraint: NSLayoutConstraint?
-    var leftCenterConstraint: NSLayoutConstraint?
-    var leftWidthConstraint: NSLayoutConstraint?
-    var previewWidthConstraint: NSLayoutConstraint?
-    var previewHorizontalConstraints: [NSLayoutConstraint] = []
-    private var lastRenderedStep: Step?
     var demoImages: PetImageSet?
 
-    var currentStep = Step.pet
-    var isShowingChatGPTGuide = false
-    var didRegisterPet = false
-    var importedFileName: String?
-    var didFailCopy = false
-    var didAttemptCopy = false
-    var isShowingTroubleshooting = false
+    @Published var currentStep = Step.pet
+    @Published var isShowingChatGPTGuide = false
+    @Published var didRegisterPet = false
+    @Published var importedFileName: String?
+    @Published var didFailCopy = false
+    @Published var didAttemptCopy = false
+    @Published var isShowingTroubleshooting = false
 
     init(
         localization: LocalizationController,
@@ -82,7 +58,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
     ) {
         self.localization = localization
         self.promptResourcesURL = promptResourcesURL
-        self.demoPetURL = demoPetURL
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
@@ -90,7 +65,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
-        demoImages = SetupWizardController.loadDemoImages(from: demoPetURL)
+        demoImages = Self.loadDemoImages(from: demoPetURL)
 
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: SetupMetrics.contentSize),
@@ -187,7 +162,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
-        completionPlayer.stop()
+        window?.contentView = nil
+        window?.delegate = nil
         onClose()
     }
 
@@ -202,92 +178,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate {
 
 extension SetupWizardController {
     func renderCurrentStep() {
-        let page: NSView = switch currentStep {
-        case .pet: makePetPage()
-        case .monitoring: makeMonitoringPage()
-        case .completed: makeCompletedPage()
-        }
-        leftContainer.subviews.forEach { $0.removeFromSuperview() }
-        page.translatesAutoresizingMaskIntoConstraints = false
-        leftContainer.addSubview(page)
-        NSLayoutConstraint.activate([
-            page.leadingAnchor.constraint(equalTo: leftContainer.leadingAnchor),
-            page.trailingAnchor.constraint(equalTo: leftContainer.trailingAnchor),
-            page.topAnchor.constraint(equalTo: leftContainer.topAnchor),
-            page.bottomAnchor.constraint(lessThanOrEqualTo: leftContainer.bottomAnchor)
-        ])
-        applyColumnLayout()
-        updateHeader()
-        updateFooter()
         updatePreview()
-        fadeInPageIfStepChanged()
-    }
-
-    /// A short cross-fade between steps; skipped when the system asks for reduced motion.
-    private func fadeInPageIfStepChanged() {
-        let stepChanged = lastRenderedStep != currentStep
-        let isFirstRender = lastRenderedStep == nil
-        lastRenderedStep = currentStep
-        guard stepChanged, !isFirstRender, !MotionPreference.isReduced else { return }
-        leftContainer.alphaValue = 0
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
-            leftContainer.animator().alphaValue = 1
-        }
-    }
-
-    /// The completion screen is centred and compact instead of keeping the two-column split.
-    private func applyColumnLayout() {
-        let isCompact = currentStep == .completed
-        previewPane.isHidden = isCompact
-        leftLeadingConstraint?.isActive = !isCompact
-        leftCenterConstraint?.isActive = isCompact
-        // The pane keeps a fixed 330pt only while it is visible; the compact screen frees it.
-        previewHorizontalConstraints.forEach { $0.isActive = !isCompact }
-        leftWidthConstraint?.constant = isCompact ? 440 : SetupMetrics.leftColumnWidth
-    }
-
-    private func updateHeader() {
-        stepIndicator.isHidden = currentStep == .completed
-        guard currentStep != .completed else { return }
-        stepIndicator.configure(
-            titles: Step.visibleSteps.map { localizedString($0.titleKey) },
-            currentIndex: currentStep.rawValue
-        )
-    }
-
-    private func updateFooter() {
-        backButton.title = localizedString(.setupBack)
-        backButton.isHidden = currentStep == .pet
-        switch currentStep {
-        case .pet:
-            nextButton.title = localizedString(.setupNext)
-            nextButton.isEnabled = hasImage
-            nextButton.isHidden = false
-        case .monitoring:
-            // While reactions are not working, the column owns the primary action and the footer only
-            // offers the escape, so Next never competes with "Enable Input Monitoring".
-            nextButton.isHidden = !isMonitoringReady
-            nextButton.title = localizedString(.setupNext)
-            nextButton.isEnabled = true
-            laterButton.isHidden = isMonitoringReady
-        case .completed:
-            nextButton.isHidden = false
-            nextButton.title = localizedString(.setupShowOnDesktop)
-            nextButton.isEnabled = true
-            laterButton.isHidden = true
-        }
-        if currentStep == .pet {
-            laterButton.isHidden = true
-        }
-        window?.defaultButtonCell = nextButton.isHidden ? nil : nextButton.cell as? NSButtonCell
+        objectWillChange.send()
     }
 
     private func updatePreview() {
-        guard currentStep != .completed else {
-            updateCompletionPreview()
-            return
-        }
         if isShowingGuide {
             previewPane.showDropGuide()
             return
@@ -303,17 +198,6 @@ extension SetupWizardController {
                 message: localizedString(.setupImageMissing),
                 caption: ""
             )
-        }
-    }
-
-    private func updateCompletionPreview() {
-        let images = currentPetImages()
-        if images.isComplete {
-            completionPlayer.setImages(images)
-            completionPlayer.playLoop()
-        } else {
-            completionPlayer.stop()
-            completionPetView.image = images[.idle].first
         }
     }
 

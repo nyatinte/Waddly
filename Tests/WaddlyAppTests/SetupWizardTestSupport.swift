@@ -16,18 +16,6 @@ enum SetupWizardFixture {
     }
 
     @MainActor
-    static func optionCard(_ action: String, in content: NSView) throws -> SetupOptionCard {
-        try #require(descendants(of: content).compactMap { $0 as? SetupOptionCard }
-            .first { $0.actionSelector == NSSelectorFromString(action) })
-    }
-
-    @MainActor
-    static func button(_ action: String, in content: NSView) throws -> NSButton {
-        try #require(descendants(of: content).compactMap { $0 as? NSButton }
-            .first { $0.action == NSSelectorFromString(action) })
-    }
-
-    @MainActor
     static func makeWizard(
         language: AppLanguage = .japanese,
         state: State = State(),
@@ -85,18 +73,6 @@ enum SetupWizardFixture {
     @MainActor
     static func descendants(of view: NSView) -> [NSView] {
         [view] + view.subviews.flatMap { descendants(of: $0) }
-    }
-
-    /// Waits for an async wizard action to settle without hard-coding a delay.
-    @MainActor
-    static func waitUntil(_ condition: () -> Bool, attempts: Int = 400) async throws {
-        for _ in 0 ..< attempts {
-            if condition() {
-                return
-            }
-            try await Task.sleep(for: .milliseconds(5))
-        }
-        Issue.record("condition never became true")
     }
 
     @MainActor

@@ -90,6 +90,8 @@ You can also create the sprite sheet by hand.
 
 Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. Animation Settings… adds several PNGs per animation.
 
+Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Use **Setup Guide…** for Input Monitoring help and **Animation Settings…** to edit its images. The status menu offers the same controls.
+
 Images are stored on your Mac as individual PNG frames. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
 
 ## Privacy
