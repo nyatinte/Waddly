@@ -34,6 +34,8 @@ extension SetupWizardController {
     /// All step changes funnel through here so the saved step always matches the screen.
     func setStep(_ step: Step?) {
         currentStep = step ?? .pet
+        // The inline import error belongs to the step where the drop happened, not the next one.
+        didFailImport = false
         onStepChange(step?.rawValue)
         renderCurrentStep()
     }

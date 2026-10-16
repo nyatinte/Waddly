@@ -20,9 +20,16 @@ struct SetupWizardScreen: View {
             }
 
             HStack(alignment: .top, spacing: 24) {
-                page
-                    .frame(width: 410, alignment: .leading)
-                    .frame(maxHeight: .infinity, alignment: .topLeading)
+                VStack(alignment: .leading, spacing: 12) {
+                    // Window-wide drops stay live on every step, so the failure has to be visible
+                    // here too; `setStep` clears it when the user moves on.
+                    if controller.didFailImport {
+                        errorMessage(.petImportErrorMessage)
+                    }
+                    page
+                }
+                .frame(width: 410, alignment: .leading)
+                .frame(maxHeight: .infinity, alignment: .topLeading)
                 SetupPreviewHost(pane: controller.previewPane)
                     .frame(width: 330)
                     .frame(maxHeight: .infinity)
@@ -60,9 +67,6 @@ private extension SetupWizardScreen {
                 chatGPTGuideContent
             } else {
                 petImportOptions
-            }
-            if controller.didFailImport {
-                errorMessage(.petImportErrorMessage)
             }
         }
     }

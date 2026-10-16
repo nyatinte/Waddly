@@ -19,10 +19,14 @@ import WaddlyCore
     }
 
     @Test func unreadableSheetLeavesThePreviousSetAlone() async throws {
-        let wizard = try Fixture.makeWizard(previewResult: nil)
+        let state = Fixture.State()
+        let previous = try Fixture.sheetImages()
+        state.images = previous
+        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
         defer { wizard.close() }
         try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(!wizard.hasImage)
+        #expect(wizard.hasImage)
+        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
         #expect(!wizard.didRegisterPet)
         #expect(wizard.currentStep == .pet)
     }

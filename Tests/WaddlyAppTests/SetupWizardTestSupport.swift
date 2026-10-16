@@ -68,6 +68,7 @@ enum SetupWizardFixture {
             savedStep: savedStep,
             pasteboard: pasteboard,
             openBrowser: openBrowser,
+            announce: { state.announcements.append($0) },
             onStepChange: onStepChange,
             onShowOnDesktop: onShowOnDesktop,
             onClose: {
@@ -100,5 +101,7 @@ enum SetupWizardFixture {
         var receiving = true
         var tapRestarted = 0
         var settingsOpened = 0
+        /// Messages the wizard asked to announce; the fixture records them instead of speaking.
+        var announcements: [String] = []
     }
 }

@@ -26,9 +26,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
     }
 
-    /// Reads a sheet without saving it, so the wizard can review it first.
+    /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
-    /// Commits the reviewed set.
+    /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
     let onConfirmImage: @MainActor (PetImageSet) async -> Bool
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
@@ -37,6 +37,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let pasteboard: NSPasteboard
     /// Opens the ChatGPT URL. Injectable so a test can prove the truthful failure state.
     let openBrowser: @MainActor (URL) -> Bool
+    /// Announces an inline failure. Injectable so tests prove the call without posting real speech.
+    let announce: @MainActor (String) -> Void
 
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
@@ -66,6 +68,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         savedStep: Int? = nil,
         pasteboard: NSPasteboard = .general,
         openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
+        announce: @escaping @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
         onClose: @escaping @MainActor () -> Void
@@ -78,6 +81,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.permission = permission
         self.pasteboard = pasteboard
         self.openBrowser = openBrowser
+        self.announce = announce
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
@@ -189,6 +193,19 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
               frames.isComplete
         else { return nil }
         return frames
+    }
+
+    /// The native macOS announcement API. The wizard calls it only when an inline error appears, so
+    /// VoiceOver hears the reason once; re-rendering never re-announces.
+    static func postAccessibilityAnnouncement(_ message: String) {
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: NSNumber(value: NSAccessibilityPriorityLevel.high.rawValue)
+            ]
+        )
     }
 }
 

@@ -14,6 +14,7 @@ extension SetupWizardController {
             guard let images = await onPreviewImage(url) else {
                 // Nothing is written, the page stays put, and the failure is explained in place.
                 didFailImport = true
+                announce(localizedString(.petImportErrorMessage))
                 renderCurrentStep()
                 return
             }
@@ -52,17 +53,23 @@ extension SetupWizardController {
     @objc func copyPromptAndOpenChatGPT() {
         pasteboard.clearContents()
         guard pasteboard.setString(prompt, forType: .string) else {
-            promptFeedback = .copyFailed
-            renderCurrentStep()
+            reportPromptFeedback(.copyFailed)
             return
         }
         guard let url = URL(string: "https://chatgpt.com/") else {
-            promptFeedback = .copied
-            renderCurrentStep()
+            reportPromptFeedback(.copied)
             return
         }
         // The copy already succeeded, so a browser failure is its own truthful message.
-        promptFeedback = openBrowser(url) ? .copied : .openFailed
+        reportPromptFeedback(openBrowser(url) ? .copied : .openFailed)
+    }
+
+    /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.
+    private func reportPromptFeedback(_ feedback: PromptActionFeedback) {
+        promptFeedback = feedback
+        if promptFeedbackIsError, let key = promptFeedbackKey {
+            announce(localizedString(key))
+        }
         renderCurrentStep()
     }
 
