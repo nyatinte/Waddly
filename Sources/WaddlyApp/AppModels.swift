@@ -112,11 +112,3 @@ extension PetImageCategory {
         }
     }
 }
-
-func moving<Element>(_ elements: [Element], from source: Int, to destination: Int) -> [Element]? {
-    guard elements.indices.contains(source), elements.indices.contains(destination) else { return nil }
-    var result = elements
-    let item = result.remove(at: source)
-    result.insert(item, at: destination)
-    return result
-}
