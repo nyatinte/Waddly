@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import WaddlyCore
 
 extension AppDelegate {
@@ -124,9 +125,7 @@ extension AppDelegate {
     }
 
     func imageSetDidChange(resetActivity: Bool = false) {
-        for category in PetImageCategory.allCases {
-            imageRows[category]?.setImages(thumbnails(for: category))
-        }
+        animationSettingsModel?.setThumbnails(currentThumbnails())
         guard hasCompletePetImageSet else {
             panel.orderOut(nil)
             animationController.imageSetDidChange(resetActivity: resetActivity)
@@ -138,6 +137,16 @@ extension AppDelegate {
 
     private func thumbnails(for category: PetImageCategory) -> [NSImage] {
         petImages[category].map { imageThumbnails[ObjectIdentifier($0)] ?? $0 }
+    }
+
+    /// Snapshots the current images as thumbnails for the SwiftUI model, keeping the editor in sync
+    /// with the pet set while it is open.
+    private func currentThumbnails() -> [PetImageCategory: [AnimationSettingsThumbnail]] {
+        var result: [PetImageCategory: [AnimationSettingsThumbnail]] = [:]
+        for category in PetImageCategory.allCases {
+            result[category] = thumbnails(for: category).map(AnimationSettingsThumbnail.init)
+        }
+        return result
     }
 
     private func showPetImageImportError() async {
@@ -229,13 +238,13 @@ extension AppDelegate {
     @objc func showImageSettings() {
         if imageSettingsWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 760, height: 650),
+                contentRect: NSRect(x: 0, y: 0, width: 760, height: 700),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
             )
             window.title = localizedString(.imagesWindowTitle)
-            window.minSize = NSSize(width: 620, height: 670)
+            window.minSize = NSSize(width: 620, height: 640)
             window.isReleasedWhenClosed = false
 
             imageSettingsWindow = window
@@ -250,53 +259,39 @@ extension AppDelegate {
     func refreshImageSettingsLocalization() {
         guard let window = imageSettingsWindow else { return }
         window.title = localizedString(.imagesWindowTitle)
-        imageRows.removeAll()
-        window.contentView = makeImageSettingsContent()
+        animationSettingsModel?.refreshLocalization()
     }
 
     private func makeImageSettingsContent() -> NSView {
-        let content = NSView()
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(stack)
+        let model = makeAnimationSettingsModel()
+        animationSettingsModel = model
+        return NSHostingView(rootView: AnimationSettingsView(model: model))
+    }
 
-        let note = NSTextField(wrappingLabelWithString: localizedString(.imagesInstructions))
-        note.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(note)
-        note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-        for category in PetImageCategory.allCases {
-            let row = PetImageCategoryRowView(
-                category: category,
-                images: thumbnails(for: category),
-                localization: localization
-            )
-            row.onAdd = { [weak self] in self?.chooseImages(for: category) }
-            row.onDrop = { [weak self] in self?.addImages($0, to: category) }
-            row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }
-            row.onMove = { [weak self] in self?.moveImage(from: $0, to: $1, in: category) }
-            imageRows[category] = row
-            stack.addArrangedSubview(row)
-            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    private func makeAnimationSettingsModel() -> AnimationSettingsModel {
+        let model = AnimationSettingsModel(
+            thumbnailsByCategory: currentThumbnails(),
+            localization: localization
+        )
+        model.onAdd = { [weak self] category in self?.chooseImages(for: category) }
+        model.onDrop = { [weak self] category, urls in self?.addImages(urls, to: category) }
+        model.onRemove = { [weak self] category, index in
+            _ = self?.removeImage(at: index, from: category)
         }
-
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
-            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -20)
-        ])
-        return content
+        model.onMove = { [weak self] category, source, destination in
+            _ = self?.moveImage(from: source, to: destination, in: category)
+        }
+        return model
     }
 
     func closeImageSettingsWindow() {
+        // Drop the first responder before the content so the window does not keep the hosting view
+        // (or any of its controls) alive through the responder chain.
+        imageSettingsWindow?.makeFirstResponder(nil)
         imageSettingsWindow?.contentView = nil
         imageSettingsWindow?.delegate = nil
         imageSettingsWindow = nil
-        imageRows.removeAll()
+        animationSettingsModel = nil
     }
 
     private func chooseImages(for category: PetImageCategory) {

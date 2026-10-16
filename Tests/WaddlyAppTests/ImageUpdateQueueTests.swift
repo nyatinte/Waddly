@@ -44,7 +44,7 @@ import WaddlyCore
     #expect(events == [1, 2, 3])
 }
 
-@Test @MainActor func committedImageRowsStayCorrectWhileCleanupIsSuspended() async throws {
+@Test @MainActor func committedImageEditsStayCorrectWhileCleanupIsSuspended() async throws {
     _ = NSApplication.shared
     let domain = "WaddlyTests-\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: domain))
@@ -54,7 +54,7 @@ import WaddlyCore
     let app = AppDelegate(settings: AppSettings(defaults: defaults))
     app.petImagesDirectoryURL = directory
     let frames = try makeImageFrames()
-    let row = try prepareImageRow(frames, app: app, directory: directory)
+    let model = try prepareImageModel(frames, app: app, directory: directory)
     let updated = PetImageSet([.idle: Array(frames.dropFirst())])
     let (started, startSignal) = AsyncStream<Void>.makeStream()
     let (release, releaseSignal) = AsyncStream<Void>.makeStream()
@@ -77,18 +77,19 @@ import WaddlyCore
     }
     var iterator = started.makeAsyncIterator()
     _ = await iterator.next()
-    let thumbnails = imageThumbnails(in: row)
+    let thumbnails = model.thumbnails(for: .idle).map(\.image)
     #expect(thumbnails.count == 2)
     let visibleB = try #require(app.imageThumbnails[ObjectIdentifier(frames[1])])
-    #expect(thumbnails.first?.image === visibleB)
-    let visibleBIndex = try #require(thumbnails.firstIndex { $0.image === visibleB })
+    #expect(thumbnails.first === visibleB)
+    let visibleBIndex = try #require(thumbnails.firstIndex { $0 === visibleB })
     let removal = try #require(app.removeImage(at: visibleBIndex, from: .idle))
     releaseSignal.yield()
     #expect(await first.value)
     await removal.value
     #expect(app.petImages[.idle].count == 1)
     #expect(app.petImages[.idle].first === frames[2])
-    #expect(imageThumbnails(in: row).first?.image === app.imageThumbnails[ObjectIdentifier(frames[2])])
+    #expect(model.thumbnails(for: .idle).first?.image === app.imageThumbnails[ObjectIdentifier(frames[2])])
+    // The manifest also lives in the directory, so count only the frame files.
     let framesOnDisk = try FileManager.default.contentsOfDirectory(atPath: directory.path)
         .filter { $0.hasSuffix(".png") }
     #expect(framesOnDisk.count == 1)
@@ -97,11 +98,19 @@ import WaddlyCore
     app.animationController.shutdown()
 }
 
-@MainActor private func imageThumbnails(in view: NSView) -> [NSImageView] {
-    if let imageView = view as? NSImageView {
-        return [imageView]
-    }
-    return view.subviews.flatMap { imageThumbnails(in: $0) }
+@MainActor private func prepareImageModel(
+    _ frames: [NSImage], app: AppDelegate, directory: URL
+) throws -> AnimationSettingsModel {
+    let previous = PetImageSet([.idle: frames])
+    app.importedImages = previous
+    let storage = PetImageStorage(directory: directory)
+    app.storedImageFiles = try storage.stage(previous, replacing: PetImageSet(), files: [:])
+    let model = AnimationSettingsModel(
+        thumbnailsByCategory: [.idle: frames.map(AnimationSettingsThumbnail.init)],
+        localization: app.localization
+    )
+    app.animationSettingsModel = model
+    return model
 }
 
 private func makeImageFrames() throws -> [NSImage] {
@@ -111,16 +120,4 @@ private func makeImageFrames() throws -> [NSImage] {
     ))
     let raster = try #require(context.makeImage())
     return (0 ..< 3).map { _ in NSImage(cgImage: raster, size: NSSize(width: 2, height: 2)) }
-}
-
-@MainActor private func prepareImageRow(
-    _ frames: [NSImage], app: AppDelegate, directory: URL
-) throws -> PetImageCategoryRowView {
-    let previous = PetImageSet([.idle: frames])
-    app.importedImages = previous
-    let storage = PetImageStorage(directory: directory)
-    app.storedImageFiles = try storage.stage(previous, replacing: PetImageSet(), files: [:])
-    let row = PetImageCategoryRowView(category: .idle, images: frames, localization: app.localization)
-    app.imageRows[.idle] = row
-    return row
 }

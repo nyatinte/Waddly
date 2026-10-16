@@ -127,17 +127,39 @@ import WaddlyCore
         #expect(app.setupWizardController?.window?.isVisible == true)
     }
 
-    @Test func closingAnimationSettingsReleasesItsHostedContentAndRows() throws {
+    /// Closing releases the app's references and detaches the hosted SwiftUI view. Immediate
+    /// NSHostingView deallocation cannot be asserted: SwiftUI retains every hosting view past window
+    /// close (verified with a bare NSHostingView<Text>), so that framework retention is reported here
+    /// rather than asserted. Reopening builds a fresh model and shows the current pet images.
+    @Test func animationSettingsReleaseOnCloseAndRebuildOnReopen() async throws {
         let fixture = try AppTestFixture()
         defer { fixture.close() }
         let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
         app.showImageSettings()
         let window = try #require(app.imageSettingsWindow)
-        #expect(!app.imageRows.isEmpty)
+        #expect(window.contentView is NSHostingView<AnimationSettingsView>)
+        let first = try #require(app.animationSettingsModel)
+        #expect(first.thumbnails(for: .idle).count == 2)
+        #expect(first.thumbnails(for: .typing).count == 4)
+        #expect(first.thumbnails(for: .sleep).count == 2)
+        #expect(first.thumbnails(for: .enter).count == 1)
+
+        // An edit while the editor is open flows through the same persistence path and refreshes
+        // the model without reopening the window.
+        await app.removeImage(at: 0, from: .idle)?.value
+        #expect(first.thumbnails(for: .idle).count == 1)
+        #expect(app.petImages[.idle].count == 1)
+
         window.close()
         #expect(app.imageSettingsWindow == nil)
-        #expect(app.imageRows.isEmpty)
+        #expect(app.animationSettingsModel == nil)
         #expect(window.contentView == nil)
+
+        app.showImageSettings()
+        let second = try #require(app.animationSettingsModel)
+        #expect(second !== first)
+        #expect(second.thumbnails(for: .idle).count == 1)
     }
 
     /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.

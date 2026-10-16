@@ -116,28 +116,6 @@ typealias Fixture = SetupWizardFixture
         #expect(!wizard.isShowingGuide)
     }
 
-    @Test func imageRowsKeepTheirScrollViewAsAnInputTarget() throws {
-        let wizard = try Fixture.makeWizard()
-        defer { wizard.close() }
-        let row = PetImageCategoryRowView(
-            category: .typing,
-            images: (0 ..< 12).map { _ in NSImage(size: NSSize(width: 2, height: 2)) },
-            localization: wizard.localization
-        )
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 138),
-            styleMask: [.titled], backing: .buffered, defer: false
-        )
-        window.isReleasedWhenClosed = false
-        defer { window.close() }
-        window.contentView = row
-        row.layoutSubtreeIfNeeded()
-        let scroll = try #require(Fixture.descendants(of: row).compactMap { $0 as? NSScrollView }.first)
-        let point = scroll.convert(NSPoint(x: scroll.bounds.midX, y: scroll.bounds.midY), to: row)
-        let hit = try #require(row.hitTest(point))
-        #expect(hit === scroll || hit.isDescendant(of: scroll))
-    }
-
     @Test func closingTheWindowStopsPreviewAndAReopenedWizardCanResumeIt() throws {
         let state = Fixture.State()
         let wizard = try Fixture.makeWizard(state: state, demoURL: Fixture.sheetURL())

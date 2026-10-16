@@ -174,3 +174,62 @@ import WaddlyCore
     #expect(moving(elements, from: 2, to: 0) == ["third", "first", "second"])
     #expect(moving(["only"], from: 1, to: 0) == nil)
 }
+
+@Test @MainActor func animationSettingsModelForwardsEditorActionsAndTracksThumbnails() throws {
+    let suiteName = "WaddlyTests.animationSettings.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let localization = LocalizationController(settings: AppSettings(defaults: defaults))
+    let first = NSImage(size: NSSize(width: 2, height: 2))
+    let second = NSImage(size: NSSize(width: 2, height: 2))
+    let model = AnimationSettingsModel(
+        thumbnailsByCategory: [.idle: [AnimationSettingsThumbnail(image: first)]],
+        localization: localization
+    )
+
+    var added: PetImageCategory?
+    var dropped: (PetImageCategory, [URL])?
+    var removed: (PetImageCategory, Int)?
+    var movedCategory: PetImageCategory?
+    var movedFrom: Int?
+    var movedTo: Int?
+    model.onAdd = { added = $0 }
+    model.onDrop = { dropped = ($0, $1) }
+    model.onRemove = { removed = ($0, $1) }
+    model.onMove = { category, source, destination in
+        movedCategory = category
+        movedFrom = source
+        movedTo = destination
+    }
+
+    #expect(model.thumbnails(for: .idle).map(\.id) == [ObjectIdentifier(first)])
+    model.add(.typing)
+    model.drop([URL(fileURLWithPath: "/tmp/pet.png")], on: .sleep)
+    model.remove(at: 2, from: .idle)
+    model.move(from: 1, to: 3, in: .enter)
+    #expect(added == .typing)
+    #expect(dropped?.0 == .sleep)
+    #expect(dropped?.1.map(\.lastPathComponent) == ["pet.png"])
+    #expect(removed?.0 == .idle && removed?.1 == 2)
+    #expect(movedCategory == .enter && movedFrom == 1 && movedTo == 3)
+
+    model.setThumbnails([.idle: [AnimationSettingsThumbnail(image: second)]])
+    #expect(model.thumbnails(for: .idle).map(\.id) == [ObjectIdentifier(second)])
+}
+
+/// The editor model must not retain itself once the app drops it: the callbacks AppDelegate wires
+/// capture `self` weakly, and the model holds no self-reference. Immediate NSHostingView release is
+/// a framework concern and is reported separately, not asserted here.
+@Test @MainActor func animationSettingsModelDeallocatesWithoutASelfRetain() throws {
+    let suiteName = "WaddlyTests.animationSettingsRelease.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let localization = LocalizationController(settings: AppSettings(defaults: defaults))
+    weak var released: AnimationSettingsModel?
+    autoreleasepool {
+        let model = AnimationSettingsModel(thumbnailsByCategory: [:], localization: localization)
+        model.onAdd = { _ in }
+        released = model
+    }
+    #expect(released == nil)
+}
