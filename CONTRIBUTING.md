@@ -100,7 +100,7 @@ mise run test
 
 The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path.
 
-The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames.
+The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames. [docs/setup-wizard-qa.md](docs/setup-wizard-qa.md) maps each Setup Guide state to the suite that verifies it and lists the manual checks that are still unverified.
 
 If a deliberate sprite-sheet visual change breaks `spriteSheetExtractionMatchesPixelSnapshots`, run:
 

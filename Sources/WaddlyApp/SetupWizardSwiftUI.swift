@@ -61,6 +61,9 @@ private extension SetupWizardScreen {
             } else {
                 petImportOptions
             }
+            if controller.didFailImport {
+                errorMessage(.petImportErrorMessage)
+            }
         }
     }
 
@@ -97,10 +100,10 @@ private extension SetupWizardScreen {
             .buttonStyle(.borderedProminent)
             .accessibilityLabel(controller.localizedString(.setupCopyAndOpen))
             .accessibilityIdentifier("copyPromptAndOpenChatGPT")
-            Text(controller.didAttemptCopy
-                ? controller.localizedString(controller.didFailCopy ? .setupCopyFailed : .setupPromptCopied)
-                : " ")
-                .font(.caption).foregroundStyle(controller.didFailCopy ? .red : .secondary)
+            Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
+                .font(.caption)
+                .foregroundStyle(controller.promptFeedbackIsError ? .red : .secondary)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             bodyText(.setupWhenReady)
             Button(controller.localizedString(.setupChoosePNG), action: controller.importFromPanel)

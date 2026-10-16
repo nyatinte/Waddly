@@ -12,6 +12,13 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         case completed
     }
 
+    /// Inline result of "copy the prompt and open ChatGPT". `nil` means the user has not tried yet.
+    enum PromptActionFeedback: Equatable {
+        case copied
+        case copyFailed
+        case openFailed
+    }
+
     let localization: LocalizationController
     let promptResourcesURL: URL?
 
@@ -26,6 +33,10 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
+    /// The pasteboard the prompt copy writes to. Injectable so tests never touch the system one.
+    let pasteboard: NSPasteboard
+    /// Opens the ChatGPT URL. Injectable so a test can prove the truthful failure state.
+    let openBrowser: @MainActor (URL) -> Bool
 
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
@@ -39,8 +50,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var isShowingChatGPTGuide = false
     @Published var didRegisterPet = false
     @Published var importedFileName: String?
-    @Published var didFailCopy = false
-    @Published var didAttemptCopy = false
+    @Published var promptFeedback: PromptActionFeedback?
+    /// Set when a chosen sheet could not be read, so the page can explain it in place.
+    @Published var didFailImport = false
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -52,6 +64,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         savedStep: Int? = nil,
+        pasteboard: NSPasteboard = .general,
+        openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
         onClose: @escaping @MainActor () -> Void
@@ -62,6 +76,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
         self.permission = permission
+        self.pasteboard = pasteboard
+        self.openBrowser = openBrowser
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose

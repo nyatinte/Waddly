@@ -22,9 +22,11 @@ enum SetupWizardFixture {
         demoURL: URL? = nil,
         savedStep: Int? = nil,
         granted: Bool = false,
+        receiving: Bool = true,
         previewResult: PetImageSet? = nil,
         confirmResult: Bool = false,
         requestPermission: @escaping @MainActor () -> Bool = { false },
+        openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {}
@@ -39,14 +41,17 @@ enum SetupWizardFixture {
         // The wizard no longer knows about CGPreflight or event taps; the service does.
         let permission = PermissionService(
             hasPermission: { state.granted },
-            isReceivingKeys: { state.granted },
+            isReceivingKeys: { state.granted && state.receiving },
             requestAccess: { requestPermission() },
             restartTap: { state.tapRestarted += 1 },
             openSettings: { state.settingsOpened += 1 }
         )
         state.granted = granted
+        state.receiving = receiving
         onPermissionService(permission)
         let resources = try #require(Bundle(url: root().appendingPathComponent("macos")))
+        // A named pasteboard keeps the prompt copy off the system clipboard in every run.
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("WaddlyTests.wizard.\(UUID().uuidString)"))
         return SetupWizardController(
             localization: LocalizationController(settings: settings, resources: resources),
             demoPetURL: demoURL,
@@ -61,6 +66,8 @@ enum SetupWizardFixture {
             currentPetImages: { state.images },
             permission: permission,
             savedStep: savedStep,
+            pasteboard: pasteboard,
+            openBrowser: openBrowser,
             onStepChange: onStepChange,
             onShowOnDesktop: onShowOnDesktop,
             onClose: {
@@ -89,6 +96,8 @@ enum SetupWizardFixture {
         var previewResult: PetImageSet?
         var confirmResult = false
         var granted = false
+        /// Whether the granted app is actually receiving keys; `false` is the restart-required state.
+        var receiving = true
         var tapRestarted = 0
         var settingsOpened = 0
     }

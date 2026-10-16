@@ -10,8 +10,10 @@ extension SetupWizardController {
     func importImage(from url: URL) -> Task<Void, Never> {
         Task { [weak self] in
             guard let self else { return }
+            didFailImport = false
             guard let images = await onPreviewImage(url) else {
-                // The failure alert is raised by the import path; the page itself stays put.
+                // Nothing is written, the page stays put, and the failure is explained in place.
+                didFailImport = true
                 renderCurrentStep()
                 return
             }
@@ -25,15 +27,15 @@ extension SetupWizardController {
 
     @objc func showChatGPTGuide() {
         isShowingChatGPTGuide = true
-        didFailCopy = false
-        didAttemptCopy = false
+        promptFeedback = nil
+        didFailImport = false
         renderCurrentStep()
     }
 
     @objc func changeMethod() {
         isShowingChatGPTGuide = false
-        didFailCopy = false
-        didAttemptCopy = false
+        promptFeedback = nil
+        didFailImport = false
         renderCurrentStep()
     }
 
@@ -48,13 +50,20 @@ extension SetupWizardController {
     }
 
     @objc func copyPromptAndOpenChatGPT() {
-        let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        didAttemptCopy = true
-        didFailCopy = !pasteboard.setString(prompt, forType: .string)
+        guard pasteboard.setString(prompt, forType: .string) else {
+            promptFeedback = .copyFailed
+            renderCurrentStep()
+            return
+        }
+        guard let url = URL(string: "https://chatgpt.com/") else {
+            promptFeedback = .copied
+            renderCurrentStep()
+            return
+        }
+        // The copy already succeeded, so a browser failure is its own truthful message.
+        promptFeedback = openBrowser(url) ? .copied : .openFailed
         renderCurrentStep()
-        guard !didFailCopy, let url = URL(string: "https://chatgpt.com/") else { return }
-        NSWorkspace.shared.open(url)
     }
 
     /// First attempt: ask macOS, then turn the wizard into the drag guide.
