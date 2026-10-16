@@ -6,7 +6,7 @@ private struct PetShareAssets: Sendable {
     let spriteURL: URL
     let movieURL: URL
 
-    static func make(from images: PetImageSet) throws -> PetShareAssets {
+    static func make(from images: PetImageSet, cancellation: PetShareExportCancellation) throws -> PetShareAssets {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("WaddlyShare-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -17,7 +17,7 @@ private struct PetShareAssets: Sendable {
                 throw PetShareExportError.incompleteImageSet
             }
             try png.write(to: spriteURL, options: .atomic)
-            try PetShareExporter.writeMovie(from: images, to: movieURL)
+            try PetShareExporter.writeMovie(from: images, to: movieURL, cancellation: cancellation)
             return PetShareAssets(directory: directory, spriteURL: spriteURL, movieURL: movieURL)
         } catch {
             try? FileManager.default.removeItem(at: directory)
@@ -31,6 +31,7 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     private let images: PetImageSet
     private let localization: LocalizationController
     private let shareView: PetShareDialogView
+    private let cancellation = PetShareExportCancellation()
     private var generationTask: Task<Void, Never>?
     private var assets: PetShareAssets?
     private var isClosed = false
@@ -68,9 +69,10 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     func prepareAssets() {
         guard generationTask == nil else { return }
+        let exportCancellation = cancellation
         generationTask = Task { [weak self, images] in
             let result = await Task.detached(priority: .userInitiated) {
-                Result { try PetShareAssets.make(from: images) }
+                Result { try PetShareAssets.make(from: images, cancellation: exportCancellation) }
             }.value
             guard let self else {
                 if case let .success(assets) = result {
@@ -110,6 +112,9 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         isClosed = true
+        // Stop the encoder itself, not just the task that awaits it: the export polls this token and
+        // removes its partial movie before the temporary directory below disappears.
+        cancellation.cancel()
         generationTask?.cancel()
         shareView.stopPlayback()
         if let assets {

@@ -6,10 +6,10 @@
     ],
     "unchecked-sendable": [
       "Sources/WaddlyApp/AppSettings.swift:4",
-      "Sources/WaddlyCore/PetShareExporter.swift:17"
+      "Sources/WaddlyCore/PetShareExporter.swift:28"
     ],
     "preconcurrency": [
-      "Sources/WaddlyCore/PetShareExporter.swift:2"
+      "Sources/WaddlyCore/PetShareExporter.swift:6"
     ],
     "actor-assumption": [
       "Sources/WaddlyApp/Waddly.swift:153",
