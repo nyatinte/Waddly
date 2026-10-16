@@ -6,7 +6,11 @@ private struct PetShareAssets: Sendable {
     let spriteURL: URL
     let movieURL: URL
 
-    static func make(from images: PetImageSet, cancellation: PetShareExportCancellation) throws -> PetShareAssets {
+    static func make(
+        from images: PetImageSet,
+        cancellation: PetShareExportCancellation,
+        writeMovie: PetShareWindowController.MovieWriter
+    ) throws -> PetShareAssets {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("WaddlyShare-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -17,7 +21,7 @@ private struct PetShareAssets: Sendable {
                 throw PetShareExportError.incompleteImageSet
             }
             try png.write(to: spriteURL, options: .atomic)
-            try PetShareExporter.writeMovie(from: images, to: movieURL, cancellation: cancellation)
+            try writeMovie(images, movieURL, cancellation)
             return PetShareAssets(directory: directory, spriteURL: spriteURL, movieURL: movieURL)
         } catch {
             try? FileManager.default.removeItem(at: directory)
@@ -28,18 +32,29 @@ private struct PetShareAssets: Sendable {
 
 @MainActor
 final class PetShareWindowController: NSWindowController, NSWindowDelegate {
+    /// Writes the dialog's movie. Tests inject a writer that reports when closing cancels generation.
+    typealias MovieWriter = @Sendable (PetImageSet, URL, PetShareExportCancellation) throws -> Void
+
     private let images: PetImageSet
     private let localization: LocalizationController
     private let shareView: PetShareDialogView
+    private let writeMovie: MovieWriter
     private let cancellation = PetShareExportCancellation()
     private var generationTask: Task<Void, Never>?
     private var assets: PetShareAssets?
     private var isClosed = false
     var onClose: (() -> Void)?
 
-    init(images: PetImageSet, localization: LocalizationController) {
+    init(
+        images: PetImageSet,
+        localization: LocalizationController,
+        writeMovie: @escaping MovieWriter = { images, url, cancellation in
+            try PetShareExporter.writeMovie(from: images, to: url, cancellation: cancellation)
+        }
+    ) {
         self.images = images
         self.localization = localization
+        self.writeMovie = writeMovie
         shareView = PetShareDialogView(localization: localization)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 410),
@@ -70,9 +85,16 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     func prepareAssets() {
         guard generationTask == nil else { return }
         let exportCancellation = cancellation
+        let movieWriter = writeMovie
         generationTask = Task { [weak self, images] in
             let result = await Task.detached(priority: .userInitiated) {
-                Result { try PetShareAssets.make(from: images, cancellation: exportCancellation) }
+                Result {
+                    try PetShareAssets.make(
+                        from: images,
+                        cancellation: exportCancellation,
+                        writeMovie: movieWriter
+                    )
+                }
             }.value
             guard let self else {
                 if case let .success(assets) = result {
