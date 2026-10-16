@@ -6,7 +6,7 @@ The required `mise run check` validation runs SwiftLint in strict mode, Swift 6 
 
 `Tools/SwiftSafetyCheck/Allowlist.json` contains only existing source locations that were reviewed while introducing the check. Each entry is tied to a rule and exact line; moving the code requires reviewing and updating the entry. New uses fail CI. Keep any new exception narrow, explain the invariant in the change, and require review.
 
-The current semaphore wait and pixel-buffer ownership path are already tracked for remediation in [#96](https://github.com/nyatinte/Waddly/issues/96). The image test helper also has two exact pointer-use exceptions: it allocates a buffer and releases it with `defer`, and passes that buffer to Core Graphics.
+The movie export no longer needs an exception: `appendMovieFrames` bounds its wait for the writer, and `makeVideoPixelBuffer` unlocks the buffer on every path after a successful lock. The image test helper also has two exact pointer-use exceptions: it allocates a buffer and releases it with `defer`, and passes that buffer to Core Graphics.
 
 `KeyboardMonitor` has four exact `Unmanaged` exceptions for its Core Graphics event-tap bridge. `AppDelegate` retains the monitor, `stop()` removes the run-loop source and invalidates the tap before clearing it, and the callback uses unretained conversions to avoid creating an ownership cycle while returning the event with the callback API's expected ownership.
 
