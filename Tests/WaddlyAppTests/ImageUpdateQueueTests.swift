@@ -61,12 +61,12 @@ import WaddlyCore
     let first = Task {
         await app.queueImageUpdate {
             do {
-                try await app.persistPetImages(updated, cleanup: { storage, old, new in
+                try await app.persistPetImages(updated, cleanup: { storage in
                     startSignal.yield()
                     for await _ in release {
                         break
                     }
-                    await Task.detached { storage.removeObsoleteFiles(from: old, keeping: new) }.value
+                    await Task.detached { _ = try? storage.reconcileFiles() }.value
                 })
                 return true
             } catch {
@@ -89,7 +89,9 @@ import WaddlyCore
     #expect(app.petImages[.idle].count == 1)
     #expect(app.petImages[.idle].first === frames[2])
     #expect(imageThumbnails(in: row).first?.image === app.imageThumbnails[ObjectIdentifier(frames[2])])
-    #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).count == 1)
+    let framesOnDisk = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        .filter { $0.hasSuffix(".png") }
+    #expect(framesOnDisk.count == 1)
     startSignal.finish()
     releaseSignal.finish()
     app.animationController.shutdown()

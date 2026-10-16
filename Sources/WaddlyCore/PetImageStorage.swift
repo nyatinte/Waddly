@@ -5,7 +5,13 @@ import AppKit
 /// The JSON manifest in `directory` is the source of truth for which frame files compose the set.
 /// `readManifest()` returns `nil` until a manifest exists so callers can migrate legacy defaults by
 /// committing one, and `reconcileFiles()` compares the manifest against directory metadata without
-/// decoding images.
+/// decoding images. A missing manifest is `nil`; an explicitly committed empty manifest is `[:]`,
+/// and the two are not interchangeable because `[:]` authorizes removing every frame.
+///
+/// Callers must hold exclusive access to `directory` across the stage → commit → reconcile
+/// transaction; this type takes no lock. `reconcileFiles()` deletes anything the manifest read at
+/// call time does not reference, so a concurrent `stage` could otherwise be collected before its
+/// commit.
 public struct PetImageStorage: Sendable {
     public let directory: URL
 

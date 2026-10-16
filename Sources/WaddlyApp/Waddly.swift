@@ -171,6 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var pendingImageUpdate: Task<Void, Never>?
     var isShuttingDown = false
     var imageLoadFailed = false
+    var imageLoadError: Error?
     var importedImages: PetImageSet?
     var imageThumbnails: [ObjectIdentifier: NSImage] = [:]
     var petImages: PetImageSet {

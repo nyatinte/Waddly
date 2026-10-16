@@ -15,6 +15,8 @@ enum LocalizationKey: String, CaseIterable {
     case imagesMemoryLimit = "images.memoryLimit"
     case imagesMoveLeft = "images.moveLeft"
     case imagesMoveRight = "images.moveRight"
+    case imagesReadErrorMessage = "images.readErrorMessage"
+    case imagesReadErrorTitle = "images.readErrorTitle"
     case imagesRemove = "images.remove"
     case imagesSaveErrorMessage = "images.saveErrorMessage"
     case imagesSaveErrorTitle = "images.saveErrorTitle"
