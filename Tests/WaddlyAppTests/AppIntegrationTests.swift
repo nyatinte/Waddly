@@ -6,7 +6,7 @@ import WaddlyCore
 
 @Suite(.serialized) @MainActor struct AppIntegrationTests {
     @Test func imagesSurviveEditsAndReloadWithoutRewritingRetainedFrames() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         let images = try fixture.exampleImages()
@@ -36,7 +36,7 @@ import WaddlyCore
     }
 
     @Test func cancelingReplacementAndInvalidImportsPreserveSavedImages() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -60,7 +60,7 @@ import WaddlyCore
     }
 
     @Test func missingSavedFrameDoesNotDeleteOrCommitAPartialManifest() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -77,7 +77,7 @@ import WaddlyCore
     }
 
     @Test func menuCommandsUpdatePreferencesAndKeepAnEntryPointVisible() throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         app.buildMenu()
@@ -108,7 +108,7 @@ import WaddlyCore
 
     @Test(arguments: [false, true])
     func dockReopenRestoresControlsWithoutAMenuBar(hasImages: Bool) async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         app.settings.showInMenuBar = false
@@ -122,22 +122,44 @@ import WaddlyCore
         #expect(app.setupWizardController?.window?.isVisible == true)
     }
 
-    @Test func closingAnimationSettingsReleasesItsHostedContentAndRows() throws {
-        let fixture = try Fixture()
+    /// Closing releases the app's references and detaches the hosted SwiftUI view. Immediate
+    /// NSHostingView deallocation cannot be asserted: SwiftUI retains every hosting view past window
+    /// close (verified with a bare NSHostingView<Text>), so that framework retention is reported here
+    /// rather than asserted. Reopening builds a fresh model and shows the current pet images.
+    @Test func animationSettingsReleaseOnCloseAndRebuildOnReopen() async throws {
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
         app.showImageSettings()
         let window = try #require(app.imageSettingsWindow)
-        #expect(!app.imageRows.isEmpty)
+        #expect(window.contentView is NSHostingView<AnimationSettingsView>)
+        let first = try #require(app.animationSettingsModel)
+        #expect(first.thumbnails(for: .idle).count == 2)
+        #expect(first.thumbnails(for: .typing).count == 4)
+        #expect(first.thumbnails(for: .sleep).count == 2)
+        #expect(first.thumbnails(for: .enter).count == 1)
+
+        // An edit while the editor is open flows through the same persistence path and refreshes
+        // the model without reopening the window.
+        await app.removeImage(at: 0, from: .idle)?.value
+        #expect(first.thumbnails(for: .idle).count == 1)
+        #expect(app.petImages[.idle].count == 1)
+
         window.close()
         #expect(app.imageSettingsWindow == nil)
-        #expect(app.imageRows.isEmpty)
+        #expect(app.animationSettingsModel == nil)
         #expect(window.contentView == nil)
+
+        app.showImageSettings()
+        let second = try #require(app.animationSettingsModel)
+        #expect(second !== first)
+        #expect(second.thumbnails(for: .idle).count == 1)
     }
 
     /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
     @Test func dockReopenNeverOpensAnimationSettingsAfterSetup() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -158,7 +180,7 @@ import WaddlyCore
     /// Re-showing an already open guide must not recenter it: the app's own move would look like a
     /// user drag to `GuideFollowing` and stop the guide from following System Settings (#79).
     @Test func reShowingAnOpenGuideKeepsItFollowing() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -192,7 +214,7 @@ import WaddlyCore
 
     /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
     @Test func dockReopenResumesSetupWhenItWasLeftUnfinished() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -213,7 +235,7 @@ import WaddlyCore
     /// (for example, after closing the guide early) must not get setup back on the next launch.
     @Test(arguments: LaunchCase.all)
     func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         if scenario.hasImages {
@@ -227,7 +249,7 @@ import WaddlyCore
     }
 
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
-        let fixture = try Fixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -239,47 +261,48 @@ import WaddlyCore
         #expect(wizard.window?.isVisible == true)
         #expect(app.imageSettingsWindow == nil)
     }
+}
 
-    @MainActor private final class Fixture {
-        let domain = "WaddlyTests.integration.\(UUID().uuidString)"
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let defaults: UserDefaults
-        let app: AppDelegate
-        let exampleURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("assets/examples/nyatinte-bot-3x3.png")
+/// Shared app-under-test harness for the AppKit integration suites.
+@MainActor final class AppIntegrationFixture {
+    let domain = "WaddlyTests.integration.\(UUID().uuidString)"
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let defaults: UserDefaults
+    let app: AppDelegate
+    let exampleURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("assets/examples/nyatinte-bot-3x3.png")
 
-        init() throws {
-            _ = NSApplication.shared
-            defaults = try #require(UserDefaults(suiteName: domain))
-            app = AppDelegate(settings: AppSettings(defaults: defaults))
-            app.settings.registerDefaults()
-            app.petImagesDirectoryURL = directory
-            app.buildPanel()
-            app.buildMenu()
-        }
+    init() throws {
+        _ = NSApplication.shared
+        defaults = try #require(UserDefaults(suiteName: domain))
+        app = AppDelegate(settings: AppSettings(defaults: defaults))
+        app.settings.registerDefaults()
+        app.petImagesDirectoryURL = directory
+        app.buildPanel()
+        app.buildMenu()
+    }
 
-        func exampleImages() throws -> PetImageSet {
-            try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleURL)))
-        }
+    func exampleImages() throws -> PetImageSet {
+        try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleURL)))
+    }
 
-        func savedData() throws -> [String: Data] {
-            let urls = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            return try Dictionary(uniqueKeysWithValues: urls.map { try ($0.lastPathComponent, Data(contentsOf: $0)) })
-        }
+    func savedData() throws -> [String: Data] {
+        let urls = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+        return try Dictionary(uniqueKeysWithValues: urls.map { try ($0.lastPathComponent, Data(contentsOf: $0)) })
+    }
 
-        func close() {
-            app.isShuttingDown = true
-            app.animationController.shutdown()
-            app.setupWizardController?.close()
-            app.imageSettingsWindow?.close()
-            // Closing setup can start monitoring; stop it after closing all windows.
-            app.monitor.stop()
-            app.panel.close()
-            NSStatusBar.system.removeStatusItem(app.statusItem)
-            defaults.removePersistentDomain(forName: domain)
-            try? FileManager.default.removeItem(at: directory)
-        }
+    func close() {
+        app.isShuttingDown = true
+        app.animationController.shutdown()
+        app.setupWizardController?.close()
+        app.imageSettingsWindow?.close()
+        // Closing setup can start monitoring; stop it after closing all windows.
+        app.monitor.stop()
+        app.panel.close()
+        NSStatusBar.system.removeStatusItem(app.statusItem)
+        defaults.removePersistentDomain(forName: domain)
+        try? FileManager.default.removeItem(at: directory)
     }
 }
 
