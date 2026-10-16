@@ -42,8 +42,9 @@ final class ShareXIdentityView: NSStackView {
 final class CheckerboardView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let tile: CGFloat = 14
-        let light = NSColor(calibratedWhite: 0.97, alpha: 1)
-        let dark = NSColor(calibratedWhite: 0.88, alpha: 1)
+        let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let light = NSColor(calibratedWhite: isDark ? 0.30 : 0.97, alpha: 1)
+        let dark = NSColor(calibratedWhite: isDark ? 0.22 : 0.88, alpha: 1)
         for row in 0 ..< Int(ceil(bounds.height / tile)) {
             for column in 0 ..< Int(ceil(bounds.width / tile)) {
                 ((row + column).isMultiple(of: 2) ? light : dark).setFill()

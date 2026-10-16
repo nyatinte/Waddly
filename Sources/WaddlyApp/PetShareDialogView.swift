@@ -46,6 +46,7 @@ final class PetShareDialogView: NSView {
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         configureAppearance()
+        updateAppearance()
         installSubviews()
         installActions()
         installConstraints()
@@ -54,6 +55,11 @@ final class PetShareDialogView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateAppearance()
     }
 
     func showAssets(spriteURL: URL, movieURL: URL, moviePoster: NSImage?) {
@@ -116,7 +122,6 @@ final class PetShareDialogView: NSView {
         xIdentity.addArrangedSubview(xMark)
         xIdentity.addArrangedSubview(xLabel)
         xRow.wantsLayer = true
-        xRow.layer?.backgroundColor = NSColor(calibratedRed: 0.933, green: 0.933, blue: 0.945, alpha: 1).cgColor
         xRow.layer?.cornerRadius = 10
         xIdentity.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.xIdentity")
         xIdentity.orientation = .horizontal
@@ -143,6 +148,26 @@ final class PetShareDialogView: NSView {
         loading.addArrangedSubview(loadingLabel)
         loadingLabel.textColor = .secondaryLabelColor
         cards.isHidden = true
+    }
+
+    private func updateAppearance() {
+        let cardColor = layerColor(.controlBackgroundColor)
+        let buttonColor = layerColor(.controlColor)
+        let borderColor = layerColor(.separatorColor)
+        xRow.layer?.backgroundColor = cardColor
+        for card in cards.arrangedSubviews {
+            card.layer?.backgroundColor = cardColor
+            card.layer?.borderColor = borderColor
+            for button in card.subviews.compactMap({ $0 as? NSButton }) {
+                button.layer?.backgroundColor = buttonColor
+            }
+        }
+    }
+
+    private func layerColor(_ color: NSColor) -> CGColor {
+        var result = color.cgColor
+        effectiveAppearance.performAsCurrentDrawingAppearance { result = color.cgColor }
+        return result
     }
 
     private func installSubviews() {
@@ -197,10 +222,8 @@ final class PetShareDialogView: NSView {
     ) -> NSView {
         let card = NSView()
         card.wantsLayer = true
-        card.layer?.backgroundColor = NSColor.white.cgColor
         card.layer?.cornerRadius = 11
         card.layer?.borderWidth = 1
-        card.layer?.borderColor = NSColor(calibratedRed: 0.851, green: 0.851, blue: 0.871, alpha: 1).cgColor
         titleLabel.font = .systemFont(ofSize: 12, weight: .semibold)
         titleLabel.lineBreakMode = .byTruncatingTail
         let detailLabel = NSTextField(labelWithString: detail)
@@ -212,9 +235,8 @@ final class PetShareDialogView: NSView {
         surface.layer?.masksToBounds = true
         copyButton.isBordered = false
         copyButton.wantsLayer = true
-        copyButton.layer?.backgroundColor = NSColor(calibratedRed: 0.929, green: 0.941, blue: 0.957, alpha: 1).cgColor
         copyButton.layer?.cornerRadius = 6
-        copyButton.contentTintColor = NSColor(calibratedRed: 0.204, green: 0.224, blue: 0.255, alpha: 1)
+        copyButton.contentTintColor = .labelColor
         copyButton.font = .systemFont(ofSize: 11)
         copyButton.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
         copyButton.imagePosition = .imageLeading
