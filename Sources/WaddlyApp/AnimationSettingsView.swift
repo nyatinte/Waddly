@@ -12,6 +12,25 @@ struct AnimationSettingsThumbnail: Identifiable {
     }
 }
 
+/// Fixed editor layout. The window's *content* minimum must cover the four pose rows, the spacing
+/// between them, the wrapping instruction block, and the content insets. A minimum expressed as a
+/// window frame height is smaller than this by the title bar, which clipped the last row.
+enum AnimationSettingsMetrics {
+    static let rowHeight: CGFloat = 138
+    static let rowSpacing: CGFloat = 8
+    static let contentInset: CGFloat = 20
+    /// Room for the instructions above the rows at the minimum width.
+    static let instructionBlockHeight: CGFloat = 64
+
+    static var contentMinSize: NSSize {
+        let rows = CGFloat(PetImageCategory.allCases.count)
+        // The stack holds the instruction, one row per category, and a trailing spacer.
+        let gaps = rows + 1
+        let height = contentInset * 2 + instructionBlockHeight + rowSpacing * gaps + rowHeight * rows
+        return NSSize(width: 620, height: height.rounded(.up))
+    }
+}
+
 /// Presentation state for the animation editor. The editor owns this model only while its window is
 /// open: `AppDelegate` builds it from the current pet images and releases it on close.
 @MainActor
@@ -78,7 +97,7 @@ struct AnimationSettingsView: View {
     @ObservedObject var model: AnimationSettingsModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AnimationSettingsMetrics.rowSpacing) {
             Text(model.localization.string(for: .imagesInstructions))
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -100,8 +119,12 @@ struct AnimationSettingsView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(20)
-        .frame(minWidth: 620, minHeight: 640, alignment: .topLeading)
+        .padding(AnimationSettingsMetrics.contentInset)
+        .frame(
+            minWidth: AnimationSettingsMetrics.contentMinSize.width,
+            minHeight: AnimationSettingsMetrics.contentMinSize.height,
+            alignment: .topLeading
+        )
     }
 }
 
@@ -170,7 +193,7 @@ private struct AnimationSettingsCategoryRow: View {
                 onDropTargetChange(targeted)
             }
         }
-        .frame(height: 138)
+        .frame(height: AnimationSettingsMetrics.rowHeight)
     }
 }
 

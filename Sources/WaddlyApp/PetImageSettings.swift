@@ -196,7 +196,9 @@ extension AppDelegate {
                 defer: false
             )
             window.title = localizedString(.imagesWindowTitle)
-            window.minSize = NSSize(width: 620, height: 640)
+            // Content minimum, not frame minimum: `minSize` is a frame height and would fall short of
+            // the four rows plus instructions once the title bar is removed, clipping the last row.
+            window.contentMinSize = AnimationSettingsMetrics.contentMinSize
             window.isReleasedWhenClosed = false
 
             imageSettingsWindow = window
