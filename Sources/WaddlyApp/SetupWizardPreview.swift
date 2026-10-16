@@ -56,6 +56,16 @@ final class SetupPreviewPane: PetImageDropView {
         applyMode()
     }
 
+    /// Captured CGColors never follow the appearance, so a pane first drawn while the system was
+    /// dark would keep a dark backdrop after the appearance flips to light. Re-resolve both.
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            layer?.borderColor = idleBorderColor.cgColor
+        }
+    }
+
     required init?(coder: NSCoder) {
         nil
     }

@@ -105,4 +105,35 @@ import WaddlyCore
         #expect(shots.count == 9)
         #expect(shots.allSatisfy { $0.seconds > 0 })
     }
+
+    /// The pane captured its layer colors once at init. Flipping the appearance afterwards must
+    /// re-resolve them, or a dark-initialized backdrop stays dark under the light appearance.
+    @Test func previewBackdropFollowsAnAppearanceChange() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        let dark = try #require(NSAppearance(named: .darkAqua))
+        let light = try #require(NSAppearance(named: .aqua))
+
+        pane.appearance = dark
+        pane.viewDidChangeEffectiveAppearance()
+        let darkBackdrop = pane.layer?.backgroundColor
+
+        pane.appearance = light
+        pane.viewDidChangeEffectiveAppearance()
+        let lightBackdrop = pane.layer?.backgroundColor
+
+        // A single init-time resolution would leave both equal; the backdrop must re-resolve.
+        #expect(darkBackdrop != lightBackdrop)
+        #expect(darkBackdrop == resolvedControlBackground(dark))
+        #expect(lightBackdrop == resolvedControlBackground(light))
+    }
+
+    private func resolvedControlBackground(_ appearance: NSAppearance) -> CGColor {
+        var color = NSColor.controlBackgroundColor.cgColor
+        appearance.performAsCurrentDrawingAppearance {
+            color = NSColor.controlBackgroundColor.cgColor
+        }
+        return color
+    }
 }

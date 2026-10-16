@@ -49,6 +49,7 @@ Command: `mise run test` (serialized Swift Testing suites). The wizard suites ar
 | A failed import reports inline and keeps the previous set; switching method clears it | `failedImportExplainsTheProblemInlineAndKeepsThePreviousSet` |
 | A failure from a window-wide drop survives on a later step and clears on step change | `importFailureStaysOnItsStepAndClearsWhenTheStepChanges` |
 | An inline failure posts one announcement with the localized message; success posts none | `failedImportExplainsTheProblemInlineAndKeepsThePreviousSet`, `copyingThePromptReportsCopyAndBrowserOpenResults` |
+| Preview backdrop and border re-resolve when the effective appearance changes | `previewBackdropFollowsAnAppearanceChange` |
 | Granted and ready stay distinct; Next is blocked until keys actually arrive | `permissionGrantedAndReadyStayDistinctStates` |
 | Permission rules, polling, manual steps, and deferral | `PermissionServiceTests` |
 
