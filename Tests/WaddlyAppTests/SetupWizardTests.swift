@@ -16,6 +16,12 @@ typealias Fixture = SetupWizardFixture
         #expect(window.contentView?.bounds.size == SetupMetrics.contentSize)
         #expect(wizard.previewPane.hasPet)
         #expect(!wizard.hasImage)
+        for step in [SetupWizardController.Step.pet, .monitoring, .completed] {
+            wizard.currentStep = step
+            wizard.renderCurrentStep()
+            window.layoutIfNeeded()
+            #expect(window.contentView?.bounds.size == SetupMetrics.contentSize)
+        }
     }
 
     @Test func stepChangesPersistAndFinishHandsThePetToTheDesktop() throws {
@@ -37,6 +43,7 @@ typealias Fixture = SetupWizardFixture
         #expect(wizard.currentStep == .monitoring)
         wizard.deferMonitoring()
         #expect(wizard.currentStep == .completed)
+        #expect(recorded.last == SetupWizardController.Step.completed.rawValue)
         #expect(!wizard.isMonitoringReady)
         wizard.goNext()
         #expect(recorded.last == .some(nil))
@@ -82,6 +89,53 @@ typealias Fixture = SetupWizardFixture
         #expect(wizard.didRegisterPet)
         #expect(wizard.importedFileName == sheetURL.lastPathComponent)
         #expect(wizard.previewPane.hasPet)
+    }
+
+    @Test func savedStepAndChatGPTGuideCanBeRestoredAndDismissed() throws {
+        let wizard = try Fixture.makeWizard(savedStep: SetupWizardController.Step.monitoring.rawValue)
+        defer { wizard.close() }
+        #expect(wizard.currentStep == .monitoring)
+
+        wizard.goBack()
+        wizard.showChatGPTGuide()
+        #expect(wizard.currentStep == .pet)
+        #expect(wizard.isShowingChatGPTGuide)
+        wizard.changeMethod()
+        #expect(!wizard.isShowingChatGPTGuide)
+    }
+
+    @Test func troubleshootingStaysInTheWizard() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(state: state, granted: true, requestPermission: { true })
+        defer { wizard.close() }
+        wizard.currentStep = .monitoring
+        wizard.toggleTroubleshooting()
+        #expect(wizard.isShowingTroubleshooting)
+        #expect(wizard.currentStep == .monitoring)
+        #expect(!wizard.isShowingGuide)
+    }
+
+    @Test func imageRowsKeepTheirScrollViewAsAnInputTarget() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let row = PetImageCategoryRowView(
+            category: .typing,
+            images: (0 ..< 12).map { _ in NSImage(size: NSSize(width: 2, height: 2)) },
+            localization: wizard.localization
+        )
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 138),
+            styleMask: [.titled], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.contentView = row
+        row.layoutSubtreeIfNeeded()
+        let scroll = try #require(Fixture.descendants(of: row).compactMap { $0 as? NSScrollView }.first)
+        let point = scroll.convert(NSPoint(x: scroll.bounds.midX, y: scroll.bounds.midY), to: row)
+        let hit = try #require(row.hitTest(point))
+        #expect(hit === scroll || hit.isDescendant(of: scroll))
     }
 
     @Test func closingTheWindowStopsPreviewAndAReopenedWizardCanResumeIt() throws {

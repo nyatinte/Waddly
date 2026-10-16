@@ -2,8 +2,7 @@
   "rules": {
     "switch-default": [
       "Sources/WaddlyApp/AppDelegateWindow.swift:9",
-      "Sources/WaddlyCore/PetImageCore.swift:219",
-      "Sources/WaddlyApp/SetupWizardComponents.swift:210"
+      "Sources/WaddlyCore/PetImageCore.swift:219"
     ],
     "unchecked-sendable": [
       "Sources/WaddlyApp/AppSettings.swift:4",

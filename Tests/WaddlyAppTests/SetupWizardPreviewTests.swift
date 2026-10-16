@@ -58,4 +58,47 @@ import WaddlyCore
         try wizard.previewPane.showPet(Fixture.sheetImages(), caption: "ready")
         #expect(wizard.previewPane.hasPet)
     }
+
+    @Test func demoPetIsShownWithoutRegisteringIt() throws {
+        let wizard = try Fixture.makeWizard(demoURL: Fixture.sheetURL())
+        defer { wizard.close() }
+        #expect(wizard.previewPane.hasPet)
+        #expect(!wizard.hasImage)
+    }
+
+    @Test func rerenderingTheSameFramesResumesPlayback() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        let images = try Fixture.sheetImages()
+        pane.showPet(images, caption: "ready")
+        #expect(pane.isPlayingPreview)
+
+        pane.stopPlayback()
+        #expect(!pane.isPlayingPreview)
+
+        pane.showPet(images, caption: "ready")
+        #expect(pane.isPlayingPreview)
+    }
+
+    @Test func rerenderingInCellsModeLeavesPlaybackStopped() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        let images = try Fixture.sheetImages()
+        pane.showPet(images, caption: "ready")
+
+        pane.modeControl.selectedSegment = 1
+        _ = pane.modeControl.sendAction(pane.modeControl.action, to: pane.modeControl.target)
+        #expect(!pane.isPlayingPreview)
+
+        pane.showPet(images, caption: "ready")
+        #expect(!pane.isPlayingPreview)
+    }
+
+    @Test func previewLoopsEveryCategoryOfTheImportedSheet() throws {
+        let shots = try PetPreviewPlayer.demoShots(for: Fixture.sheetImages())
+        #expect(shots.count == 9)
+        #expect(shots.allSatisfy { $0.seconds > 0 })
+    }
 }

@@ -16,12 +16,6 @@ enum SetupWizardFixture {
     }
 
     @MainActor
-    static func button(_ action: String, in content: NSView) throws -> NSButton {
-        try #require(descendants(of: content).compactMap { $0 as? NSButton }
-            .first { $0.action == NSSelectorFromString(action) })
-    }
-
-    @MainActor
     static func makeWizard(
         language: AppLanguage = .japanese,
         state: State = State(),
