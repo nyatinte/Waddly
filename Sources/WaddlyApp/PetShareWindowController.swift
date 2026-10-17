@@ -37,6 +37,7 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     private let images: PetImageSet
     private let localization: LocalizationController
+    private let presenter: WindowPresenter
     private let shareView: PetShareDialogView
     private let writeMovie: MovieWriter
     private let cancellation = PetShareExportCancellation()
@@ -48,12 +49,14 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     init(
         images: PetImageSet,
         localization: LocalizationController,
+        presenter: WindowPresenter = .live,
         writeMovie: @escaping MovieWriter = { images, url, cancellation in
             try PetShareExporter.writeMovie(from: images, to: url, cancellation: cancellation)
         }
     ) {
         self.images = images
         self.localization = localization
+        self.presenter = presenter
         self.writeMovie = writeMovie
         shareView = PetShareDialogView(localization: localization)
         let window = NSWindow(
@@ -123,12 +126,13 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     override func showWindow(_ sender: Any?) {
-        super.showWindow(sender)
+        guard let window else { return }
+        presenter.reveal(window)
         // The context menu is still tracking during its action; activate after it closes.
         Task { @MainActor [weak self] in
-            guard let window = self?.window, window.isVisible else { return }
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
+            guard let self, let window = self.window, window.isVisible else { return }
+            presenter.activate()
+            presenter.focus(window)
         }
     }
 

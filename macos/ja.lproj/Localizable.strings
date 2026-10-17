@@ -50,6 +50,8 @@
 "images.errorMessage" = "20 MB以下、4096 × 4096 px以下の透過PNGを選んでください。";
 "images.saveErrorTitle" = "ペット画像を保存できませんでした";
 "images.saveErrorMessage" = "画像の容量上限を超えているか、空き容量が不足しています。画像と空き容量を確認してください。";
+"images.readErrorTitle" = "ペット画像を読み込めませんでした";
+"images.readErrorMessage" = "保存済み画像の一覧を読み込めなかったか、一部の画像が見つかりません。画像をインポートし直すと最初からやり直せます。この状態では画像を削除しません。";
 "images.skippedTitle" = "一部の画像を追加できませんでした";
 "images.skippedMessage" = "サイズ上限内の透過PNGだけを追加できます。";
 "pet.previewTitle" = "このペット画像を読み込みますか？";
@@ -85,6 +87,7 @@
 "setup.copyAndOpen" = "プロンプトをコピーしてChatGPTを開く";
 "setup.promptCopied" = "プロンプトをコピーしました。";
 "setup.copyFailed" = "プロンプトをコピーできませんでした。もう一度お試しください。";
+"setup.openFailed" = "プロンプトはコピーしましたが、ChatGPTを開けませんでした。ブラウザでchatgpt.comを開いてください。";
 "setup.whenReady" = "画像ができたら、ここから読み込みます。";
 "setup.changeMethod" = "方法を変更";
 "setup.choosePNG" = "PNGファイルを選択";

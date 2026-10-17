@@ -12,6 +12,13 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         case completed
     }
 
+    /// Inline result of "copy the prompt and open ChatGPT". `nil` means the user has not tried yet.
+    enum PromptActionFeedback: Equatable {
+        case copied
+        case copyFailed
+        case openFailed
+    }
+
     let localization: LocalizationController
     let promptResourcesURL: URL?
 
@@ -19,13 +26,21 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
     }
 
-    /// Reads a sheet without saving it, so the wizard can review it first.
+    /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
-    /// Commits the reviewed set.
+    /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
     let onConfirmImage: @MainActor (PetImageSet) async -> Bool
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
+    /// The pasteboard the prompt copy writes to. Injectable so tests never touch the system one.
+    let pasteboard: NSPasteboard
+    /// Opens the ChatGPT URL. Injectable so a test can prove the truthful failure state.
+    let openBrowser: @MainActor (URL) -> Bool
+    /// Announces an inline failure. Injectable so tests prove the call without posting real speech.
+    let announce: @MainActor (String) -> Void
+    /// The only way this window reaches the screen. Tests pass one that draws nothing.
+    let presenter: WindowPresenter
 
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
@@ -39,8 +54,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var isShowingChatGPTGuide = false
     @Published var didRegisterPet = false
     @Published var importedFileName: String?
-    @Published var didFailCopy = false
-    @Published var didAttemptCopy = false
+    @Published var promptFeedback: PromptActionFeedback?
+    /// Set when a chosen sheet could not be read, so the page can explain it in place.
+    @Published var didFailImport = false
+    /// Identifies the interaction that may publish asynchronous import feedback.
+    var importFeedbackGeneration = UUID()
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -51,7 +69,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
+        presenter: WindowPresenter = .live,
         savedStep: Int? = nil,
+        pasteboard: NSPasteboard = .general,
+        openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
+        announce: @escaping @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
         onClose: @escaping @MainActor () -> Void
@@ -62,6 +84,10 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.onConfirmImage = onConfirmImage
         self.currentPetImages = currentPetImages
         self.permission = permission
+        self.pasteboard = pasteboard
+        self.openBrowser = openBrowser
+        self.announce = announce
+        self.presenter = presenter
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
@@ -153,12 +179,20 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         }
     }
 
+    /// The wizard is shown from the app and from tests, so the one window it owns goes through the
+    /// presenter here instead of `super`, which would order a real window onto the desktop.
+    override func showWindow(_ sender: Any?) {
+        guard let window else { return }
+        presenter.focus(window)
+    }
+
     func windowDidMove(_ notification: Notification) {
         guard !isMovingProgrammatically, isShowingGuide, let window else { return }
         following.recordMove(to: window.frame.origin)
     }
 
     func windowWillClose(_ notification: Notification) {
+        clearImportFeedback()
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
@@ -173,6 +207,19 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
               frames.isComplete
         else { return nil }
         return frames
+    }
+
+    /// The native macOS announcement API. The wizard calls it only when an inline error appears, so
+    /// VoiceOver hears the reason once; re-rendering never re-announces.
+    static func postAccessibilityAnnouncement(_ message: String) {
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: NSNumber(value: NSAccessibilityPriorityLevel.high.rawValue)
+            ]
+        )
     }
 }
 

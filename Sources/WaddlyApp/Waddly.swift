@@ -166,11 +166,14 @@ final class KeyboardMonitor {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     let settings: AppSettings
+    /// The only way this app reaches the screen. Tests pass a presenter whose windows are invisible.
+    let presenter: WindowPresenter
     let localization: LocalizationController
     let monitor = KeyboardMonitor()
     var pendingImageUpdate: Task<Void, Never>?
     var isShuttingDown = false
     var imageLoadFailed = false
+    var imageLoadError: Error?
     var importedImages: PetImageSet?
     var imageThumbnails: [ObjectIdentifier: NSImage] = [:]
     var petImages: PetImageSet {
@@ -208,8 +211,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
     var imageSettingsWindow: NSWindow?
+    var animationSettingsModel: AnimationSettingsModel?
     var shareWindowController: PetShareWindowController?
-    var imageRows: [PetImageCategory: PetImageCategoryRowView] = [:]
 
     var isPaused: Bool {
         animationController.isPaused
@@ -232,8 +235,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         .first
         .map { PetImageLocation.directoryURL(for: Bundle.main.bundleIdentifier, applicationSupport: $0) }
 
-    init(settings: AppSettings = .standard) {
+    init(settings: AppSettings = .standard, presenter: WindowPresenter = .live) {
         self.settings = settings
+        self.presenter = presenter
         localization = LocalizationController(settings: settings)
         super.init()
     }
@@ -301,7 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     /// A Dock click after setup just puts the pet back in view.
     func bringPetToFront() {
         guard hasCompletePetImageSet else { return }
-        panel.orderFrontRegardless()
+        presenter.reveal(panel)
     }
 
     /// Setup opens on launch only while it is genuinely unfinished: no registered pet, or the user

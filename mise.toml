@@ -54,7 +54,7 @@ run = ["mise run format:check", "mise run lint", "mise run complexity", "mise ru
 
 [tasks.safety]
 description = "Run AST-aware Swift safety checks"
-run = "swift run --package-path Tools/SwiftSafetyCheck swift-safety-check --check Sources Tests"
+run = "swift run --package-path Tools/SwiftSafetyCheck swift-safety-check --check Sources Tests Package.swift Performance/Package.swift Tools/SwiftSafetyCheck/Package.swift"
 
 [tasks."safety:test"]
 description = "Prove Swift safety rules reject dangerous fixtures"

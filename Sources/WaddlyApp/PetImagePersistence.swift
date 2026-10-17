@@ -2,7 +2,11 @@ import AppKit
 import WaddlyCore
 
 extension AppDelegate {
-    /// Serialize complete image transactions, including their main-actor manifest commit.
+    /// Serialize complete image transactions, including the manifest commit (run on a worker).
+    ///
+    /// This is the exclusive-access guarantee `PetImageStorage` requires across the
+    /// stage → commit → reconcile transaction: operations queue behind one another and no extra lock
+    /// is taken.
     func queueImageUpdate(_ operation: @escaping @MainActor () async -> Bool) async -> Bool {
         let previous = pendingImageUpdate
         let task = Task { @MainActor in
@@ -14,16 +18,19 @@ extension AppDelegate {
         return await task.value
     }
 
+    /// Persist a frame set with the on-disk manifest as the source of truth.
+    ///
+    /// Order matters: stage the new files, commit the manifest atomically, publish the new set, then
+    /// sweep unreferenced files. A failed commit removes only the files this call staged and keeps
+    /// the previous manifest and images. Cleanup runs last and is non-fatal; leftovers are swept on
+    /// the next launch. The legacy `UserDefaults` mirror is written only after a successful commit
+    /// so a downgrade still finds the frames.
     func persistPetImages(
         _ updated: PetImageSet,
         encodedImages: [ObjectIdentifier: Data] = [:],
         resetActivity: Bool = false,
-        cleanup: @Sendable (
-            PetImageStorage,
-            [String: [String]],
-            [String: [String]]
-        ) async -> Void = { storage, old, new in
-            await Task.detached { storage.removeObsoleteFiles(from: old, keeping: new) }.value
+        cleanup: @Sendable (PetImageStorage) async -> Void = { storage in
+            await Task.detached { _ = try? storage.reconcileFiles() }.value
         }
     ) async throws {
         guard let directory = petImagesDirectoryURL else { throw CocoaError(.fileNoSuchFile) }
@@ -37,15 +44,39 @@ extension AppDelegate {
         }.value
         let newFiles = staged.0
         guard !isShuttingDown else {
-            await Task.detached { storage.removeObsoleteFiles(from: newFiles, keeping: oldFiles) }.value
+            await discardStagedFiles(storage, staged: newFiles, committed: oldFiles)
             throw CancellationError()
+        }
+        do {
+            try await Task.detached(priority: .userInitiated) {
+                try storage.commitManifest(newFiles)
+            }.value
+        } catch {
+            await discardStagedFiles(storage, staged: newFiles, committed: oldFiles)
+            throw error
         }
         settings.petImageFiles = newFiles
         storedImageFiles = newFiles
         importedImages = updated
         imageThumbnails = staged.1
         imageSetDidChange(resetActivity: resetActivity)
-        await cleanup(storage, oldFiles, newFiles)
+        await cleanup(storage)
+    }
+
+    /// Remove only the files this save just created, leaving the committed set untouched.
+    private func discardStagedFiles(
+        _ storage: PetImageStorage,
+        staged: [String: [String]],
+        committed: [String: [String]]
+    ) async {
+        let created = Set(staged.values.flatMap(\.self)).subtracting(committed.values.flatMap(\.self))
+        guard !created.isEmpty else { return }
+        let directory = storage.directory
+        await Task.detached(priority: .userInitiated) {
+            for name in created {
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+            }
+        }.value
     }
 
     func addImages(_ urls: [URL], to category: PetImageCategory) {
@@ -57,7 +88,7 @@ extension AppDelegate {
 
     private func addImagesInOrder(_ urls: [URL], to category: PetImageCategory) async -> Bool {
         guard !imageLoadFailed else {
-            await showImageSaveError(PetImageStorageError.memoryBudgetExceeded)
+            await showImageLoadError()
             return false
         }
         var addedCount = 0

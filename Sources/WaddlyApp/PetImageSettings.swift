@@ -1,28 +1,63 @@
 import AppKit
+import SwiftUI
 import WaddlyCore
 
 extension AppDelegate {
+    /// Restore the last committed frame set, treating the on-disk manifest as authoritative.
+    ///
+    /// When the manifest is missing, the legacy `UserDefaults` mirror is committed to disk before
+    /// the reconciling sweep so the frames it still names are protected. A manifest that cannot be
+    /// read leaves the app read-only: edits and deletion stay blocked until images are imported
+    /// again. Reconciliation runs off the main actor, serialized by the image queue, and only when
+    /// the manifest fully materialized and the mirror still agrees with it; disagreement can mean
+    /// another build wrote frames after this manifest, so those frames stay until a deliberate save.
     func loadSavedPetImage() async {
         guard let directory = petImagesDirectoryURL else { return }
-        let manifest = settings.petImageFiles
+        let storage = PetImageStorage(directory: directory)
+        let legacyFiles = settings.petImageFiles
         do {
-            let loaded = try await Task.detached(priority: .userInitiated) {
-                try autoreleasepool {
-                    let loaded = try PetImageStorage(directory: directory).load(manifest)
-                    return (loaded.0, loaded.1, PetSpriteSheetImporter.thumbnails(for: loaded.0))
+            let restored = try await Task.detached(priority: .userInitiated) {
+                try autoreleasepool { () -> RestoredPetImages in
+                    let manifest = try committedOrMigratedManifest(storage, legacy: legacyFiles)
+                    let loaded = try storage.load(manifest)
+                    return RestoredPetImages(
+                        manifest: manifest,
+                        images: loaded.0,
+                        files: loaded.1,
+                        thumbnails: PetSpriteSheetImporter.thumbnails(for: loaded.0)
+                    )
                 }
             }.value
             guard !isShuttingDown else { return }
-            storedImageFiles = loaded.1
-            if !manifest.isEmpty {
-                importedImages = loaded.0
-                imageThumbnails = loaded.2
+            storedImageFiles = restored.manifest
+            let referencedNames = Set(restored.manifest.values.flatMap(\.self))
+            let decodedNames = Set(restored.files.values.flatMap(\.self))
+            imageLoadFailed = referencedNames != decodedNames
+            imageLoadError = nil
+            if !restored.manifest.isEmpty {
+                importedImages = restored.images
+                imageThumbnails = restored.thumbnails
+            }
+            // Sweep only when the decoded set is complete and the mirror agrees with the manifest.
+            // Disagreement means another build updated the mirror after this manifest, so the mixed
+            // state is uncertain and unknown frames must survive until a deliberate save.
+            if !imageLoadFailed, legacyFiles == restored.manifest {
+                await reconcileSavedPetImages(storage)
             }
         } catch {
             imageLoadFailed = true
-            storedImageFiles = manifest
+            imageLoadError = error
+            storedImageFiles = legacyFiles
             await showImageSaveError(error)
         }
+    }
+
+    /// Sweep files the committed manifest no longer references. Best effort: a failure retries on
+    /// the next launch without blocking the images that are already displayed.
+    private func reconcileSavedPetImages(_ storage: PetImageStorage) async {
+        await Task.detached(priority: .utility) {
+            _ = try? storage.reconcileFiles()
+        }.value
     }
 
     func importPetImage(from url: URL) async -> Bool {
@@ -51,11 +86,13 @@ extension AppDelegate {
             return false
         }
         imageLoadFailed = false
+        imageLoadError = nil
         return true
     }
 
-    /// Reads a sheet for review only. Nothing is written until `confirmPetImage` is called,
-    /// so the wizard can show the nine cells before anything is committed.
+    /// Reads a sheet without writing. The wizard calls `confirmPetImage` immediately on success;
+    /// a failed read returns `nil` and leaves the saved set untouched. A read failure returns
+    /// `nil`; the wizard explains it in place instead of raising a separate alert.
     func previewPetImage(from url: URL) async -> PetImageSet? {
         let images = await Task.detached(priority: .userInitiated) {
             autoreleasepool { () -> PetImageSet? in
@@ -64,14 +101,10 @@ extension AppDelegate {
             }
         }.value
         guard !isShuttingDown else { return nil }
-        guard let images else {
-            await showPetImageImportError()
-            return nil
-        }
         return images
     }
 
-    /// Commits a set the user already reviewed.
+    /// Commits the decoded set; the wizard does not present a separate confirmation step.
     func confirmPetImage(_ images: PetImageSet) async -> Bool {
         await queueImageUpdate { await self.confirmPetImageInOrder(images) }
     }
@@ -84,24 +117,33 @@ extension AppDelegate {
             return false
         }
         imageLoadFailed = false
+        imageLoadError = nil
         return true
     }
 
     func imageSetDidChange(resetActivity: Bool = false) {
-        for category in PetImageCategory.allCases {
-            imageRows[category]?.setImages(thumbnails(for: category))
-        }
+        animationSettingsModel?.setThumbnails(currentThumbnails())
         guard hasCompletePetImageSet else {
-            panel.orderOut(nil)
+            presenter.hide(panel)
             animationController.imageSetDidChange(resetActivity: resetActivity)
             return
         }
-        panel.orderFrontRegardless()
+        presenter.reveal(panel)
         animationController.imageSetDidChange(resetActivity: resetActivity)
     }
 
     private func thumbnails(for category: PetImageCategory) -> [NSImage] {
         petImages[category].map { imageThumbnails[ObjectIdentifier($0)] ?? $0 }
+    }
+
+    /// Snapshots the current images as thumbnails for the SwiftUI model, keeping the editor in sync
+    /// with the pet set while it is open.
+    private func currentThumbnails() -> [PetImageCategory: [AnimationSettingsThumbnail]] {
+        var result: [PetImageCategory: [AnimationSettingsThumbnail]] = [:]
+        for category in PetImageCategory.allCases {
+            result[category] = thumbnails(for: category).map(AnimationSettingsThumbnail.init)
+        }
+        return result
     }
 
     private func showPetImageImportError() async {
@@ -112,8 +154,20 @@ extension AppDelegate {
         guard !isShuttingDown else { return }
         if error is PetImageStorageError {
             await showAlert(.imagesErrorTitle, .imagesMemoryLimit)
+        } else if (error as? PetImageManifestError) == .unreadable {
+            await showAlert(.imagesReadErrorTitle, .imagesReadErrorMessage)
         } else {
             await showAlert(.imagesSaveErrorTitle, .imagesSaveErrorMessage)
+        }
+    }
+
+    /// Report why an edit is blocked. The recorded load failure keeps a memory-budget or commit
+    /// problem from being misreported as an unreadable image list.
+    func showImageLoadError() async {
+        if let imageLoadError {
+            await showImageSaveError(imageLoadError)
+        } else {
+            await showAlert(.imagesReadErrorTitle, .imagesReadErrorMessage)
         }
     }
 
@@ -170,9 +224,9 @@ extension AppDelegate {
 
     private func presentImageAlert(_ alert: NSAlert, in parent: NSWindow) async -> NSApplication.ModalResponse {
         guard !isShuttingDown else { return .cancel }
-        NSApp.activate(ignoringOtherApps: true)
+        presenter.activate()
         return await withCheckedContinuation { continuation in
-            alert.beginSheetModal(for: parent) { response in
+            presenter.presentAlert(alert, parent) { response in
                 continuation.resume(returning: response)
             }
         }
@@ -181,13 +235,15 @@ extension AppDelegate {
     @objc func showImageSettings() {
         if imageSettingsWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 760, height: 650),
+                contentRect: NSRect(x: 0, y: 0, width: 760, height: 700),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
             )
             window.title = localizedString(.imagesWindowTitle)
-            window.minSize = NSSize(width: 620, height: 670)
+            // Content minimum, not frame minimum: `minSize` is a frame height and would fall short of
+            // the four rows plus instructions once the title bar is removed, clipping the last row.
+            window.contentMinSize = AnimationSettingsMetrics.contentMinSize
             window.isReleasedWhenClosed = false
 
             imageSettingsWindow = window
@@ -195,60 +251,48 @@ extension AppDelegate {
             window.center()
             window.contentView = makeImageSettingsContent()
         }
-        NSApp.activate(ignoringOtherApps: true)
-        imageSettingsWindow?.makeKeyAndOrderFront(nil)
+        presenter.activate()
+        if let window = imageSettingsWindow {
+            presenter.focus(window)
+        }
     }
 
     func refreshImageSettingsLocalization() {
         guard let window = imageSettingsWindow else { return }
         window.title = localizedString(.imagesWindowTitle)
-        imageRows.removeAll()
-        window.contentView = makeImageSettingsContent()
+        animationSettingsModel?.refreshLocalization()
     }
 
     private func makeImageSettingsContent() -> NSView {
-        let content = NSView()
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(stack)
+        let model = makeAnimationSettingsModel()
+        animationSettingsModel = model
+        return NSHostingView(rootView: AnimationSettingsView(model: model))
+    }
 
-        let note = NSTextField(wrappingLabelWithString: localizedString(.imagesInstructions))
-        note.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(note)
-        note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-        for category in PetImageCategory.allCases {
-            let row = PetImageCategoryRowView(
-                category: category,
-                images: thumbnails(for: category),
-                localization: localization
-            )
-            row.onAdd = { [weak self] in self?.chooseImages(for: category) }
-            row.onDrop = { [weak self] in self?.addImages($0, to: category) }
-            row.onRemove = { [weak self] in self?.removeImage(at: $0, from: category) }
-            row.onMove = { [weak self] in self?.moveImage(from: $0, to: $1, in: category) }
-            imageRows[category] = row
-            stack.addArrangedSubview(row)
-            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    private func makeAnimationSettingsModel() -> AnimationSettingsModel {
+        let model = AnimationSettingsModel(
+            thumbnailsByCategory: currentThumbnails(),
+            localization: localization
+        )
+        model.onAdd = { [weak self] category in self?.chooseImages(for: category) }
+        model.onDrop = { [weak self] category, urls in self?.addImages(urls, to: category) }
+        model.onRemove = { [weak self] category, index in
+            _ = self?.removeImage(at: index, from: category)
         }
-
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
-            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -20)
-        ])
-        return content
+        model.onMove = { [weak self] category, source, destination in
+            _ = self?.moveImage(from: source, to: destination, in: category)
+        }
+        return model
     }
 
     func closeImageSettingsWindow() {
+        // Drop the first responder before the content so the window does not keep the hosting view
+        // (or any of its controls) alive through the responder chain.
+        imageSettingsWindow?.makeFirstResponder(nil)
         imageSettingsWindow?.contentView = nil
         imageSettingsWindow?.delegate = nil
         imageSettingsWindow = nil
-        imageRows.removeAll()
+        animationSettingsModel = nil
     }
 
     private func chooseImages(for category: PetImageCategory) {
@@ -260,4 +304,31 @@ extension AppDelegate {
         guard picker.runModal() == .OK else { return }
         addImages(picker.urls, to: category)
     }
+}
+
+/// The manifest, decoded images, their frame names, and thumbnails restored from disk in one pass.
+private struct RestoredPetImages {
+    let manifest: [String: [String]]
+    let images: PetImageSet
+    let files: [String: [String]]
+    let thumbnails: [ObjectIdentifier: NSImage]
+}
+
+/// Read the committed manifest, or migrate the legacy defaults to disk when it is missing.
+///
+/// Migration writes the mirror first so the reconciliation that follows can never delete a frame
+/// the legacy state still referenced. With no manifest and no legacy mirror, nothing is committed:
+/// the returned empty manifest only means "show nothing", while the reconciling sweep sees `nil`
+/// and leaves the on-disk frames of uncertain provenance untouched. An explicitly committed empty
+/// manifest is different and stays authoritative.
+private func committedOrMigratedManifest(
+    _ storage: PetImageStorage,
+    legacy: [String: [String]]
+) throws -> [String: [String]] {
+    if let committed = try storage.readManifest() {
+        return committed
+    }
+    guard !legacy.isEmpty else { return [:] }
+    try storage.commitManifest(legacy)
+    return legacy
 }
