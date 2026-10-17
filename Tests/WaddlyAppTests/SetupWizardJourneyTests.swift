@@ -170,6 +170,12 @@ import Testing
         #expect(!wizard.isMonitoringReady)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoringWaiting)
         #expect(wizard.monitoringIncompleteActionKey == .setupConfirmTyping)
+
+        // A delivered key confirms it from the completion page too.
+        state.observedReaction = true
+        wizard.monitoringDidObserveReaction()
+        #expect(wizard.isMonitoringReady)
+        #expect(wizard.monitoringCheckKey == .setupCheckMonitoring)
     }
 
     /// A returning user who already confirmed reactions is not reset by reopening the guide.
