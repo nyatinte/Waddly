@@ -12,12 +12,14 @@ import WaddlyCore
         let images = try fixture.exampleImages()
         try await app.persistPetImages(images, resetActivity: true)
         let original = app.settings.petImageFiles
-        let data = try fixture.savedData()
+        let data = try fixture.frameData()
         #expect(app.hasCompletePetImageSet)
         #expect(app.panel.isVisible)
         await app.moveImage(from: 0, to: 1, in: .idle)?.value
         #expect(app.settings.petImageFiles["idle"] == original["idle"]?.reversed().map(\.self))
-        #expect(try fixture.savedData() == data)
+        // A reorder rewrites only the manifest; the frame files themselves stay untouched.
+        #expect(try fixture.frameData() == data)
+        #expect(try fixture.manifest() == app.settings.petImageFiles)
         let removal = try #require(app.removeImage(at: 0, from: .idle))
         await removal.value
         #expect(app.petImages[.idle].count == 1)
@@ -32,7 +34,7 @@ import WaddlyCore
         #expect(app.petImages[.typing].count == 4)
         #expect(app.petImages[.sleep].count == 2)
         #expect(app.petImages[.enter].count == 1)
-        #expect(try fixture.savedData().count == 8)
+        #expect(try fixture.frameData().count == 8)
     }
 
     @Test func cancelingReplacementAndInvalidImportsPreserveSavedImages() async throws {
@@ -73,7 +75,10 @@ import WaddlyCore
         #expect(!app.hasCompletePetImageSet)
         #expect(!app.panel.isVisible)
         #expect(app.settings.petImageFiles == manifest)
-        #expect(try fixture.savedData().count == 8)
+        // A referenced frame that is gone blocks edits instead of committing a reduced manifest.
+        #expect(app.imageLoadFailed)
+        #expect(try fixture.frameData().count == 8)
+        #expect(try fixture.manifest() == manifest)
     }
 
     @Test func menuCommandsUpdatePreferencesAndKeepAnEntryPointVisible() throws {
@@ -228,49 +233,6 @@ import WaddlyCore
     }
 }
 
-/// Shared app-under-test harness for the AppKit integration suites.
-@MainActor final class AppIntegrationFixture {
-    let domain = "WaddlyTests.integration.\(UUID().uuidString)"
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    let defaults: UserDefaults
-    let app: AppDelegate
-    let exampleURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("assets/examples/nyatinte-bot-3x3.png")
-
-    init() throws {
-        _ = NSApplication.shared
-        defaults = try #require(UserDefaults(suiteName: domain))
-        app = makeTestApp(settings: AppSettings(defaults: defaults))
-        app.settings.registerDefaults()
-        app.petImagesDirectoryURL = directory
-        app.buildPanel()
-        app.buildMenu()
-    }
-
-    func exampleImages() throws -> PetImageSet {
-        try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleURL)))
-    }
-
-    func savedData() throws -> [String: Data] {
-        let urls = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-        return try Dictionary(uniqueKeysWithValues: urls.map { try ($0.lastPathComponent, Data(contentsOf: $0)) })
-    }
-
-    func close() {
-        app.isShuttingDown = true
-        app.animationController.shutdown()
-        app.setupWizardController?.close()
-        app.imageSettingsWindow?.close()
-        // Closing setup can start monitoring; stop it after closing all windows.
-        app.monitor.stop()
-        app.panel.close()
-        NSStatusBar.system.removeStatusItem(app.statusItem)
-        defaults.removePersistentDomain(forName: domain)
-        try? FileManager.default.removeItem(at: directory)
-    }
-}
-
 /// The launch cases, named so a failure says which state broke.
 struct LaunchCase: Sendable {
     let name: String
@@ -322,27 +284,4 @@ struct LaunchCase: Sendable {
             isComplete: true
         )
     ]
-}
-
-private extension AppIntegrationTests {
-    func waitForSheet(_ app: AppDelegate) async throws -> NSWindow {
-        for _ in 0 ..< 200 {
-            if let sheet = app.setupWizardController?.window?.attachedSheet {
-                return sheet
-            }
-            try await Task.sleep(for: .milliseconds(10))
-        }
-        throw CocoaError(.userCancelled)
-    }
-
-    /// Validation is what the menu actually asks, so the tests ask it the same way.
-    func editorItem(of app: AppDelegate) throws -> NSMenuItem {
-        try #require(menuItems(app.statusMenu).first {
-            $0.action == #selector(AppDelegate.showImageSettings)
-        })
-    }
-
-    func menuItems(_ menu: NSMenu) -> [NSMenuItem] {
-        menu.items.flatMap { item in [item] + (item.submenu.map(menuItems) ?? []) }
-    }
 }

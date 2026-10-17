@@ -50,6 +50,8 @@
 "images.errorMessage" = "Choose transparent PNG images no larger than 20 MB and 4096 × 4096 px.";
 "images.saveErrorTitle" = "Could not save pet images";
 "images.saveErrorMessage" = "An image exceeds the storage limit, or disk space is low. Check the files and try again.";
+"images.readErrorTitle" = "Could not load the saved pet images";
+"images.readErrorMessage" = "Waddly could not read the saved image list, or one of its frames is missing. Import your images again to start over; nothing has been deleted.";
 "images.skippedTitle" = "Some images were skipped";
 "images.skippedMessage" = "Only transparent PNG files within the size limits can be added.";
 "pet.previewTitle" = "Import this pet image?";

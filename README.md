@@ -96,6 +96,8 @@ Right-click the pet to change its size and behavior, language, visibility, and l
 
 Images are stored on your Mac as individual PNG frames. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
 
+Waddly keeps a small manifest next to the frames that lists the saved images, and removes a frame only once the manifest no longer refers to it. If the app is interrupted — a crash or a forced quit — the next launch restores the last committed images and discards frames that were never committed. The manifest is written atomically but not flushed to disk, so sudden power loss can still lose the most recent change or leave the previous images. A manifest that cannot be read blocks further edits until you import images again; Waddly deletes nothing in that state. Waddly also records the same list in your preferences so a downgraded copy can still find the frames, but running two versions at once, or importing with an older version between saves, is not fully supported: the current version then keeps the extra frames and shows its own last committed set until you import or save again.
+
 ## Privacy
 
 Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (prefilled with “Copy the video and image, then attach them to your post.” and `#ShareMyWaddly`); attach the asset and post it yourself.
