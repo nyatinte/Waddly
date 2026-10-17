@@ -92,10 +92,20 @@ private func fixtureImages() throws -> PetImageSet {
     return try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
 }
 
-private func exportMovie(from images: PetImageSet, to url: URL, timeout: DispatchTimeInterval) throws {
-    try PetShareExporter.writeMovie(from: images, to: url, timeout: timeout) { input, queue, block in
-        input.requestMediaDataWhenReady(on: queue, using: block)
-    }
+private func exportMovie(
+    from images: PetImageSet,
+    to url: URL,
+    timeout: DispatchTimeInterval,
+    cancellation: PetShareExportCancellation = PetShareExportCancellation(),
+    hooks: MovieWriterHooks = MovieWriterHooks()
+) throws {
+    try PetShareExporter.writeMovie(
+        from: images,
+        to: url,
+        timeout: timeout,
+        cancellation: cancellation,
+        hooks: hooks
+    )
 }
 
 private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) -> Bool {
@@ -117,12 +127,18 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
 
     #expect(throws: PetShareExportError.timedOut) {
         // Model an encoder whose readiness callback arrives long after the deadline: cleanup cannot depend on one.
-        try PetShareExporter.writeMovie(from: images, to: movieURL, timeout: .milliseconds(50)) { _, queue, block in
-            queue.asyncAfter(deadline: .now() + .seconds(2)) {
-                block()
-                readinessCallbackRan.signal()
-            }
-        }
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .milliseconds(50),
+            cancellation: PetShareExportCancellation(),
+            hooks: MovieWriterHooks(scheduleMediaData: { _, queue, block in
+                queue.asyncAfter(deadline: .now() + .seconds(2)) {
+                    block()
+                    readinessCallbackRan.signal()
+                }
+            })
+        )
     }
 
     #expect(readinessCallbackRan.wait(timeout: .now()) == .timedOut)
@@ -140,6 +156,119 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     }
 
     #expect(waitUntil({ !FileManager.default.fileExists(atPath: movieURL.path) }, within: 10))
+}
+
+@Test func cancellationBeforeTheFirstAppendStopsTheExportAndRemovesTheOutput() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let cancellation = PetShareExportCancellation()
+    let start = DispatchTime.now()
+
+    #expect(throws: PetShareExportError.cancelled) {
+        // The dialog closed between starting the writer and the first media-data callback.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: cancellation,
+            hooks: MovieWriterHooks(scheduleMediaData: { input, queue, block in
+                cancellation.cancel()
+                input.requestMediaDataWhenReady(on: queue, using: block)
+            })
+        )
+    }
+
+    // Cancellation must not wait for the export timeout, and the cancelled export leaves no movie.
+    #expect(DispatchTime.now() < start + .seconds(5))
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
+}
+
+@Test func cancellationAfterTheFirstEncodedFramesRemovesThePartialMovie() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let cancellation = PetShareExportCancellation()
+    let sawPartialMovie = DispatchSemaphore(value: 0)
+
+    #expect(throws: PetShareExportError.cancelled) {
+        // The dialog closes after the encoder has already written frames, not before the first one.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: cancellation,
+            hooks: MovieWriterHooks(scheduleMediaData: { input, queue, block in
+                input.requestMediaDataWhenReady(on: queue) {
+                    block()
+                    if FileManager.default.fileExists(atPath: movieURL.path) {
+                        sawPartialMovie.signal()
+                    }
+                    cancellation.cancel()
+                }
+            })
+        )
+    }
+
+    #expect(sawPartialMovie.wait(timeout: .now()) == .success)
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
+}
+
+@Test func cancellingWhileTheWriterIsFinishingStopsItAndRemovesThePartialMovie() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let cancellation = PetShareExportCancellation()
+    let sawPartialMovie = DispatchSemaphore(value: 0)
+    let start = DispatchTime.now()
+
+    #expect(throws: PetShareExportError.cancelled) {
+        // Model an encoder that never completes finishWriting while every frame is already written.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: cancellation,
+            hooks: MovieWriterHooks(finalizeWriter: { writer, _ in
+                if FileManager.default.fileExists(atPath: writer.outputURL.path) {
+                    sawPartialMovie.signal()
+                }
+                cancellation.cancel()
+            })
+        )
+    }
+
+    // The stalled writer is cancelled instead of being left to run through the grace period.
+    #expect(DispatchTime.now() < start + .seconds(2))
+    #expect(sawPartialMovie.wait(timeout: .now()) == .success)
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
+}
+
+@Test func aCancellationThatLosesTheRaceToCompletionKeepsTheFinishedMovie() async throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let cancellation = PetShareExportCancellation()
+
+    #expect(throws: PetShareExportError.cancelled) {
+        // Model a completion the caller never observes: the movie is complete on disk when the dialog
+        // closes, so cancellation must not delete it.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: cancellation,
+            hooks: MovieWriterHooks(finalizeWriter: { writer, _ in
+                let writerFinished = DispatchSemaphore(value: 0)
+                writer.finishWriting { writerFinished.signal() }
+                _ = writerFinished.wait(timeout: .now() + .seconds(10))
+                cancellation.cancel()
+            })
+        )
+    }
+
+    let duration = try await AVURLAsset(url: movieURL).load(.duration)
+    #expect(abs(CMTimeGetSeconds(duration) - 5) < 0.1)
 }
 
 @Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {

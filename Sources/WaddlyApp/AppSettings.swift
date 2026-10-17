@@ -1,6 +1,8 @@
 import Foundation
 
-/// UserDefaults is thread-safe, and this wrapper stores no other mutable state.
+/// `UserDefaults` is documented as thread-safe and is the only state stored here, so the unchecked
+/// conformance only stands in for `UserDefaults` not being marked `Sendable`; every accessor reads or
+/// writes through `defaults`.
 final class AppSettings: @unchecked Sendable {
     private enum Key {
         static let appLanguage = "appLanguage"

@@ -5,11 +5,11 @@
       "Sources/WaddlyCore/PetImageCore.swift:219"
     ],
     "unchecked-sendable": [
-      "Sources/WaddlyApp/AppSettings.swift:4",
-      "Sources/WaddlyCore/PetShareExporter.swift:17"
+      "Sources/WaddlyApp/AppSettings.swift:6",
+      "Sources/WaddlyCore/PetShareMovieWriter.swift:46"
     ],
     "preconcurrency": [
-      "Sources/WaddlyCore/PetShareExporter.swift:2"
+      "Sources/WaddlyCore/PetShareMovieWriter.swift:4"
     ],
     "actor-assumption": [
       "Sources/WaddlyApp/Waddly.swift:153",

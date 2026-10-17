@@ -1,11 +1,26 @@
 import AppKit
-@preconcurrency import AVFoundation
+import AVFoundation
 import ImageIO
+import os
 import UniformTypeIdentifiers
 
-private struct ScheduledShot {
-    let image: CGImage
-    let duration: TimeInterval
+/// Cancels one in-flight export.
+///
+/// The share window controller owns a token, sets it when the dialog closes, and the export observes it
+/// while waiting for the writer. The lock lets the closing main actor and the export queue share the flag
+/// without an `@unchecked Sendable` conformance.
+public final class PetShareExportCancellation: Sendable {
+    private let cancelled = OSAllocatedUnfairLock(initialState: false)
+
+    public init() {}
+
+    public func cancel() {
+        cancelled.withLock { $0 = true }
+    }
+
+    public var isCancelled: Bool {
+        cancelled.withLock { $0 }
+    }
 }
 
 private struct ShotDefinition {
@@ -14,39 +29,8 @@ private struct ShotDefinition {
     let duration: TimeInterval
 }
 
-private final class MovieWriterState: @unchecked Sendable {
-    let writer: AVAssetWriter
-    let input: AVAssetWriterInput
-    let adaptor: AVAssetWriterInputPixelBufferAdaptor
-    let shots: [ScheduledShot]
-    var frameIndex = 0
-    var error: Error?
-    var isTerminal = false
-    var didCancel = false
-
-    init(
-        writer: AVAssetWriter,
-        input: AVAssetWriterInput,
-        adaptor: AVAssetWriterInputPixelBufferAdaptor,
-        shots: [ScheduledShot]
-    ) {
-        self.writer = writer
-        self.input = input
-        self.adaptor = adaptor
-        self.shots = shots
-    }
-}
-
-/// Schedules the media-data callback that owns the writer. Tests inject a delayed queue to model a stalled encoder.
-typealias MediaDataScheduler = @Sendable (AVAssetWriterInput, DispatchQueue, @escaping @Sendable () -> Void) -> Void
-
 public enum PetShareExporter {
-    private static let frameRate: Int32 = 12
-    private static let movieFrameCount = 60
     private static let movieSize = 384
-    private static let scheduleMediaData: MediaDataScheduler = { input, queue, block in
-        input.requestMediaDataWhenReady(on: queue, using: block)
-    }
 
     private static let frameOrder: [(PetImageCategory, Int)] = [
         (.idle, 0), (.idle, 1),
@@ -54,17 +38,29 @@ public enum PetShareExporter {
         (.enter, 0), (.sleep, 0), (.sleep, 1)
     ]
 
-    public static func writeMovie(from images: PetImageSet, to url: URL) throws {
+    public static func writeMovie(
+        from images: PetImageSet,
+        to url: URL,
+        cancellation: PetShareExportCancellation = PetShareExportCancellation()
+    ) throws {
         // Only a wedged encoder reaches this bound; a full export takes about a second here.
-        try writeMovie(from: images, to: url, timeout: .seconds(120), scheduleMediaData: scheduleMediaData)
+        try writeMovie(
+            from: images,
+            to: url,
+            timeout: .seconds(120),
+            cancellation: cancellation,
+            hooks: MovieWriterHooks()
+        )
     }
 
-    /// `timeout` bounds the wait for a stalled writer, and `scheduleMediaData` lets tests stall the media-data queue.
+    /// `timeout` bounds the wait for a stalled writer, `cancellation` stops an in-flight export, and
+    /// `hooks` lets tests stall the encoder's asynchronous steps.
     static func writeMovie(
         from images: PetImageSet,
         to url: URL,
         timeout: DispatchTimeInterval,
-        scheduleMediaData: MediaDataScheduler
+        cancellation: PetShareExportCancellation,
+        hooks: MovieWriterHooks
     ) throws {
         let shots = try scheduledShots(from: images)
         try? FileManager.default.removeItem(at: url)
@@ -90,8 +86,9 @@ public enum PetShareExporter {
         writer.startSession(atSourceTime: .zero)
         try appendMovieFrames(
             MovieWriterState(writer: writer, input: input, adaptor: adaptor, shots: shots),
+            cancellation: cancellation,
             timeout: timeout,
-            scheduleMediaData: scheduleMediaData
+            hooks: hooks
         )
     }
 
@@ -159,68 +156,44 @@ public enum PetShareExporter {
 
     private static func appendMovieFrames(
         _ state: MovieWriterState,
+        cancellation: PetShareExportCancellation,
         timeout: DispatchTimeInterval,
-        scheduleMediaData: MediaDataScheduler
+        hooks: MovieWriterHooks
     ) throws {
         let finished = DispatchSemaphore(value: 0)
         let queue = DispatchQueue(label: "dev.nyatinte.waddly.share-video")
-        // Only the media-data queue touches the writer, so cancellation can never overlap an append.
+        // Exactly one path ends the export. Cancellation mutates the writer only through this block,
+        // which runs on the queue that owns the writer, so it can never overlap an append.
         let cancelOnQueue: @Sendable () -> Void = {
-            guard !state.didCancel else { return }
-            state.didCancel = true
-            state.isTerminal = true
+            guard state.endExport() else { return }
+            // cancelWriting() is a no-op once the writer failed or completed. Deleting the output is
+            // limited to writers that did not complete, so a cancellation that loses the race to
+            // finishWriting cannot destroy a finished movie.
             if state.writer.status == .writing {
                 state.writer.cancelWriting()
             }
+            if state.writer.status != .completed {
+                try? FileManager.default.removeItem(at: state.writer.outputURL)
+            }
             finished.signal()
         }
-        scheduleMediaData(state.input, queue) {
-            guard !state.isTerminal else { return }
-            while state.input.isReadyForMoreMediaData, state.frameIndex < movieFrameCount {
-                let appended = autoreleasepool {
-                    let frame = frameForExport(state)
-                    guard let buffer = makeVideoPixelBuffer(frame: frame, adaptor: state.adaptor) else {
-                        return false
-                    }
-                    return state.adaptor.append(
-                        buffer,
-                        withPresentationTime: CMTime(value: Int64(state.frameIndex), timescale: frameRate)
-                    )
-                }
-                guard appended else {
-                    state.error = state.writer.error ?? PetShareExportError.frameEncodingFailed
-                    state.input.markAsFinished()
-                    cancelOnQueue()
-                    return
-                }
-                state.frameIndex += 1
-            }
-            guard state.frameIndex == movieFrameCount else { return }
-            state.isTerminal = true
-            state.input.markAsFinished()
-            state.writer.finishWriting { finished.signal() }
+        let context = MovieWriterContext(
+            state: state,
+            queue: queue,
+            finished: finished,
+            hooks: hooks,
+            cancelOnQueue: cancelOnQueue
+        )
+        hooks.scheduleMediaData(state.input, queue) {
+            context.encodeFrames(cancellation: cancellation)
         }
-        guard finished.wait(timeout: .now() + timeout) == .success else {
-            // Cleanup goes to the queue that owns the writer, without blocking here or waiting for readiness.
-            queue.async(execute: cancelOnQueue)
-            throw PetShareExportError.timedOut
-        }
-        if let error = state.error {
+        try context.waitForWriter(cancellation: cancellation, timeout: timeout)
+        if let error = state.recordedError {
             throw error
         }
         guard state.writer.status == .completed else {
             throw state.writer.error ?? PetShareExportError.writerUnavailable
         }
-    }
-
-    private static func frameForExport(_ state: MovieWriterState) -> CGImage {
-        let timeline = state.shots.reduce(0) { $0 + $1.duration }
-        let elapsed = Double(state.frameIndex) * timeline / Double(movieFrameCount)
-        var cursor = 0.0
-        return state.shots.first { shot in
-            defer { cursor += shot.duration }
-            return elapsed < cursor + shot.duration
-        }?.image ?? state.shots[0].image
     }
 
     static func makeVideoPixelBuffer(
@@ -270,4 +243,5 @@ public enum PetShareExportError: Error {
     case writerUnavailable
     case frameEncodingFailed
     case timedOut
+    case cancelled
 }

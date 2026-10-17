@@ -1,7 +1,10 @@
 import AppKit
 import AVKit
+import Foundation
+import os
 import Testing
 @testable import WaddlyApp
+import WaddlyCore
 
 @Test @MainActor func openingShareDialogPreparesMovieAndSpriteForPreview() async throws {
     _ = NSApplication.shared
@@ -55,6 +58,44 @@ import Testing
     Issue.record("share dialog did not prepare both preview assets")
 }
 
+@Test @MainActor func closingTheShareWindowCancelsPendingGeneration() async throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-close.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let localization = LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
+    let generationStarted = SharedValue<Bool>()
+    let generationToken = SharedValue<PetShareExportCancellation>()
+    let images = try SetupWizardFixture.sheetImages()
+    let controller = PetShareWindowController(
+        images: images,
+        localization: localization
+    ) { _, _, cancellation in
+        generationToken.store(cancellation)
+        generationStarted.store(true)
+        // Stands in for the encoder: it only returns once closing the dialog cancels generation.
+        let deadline = Date().addingTimeInterval(5)
+        while !cancellation.isCancelled, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        throw PetShareExportError.cancelled
+    }
+    var didClose = false
+    controller.onClose = { didClose = true }
+
+    // The window stays off screen: showing it activates the app, and a later test in this headless host
+    // then loses the process. Closing it still delivers `windowWillClose`, which is what this covers.
+    controller.prepareAssets()
+    #expect(await waitFor({ generationStarted.current == true }, within: 5))
+
+    controller.close()
+
+    // Closing must cancel the token the pending generation observes, not wait for it to finish.
+    #expect(generationToken.current?.isCancelled == true)
+    #expect(didClose)
+}
+
 @Test @MainActor func xPostURLIncludesReminderAndShareHashtag() throws {
     let reminder = "動画と画像をコピーしてポストに添付してください"
     let url = try #require(PetShareWindowController.xPostURL(text: reminder))
@@ -95,4 +136,29 @@ import Testing
 
 @MainActor private func descendants(of view: NSView) -> [NSView] {
     [view] + view.subviews.flatMap(descendants(of:))
+}
+
+/// Yields the main actor while polling, so the controller's detached generation task can make progress.
+@MainActor private func waitFor(_ condition: () -> Bool, within seconds: TimeInterval) async -> Bool {
+    let deadline = Date().addingTimeInterval(seconds)
+    while Date() < deadline {
+        if condition() {
+            return true
+        }
+        try? await Task.sleep(for: .milliseconds(5))
+    }
+    return condition()
+}
+
+/// A value a detached task can store and the main actor can read.
+private final class SharedValue<Value: Sendable>: Sendable {
+    private let value = OSAllocatedUnfairLock<Value?>(initialState: nil)
+
+    var current: Value? {
+        value.withLock { $0 }
+    }
+
+    func store(_ newValue: Value) {
+        value.withLock { $0 = newValue }
+    }
 }
