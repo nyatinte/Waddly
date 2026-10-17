@@ -30,15 +30,17 @@ private struct PetShareAssets: Sendable {
 final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     private let images: PetImageSet
     private let localization: LocalizationController
+    private let presenter: WindowPresenter
     private let shareView: PetShareDialogView
     private var generationTask: Task<Void, Never>?
     private var assets: PetShareAssets?
     private var isClosed = false
     var onClose: (() -> Void)?
 
-    init(images: PetImageSet, localization: LocalizationController) {
+    init(images: PetImageSet, localization: LocalizationController, presenter: WindowPresenter = .live) {
         self.images = images
         self.localization = localization
+        self.presenter = presenter
         shareView = PetShareDialogView(localization: localization)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 410),
@@ -99,12 +101,13 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     override func showWindow(_ sender: Any?) {
-        super.showWindow(sender)
+        guard let window else { return }
+        presenter.reveal(window)
         // The context menu is still tracking during its action; activate after it closes.
         Task { @MainActor [weak self] in
-            guard let window = self?.window, window.isVisible else { return }
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
+            guard let self, let window = self.window, window.isVisible else { return }
+            presenter.activate()
+            presenter.focus(window)
         }
     }
 

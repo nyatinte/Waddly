@@ -8,7 +8,7 @@ import Testing
     let suiteName = "WaddlyTests.share-dialog.\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { defaults.removePersistentDomain(forName: suiteName) }
-    let app = AppDelegate(settings: AppSettings(defaults: defaults))
+    let app = makeTestApp(settings: AppSettings(defaults: defaults))
     app.importedImages = try SetupWizardFixture.sheetImages()
 
     app.showPetShare()
