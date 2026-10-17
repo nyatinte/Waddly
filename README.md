@@ -106,7 +106,7 @@ The app targets a physical memory footprint below 100 MB in typical use. One sha
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).
 
 ## License
 

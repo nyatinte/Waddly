@@ -145,7 +145,7 @@ AIが生成したシートは、プロンプトで位置を指定しても、コ
 
 ## コントリビュート
 
-開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。画面の入口、操作状態、手動QAチェックリストの監査結果は[UX操作監査](docs/ux-interaction-audit.md)にまとめています。
 
 ## ライセンス
 
