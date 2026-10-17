@@ -79,6 +79,8 @@
 "setup.methodChoosePNG" = "Choose a PNG file";
 "setup.methodChoosePNGDetail" = "Use a sprite sheet you already have.";
 "setup.dropHint" = "You can also drag and drop a transparent PNG onto this window.";
+"setup.trySample" = "Try the sample pet first";
+"setup.sampleActive" = "The sample pet is in use. Choose Change image to use your own.";
 "setup.chatGPTPromptTitle" = "Create an image with ChatGPT";
 "setup.chatGPTPromptBody" = "Create a nine-cell sprite sheet from a photo of your pet.";
 "setup.chatGPTStep1" = "Copy the prompt";

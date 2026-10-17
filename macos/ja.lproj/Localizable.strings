@@ -79,6 +79,8 @@
 "setup.methodChoosePNG" = "PNGファイルを選択";
 "setup.methodChoosePNGDetail" = "作成済みの画像を読み込みます。";
 "setup.dropHint" = "透過PNGをこのウィンドウにドラッグ＆ドロップすることもできます。";
+"setup.trySample" = "まずサンプルで試す";
+"setup.sampleActive" = "サンプルを表示中です。「画像を変更」から自分の画像に切り替えられます。";
 "setup.chatGPTPromptTitle" = "ChatGPTで画像を作成";
 "setup.chatGPTPromptBody" = "ペットの写真から、9コマのアニメーション画像を作成します。";
 "setup.chatGPTStep1" = "プロンプトをコピー";

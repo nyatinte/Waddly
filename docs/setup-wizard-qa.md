@@ -9,9 +9,10 @@ results; treat the two tables below separately.
 
 | Screen | State | Primary action | Other actions |
 | --- | --- | --- | --- |
-| Pet | No image yet | Create with ChatGPT / Choose a PNG | Drag and drop a PNG onto the window; sample pet plays in the preview |
+| Pet | No image yet | Create with ChatGPT / Choose a PNG | Try the sample pet first (bundled sample, offered only while no pet is stored); drag and drop a PNG onto the window; sample pet plays in the preview |
 | Pet | ChatGPT guide | Copy the prompt and open ChatGPT | Choose a PNG, Change method, inline copy/open status |
 | Pet | Image registered | Next | Change image (imports immediately and replaces the saved set) |
+| Pet | Sample in use | Next | Change image; the page states the sample is active so it is not mistaken for the user's own pet |
 | Any step | Import failed (drop or picker) | Choose a PNG again | Inline message in the page column; nothing is written and the previous set stays; clears when the step changes |
 | Keyboard reactions | Not granted | Enable Input Monitoring | Privacy note; guide opens System Settings and parks beside it; manual steps remain available |
 | Keyboard reactions | Granted, not yet receiving | Restart Waddly | Try again without restarting; Next stays disabled and “Set up later” is the non-destructive escape |
@@ -53,6 +54,9 @@ Command: `mise run test` (serialized Swift Testing suites). The wizard suites ar
 | An inline failure posts one announcement with the localized message; success posts none | `failedImportExplainsTheProblemInlineAndKeepsThePreviousSet`, `copyingThePromptReportsCopyAndBrowserOpenResults` |
 | Preview backdrop and border re-resolve when the effective appearance changes | `previewBackdropFollowsAnAppearanceChange` |
 | Granted and ready stay distinct; Next is blocked until keys actually arrive | `permissionGrantedAndReadyStayDistinctStates` |
+| The sample shortcut commits the bundled sample in place, keeps the step, and is offered only when no pet is stored; a real import clears the sample choice | `tryingTheSampleCommitsTheBundledSampleInPlace`, `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice` |
+| A relaunch mid-permission resumes at “restart required”, not a false ready state | `interruptedPermissionFlowResumesToRestartRequired` |
+| “Set up later” records the Ready step so a relaunch resumes with the warning still shown | `deferringSavesTheReadyStepSoARelaunchCanResume` |
 | Permission rules, polling, manual steps, and deferral | `PermissionServiceTests` |
 
 ## Manual QA matrix (unverified)
@@ -73,3 +77,6 @@ passed until they are actually executed on the target machine.
 | Browser hand-off | ChatGPT guide | With a browser available, ChatGPT opens and the inline text says the prompt was copied; with no handler, the inline open-failure message appears |
 | Invalid sheet | Any step | An unreadable PNG shows the inline message on that step and leaves any previously imported pet in place |
 | Both languages | All states | English and Japanese copy fit the fixed columns |
+
+See [setup-first-run-journey.md](setup-first-run-journey.md) for the audited journey map, the
+state-transition invariants, and the five scripted first-run tasks to run against a real GUI session.

@@ -23,12 +23,38 @@ extension SetupWizardController {
             if await onConfirmImage(images) {
                 importedFileName = url.lastPathComponent
                 didRegisterPet = true
+                didUseSamplePet = false
                 if importFeedbackGeneration == generation {
                     didFailImport = false
                 }
             }
             renderCurrentStep()
         }
+    }
+
+    /// Uses the bundled sample as the pet, without a file picker. The commit goes through the same
+    /// path as an import, so the sample becomes a real, local pet image; the user stays on this
+    /// step and can see which pet is active. Offered only when the store is empty, so it never
+    /// replaces an existing pet, and it never touches the saved step.
+    @discardableResult
+    func trySamplePet() -> Task<Void, Never> {
+        // A rapid second click must not start a second write: hand back the commit already running.
+        if let inFlight = sampleCommitTask {
+            return inFlight
+        }
+        clearImportFeedback()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            defer { sampleCommitTask = nil }
+            guard canTrySample, let sample = demoImages else { return }
+            guard await onConfirmImage(sample) else { return }
+            didUseSamplePet = true
+            didRegisterPet = true
+            importedFileName = nil
+            renderCurrentStep()
+        }
+        sampleCommitTask = task
+        return task
     }
 
     /// Invalidates pending feedback without cancelling image commits already in progress.

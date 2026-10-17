@@ -74,6 +74,9 @@ private extension SetupWizardScreen {
     private var registeredPetContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupRegisteredBody)
+            if controller.didUseSamplePet {
+                caption(.setupSampleActive)
+            }
             if let importedFileName = controller.importedFileName {
                 caption(String(format: controller.localizedString(.setupImageImported), importedFileName))
             }
@@ -137,7 +140,18 @@ private extension SetupWizardScreen {
                 action: controller.importFromPanel
             )
             .accessibilityIdentifier("importFromPanel")
+            sampleOption
             caption(.setupDropHint)
+        }
+    }
+
+    /// The one-click path to a visible pet. It is a plain choice, not a required step, and it only
+    /// appears while no pet is stored.
+    @ViewBuilder private var sampleOption: some View {
+        if controller.canTrySample {
+            Button(controller.localizedString(.setupTrySample)) { _ = controller.trySamplePet() }
+                .accessibilityLabel(controller.localizedString(.setupTrySample))
+                .accessibilityIdentifier("trySamplePet")
         }
     }
 

@@ -53,12 +53,17 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var currentStep = Step.pet
     @Published var isShowingChatGPTGuide = false
     @Published var didRegisterPet = false
+    /// Set only when the user explicitly chose the bundled sample, so the page can say which pet
+    /// is active. It is session state, like `importedFileName`.
+    @Published var didUseSamplePet = false
     @Published var importedFileName: String?
     @Published var promptFeedback: PromptActionFeedback?
     /// Set when a chosen sheet could not be read, so the page can explain it in place.
     @Published var didFailImport = false
     /// Identifies the interaction that may publish asynchronous import feedback.
     var importFeedbackGeneration = UUID()
+    /// The in-flight sample commit, so a rapid second click cannot start a second write.
+    var sampleCommitTask: Task<Void, Never>?
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -120,6 +125,12 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 
     var hasImage: Bool {
         currentPetImages().isComplete
+    }
+
+    /// The sample shortcut is offered only while the pet store is empty, so choosing it can never
+    /// replace a user's own pet. It is explicit: nothing is written until the user picks it.
+    var canTrySample: Bool {
+        !hasImage && demoImages != nil
     }
 
     var isMonitoringGranted: Bool {
