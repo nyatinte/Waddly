@@ -8,32 +8,46 @@ extension SetupWizardController {
     /// Cancelling the picker leaves everything untouched, and "画像を変更" is always available.
     @discardableResult
     func importImage(from url: URL) -> Task<Void, Never> {
-        Task { [weak self] in
+        clearImportFeedback()
+        let generation = importFeedbackGeneration
+        return Task { [weak self] in
             guard let self else { return }
             guard let images = await onPreviewImage(url) else {
-                // The failure alert is raised by the import path; the page itself stays put.
+                // A previous decode must not restore feedback after navigation or a newer attempt.
+                guard importFeedbackGeneration == generation else { return }
+                didFailImport = true
+                announce(localizedString(.petImportErrorMessage))
                 renderCurrentStep()
                 return
             }
             if await onConfirmImage(images) {
                 importedFileName = url.lastPathComponent
                 didRegisterPet = true
+                if importFeedbackGeneration == generation {
+                    didFailImport = false
+                }
             }
             renderCurrentStep()
         }
     }
 
+    /// Invalidates pending feedback without cancelling image commits already in progress.
+    func clearImportFeedback() {
+        importFeedbackGeneration = UUID()
+        didFailImport = false
+    }
+
     @objc func showChatGPTGuide() {
         isShowingChatGPTGuide = true
-        didFailCopy = false
-        didAttemptCopy = false
+        promptFeedback = nil
+        clearImportFeedback()
         renderCurrentStep()
     }
 
     @objc func changeMethod() {
         isShowingChatGPTGuide = false
-        didFailCopy = false
-        didAttemptCopy = false
+        promptFeedback = nil
+        clearImportFeedback()
         renderCurrentStep()
     }
 
@@ -48,13 +62,26 @@ extension SetupWizardController {
     }
 
     @objc func copyPromptAndOpenChatGPT() {
-        let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        didAttemptCopy = true
-        didFailCopy = !pasteboard.setString(prompt, forType: .string)
+        guard pasteboard.setString(prompt, forType: .string) else {
+            reportPromptFeedback(.copyFailed)
+            return
+        }
+        guard let url = URL(string: "https://chatgpt.com/") else {
+            reportPromptFeedback(.copied)
+            return
+        }
+        // The copy already succeeded, so a browser failure is its own truthful message.
+        reportPromptFeedback(openBrowser(url) ? .copied : .openFailed)
+    }
+
+    /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.
+    private func reportPromptFeedback(_ feedback: PromptActionFeedback) {
+        promptFeedback = feedback
+        if promptFeedbackIsError, let key = promptFeedbackKey {
+            announce(localizedString(key))
+        }
         renderCurrentStep()
-        guard !didFailCopy, let url = URL(string: "https://chatgpt.com/") else { return }
-        NSWorkspace.shared.open(url)
     }
 
     /// First attempt: ask macOS, then turn the wizard into the drag guide.

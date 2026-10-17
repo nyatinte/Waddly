@@ -156,4 +156,106 @@ typealias Fixture = SetupWizardFixture
         reopened.showWindow(nil)
         #expect(reopened.previewPane.isPlayingPreview)
     }
+
+    @Test func copyingThePromptReportsCopyAndBrowserOpenResults() throws {
+        let chatGPT = try #require(URL(string: "https://chatgpt.com/"))
+        let failingState = Fixture.State()
+        var opened: [URL] = []
+        let failingOpen = try Fixture.makeWizard(state: failingState, openBrowser: { url in
+            opened.append(url)
+            return false
+        })
+        defer { failingOpen.close() }
+        failingOpen.showChatGPTGuide()
+        failingOpen.copyPromptAndOpenChatGPT()
+        #expect(opened == [chatGPT])
+        #expect(failingOpen.promptFeedback == .openFailed)
+        #expect(failingOpen.promptFeedbackKey == .setupOpenFailed)
+        #expect(failingOpen.promptFeedbackIsError)
+        #expect(failingState.announcements == [failingOpen.localizedString(.setupOpenFailed)])
+
+        let succeedingState = Fixture.State()
+        var didOpen = false
+        let succeedingOpen = try Fixture.makeWizard(state: succeedingState, openBrowser: { _ in
+            didOpen = true
+            return true
+        })
+        defer { succeedingOpen.close() }
+        succeedingOpen.showChatGPTGuide()
+        succeedingOpen.copyPromptAndOpenChatGPT()
+        #expect(didOpen)
+        #expect(succeedingOpen.promptFeedback == .copied)
+        #expect(succeedingOpen.promptFeedbackKey == .setupPromptCopied)
+        #expect(!succeedingOpen.promptFeedbackIsError)
+        // Only a failure is announced.
+        #expect(succeedingState.announcements.isEmpty)
+    }
+
+    @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {
+        let state = Fixture.State()
+        let previous = try Fixture.sheetImages()
+        state.images = previous
+        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
+        defer { wizard.close() }
+        try await wizard.importImage(from: Fixture.sheetURL()).value
+        #expect(wizard.didFailImport)
+        #expect(wizard.currentStep == .pet)
+        // The failed read writes nothing, so the seeded set and its preview survive untouched.
+        #expect(wizard.hasImage)
+        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
+        #expect(wizard.previewPane.hasPet)
+        #expect(!wizard.didRegisterPet)
+        #expect(state.announcements == [wizard.localizedString(.petImportErrorMessage)])
+
+        // Choosing a method again clears the stale message.
+        wizard.showChatGPTGuide()
+        #expect(!wizard.didFailImport)
+    }
+
+    @Test func importFailureStaysOnItsStepAndClearsWhenTheStepChanges() async throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
+        defer { wizard.close() }
+        // The drop target is window-wide, so a failure on a later step must stay visible there.
+        wizard.setStep(.monitoring)
+        try await wizard.importImage(from: Fixture.sheetURL()).value
+        #expect(wizard.currentStep == .monitoring)
+        #expect(wizard.didFailImport)
+        #expect(wizard.hasImage)
+
+        wizard.goBack()
+        #expect(wizard.currentStep == .pet)
+        #expect(!wizard.didFailImport)
+    }
+
+    @Test func permissionGrantedAndReadyStayDistinctStates() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(state: state, granted: false, receiving: false)
+        defer { wizard.close() }
+        wizard.setStep(.monitoring)
+
+        // 1. Not granted: setup stays on the page.
+        #expect(!wizard.isMonitoringGranted)
+        #expect(!wizard.isMonitoringReady)
+        wizard.goNext()
+        #expect(wizard.currentStep == .monitoring)
+
+        // 2. Granted but the keyboard is not arriving: restart required, not success.
+        state.granted = true
+        state.receiving = false
+        wizard.refreshPermissionStatus()
+        #expect(wizard.isMonitoringGranted)
+        #expect(!wizard.isMonitoringReady)
+        wizard.goNext()
+        #expect(wizard.currentStep == .monitoring)
+
+        // 3. Granted and receiving keys: ready, and setup can finish.
+        state.receiving = true
+        wizard.refreshPermissionStatus()
+        #expect(wizard.isMonitoringReady)
+        wizard.goNext()
+        #expect(wizard.currentStep == .completed)
+    }
 }

@@ -54,8 +54,9 @@ extension AppDelegate {
         return true
     }
 
-    /// Reads a sheet for review only. Nothing is written until `confirmPetImage` is called,
-    /// so the wizard can show the nine cells before anything is committed.
+    /// Reads a sheet without writing. The wizard calls `confirmPetImage` immediately on success;
+    /// a failed read returns `nil` and leaves the saved set untouched. A read failure returns
+    /// `nil`; the wizard explains it in place instead of raising a separate alert.
     func previewPetImage(from url: URL) async -> PetImageSet? {
         let images = await Task.detached(priority: .userInitiated) {
             autoreleasepool { () -> PetImageSet? in
@@ -64,14 +65,10 @@ extension AppDelegate {
             }
         }.value
         guard !isShuttingDown else { return nil }
-        guard let images else {
-            await showPetImageImportError()
-            return nil
-        }
         return images
     }
 
-    /// Commits a set the user already reviewed.
+    /// Commits the decoded set; the wizard does not present a separate confirmation step.
     func confirmPetImage(_ images: PetImageSet) async -> Bool {
         await queueImageUpdate { await self.confirmPetImageInOrder(images) }
     }

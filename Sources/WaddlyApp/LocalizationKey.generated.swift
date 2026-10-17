@@ -104,6 +104,7 @@ enum LocalizationKey: String, CaseIterable {
     case setupMonitoringWatching = "setup.monitoringWatching"
     case setupNext = "setup.next"
     case setupNotWorking = "setup.notWorking"
+    case setupOpenFailed = "setup.openFailed"
     case setupOpenSystemSettings = "setup.openSystemSettings"
     case setupPetBody = "setup.petBody"
     case setupPetTitle = "setup.petTitle"
