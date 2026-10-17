@@ -252,7 +252,7 @@ import WaddlyCore
         init() throws {
             _ = NSApplication.shared
             defaults = try #require(UserDefaults(suiteName: domain))
-            app = AppDelegate(settings: AppSettings(defaults: defaults))
+            app = makeTestApp(settings: AppSettings(defaults: defaults))
             app.settings.registerDefaults()
             app.petImagesDirectoryURL = directory
             app.buildPanel()
