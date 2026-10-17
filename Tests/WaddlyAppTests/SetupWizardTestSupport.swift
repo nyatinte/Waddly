@@ -23,6 +23,7 @@ enum SetupWizardFixture {
         savedStep: Int? = nil,
         granted: Bool = false,
         receiving: Bool = true,
+        observedReaction: Bool = true,
         previewResult: PetImageSet? = nil,
         preview: (@MainActor (URL) async -> PetImageSet?)? = nil,
         confirmResult: Bool = false,
@@ -39,16 +40,10 @@ enum SetupWizardFixture {
         settings.appLanguage = language
         state.previewResult = previewResult
         state.confirmResult = confirmResult
-        // The wizard no longer knows about CGPreflight or event taps; the service does.
-        let permission = PermissionService(
-            hasPermission: { state.granted },
-            isReceivingKeys: { state.granted && state.receiving },
-            requestAccess: { requestPermission() },
-            restartTap: { state.tapRestarted += 1 },
-            openSettings: { state.settingsOpened += 1 }
-        )
         state.granted = granted
         state.receiving = receiving
+        state.observedReaction = observedReaction
+        let permission = makePermission(state: state, requestPermission: requestPermission)
         onPermissionService(permission)
         let resources = try #require(Bundle(url: root().appendingPathComponent("macos")))
         // A named pasteboard keeps the prompt copy off the system clipboard in every run.
@@ -64,6 +59,7 @@ enum SetupWizardFixture {
             },
             onConfirmImage: { images in
                 // Mirrors the app: committing is what updates the stored set.
+                state.confirmCount += 1
                 if state.confirmResult {
                     state.images = images
                 }
@@ -82,6 +78,22 @@ enum SetupWizardFixture {
                 defaults.removePersistentDomain(forName: name)
                 state.closed = true
             }
+        )
+    }
+
+    /// The wizard no longer knows about CGPreflight or event taps; the service does.
+    @MainActor
+    private static func makePermission(
+        state: State,
+        requestPermission: @escaping @MainActor () -> Bool
+    ) -> PermissionService {
+        PermissionService(
+            hasPermission: { state.granted },
+            isReceivingKeys: { state.granted && state.receiving },
+            hasObservedReaction: { state.observedReaction },
+            requestAccess: { requestPermission() },
+            restartTap: { state.tapRestarted += 1 },
+            openSettings: { state.settingsOpened += 1 }
         )
     }
 
@@ -106,8 +118,13 @@ enum SetupWizardFixture {
         var granted = false
         /// Whether the granted app is actually receiving keys; `false` is the restart-required state.
         var receiving = true
+        /// Whether a real key has been delivered since the tap started; `false` is the live-tap but
+        /// no-reaction-yet state.
+        var observedReaction = true
         var tapRestarted = 0
         var settingsOpened = 0
+        /// How many times the wizard committed an image set; a duplicate sample click must stay at 1.
+        var confirmCount = 0
         /// Messages the wizard asked to announce; the fixture records them instead of speaking.
         var announcements: [String] = []
     }

@@ -121,4 +121,94 @@ import Testing
         resumed.showMonitoringStep()
         #expect(resumed.currentStep == .monitoring)
     }
+
+    /// A live tap with zero delivered keys must stay unconfirmed: no success, no advance.
+    @Test func aLiveTapStaysUnconfirmedUntilAKeyArrives() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            savedStep: SetupWizardController.Step.monitoring.rawValue,
+            granted: true,
+            receiving: true,
+            observedReaction: false
+        )
+        defer { wizard.close() }
+        #expect(wizard.monitoringReadiness == .awaitingReaction)
+        #expect(wizard.isMonitoringGranted)
+        #expect(!wizard.isMonitoringReady)
+
+        wizard.goNext()
+        #expect(wizard.currentStep == .monitoring)
+
+        // The delivered-key callback repaints the step, and only then is it ready.
+        state.observedReaction = true
+        wizard.monitoringDidObserveReaction()
+        #expect(wizard.monitoringReadiness == .reactionObserved)
+        #expect(wizard.isMonitoringReady)
+        wizard.goNext()
+        #expect(wizard.currentStep == .completed)
+    }
+
+    /// "Set up later" with a live-but-unconfirmed tap stays incomplete, and the completion page
+    /// offers to confirm typing rather than to set permissions up again.
+    @Test func deferringFromALiveTapKeepsTheCheckWaiting() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            savedStep: SetupWizardController.Step.monitoring.rawValue,
+            granted: true,
+            receiving: true,
+            observedReaction: false
+        )
+        defer { wizard.close() }
+
+        wizard.deferMonitoring()
+
+        #expect(wizard.currentStep == .completed)
+        #expect(!wizard.isMonitoringReady)
+        #expect(wizard.monitoringCheckKey == .setupCheckMonitoringWaiting)
+        #expect(wizard.monitoringIncompleteActionKey == .setupConfirmTyping)
+    }
+
+    /// A returning user who already confirmed reactions is not reset by reopening the guide.
+    @Test func aReturningUserKeepsAConfirmedReaction() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            savedStep: SetupWizardController.Step.completed.rawValue,
+            granted: true,
+            receiving: true,
+            observedReaction: true
+        )
+        defer { wizard.close() }
+
+        #expect(wizard.currentStep == .completed)
+        #expect(wizard.isMonitoringReady)
+        #expect(wizard.monitoringCheckKey == .setupCheckMonitoring)
+        wizard.renderCurrentStep()
+        #expect(wizard.isMonitoringReady)
+    }
+
+    /// Two rapid clicks on the sample shortcut must start one commit, not two writes.
+    @Test func rapidSampleRequestsCommitOnce() async throws {
+        let state = Fixture.State()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            demoURL: Fixture.sheetURL(),
+            confirmResult: true
+        )
+        defer { wizard.close() }
+
+        let first = wizard.trySamplePet()
+        let second = wizard.trySamplePet()
+        _ = await first.value
+        _ = await second.value
+
+        #expect(state.confirmCount == 1)
+        #expect(wizard.didUseSamplePet)
+        #expect(wizard.hasImage)
+    }
 }

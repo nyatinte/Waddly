@@ -185,6 +185,7 @@ private func textFenceBody(in markdown: String) -> String? {
         permission: PermissionService(
             hasPermission: { false },
             isReceivingKeys: { false },
+            hasObservedReaction: { false },
             requestAccess: { false },
             restartTap: {}
         ),
@@ -200,6 +201,13 @@ private func textFenceBody(in markdown: String) -> String? {
     #expect(KeyboardMonitor.isEnterKeyCode(36))
     #expect(KeyboardMonitor.isEnterKeyCode(76))
     #expect(!KeyboardMonitor.isEnterKeyCode(0))
+}
+
+/// The confirmation must start empty: nothing is claimed until a real key reaches a fresh tap.
+@Test @MainActor func aFreshKeyboardMonitorHasObservedNothing() {
+    let monitor = KeyboardMonitor()
+    #expect(!monitor.hasObservedKeyEvent)
+    #expect(!monitor.isRunning)
 }
 
 @Test func movingAnElementPreservesTheRequestedOrder() {

@@ -110,9 +110,13 @@
 "setup.later" = "後で設定する";
 "setup.monitoringGrantedTitle" = "入力監視を設定しました";
 "setup.monitoringGrantedBody" = "キー入力に合わせてペットが動く準備ができました。";
+"setup.monitoringWaitingTitle" = "キー入力への反応を確認";
+"setup.monitoringWaitingBody" = "入力監視は許可され、Waddlyはキー入力を待っています。何かキーを押して、ペットが実際に反応することを確認してください。入力内容は記録しません。";
+"setup.monitoringStatusWaiting" = "キー入力への反応：キー入力を待っています";
 "setup.tryTyping" = "実際にキーを押して動作を確認できます。";
 "setup.notWorking" = "動作しない場合";
 "setup.previewMonitoringOff" = "キー入力への反応：オフ";
+"setup.previewMonitoringWaiting" = "キーを押すと反応します";
 "setup.helperAlternative" = "別の方法で追加";
 "setup.manualTitle" = "手動で追加する";
 "setup.manualStep1" = "システム設定の「入力監視」を開きます。";
@@ -127,6 +131,8 @@
 "setup.checkMonitoring" = "入力監視を設定しました";
 "setup.checkMonitoringOff" = "入力監視：未設定";
 "setup.completeWarning" = "入力監視を有効にするまで、キー入力には反応しません。";
+"setup.completeWarningWaiting" = "セットアップガイドでキーを押し、ペットが反応することを確認してください。";
+"setup.confirmTyping" = "キー入力を確認";
 "setup.showOnDesktop" = "デスクトップに表示";
 "setup.setUpMonitoring" = "入力監視を設定";
 "setup.completeHint" = "表示位置やサイズは、ペットを右クリックして変更できます。";
@@ -147,6 +153,7 @@
 "setup.restartNow" = "Waddlyを再起動";
 "setup.retryWithoutRestart" = "再起動せずにもう一度試す";
 "setup.checkMonitoringRestart" = "入力監視：再起動が必要";
+"setup.checkMonitoringWaiting" = "キー入力への反応：キー入力を待っています";
 "setup.troubleshootingTitle" = "動作しないときは";
 "setup.troubleshootingBody" = "Waddlyを再起動してから、もう一度キーを押してみてください。";
 "setup.imageDetails" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px";

@@ -16,23 +16,26 @@ migration is #95; the animation/permission lifecycle is #63/#98. Nothing here ad
 | Fresh install | No pet frames and `setupWizardSeen == false` | Pet step. The bundled sample animates in the preview, labelled “Sample”, with a one-line body. | Create with ChatGPT / Choose a PNG / **Try the sample pet first** / drop a PNG | Import or sample writes frames; `setupStep` still `nil` until a step change |
 | Existing-user upgrade | `setupWizardSeen == true` and a complete pet | No wizard on launch; the pet is on the desktop. `Setup Guide…` opens it deliberately. | Menu actions | Setup does not reopen; `setupStep` stays `nil` |
 | Denied permission | On the Keyboard reactions step | “not allowed”, the privacy note, and **Enable Input Monitoring** | Enable → guide opens System Settings; or **Add it another way**; or **Set up later** | Granted lands in `setupStep = 1`; Later records `setupStep = 2`, permission TCC untouched |
-| Interrupted setup | The window closed before the finish action | Reopening resumes at the saved step (`setupStep`) | Continue, or reopen from the Dock | `setupStep` is kept while the pet is complete; closing does not clear it |
+| Interrupted setup | The window closed before the finish action | With a complete pet, nothing reopens by itself; the Dock click or **Setup Guide…** resumes at the saved step. With no pet yet, the next launch reopens the guide. | Continue, or reopen from the Dock/menu | Closing a complete pet sets `setupWizardSeen = true`; closing without a pet clears it; `setupStep` is kept either way |
 | Returning user | Completed once, then reopened | Finish page with the pet check and the monitoring check as they truly are | **Show on desktop**, or **Set up Input Monitoring** if the check is empty | No onboarding restart; a completed guide never traps the user in setup |
 
 ## State transitions and saved invariants
 
 The app persists four things that a relaunch reads: `petImageFiles` (plus the frame files on disk),
 `setupWizardSeen`, `setupStep`, and the macOS Input Monitoring grant. The app never stores key codes;
-`isReceivingKeys` only reports whether the event tap is live.
+`isReceivingKeys` only reports whether the event tap is live, and the observed-reaction signal is a
+single in-memory boolean that is never persisted or logged.
 
 | State | Shown on the Keyboard reactions step | Next enabled | Saved invariant |
 | --- | --- | --- | --- |
 | No pet frames | n/a — the Pet step blocks | No | `petImageFiles` empty, `setupStep` unchanged |
 | Pet ready | Wizard shows the pet; sample is labelled as the sample | Pet → Next | Frames on disk + manifest |
 | Permission not granted | “not allowed”, guide or manual steps | No | TCC not granted; `setupStep` = 1 |
-| Granted, tap silent | “restart required” + Restart / retry | No | TCC granted; tap not running |
-| Granted, keys arriving | “allowed”, try-typing | Yes | TCC granted; tap running |
-| Finished, permission ready | Completion page, both checks filled | Yes → Show on desktop | `setupWizardSeen = true`, `setupStep = nil` |
+| Granted, tap unavailable | “restart required” + Restart / retry | No | TCC granted; event tap not running |
+| Tap live, no key yet | “waiting for a key press”, pet awake | No | TCC granted; tap running; no delivered key |
+| Key observed | “allowed”, pet has reacted | Yes | TCC granted; tap running; a delivered key |
+| Finished, reactions confirmed | Completion page, both checks filled | Yes → Show on desktop | `setupWizardSeen = true`, `setupStep = nil` |
+| Finished, reactions unconfirmed | Completion page, “waiting for a key press” + Confirm typing | Yes (non-destructive) | `setupWizardSeen = true`, `setupStep = nil`, no delivered key |
 | Finished, permission missing | Completion page, monitoring check empty + warning | Yes (non-destructive) | `setupWizardSeen = true`, `setupStep = nil`, TCC missing |
 
 Transitions:
@@ -43,24 +46,28 @@ launch ─ no pet or unseen ─► Pet ──(import / Try the sample)──► 
   │                                └─(Next)─► Keyboard reactions
   │                                              │
   │                     not granted ─────────────┤
-  │                          │ enable/guide      │ granted, tap silent ──► restart required
+  │                          │ enable/guide      │ granted, tap unavailable ──► restart required
   │                          ▼                   │        │
-  │                     System Settings          │        └─(retry / relaunch / keys arrive)─► ready
-  │                          │ grant             │ granted, keys arriving ──► ready
+  │                     System Settings          │        └─(retry / relaunch)─► tap live
+  │                          │ grant             │ tap live, no key yet ──► waiting for a key
   │                          └───────────────────┘        │
-  │                                                       └─(Next)─► Ready
-  └─(Later on Keyboard reactions)────────────────────────────────────► Ready (warning shown)
+  │                                                       └─(a real key reaches Waddly)─► confirmed
+  │                                                                 │
+  │                                                                 └─(Next)─► Ready
+  └─(Later on Keyboard reactions)─────────────────────────────────────────► Ready (incomplete warning)
 
-Close any step  ── keeps setupStep ──► Dock reopen / relaunch resumes that step
-Reach Ready + Show on desktop ── clears setupStep, sets setupWizardSeen ──► never reopens onboarding
+Close any step ── keeps setupStep ──► the Dock click or the menu's Setup Guide resumes that step
+Complete pet + close ── setupWizardSeen = true ──► relaunch does NOT reopen the guide; Dock/menu resumes
+No complete pet + close ── setupWizardSeen = false ──► relaunch reopens the guide
+Ready + Show on desktop ── clears setupStep ──► never reopens onboarding
 ```
 
 Invariants enforced by construction:
 
-- **No false ready.** `Next` stays disabled until `isMonitoringReady` (granted *and* keys arriving).
-  A granted-but-silent tap is “restart required”, not success.
+- **No false ready.** `Next` stays disabled until a real key has reached Waddly (`isMonitoringReady`: granted *and* the tap live *and* a key observed). A missing permission, an unavailable tap, and a live-but-silent tap are each shown as their own unconfirmed state.
+- **Confirmation is ephemeral and private.** The observed signal is a single boolean set inside the event tap; it stores no key code, text, or time, and a new tap clears it. Nothing is logged or sent.
 - **Later is explicit and non-destructive.** `deferMonitoring` only sets the phase to deferred and the
-  step to Ready; it does not change TCC and does not clear the pet.
+  step to Ready; it does not change TCC and does not clear the pet. It never marks reactions confirmed.
 - **Resume never loses work.** Step changes record `setupStep`; only the finish action clears it.
   Closing the window keeps the frames and the step.
 - **The sample cannot clobber a pet.** “Try the sample pet first” is offered only when no complete
@@ -84,16 +91,21 @@ observable state is seen on screen. Run each in English and Japanese, in light a
    Failure: a confirm dialog appears, or the previous pet is lost.
 3. **Permission honest before and after the tap.** Continue to Keyboard reactions with permission not
    granted. Expected: “not allowed” and the privacy note. Grant in System Settings and return.
-   Expected: while the tap is silent the page says “restart required” and `Next` is disabled; after
-   Restart (or the retry that starts the tap) it says “allowed” and `Next` enables. Failure: “ready”
-   appears while typing does not move the pet.
+   Expected: while the tap is unavailable the page says “restart required” and `Next` is disabled;
+   after Restart (or the retry that starts the tap) the page says “waiting for a key press” and
+   `Next` stays disabled. Press a key. Expected: the pet reacts and the page switches to “allowed”
+   with `Next` enabled. Failure: “ready” appears before any key has reached Waddly, or a live tap
+   with no key press is reported as success.
 4. **Explicit Later, then resume.** On Keyboard reactions choose **Set up later**. Expected: the
-   completion page shows the pet check filled and the monitoring check empty with the warning, no
-   false success. Close the window and reopen from the Dock. Expected: it resumes on the completion
-   page, not the first step, with the warning still shown.
-5. **Interrupt and reopen mid-step.** Close the window on the Keyboard reactions step, relaunch.
-   Expected: the guide reopens on that step with the same status, the pet is unchanged, and the file
-   manifest on disk is unchanged. Failure: setup restarts at the Pet step, or the pet disappears.
+   completion page shows the pet check filled and the monitoring check incomplete with the warning,
+   and no false success. Close the window and reopen from the Dock. Expected: it resumes on the
+   completion page, not the first step, with the warning still shown.
+5. **Interrupt and reopen mid-step.** With a complete pet, close the window on the Keyboard
+   reactions step. Expected: relaunching the app does **not** reopen the guide by itself; a Dock
+   click or **Setup Guide…** reopens it on the saved step with the same status, the pet unchanged,
+   and the file manifest unchanged. Then repeat the close once more with no pet imported: a relaunch
+   does reopen the guide at the Pet step. Failure: a relaunch with a complete pet restarts setup, or
+   the pet disappears.
 
 Also confirm on the machine (not covered by unit tests): VoiceOver reads each status once and speaks
 an inline failure once; keyboard-only Tab/Space/Return reach every action; Reduce Motion removes the

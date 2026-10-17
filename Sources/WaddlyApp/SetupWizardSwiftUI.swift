@@ -157,19 +157,32 @@ private extension SetupWizardScreen {
 
     private var monitoringPage: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if controller.isMonitoringGranted {
-                grantedMonitoringContent
-            } else {
+            switch controller.monitoringReadiness {
+            case .permissionMissing:
                 missingPermissionContent
+            case .tapUnavailable:
+                restartRequiredContent
+            case .awaitingReaction:
+                awaitingReactionContent
+            case .reactionObserved:
+                readyMonitoringContent
             }
         }
     }
 
-    @ViewBuilder private var grantedMonitoringContent: some View {
-        if controller.isMonitoringReady {
-            readyMonitoringContent
-        } else {
-            restartRequiredContent
+    /// The tap is live but no key has reached the app yet: the pet is awake, reactions are unproven.
+    private var awaitingReactionContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            title(.setupMonitoringWaitingTitle)
+            bodyText(.setupMonitoringWaitingBody)
+            status(.setupMonitoringStatusWaiting, positive: false)
+            bodyText(.setupTryTyping)
+            Button(controller.localizedString(.setupNotWorking), action: controller.toggleTroubleshooting)
+                .accessibilityLabel(controller.localizedString(.setupNotWorking))
+                .accessibilityIdentifier("toggleTroubleshooting")
+            if controller.isShowingTroubleshooting {
+                troubleshootingContent
+            }
         }
     }
 
@@ -292,10 +305,7 @@ private extension SetupWizardScreen {
     }
 
     private var monitoringCheckKey: LocalizationKey {
-        if controller.isMonitoringReady {
-            return .setupCheckMonitoring
-        }
-        return controller.isMonitoringGranted ? .setupCheckMonitoringRestart : .setupCheckMonitoringOff
+        controller.monitoringCheckKey
     }
 
     private var nextButtonKey: LocalizationKey {
@@ -314,10 +324,13 @@ private extension SetupWizardScreen {
             )
             .frame(maxWidth: .infinity, alignment: .leading)
             if !controller.isMonitoringReady {
-                caption(.setupCompleteWarning).multilineTextAlignment(.center)
-                Button(controller.localizedString(.setupSetUpMonitoring), action: controller.showMonitoringStep)
-                    .accessibilityLabel(controller.localizedString(.setupSetUpMonitoring))
-                    .accessibilityIdentifier("showMonitoringStep")
+                caption(controller.monitoringIncompleteWarningKey).multilineTextAlignment(.center)
+                Button(
+                    controller.localizedString(controller.monitoringIncompleteActionKey),
+                    action: controller.showMonitoringStep
+                )
+                .accessibilityLabel(controller.localizedString(controller.monitoringIncompleteActionKey))
+                .accessibilityIdentifier("showMonitoringStep")
             }
             caption(.setupCompleteHint).multilineTextAlignment(.center)
         }

@@ -62,6 +62,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var didFailImport = false
     /// Identifies the interaction that may publish asynchronous import feedback.
     var importFeedbackGeneration = UUID()
+    /// The confirmation the step last repainted, so a delivered key repaints the page once.
+    var didRenderConfirmedReaction = false
     /// The in-flight sample commit, so a rapid second click cannot start a second write.
     var sampleCommitTask: Task<Void, Never>?
     @Published var isShowingTroubleshooting = false
@@ -137,9 +139,36 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         permission.isGranted
     }
 
-    /// True only when permission is granted and the keyboard is genuinely reaching Waddly.
+    /// The four progress states the Keyboard reactions step distinguishes: permission missing, tap
+    /// unavailable, tap live but no key observed, and a key observed. Only the last is ready.
+    var monitoringReadiness: PermissionService.Readiness {
+        permission.readiness
+    }
+
+    /// True only when permission is granted and a real key has reached Waddly since the tap started.
     var isMonitoringReady: Bool {
         permission.isReady
+    }
+
+    /// The completion page states the monitoring outcome truthfully for each readiness state.
+    var monitoringCheckKey: LocalizationKey {
+        switch monitoringReadiness {
+        case .reactionObserved: .setupCheckMonitoring
+        case .awaitingReaction: .setupCheckMonitoringWaiting
+        case .tapUnavailable: .setupCheckMonitoringRestart
+        case .permissionMissing: .setupCheckMonitoringOff
+        }
+    }
+
+    /// The completion page's warning when the monitoring check is incomplete.
+    var monitoringIncompleteWarningKey: LocalizationKey {
+        monitoringReadiness == .awaitingReaction ? .setupCompleteWarningWaiting : .setupCompleteWarning
+    }
+
+    /// What the completion page offers next: confirm by typing when the tap is already live,
+    /// otherwise send the user back to set Input Monitoring up.
+    var monitoringIncompleteActionKey: LocalizationKey {
+        monitoringReadiness == .awaitingReaction ? .setupConfirmTyping : .setupSetUpMonitoring
     }
 
     /// The wizard itself is the drag guide, so it never hands off to a floating panel.
@@ -237,6 +266,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 extension SetupWizardController {
     func renderCurrentStep() {
         updatePreview()
+        didRenderConfirmedReaction = isMonitoringReady
         objectWillChange.send()
     }
 
@@ -259,15 +289,23 @@ extension SetupWizardController {
         }
     }
 
-    /// While reactions are missing, the pet sleeps on the permission step.
+    /// While reactions cannot work yet, the pet sleeps on the permission step. Once the tap is live
+    /// (even before a key arrives), the pet stays awake so the user can watch for the reaction.
     private var shouldSleepInPreview: Bool {
-        currentStep == .monitoring && !isMonitoringReady
+        guard currentStep == .monitoring else { return false }
+        switch monitoringReadiness {
+        case .permissionMissing, .tapUnavailable: return true
+        case .awaitingReaction, .reactionObserved: return false
+        }
     }
 
     /// The completion screen states the outcome, so the stage carries no repeated caption.
     private var previewCaption: String {
         guard currentStep == .monitoring else { return "" }
-        // The ready page already says this in the column; only the failure state needs a caption.
-        return isMonitoringReady ? "" : localizedString(.setupPreviewMonitoringOff)
+        switch monitoringReadiness {
+        case .reactionObserved: return ""
+        case .awaitingReaction: return localizedString(.setupPreviewMonitoringWaiting)
+        case .permissionMissing, .tapUnavailable: return localizedString(.setupPreviewMonitoringOff)
+        }
     }
 }

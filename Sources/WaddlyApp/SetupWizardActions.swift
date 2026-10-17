@@ -57,6 +57,15 @@ extension SetupWizardController {
         return task
     }
 
+    /// A real key reached the app while the guide was open. Repaints the step once, when the
+    /// confirmation actually changes, so the status can move from “waiting” to “confirmed”.
+    func monitoringDidObserveReaction() {
+        guard currentStep == .monitoring || currentStep == .completed,
+              isMonitoringReady != didRenderConfirmedReaction
+        else { return }
+        renderCurrentStep()
+    }
+
     /// Invalidates pending feedback without cancelling image commits already in progress.
     func clearImportFeedback() {
         importFeedbackGeneration = UUID()
