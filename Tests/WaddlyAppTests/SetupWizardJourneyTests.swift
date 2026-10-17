@@ -110,7 +110,8 @@ import Testing
         #expect(recorded.last == SetupWizardController.Step.completed.rawValue)
         #expect(wizard.hasImage)
 
-        // A relaunch lands on the completion page with the missing-permission warning still shown.
+        // Reopening the guide (Dock click or menu) lands on the completion page with the
+        // missing-permission warning still shown; a relaunch with a complete pet does not auto-open it.
         let resumed = try Fixture.makeWizard(
             state: state,
             savedStep: SetupWizardController.Step.completed.rawValue
