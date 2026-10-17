@@ -112,19 +112,34 @@ an inline failure once; keyboard-only Tab/Space/Return reach every action; Reduc
 step cross-fade; larger text and increased contrast keep the footer and buttons visible; the System
 Settings hand-off parks without covering the list.
 
-## Fixture renders required for review
+## Renders (before / after)
 
-These are native AppKit content renders of the hosted `SetupWizardScreen`, not screen captures, and
-they do not prove keyboard, VoiceOver, or manual interaction. Capture the Pet step with
-“Try the sample pet first” visible, and the Pet step after it is chosen (sample-active message), in:
+These are native AppKit content-view renders of the hosted `SetupWizardScreen`, not screen captures,
+and they do not prove keyboard, VoiceOver, or manual interaction. Each was built from `git archive`
+of the named revision with the repository example sheet as the sample and isolated temporary
+preferences. Full provenance, including language and appearance per file, is in
+[docs/images/setup-journey/README.md](images/setup-journey/README.md).
 
-- English / light (`en-light`)
-- Japanese / dark (`ja-dark`)
+Before (`86dfce5`, #94 setup-feedback head) — Pet step, no pet:
 
-For the render, build from the worktree, use the repository example sheet as the sample
-(`assets/examples/nyatinte-bot-3x3.png`, shipped as `demo-pet.png`), isolated temporary preferences,
-and `cacheDisplay(in:to:)` composited on the window background. Inspect them for text and footer
-clipping at the default font; the JA/dark sample-active line is the worst case.
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![before en light](images/setup-journey/before-86dfce5-en-light.png) | ![before en dark](images/setup-journey/before-86dfce5-en-dark.png) | ![before ja light](images/setup-journey/before-86dfce5-ja-light.png) | ![before ja dark](images/setup-journey/before-86dfce5-ja-dark.png) |
+
+After (`d4bc89b`, sample shortcut) — Pet step, no pet:
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![after en light](images/setup-journey/after-d4bc89b-en-light.png) | ![after en dark](images/setup-journey/after-d4bc89b-en-dark.png) | ![after ja light](images/setup-journey/after-d4bc89b-ja-light.png) | ![after ja dark](images/setup-journey/after-d4bc89b-ja-dark.png) |
+
+After (`d4bc89b`) — sample chosen, “sample is active” message:
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![sample en light](images/setup-journey/after-sample-d4bc89b-en-light.png) | ![sample en dark](images/setup-journey/after-sample-d4bc89b-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-d4bc89b-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-d4bc89b-ja-dark.png) |
+
+Inspect them for text and footer clipping at the default font; the Japanese sample-active line is the
+worst case. Larger text, contrast, VoiceOver, keyboard, and Reduce Motion still need a manual pass.
 
 ## Automated verification
 
