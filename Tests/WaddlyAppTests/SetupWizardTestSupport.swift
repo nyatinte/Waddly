@@ -60,6 +60,7 @@ enum SetupWizardFixture {
             },
             currentPetImages: { state.images },
             permission: permission,
+            presenter: .invisible,
             savedStep: savedStep,
             onStepChange: onStepChange,
             onShowOnDesktop: onShowOnDesktop,
