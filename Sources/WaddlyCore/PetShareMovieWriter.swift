@@ -170,7 +170,9 @@ struct MovieWriterContext: Sendable {
         while finished.wait(timeout: .now() + cancellationPollInterval) == .timedOut {
             guard cancellation.isCancelled || DispatchTime.now() >= deadline else { continue }
             queue.async(execute: cancelOnQueue)
-            // Wait for the queue to stop the writer before the caller removes any partial output.
+            // Give the queue a bounded chance to stop the writer and delete its output before this export
+            // reports failure. A wedged encoder can outlast that wait, and the caller still returns: the
+            // output is deleted only by `cancelOnQueue`, so nothing touches it while the writer is active.
             _ = finished.wait(timeout: .now() + cancellationGracePeriod)
             throw cancellation.isCancelled ? PetShareExportError.cancelled : PetShareExportError.timedOut
         }
