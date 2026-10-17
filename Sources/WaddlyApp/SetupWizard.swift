@@ -39,6 +39,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let openBrowser: @MainActor (URL) -> Bool
     /// Announces an inline failure. Injectable so tests prove the call without posting real speech.
     let announce: @MainActor (String) -> Void
+    /// The only way this window reaches the screen. Tests pass one that draws nothing.
+    let presenter: WindowPresenter
 
     /// Records the step so a relaunch lands where the user left off. `nil` clears it.
     let onStepChange: @MainActor (Int?) -> Void
@@ -67,6 +69,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
+        presenter: WindowPresenter = .live,
         savedStep: Int? = nil,
         pasteboard: NSPasteboard = .general,
         openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
@@ -84,6 +87,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.pasteboard = pasteboard
         self.openBrowser = openBrowser
         self.announce = announce
+        self.presenter = presenter
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
         self.onClose = onClose
@@ -173,6 +177,13 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         if let window {
             following.recordProgrammaticMove(to: window.frame.origin)
         }
+    }
+
+    /// The wizard is shown from the app and from tests, so the one window it owns goes through the
+    /// presenter here instead of `super`, which would order a real window onto the desktop.
+    override func showWindow(_ sender: Any?) {
+        guard let window else { return }
+        presenter.focus(window)
     }
 
     func windowDidMove(_ notification: Notification) {

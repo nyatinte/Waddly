@@ -44,7 +44,7 @@ extension AppDelegate {
         // The status shown on step 2 depends on the tap above, and showWindow does not redraw.
         controller.renderCurrentStep()
         let wasVisible = window.isVisible
-        NSApp.activate(ignoringOtherApps: true)
+        presenter.activate()
         controller.moveWindowProgrammatically {
             controller.showWindow(nil)
             // Re-assert the designed size; a restored frame must never win here.
@@ -64,6 +64,7 @@ extension AppDelegate {
             onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,
+            presenter: presenter,
             savedStep: settings.setupStep,
             onStepChange: { [weak settings] step in settings?.setupStep = step },
             onShowOnDesktop: { [weak self] in self?.revealPetOnDesktop() },

@@ -150,7 +150,7 @@ extension SetupWizardController {
         moveWindowProgrammatically {
             window.setFrameOrigin(origin)
         }
-        window.orderFrontRegardless()
+        presenter.reveal(window)
     }
 
     /// Jumps back to the permission step from the completion screen.

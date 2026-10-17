@@ -89,11 +89,11 @@ extension AppDelegate {
             imageRows[category]?.setImages(thumbnails(for: category))
         }
         guard hasCompletePetImageSet else {
-            panel.orderOut(nil)
+            presenter.hide(panel)
             animationController.imageSetDidChange(resetActivity: resetActivity)
             return
         }
-        panel.orderFrontRegardless()
+        presenter.reveal(panel)
         animationController.imageSetDidChange(resetActivity: resetActivity)
     }
 
@@ -167,9 +167,9 @@ extension AppDelegate {
 
     private func presentImageAlert(_ alert: NSAlert, in parent: NSWindow) async -> NSApplication.ModalResponse {
         guard !isShuttingDown else { return .cancel }
-        NSApp.activate(ignoringOtherApps: true)
+        presenter.activate()
         return await withCheckedContinuation { continuation in
-            alert.beginSheetModal(for: parent) { response in
+            presenter.presentAlert(alert, parent) { response in
                 continuation.resume(returning: response)
             }
         }
@@ -192,8 +192,10 @@ extension AppDelegate {
             window.center()
             window.contentView = makeImageSettingsContent()
         }
-        NSApp.activate(ignoringOtherApps: true)
-        imageSettingsWindow?.makeKeyAndOrderFront(nil)
+        presenter.activate()
+        if let window = imageSettingsWindow {
+            presenter.focus(window)
+        }
     }
 
     func refreshImageSettingsLocalization() {
