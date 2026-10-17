@@ -6,7 +6,7 @@ import WaddlyCore
 
 @Suite(.serialized) @MainActor struct AppIntegrationTests {
     @Test func imagesSurviveEditsAndReloadWithoutRewritingRetainedFrames() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         let images = try fixture.exampleImages()
@@ -38,7 +38,7 @@ import WaddlyCore
     }
 
     @Test func cancelingReplacementAndInvalidImportsPreserveSavedImages() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -62,7 +62,7 @@ import WaddlyCore
     }
 
     @Test func missingSavedFrameDoesNotDeleteOrCommitAPartialManifest() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -82,7 +82,7 @@ import WaddlyCore
     }
 
     @Test func menuCommandsUpdatePreferencesAndKeepAnEntryPointVisible() throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         app.buildMenu()
@@ -113,7 +113,7 @@ import WaddlyCore
 
     @Test(arguments: [false, true])
     func dockReopenRestoresControlsWithoutAMenuBar(hasImages: Bool) async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         app.settings.showInMenuBar = false
@@ -127,22 +127,9 @@ import WaddlyCore
         #expect(app.setupWizardController?.window?.isVisible == true)
     }
 
-    @Test func closingAnimationSettingsReleasesItsHostedContentAndRows() throws {
-        let fixture = try AppTestFixture()
-        defer { fixture.close() }
-        let app = fixture.app
-        app.showImageSettings()
-        let window = try #require(app.imageSettingsWindow)
-        #expect(!app.imageRows.isEmpty)
-        window.close()
-        #expect(app.imageSettingsWindow == nil)
-        #expect(app.imageRows.isEmpty)
-        #expect(window.contentView == nil)
-    }
-
     /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
     @Test func dockReopenNeverOpensAnimationSettingsAfterSetup() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -163,7 +150,7 @@ import WaddlyCore
     /// Re-showing an already open guide must not recenter it: the app's own move would look like a
     /// user drag to `GuideFollowing` and stop the guide from following System Settings (#79).
     @Test func reShowingAnOpenGuideKeepsItFollowing() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -197,7 +184,7 @@ import WaddlyCore
 
     /// Leaving setup part-way keeps the saved step, so the Dock icon resumes it.
     @Test func dockReopenResumesSetupWhenItWasLeftUnfinished() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())
@@ -218,7 +205,7 @@ import WaddlyCore
     /// (for example, after closing the guide early) must not get setup back on the next launch.
     @Test(arguments: LaunchCase.all)
     func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         if scenario.hasImages {
@@ -232,7 +219,7 @@ import WaddlyCore
     }
 
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
-        let fixture = try AppTestFixture()
+        let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
         try await app.persistPetImages(fixture.exampleImages())

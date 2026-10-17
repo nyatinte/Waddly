@@ -54,7 +54,7 @@ struct AppPresenceMenuTests {
         let name = "WaddlyTests.presence.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
-        let app = AppDelegate(settings: AppSettings(defaults: defaults))
+        let app = makeTestApp(settings: AppSettings(defaults: defaults))
         app.settings.registerDefaults()
         app.buildMenu()
         app.settings.showInDock = showInDock

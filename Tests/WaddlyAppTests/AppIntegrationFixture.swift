@@ -5,7 +5,7 @@ import WaddlyCore
 
 /// Shared app fixture for integration-style tests: an isolated `AppDelegate` with its own defaults
 /// suite and temporary image directory.
-@MainActor final class AppTestFixture {
+@MainActor final class AppIntegrationFixture {
     let domain = "WaddlyTests.integration.\(UUID().uuidString)"
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let defaults: UserDefaults

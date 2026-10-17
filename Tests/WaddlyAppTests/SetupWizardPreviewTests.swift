@@ -19,10 +19,14 @@ import WaddlyCore
     }
 
     @Test func unreadableSheetLeavesThePreviousSetAlone() async throws {
-        let wizard = try Fixture.makeWizard(previewResult: nil)
+        let state = Fixture.State()
+        let previous = try Fixture.sheetImages()
+        state.images = previous
+        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
         defer { wizard.close() }
         try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(!wizard.hasImage)
+        #expect(wizard.hasImage)
+        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
         #expect(!wizard.didRegisterPet)
         #expect(wizard.currentStep == .pet)
     }
@@ -100,5 +104,55 @@ import WaddlyCore
         let shots = try PetPreviewPlayer.demoShots(for: Fixture.sheetImages())
         #expect(shots.count == 9)
         #expect(shots.allSatisfy { $0.seconds > 0 })
+    }
+
+    /// The pane captured its layer colors once at init. Flipping the appearance afterwards must
+    /// re-resolve them, or a dark-initialized backdrop stays dark under the light appearance.
+    @Test func previewBackdropFollowsAnAppearanceChange() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        let dark = try #require(NSAppearance(named: .darkAqua))
+        let light = try #require(NSAppearance(named: .aqua))
+
+        pane.appearance = dark
+        pane.viewDidChangeEffectiveAppearance()
+        let darkBackdrop = pane.layer?.backgroundColor
+
+        pane.appearance = light
+        pane.viewDidChangeEffectiveAppearance()
+        let lightBackdrop = pane.layer?.backgroundColor
+
+        // A single init-time resolution would leave both equal; the backdrop must re-resolve.
+        #expect(darkBackdrop != lightBackdrop)
+        #expect(darkBackdrop == resolvedControlBackground(dark))
+        #expect(lightBackdrop == resolvedControlBackground(light))
+    }
+
+    @Test func appearanceChangePreservesTheActiveDropHighlight() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        pane.isDropTargeted = true
+        for name in [NSAppearance.Name.darkAqua, .aqua] {
+            pane.appearance = try #require(NSAppearance(named: name))
+            pane.viewDidChangeEffectiveAppearance()
+            var accent = NSColor.controlAccentColor.cgColor
+            pane.effectiveAppearance.performAsCurrentDrawingAppearance {
+                accent = NSColor.controlAccentColor.cgColor
+            }
+            #expect(pane.layer?.borderColor == accent)
+            #expect(pane.layer?.borderWidth == 2)
+        }
+        pane.isDropTargeted = false
+        #expect(pane.layer?.borderWidth == pane.idleBorderWidth)
+    }
+
+    private func resolvedControlBackground(_ appearance: NSAppearance) -> CGColor {
+        var color = NSColor.controlBackgroundColor.cgColor
+        appearance.performAsCurrentDrawingAppearance {
+            color = NSColor.controlBackgroundColor.cgColor
+        }
+        return color
     }
 }

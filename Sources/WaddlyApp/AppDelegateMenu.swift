@@ -329,7 +329,7 @@ extension AppDelegate {
         let alert = NSAlert()
         alert.messageText = localizedString(.menuLoginError)
         alert.alertStyle = .warning
-        alert.beginSheetModal(for: panel)
+        presenter.presentAlert(alert, panel) { _ in }
     }
 }
 

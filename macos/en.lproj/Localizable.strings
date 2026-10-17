@@ -87,6 +87,7 @@
 "setup.copyAndOpen" = "Copy the prompt and open ChatGPT";
 "setup.promptCopied" = "The prompt has been copied.";
 "setup.copyFailed" = "The prompt could not be copied. Please try again.";
+"setup.openFailed" = "The prompt was copied, but ChatGPT could not be opened. Open chatgpt.com in your browser.";
 "setup.whenReady" = "Once the image is ready, import it here.";
 "setup.changeMethod" = "Change method";
 "setup.choosePNG" = "Choose a PNG file";

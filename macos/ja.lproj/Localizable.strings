@@ -87,6 +87,7 @@
 "setup.copyAndOpen" = "プロンプトをコピーしてChatGPTを開く";
 "setup.promptCopied" = "プロンプトをコピーしました。";
 "setup.copyFailed" = "プロンプトをコピーできませんでした。もう一度お試しください。";
+"setup.openFailed" = "プロンプトはコピーしましたが、ChatGPTを開けませんでした。ブラウザでchatgpt.comを開いてください。";
 "setup.whenReady" = "画像ができたら、ここから読み込みます。";
 "setup.changeMethod" = "方法を変更";
 "setup.choosePNG" = "PNGファイルを選択";

@@ -1,0 +1,3 @@
+do {
+    try operation()
+} catch {}
