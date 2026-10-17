@@ -99,7 +99,7 @@ are about *reason* and *outcome*, not plumbing.
 
 The wizard commits a valid sheet immediately — there is **no** review-before-write confirm step
 (PR #118 documented this in `docs/setup-wizard-qa.md`, which also holds the state/test map). The
-focus ring for `.plain` cards is a source-audited **gap** and needs a manual keyboard pass.
+cards have no explicit custom focus treatment in source; their actual native focus rendering still needs a manual keyboard pass.
 
 ### 2c. Animation Settings editor
 
@@ -156,9 +156,9 @@ language change. Hover, focus, and keyboard remain **manual-unverified**.
 
 ## 4. QA matrix
 
-The **Result** column is intentionally blank: it is filled in only by a real run. `auto` = a suite
-covers the state today; `manual` = needs a GUI / VoiceOver / System Settings session and is
-**unverified**.
+`auto` means a suite covers the stated behavior; `manual` means a GUI / VoiceOver / System Settings
+session is still **unverified**. Record manual results with OS, revision, and observed outcome after
+execution; an automated state test does not verify every interaction in its row.
 
 | Screen | Pointer | Keyboard-only | VoiceOver | Appearance / contrast | Reduce Motion | JA / EN | Failure + retry | Coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ shows an alert sheet; add again. 4) Close → content cleared; reopen → rebuil
 | --- | --- | --- | --- |
 | P1 | Share: clipboard failure only beeps, with no inline error or retry | copy is the primary action; the user cannot tell it failed | #109 |
 | P1 | Share: no hover/focus feedback on the copy buttons or the X row; X row is not keyboard reachable | wrong target / keyboard users blocked | #108, #109 |
-| P2 | Setup: `.plain` option cards have no hover or focus ring | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
+| P2 | Setup: `.plain` option cards have no explicit hover/focus styling; native focus is unverified | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
 | P2 | Editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
 | P2 | Menus: “Animation Settings…” and the presence guard are disabled with no reason | the user cannot tell why a feature is unavailable | #94 |
 | P3 | Login-item failure is a post-menu sheet with no inline retry | recoverable but easy to miss | #94 |
@@ -242,7 +242,7 @@ Provenance and limits are recorded in each branch's `docs/images/*/README.md`.
 
 ## 9. Capturing new screenshots (manual, native)
 
-1. `mise run dev:install`, then `mise run dev:reset` for a first-run state; `open "/Applications/Waddly (development).app"`.
+1. `mise run dev:install`; `open "/Applications/Waddly (development).app"`. For first-run captures, use disposable development preferences. `mise run dev:reset` clears development-app state: run it only if you intentionally want to discard that state, never on a user's production setup.
 2. Set language and appearance; use System Settings → Accessibility for contrast and Reduce Motion.
 3. Capture with ⌘⇧4 (window) or ⌘⇧5; keep EN/light, EN/dark, JA/light, JA/dark per changed surface.
 4. Store under `docs/images/<surface>/` with a small `README.md` recording revision, language,
