@@ -131,6 +131,9 @@ public final class PetImageStore {
     /// files this call staged and keeps the previous manifest and images. Cleanup runs last and is
     /// non-fatal; leftovers are swept on the next launch. The legacy mirror is written only after a
     /// successful commit so a downgrade still finds the frames.
+    ///
+    /// This transaction primitive does not enqueue itself: production callers must already own
+    /// `queue`. Edit adapters do so for their whole operation; enqueueing again would deadlock.
     public func persist(
         _ updated: PetImageSet,
         encodedImages: [ObjectIdentifier: Data] = [:],

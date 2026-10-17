@@ -11,6 +11,7 @@ extension AppDelegate {
     }
 
     /// Persist a frame set with the on-disk manifest as the source of truth.
+    /// Transaction primitive: call from an already-queued image operation, not concurrently.
     func persistPetImages(
         _ updated: PetImageSet,
         encodedImages: [ObjectIdentifier: Data] = [:],
