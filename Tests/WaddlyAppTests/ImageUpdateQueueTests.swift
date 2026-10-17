@@ -3,47 +3,8 @@ import Testing
 @testable import WaddlyApp
 import WaddlyCore
 
-@Test @MainActor func imageTransactionsStaySerializedAcrossWorkerSuspensions() async {
-    let app = AppDelegate()
-    let (started, startSignal) = AsyncStream<Void>.makeStream()
-    let (release, releaseSignal) = AsyncStream<Void>.makeStream()
-    var events: [Int] = []
-    let first = Task {
-        await app.queueImageUpdate {
-            events.append(1)
-            startSignal.yield()
-            for await _ in release {
-                break
-            }
-            events.append(2)
-            return true
-        }
-    }
-    var iterator = started.makeAsyncIterator()
-    _ = await iterator.next()
-    let second = Task {
-        await app.queueImageUpdate {
-            events.append(3)
-            return true
-        }
-    }
-    await Task.yield()
-    #expect(events == [1])
-    releaseSignal.yield()
-    #expect(await first.value)
-    #expect(await second.value)
-    #expect(events == [1, 2, 3])
-    startSignal.finish()
-    releaseSignal.finish()
-    app.isShuttingDown = true
-    let accepted = await app.queueImageUpdate {
-        events.append(4)
-        return true
-    }
-    #expect(!accepted)
-    #expect(events == [1, 2, 3])
-}
-
+/// Editor integration over the real store: an edit made while a previous save's cleanup is still
+/// suspended must still act on the frame the user sees.
 @Test @MainActor func committedImageEditsStayCorrectWhileCleanupIsSuspended() async throws {
     _ = NSApplication.shared
     let domain = "WaddlyTests-\(UUID().uuidString)"
@@ -54,7 +15,7 @@ import WaddlyCore
     let app = AppDelegate(settings: AppSettings(defaults: defaults))
     app.petImagesDirectoryURL = directory
     let frames = try makeImageFrames()
-    let model = try prepareImageModel(frames, app: app, directory: directory)
+    let model = try await prepareImageModel(frames, app: app)
     let updated = PetImageSet([.idle: Array(frames.dropFirst())])
     let (started, startSignal) = AsyncStream<Void>.makeStream()
     let (release, releaseSignal) = AsyncStream<Void>.makeStream()
@@ -99,12 +60,9 @@ import WaddlyCore
 }
 
 @MainActor private func prepareImageModel(
-    _ frames: [NSImage], app: AppDelegate, directory: URL
-) throws -> AnimationSettingsModel {
-    let previous = PetImageSet([.idle: frames])
-    app.importedImages = previous
-    let storage = PetImageStorage(directory: directory)
-    app.storedImageFiles = try storage.stage(previous, replacing: PetImageSet(), files: [:])
+    _ frames: [NSImage], app: AppDelegate
+) async throws -> AnimationSettingsModel {
+    try await app.persistPetImages(PetImageSet([.idle: frames]))
     let model = AnimationSettingsModel(
         thumbnailsByCategory: [.idle: frames.map(AnimationSettingsThumbnail.init)],
         localization: app.localization

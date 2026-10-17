@@ -43,7 +43,7 @@ import WaddlyCore
     }
 
     func close() {
-        app.isShuttingDown = true
+        app.imageStore.beginShutdown()
         app.animationController.shutdown()
         app.setupWizardController?.close()
         app.imageSettingsWindow?.close()
