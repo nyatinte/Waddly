@@ -88,6 +88,8 @@ You can also create the sprite sheet by hand.
 - Both dimensions divisible by 3
 - Maximum file size: 20 MB; maximum side length: 4096 px
 
+An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. Fix those poses before importing: place the corrected poses on equal transparent canvases with a consistent character anchor, then either assemble them into a square equal-thirds (3×3) sheet or add the individual frames per animation in **Animation Settings…**. Waddly imports exact thirds and never normalizes frames automatically, because bounding-box normalization would misalign sleeping poses and effects.
+
 Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. Animation Settings… adds several PNGs per animation.
 
 Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Use **Setup Guide…** for Input Monitoring help and **Animation Settings…** to edit its images. The status menu offers the same controls. In the Setup Guide, an unreadable sheet is reported inline at the top of the current step; a ChatGPT opening failure is reported next to its action. Navigating or starting another import discards obsolete pending error feedback. Drop-target borders follow appearance changes without losing an active drag highlight. The [setup state and QA matrix](docs/setup-wizard-qa.md) lists what the automated suites verify and what still needs a manual pass.

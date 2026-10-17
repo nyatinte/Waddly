@@ -127,6 +127,41 @@ import WaddlyCore
     }
 }
 
+@Test func promptFilesMatchTheReadmeCopy() throws {
+    // The extractor rejects missing, unclosed, repeated, and empty fences, so a broken fence
+    // fails the comparison below instead of passing against an empty block.
+    #expect(textFenceBody(in: "no fence") == nil)
+    #expect(textFenceBody(in: "```text\n```") == nil)
+    #expect(textFenceBody(in: "```text\n\n```") == nil)
+    #expect(textFenceBody(in: "```text\nunclosed") == nil)
+    #expect(textFenceBody(in: "```text\na\n```\n```text\nb\n```") == nil)
+    #expect(textFenceBody(in: "```text\nhello\n```") == "hello")
+
+    let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
+    for (language, readme) in [("en", "README.md"), ("ja", "README.ja.md")] {
+        let prompt = try String(contentsOf: root.appendingPathComponent("prompts/\(language).md"), encoding: .utf8)
+        let readmeCopy = try String(contentsOf: root.appendingPathComponent(readme), encoding: .utf8)
+        let promptBody = try #require(textFenceBody(in: prompt), "prompts/\(language).md has no usable text fence")
+        let readmeBody = try #require(textFenceBody(in: readmeCopy), "\(readme) has no usable text fence")
+        #expect(promptBody == readmeBody, "\(readme) is stale against prompts/\(language).md")
+    }
+}
+
+/// Extracts the body of the single ```text fenced block, or `nil` when the fence is missing,
+/// unclosed, repeated, or empty.
+private func textFenceBody(in markdown: String) -> String? {
+    let marker = "```text\n"
+    guard let start = markdown.range(of: marker),
+          let end = markdown[start.upperBound...].range(of: "\n```"),
+          !markdown[start.upperBound ..< end.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          markdown.range(of: marker, range: start.upperBound ..< markdown.endIndex) == nil
+    else {
+        return nil
+    }
+    return String(markdown[start.upperBound ..< end.lowerBound])
+}
+
 @Test @MainActor func setupWizardPromptTracksTheInjectedLanguage() throws {
     _ = NSApplication.shared
     let suiteName = "WaddlyTests.prompt.\(UUID().uuidString)"
