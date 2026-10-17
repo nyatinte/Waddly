@@ -48,9 +48,11 @@ Setup navigation contract:
   genuinely *receiving keys* (not merely granted). It is the window's default action.
 - **Set up later** appears only while monitoring is not ready and lands on Ready with an explicit
   warning — it never impersonates success.
-- Closing mid-way keeps `setupStep` and leaves `setupWizardSeen` cleared, so a relaunch or Dock click
-  resumes. Finishing clears the saved step. `isSetupComplete` requires image + seen + cleared step,
-  so a finished guide cannot trap the user (`AppDelegate.opensSetupOnLaunch`).
+- Closing keeps `setupStep`. With a complete pet it sets `setupWizardSeen = true`, so relaunch
+  leaves the guide closed; without a pet it clears that flag and launch reopens setup. A saved,
+  incomplete step can resume on a Dock click; the menu can always reopen the guide. Finishing clears
+  the saved step. `isSetupComplete` requires image + seen + cleared step, so a finished guide cannot
+  trap the user (`AppDelegate.opensSetupOnLaunch`).
 - The wizard is a fixed 820 × 520 pt non-restorable window (`SetupMetrics`), so a stale restored
   frame cannot reflow the layout.
 - The permission guide follows the System Settings window until the user moves it
@@ -174,8 +176,9 @@ execution; an automated state test does not verify every interaction in its row.
 ## 5. Walkthroughs (with retry)
 
 **Setup Guide.** 1) Launch to a first-run state → Pet step. 2) Choose a valid 3×3 PNG → preview
-updates, inline “Added …”; or copy the prompt and open ChatGPT. 3) *Retry:* choose a non-PNG or
-unreadable PNG → inline message, previous pet kept; choose again. If chatgpt.com will not open →
+updates, inline “Added …”; or copy the prompt and open ChatGPT. 3) *Retry:* choose a corrupt or
+unreadable file with a `.png` extension → inline message, previous pet kept; choose again. The picker
+filters non-PNG files and the drop target rejects their extensions without an import error. If chatgpt.com will not open →
 inline open-failure text, Copy again. 4) Next → Input Monitoring; Enable opens System Settings and
 the guide parks beside it. 5) *Retry:* after granting, “granted-not-receiving” offers “Restart now”
 or “Try again without restarting”. 6) Ready shows both checks filled; without permission it offers
@@ -195,8 +198,9 @@ at Login → check reflects `SMAppService` status; failure shows a warning sheet
 
 **Animation Settings.** 1) Right-click pet → Animation Settings… (enabled only after setup). 2) Add
 → pick PNGs; drop a PNG on a row → accent border while targeted, thumbnails append. 3) Reorder with
-`‹` / `›`, remove with `×` (disabled at a single image or at the ends). *Retry:* an unsupported file
-shows an alert sheet; add again. 4) Close → content cleared; reopen → rebuilt.
+`‹` / `›`, remove with `×` (disabled at a single image or at the ends). *Retry:* a corrupt or unreadable
+file with a `.png` extension shows an alert sheet; add again. Non-PNG files are filtered out by the
+picker or rejected by the drop target before import. 4) Close → content cleared; reopen → rebuilt.
 
 ## 6. Prioritized gaps by task impact
 
