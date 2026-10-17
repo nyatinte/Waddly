@@ -224,17 +224,18 @@ this audit.
 
 Setup feedback, PR [#118](https://github.com/nyatinte/Waddly/pull/118):
 
-- Before (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue94-setup-feedback/docs/images/setup-feedback/before-f1918a0-en-light.png
-- After (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue94-setup-feedback/docs/images/setup-feedback/after-0c33664-en-light.png
-- After (JA / dark): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue94-setup-feedback/docs/images/setup-feedback/after-0c33664-ja-dark.png
+- Before (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/bebbf10c27fdc9e49c35cbb2a80e6338aadb62b3/docs/images/setup-feedback/before-f1918a0-en-light.png
+- After (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/bebbf10c27fdc9e49c35cbb2a80e6338aadb62b3/docs/images/setup-feedback/after-0c33664-en-light.png
+- After (JA / dark): https://raw.githubusercontent.com/nyatinte/Waddly/bebbf10c27fdc9e49c35cbb2a80e6338aadb62b3/docs/images/setup-feedback/after-0c33664-ja-dark.png
 
 Animation Settings, PR [#116](https://github.com/nyatinte/Waddly/pull/116):
 
-- Before, AppKit (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue95-swiftui-editor/docs/images/animation-settings/before-appkit-f1918a0-en-light.png
-- After, SwiftUI (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue95-swiftui-editor/docs/images/animation-settings/after-swiftui-c5f8fcf-en-light.png
-- After, SwiftUI (JA / dark): https://raw.githubusercontent.com/nyatinte/Waddly/agent/issue95-swiftui-editor/docs/images/animation-settings/after-swiftui-c5f8fcf-ja-dark.png
+- Before, AppKit (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/a38452fcee8dd7d54f2d11d3d8ea793b17ed1c52/docs/images/animation-settings/before-appkit-f1918a0-en-light.png
+- After, SwiftUI (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/a38452fcee8dd7d54f2d11d3d8ea793b17ed1c52/docs/images/animation-settings/after-swiftui-c5f8fcf-en-light.png
+- After, SwiftUI (JA / dark): https://raw.githubusercontent.com/nyatinte/Waddly/a38452fcee8dd7d54f2d11d3d8ea793b17ed1c52/docs/images/animation-settings/after-swiftui-c5f8fcf-ja-dark.png
 
-Provenance and limits are recorded in each branch's `docs/images/*/README.md`.
+Provenance and limits are recorded in each revision's `docs/images/*/README.md`. These immutable
+commit URLs survive branch deletion; update the source-audit rows separately when behavior changes.
 
 ## 8. Post-#109 / #110 update spots
 
