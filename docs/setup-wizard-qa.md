@@ -63,6 +63,7 @@ passed until they are actually executed on the target machine.
 | --- | --- | --- |
 | VoiceOver status wording and failure announcement | Not granted → granted-not-receiving → ready; then trigger a failed import | Each status label reads the current state once when reached, and an inline failure is spoken once without repeating on re-render. The announcement call is unit-tested; the actual speech is not, and must be heard here |
 | Larger text | All Pet and Keyboard reactions states | Content wraps without clipping or hidden buttons |
+| Import failure banner | Any step, including the ChatGPT guide with open-failure text | Banner and page do not overlap the footer. Default-font English/light and Japanese/dark native renders were inspected; other states and larger text still need a manual pass |
 | Increased contrast | All states, light and dark appearance | Status and inline errors stay distinguishable from body text |
 | Reduce Motion | Step transitions | No cross-fade; layout still stable |
 | Keyboard only | Pet, Keyboard reactions, Ready | Tab reaches every action; Space/Return activate; focus never jumps to a different control after a status update |
