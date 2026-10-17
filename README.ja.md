@@ -143,7 +143,7 @@ macOSが許可を反映するのはアプリの再起動後です。
 
 ## コントリビュート
 
-開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。画面の入口、操作状態、手動QAチェックリストの監査結果は[UX操作監査](docs/ux-interaction-audit.md)にまとめています。
 
 ## ライセンス
 
