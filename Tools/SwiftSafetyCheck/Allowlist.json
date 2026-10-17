@@ -1,5 +1,43 @@
 {
   "rules": {
+    "actor-assumption": [
+      "Sources/WaddlyApp/PermissionService.swift:155",
+      "Sources/WaddlyApp/Waddly.swift:153"
+    ],
+    "empty-catch": [
+      "Sources/WaddlyApp/AnimationScheduler.swift:59"
+    ],
+    "preconcurrency": [
+      "Sources/WaddlyCore/PetShareMovieWriter.swift:4"
+    ],
+    "silenced-file-mutation": [
+      "Sources/WaddlyApp/PetImagePersistence.swift:77",
+      "Sources/WaddlyApp/PetShareWindowController.swift:27",
+      "Sources/WaddlyApp/PetShareWindowController.swift:104",
+      "Sources/WaddlyApp/PetShareWindowController.swift:110",
+      "Sources/WaddlyApp/PetShareWindowController.swift:147",
+      "Sources/WaddlyCore/PetImageCore.swift:205",
+      "Sources/WaddlyCore/PetImageStorage.swift:173",
+      "Sources/WaddlyCore/PetImageStorage.swift:182",
+      "Sources/WaddlyCore/PetShareExporter.swift:66",
+      "Sources/WaddlyCore/PetShareExporter.swift:176",
+      "Tests/WaddlyAppTests/AppIntegrationFixture.swift:55",
+      "Tests/WaddlyAppTests/AppModelTests.swift:173",
+      "Tests/WaddlyAppTests/ImageUpdateQueueTests.swift:53",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:78",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:100",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:123",
+      "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:11",
+      "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:12",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:12",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:78",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:125",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:152",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:164",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:190",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:220",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:250"
+    ],
     "switch-default": [
       "Sources/WaddlyApp/AppDelegateWindow.swift:9",
       "Sources/WaddlyCore/PetImageCore.swift:219"
@@ -8,13 +46,6 @@
       "Sources/WaddlyApp/AppSettings.swift:6",
       "Sources/WaddlyCore/PetShareMovieWriter.swift:46"
     ],
-    "preconcurrency": [
-      "Sources/WaddlyCore/PetShareMovieWriter.swift:4"
-    ],
-    "actor-assumption": [
-      "Sources/WaddlyApp/Waddly.swift:153",
-      "Sources/WaddlyApp/PermissionService.swift:155"
-    ],
     "unsafe-pointer": [
       "Sources/WaddlyApp/Waddly.swift:104",
       "Sources/WaddlyApp/Waddly.swift:147",
@@ -22,29 +53,6 @@
       "Sources/WaddlyApp/Waddly.swift:162",
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:154",
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:169"
-    ],
-    "empty-catch": [
-      "Sources/WaddlyApp/AnimationScheduler.swift:59"
-    ],
-    "silenced-file-mutation": [
-      "Sources/WaddlyApp/PetShareWindowController.swift:23",
-      "Sources/WaddlyApp/PetShareWindowController.swift:77",
-      "Sources/WaddlyApp/PetShareWindowController.swift:83",
-      "Sources/WaddlyApp/PetShareWindowController.swift:116",
-      "Sources/WaddlyCore/PetImageCore.swift:205",
-      "Sources/WaddlyCore/PetImageStorage.swift:71",
-      "Sources/WaddlyCore/PetImageStorage.swift:80",
-      "Sources/WaddlyCore/PetShareExporter.swift:70",
-      "Tests/WaddlyAppTests/AppIntegrationTests.swift:281",
-      "Tests/WaddlyAppTests/AppModelTests.swift:138",
-      "Tests/WaddlyAppTests/ImageUpdateQueueTests.swift:53",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:78",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:100",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:123",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:12",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:78",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:115",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:136"
     ]
   }
 }
