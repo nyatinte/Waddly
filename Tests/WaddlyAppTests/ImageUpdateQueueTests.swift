@@ -4,7 +4,7 @@ import Testing
 import WaddlyCore
 
 @Test @MainActor func imageTransactionsStaySerializedAcrossWorkerSuspensions() async {
-    let app = AppDelegate()
+    let app = makeTestApp()
     let (started, startSignal) = AsyncStream<Void>.makeStream()
     let (release, releaseSignal) = AsyncStream<Void>.makeStream()
     var events: [Int] = []
@@ -51,7 +51,7 @@ import WaddlyCore
     defer { defaults.removePersistentDomain(forName: domain) }
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let app = AppDelegate(settings: AppSettings(defaults: defaults))
+    let app = makeTestApp(settings: AppSettings(defaults: defaults))
     app.petImagesDirectoryURL = directory
     let frames = try makeImageFrames()
     let model = try prepareImageModel(frames, app: app, directory: directory)

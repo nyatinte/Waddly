@@ -41,7 +41,20 @@ extension SetupWizardScreen {
     func status(_ key: LocalizationKey, positive: Bool) -> some View {
         Label(controller.localizedString(key), systemImage: positive ? "checkmark.circle.fill" : "circle")
             .font(.callout.weight(.medium)).foregroundStyle(positive ? Color.green : Color.secondary)
-            .accessibilityAddTraits(.updatesFrequently)
+            // The label text already states the current value, so VoiceOver reads the transition
+            // when it reaches the element. `.updatesFrequently` instead marks the status as a
+            // moving target, which is not what a stable permission state is.
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(controller.localizedString(key))
+    }
+
+    func errorMessage(_ key: LocalizationKey) -> some View {
+        Label(controller.localizedString(key), systemImage: "exclamationmark.triangle.fill")
+            .font(.caption)
+            .foregroundStyle(.red)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(controller.localizedString(key))
     }
 
     func numbered(_ keys: [LocalizationKey]) -> some View {

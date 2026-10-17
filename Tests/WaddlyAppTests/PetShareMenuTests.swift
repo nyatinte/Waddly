@@ -8,7 +8,7 @@ import WaddlyCore
     let suiteName = "WaddlyTests.share-menu.\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { defaults.removePersistentDomain(forName: suiteName) }
-    let app = AppDelegate(settings: AppSettings(defaults: defaults))
+    let app = makeTestApp(settings: AppSettings(defaults: defaults))
     app.buildMenu()
     let menu = app.makePetContextMenu()
     let share = try #require(menu.items.first { $0.action == #selector(AppDelegate.showPetShare) })

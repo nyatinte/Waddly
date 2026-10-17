@@ -20,7 +20,7 @@ for pair in "force-cast:force_cast" "force-try:force_try" "force-unwrap:force_un
     printf 'Fixture rejected as expected: %s\n' "$fixture_rule"
 done
 
-for rule in actor-assumption preconcurrency semaphore-wait switch-default unchecked-sendable unsafe-cast unsafe-isolation unsafe-pointer; do
+for rule in actor-assumption empty-catch preconcurrency semaphore-wait silenced-file-mutation switch-default unchecked-sendable unsafe-cast unsafe-compiler-flags unsafe-isolation unsafe-pointer; do
     "$checker" --expect-rule "$rule" "$package_path/Fixtures/$rule.swift"
 done
 

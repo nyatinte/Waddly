@@ -23,6 +23,11 @@ final class SpriteSheetGridOverlay: NSView {
 class PetImageDropView: NSView {
     var onDrop: (([URL]) -> Void)?
 
+    /// Keep the semantic drag state separate from the CGColor captured for the current appearance.
+    var isDropTargeted = false {
+        didSet { refreshDropAppearance() }
+    }
+
     /// Border drawn while no drag is in progress. The wizard uses a borderless variant.
     var idleBorderColor: NSColor = .separatorColor {
         didSet { restoreDropAppearance() }
@@ -37,8 +42,12 @@ class PetImageDropView: NSView {
         registerForDraggedTypes([.fileURL])
         wantsLayer = true
         layer?.cornerRadius = 8
-        layer?.borderWidth = idleBorderWidth
-        layer?.borderColor = idleBorderColor.cgColor
+        refreshDropAppearance()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refreshDropAppearance()
     }
 
     required init?(coder: NSCoder) {
@@ -47,8 +56,7 @@ class PetImageDropView: NSView {
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard !fileURLs(from: sender).isEmpty else { return [] }
-        layer?.borderColor = NSColor.controlAccentColor.cgColor
-        layer?.borderWidth = 2
+        isDropTargeted = true
         return .copy
     }
 
@@ -65,8 +73,14 @@ class PetImageDropView: NSView {
     }
 
     private func restoreDropAppearance() {
-        layer?.borderColor = idleBorderColor.cgColor
-        layer?.borderWidth = idleBorderWidth
+        isDropTargeted = false
+    }
+
+    private func refreshDropAppearance() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.borderColor = (isDropTargeted ? NSColor.controlAccentColor : idleBorderColor).cgColor
+            layer?.borderWidth = isDropTargeted ? 2 : idleBorderWidth
+        }
     }
 
     private func fileURLs(from sender: NSDraggingInfo) -> [URL] {
