@@ -192,6 +192,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     func windowWillClose(_ notification: Notification) {
+        clearImportFeedback()
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
