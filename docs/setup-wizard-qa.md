@@ -46,6 +46,7 @@ Command: `mise run test` (serialized Swift Testing suites). The wizard suites ar
 | Import registers the sheet; an unreadable sheet leaves the previous set and preview alone | `choosingASheetRegistersItRightAway`, `unreadableSheetLeavesThePreviousSetAlone`, `failedImportExplainsTheProblemInlineAndKeepsThePreviousSet` |
 | Closing stops preview and permission; a reopened wizard resumes playback | `closingTheWindowStopsPreviewAndAReopenedWizardCanResumeIt` |
 | Copy+open reports open failure inline and success as copied | `copyingThePromptReportsCopyAndBrowserOpenResults` |
+| A dark/light appearance change preserves the active drag border | `appearanceChangePreservesTheActiveDropHighlight` (state-driven, not a live drag) |
 | Suspended failures cannot restore a banner/announcement after navigation, method changes, or a newer import | `SetupWizardImportFeedbackTests` (continuation-gated previews) |
 | A failed import reports inline and keeps the previous set; switching method clears it | `failedImportExplainsTheProblemInlineAndKeepsThePreviousSet` |
 | A failure from a window-wide drop survives on a later step and clears on step change | `importFailureStaysOnItsStepAndClearsWhenTheStepChanges` |

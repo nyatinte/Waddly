@@ -129,6 +129,25 @@ import WaddlyCore
         #expect(lightBackdrop == resolvedControlBackground(light))
     }
 
+    @Test func appearanceChangePreservesTheActiveDropHighlight() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        pane.isDropTargeted = true
+        for name in [NSAppearance.Name.darkAqua, .aqua] {
+            pane.appearance = try #require(NSAppearance(named: name))
+            pane.viewDidChangeEffectiveAppearance()
+            var accent = NSColor.controlAccentColor.cgColor
+            pane.effectiveAppearance.performAsCurrentDrawingAppearance {
+                accent = NSColor.controlAccentColor.cgColor
+            }
+            #expect(pane.layer?.borderColor == accent)
+            #expect(pane.layer?.borderWidth == 2)
+        }
+        pane.isDropTargeted = false
+        #expect(pane.layer?.borderWidth == pane.idleBorderWidth)
+    }
+
     private func resolvedControlBackground(_ appearance: NSAppearance) -> CGColor {
         var color = NSColor.controlBackgroundColor.cgColor
         appearance.performAsCurrentDrawingAppearance {
