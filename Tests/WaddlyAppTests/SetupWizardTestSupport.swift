@@ -24,6 +24,7 @@ enum SetupWizardFixture {
         granted: Bool = false,
         receiving: Bool = true,
         previewResult: PetImageSet? = nil,
+        preview: (@MainActor (URL) async -> PetImageSet?)? = nil,
         confirmResult: Bool = false,
         requestPermission: @escaping @MainActor () -> Bool = { false },
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
@@ -55,7 +56,12 @@ enum SetupWizardFixture {
         return SetupWizardController(
             localization: LocalizationController(settings: settings, resources: resources),
             demoPetURL: demoURL,
-            onPreviewImage: { _ in state.previewResult },
+            onPreviewImage: { url in
+                if let preview {
+                    return await preview(url)
+                }
+                return state.previewResult
+            },
             onConfirmImage: { images in
                 // Mirrors the app: committing is what updates the stored set.
                 if state.confirmResult {

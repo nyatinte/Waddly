@@ -8,11 +8,13 @@ extension SetupWizardController {
     /// Cancelling the picker leaves everything untouched, and "画像を変更" is always available.
     @discardableResult
     func importImage(from url: URL) -> Task<Void, Never> {
-        Task { [weak self] in
+        clearImportFeedback()
+        let generation = importFeedbackGeneration
+        return Task { [weak self] in
             guard let self else { return }
-            didFailImport = false
             guard let images = await onPreviewImage(url) else {
-                // Nothing is written, the page stays put, and the failure is explained in place.
+                // A previous decode must not restore feedback after navigation or a newer attempt.
+                guard importFeedbackGeneration == generation else { return }
                 didFailImport = true
                 announce(localizedString(.petImportErrorMessage))
                 renderCurrentStep()
@@ -21,22 +23,31 @@ extension SetupWizardController {
             if await onConfirmImage(images) {
                 importedFileName = url.lastPathComponent
                 didRegisterPet = true
+                if importFeedbackGeneration == generation {
+                    didFailImport = false
+                }
             }
             renderCurrentStep()
         }
     }
 
+    /// Invalidates pending feedback without cancelling image commits already in progress.
+    func clearImportFeedback() {
+        importFeedbackGeneration = UUID()
+        didFailImport = false
+    }
+
     @objc func showChatGPTGuide() {
         isShowingChatGPTGuide = true
         promptFeedback = nil
-        didFailImport = false
+        clearImportFeedback()
         renderCurrentStep()
     }
 
     @objc func changeMethod() {
         isShowingChatGPTGuide = false
         promptFeedback = nil
-        didFailImport = false
+        clearImportFeedback()
         renderCurrentStep()
     }
 

@@ -55,6 +55,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var promptFeedback: PromptActionFeedback?
     /// Set when a chosen sheet could not be read, so the page can explain it in place.
     @Published var didFailImport = false
+    /// Identifies the interaction that may publish asynchronous import feedback.
+    var importFeedbackGeneration = UUID()
     @Published var isShowingTroubleshooting = false
 
     init(

@@ -35,7 +35,7 @@ extension SetupWizardController {
     func setStep(_ step: Step?) {
         currentStep = step ?? .pet
         // The inline import error belongs to the step where the drop happened, not the next one.
-        didFailImport = false
+        clearImportFeedback()
         onStepChange(step?.rawValue)
         renderCurrentStep()
     }
