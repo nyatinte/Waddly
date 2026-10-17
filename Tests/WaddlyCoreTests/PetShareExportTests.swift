@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import CryptoKit
 import ImageIO
+import os
 import Testing
 import UniformTypeIdentifiers
 @testable import WaddlyCore
@@ -189,28 +190,30 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
     let cancellation = PetShareExportCancellation()
-    let sawPartialMovie = DispatchSemaphore(value: 0)
+    let cancelledAtFrame = OSAllocatedUnfairLock<Int?>(initialState: nil)
+    let partialMovieWasOnDisk = OSAllocatedUnfairLock(initialState: false)
 
     #expect(throws: PetShareExportError.cancelled) {
-        // The dialog closes after the encoder has already written frames, not before the first one.
+        // The dialog closes after the encoder has already written frames, not before the first one. The
+        // hook cancels at a known, nonterminal frame, so the encoder cannot reach the end of the movie first.
         try PetShareExporter.writeMovie(
             from: images,
             to: movieURL,
             timeout: .seconds(30),
             cancellation: cancellation,
-            hooks: MovieWriterHooks(scheduleMediaData: { input, queue, block in
-                input.requestMediaDataWhenReady(on: queue) {
-                    block()
-                    if FileManager.default.fileExists(atPath: movieURL.path) {
-                        sawPartialMovie.signal()
-                    }
-                    cancellation.cancel()
+            hooks: MovieWriterHooks(didAppendFrame: { frameCount in
+                guard frameCount == 3 else { return }
+                cancelledAtFrame.withLock { $0 = frameCount }
+                partialMovieWasOnDisk.withLock {
+                    $0 = FileManager.default.fileExists(atPath: movieURL.path)
                 }
+                cancellation.cancel()
             })
         )
     }
 
-    #expect(sawPartialMovie.wait(timeout: .now()) == .success)
+    #expect(cancelledAtFrame.withLock { $0 } == 3)
+    #expect(partialMovieWasOnDisk.withLock { $0 })
     #expect(!FileManager.default.fileExists(atPath: movieURL.path))
 }
 

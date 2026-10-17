@@ -35,6 +35,9 @@ struct MovieWriterHooks: Sendable {
     var finalizeWriter: @Sendable (AVAssetWriter, @escaping @Sendable () -> Void) -> Void = { writer, completion in
         writer.finishWriting(completionHandler: completion)
     }
+
+    /// Reports the number of frames encoded so far. Tests cancel after a known, nonterminal frame count.
+    var didAppendFrame: @Sendable (Int) -> Void = { _ in }
 }
 
 /// Owns one export's writer and the progress the waiting caller reads.
@@ -158,6 +161,7 @@ struct MovieWriterContext: Sendable {
                 return
             }
             state.advanceFrame()
+            hooks.didAppendFrame(state.frameIndex)
         }
         guard state.frameIndex == movieFrameCount else { return }
         state.finishEncoding()
