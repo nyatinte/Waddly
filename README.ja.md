@@ -147,7 +147,7 @@ Waddlyは保存した画像の一覧をマニフェストとして画像の隣�
 
 ## コントリビュート
 
-開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。画面の入口、操作状態、手動QAチェックリストの監査結果は[UX操作監査](docs/ux-interaction-audit.md)にまとめています。
+開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。`mise run test` はSwift Testingが完了を報告しないまま終了した実行を失敗として扱います。ガード自体の確認は `mise run test:guard` で実行できます。画面の入口、操作状態、手動QAチェックリストの監査結果は[UX操作監査](docs/ux-interaction-audit.md)にまとめています。
 
 ## ライセンス
 

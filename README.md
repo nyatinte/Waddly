@@ -108,7 +108,7 @@ The app targets a physical memory footprint below 100 MB in typical use. One sha
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. `mise run test` rejects Swift Testing runs that exit without reporting completion; `mise run test:guard` checks this guard without launching the app tests. For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).
 
 ## License
 
