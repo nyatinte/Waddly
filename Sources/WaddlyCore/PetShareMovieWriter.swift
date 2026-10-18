@@ -137,6 +137,15 @@ final class MovieWriterState: @unchecked Sendable {
             return true
         }
     }
+
+    /// Removes the output of a writer that stopped without completing once the terminal transition is
+    /// already claimed. A writer still in `.writing` stays owned by `cancelOnQueue`, and a `.completed`
+    /// output is preserved.
+    func removeUnfinishedOutput() {
+        let status = writer.status
+        guard status != .writing, status != .completed else { return }
+        try? FileManager.default.removeItem(at: writer.outputURL)
+    }
 }
 
 /// Drives one export from the serial queue that owns its writer.
@@ -201,9 +210,14 @@ struct MovieWriterContext: Sendable {
             hooks.willStopWriter()
             queue.async(execute: cancelOnQueue)
             // Give the queue a bounded chance to stop the writer and delete its output before this export
-            // reports failure. A wedged encoder can outlast that wait, and the caller still returns: the
-            // failed output stays owned by `cancelOnQueue`; the caller never deletes an active writer's file.
+            // reports failure. A wedged encoder can outlast that wait, and the caller still returns: a
+            // writer still in `.writing` stays owned by `cancelOnQueue`; the caller never deletes an active
+            // writer's file.
             _ = finished.wait(timeout: .now() + cancellationGracePeriod)
+            // The finalizer's completion can win the terminal transition during this grace wait, which
+            // leaves `cancelOnQueue` unable to delete an unsuccessful output. The writer is no longer
+            // active here, so remove a failed terminal output before reporting the stop.
+            state.removeUnfinishedOutput()
             throw cancellation.isCancelled ? PetShareExportError.cancelled : PetShareExportError.timedOut
         }
     }
