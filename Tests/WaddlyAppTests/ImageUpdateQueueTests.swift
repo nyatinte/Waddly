@@ -35,7 +35,7 @@ import WaddlyCore
     #expect(events == [1, 2, 3])
     startSignal.finish()
     releaseSignal.finish()
-    app.isShuttingDown = true
+    app.imageStore.beginShutdown()
     let accepted = await app.queueImageUpdate {
         events.append(4)
         return true
@@ -54,7 +54,7 @@ import WaddlyCore
     let app = makeTestApp(settings: AppSettings(defaults: defaults))
     app.petImagesDirectoryURL = directory
     let frames = try makeImageFrames()
-    let model = try prepareImageModel(frames, app: app, directory: directory)
+    let model = try await prepareImageModel(frames, app: app)
     let updated = PetImageSet([.idle: Array(frames.dropFirst())])
     let (started, startSignal) = AsyncStream<Void>.makeStream()
     let (release, releaseSignal) = AsyncStream<Void>.makeStream()
@@ -98,12 +98,9 @@ import WaddlyCore
 }
 
 @MainActor private func prepareImageModel(
-    _ frames: [NSImage], app: AppDelegate, directory: URL
-) throws -> AnimationSettingsModel {
-    let previous = PetImageSet([.idle: frames])
-    app.importedImages = previous
-    let storage = PetImageStorage(directory: directory)
-    app.storedImageFiles = try storage.stage(previous, replacing: PetImageSet(), files: [:])
+    _ frames: [NSImage], app: AppDelegate
+) async throws -> AnimationSettingsModel {
+    try await app.persistPetImages(PetImageSet([.idle: frames]))
     let model = AnimationSettingsModel(
         thumbnailsByCategory: [.idle: frames.map(AnimationSettingsThumbnail.init)],
         localization: app.localization
