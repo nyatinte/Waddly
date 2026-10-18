@@ -28,6 +28,31 @@ done
 "$checker" --expect-rule unsafe-cast "$package_path/Fixtures/unsafe-downcast.swift"
 "$checker" --expect-rule unsafe-pointer "$package_path/Fixtures/unsafe-unmanaged-generic.swift"
 
+# Each wrapped silenced-file-mutation form has its own fixture containing only that
+# form, so a regression in one cannot be masked by a direct call elsewhere.
+for fixture in \
+    silenced-file-mutation-parens-callee \
+    silenced-file-mutation-parens-nested \
+    silenced-file-mutation-parens-expression \
+    silenced-file-mutation-labeled-tuple \
+    silenced-file-mutation-await \
+    silenced-file-mutation-await-parens-callee; do
+    "$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/$fixture.swift"
+done
+
+# A parenthesized callee whose member does not mutate files must stay clean, so peeling does not over-match.
+# Capture the output: any non-zero exit is not enough, because a parse or usage failure must not be read as
+# the rule being correctly absent.
+if output=$("$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/silenced-file-mutation-unrelated-callee.swift" 2>&1); then
+    printf 'Swift safety checker flagged a parenthesized non-mutating callee.\n%s\n' "$output" >&2
+    exit 1
+fi
+if ! grep -q "Expected rule silenced-file-mutation was not reported" <<< "$output"; then
+    printf 'Swift safety checker failed for an unexpected reason:\n%s\n' "$output" >&2
+    exit 1
+fi
+printf 'Fixture accepted as expected: silenced-file-mutation-unrelated-callee\n'
+
 syntax_error_fixture=$(mktemp)
 trap 'rm -f "$syntax_error_fixture"' EXIT
 printf 'let broken = (\n' > "$syntax_error_fixture"
