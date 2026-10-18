@@ -18,9 +18,16 @@ import AppKit
 public final class PetImageStore {
     public typealias ManifestFiles = [String: [String]]
 
-    /// The on-disk directory, or `nil` when the app has no image location. Saves then throw
+    /// The current on-disk directory, or `nil` when the app has no image location. Saves then throw
     /// `CocoaError(.fileNoSuchFile)` and restores are a no-op.
-    public let directory: URL?
+    ///
+    /// Read through a provider on every operation, so an owner that rebinds its directory after the
+    /// store was built (for example a test assigning its isolated directory after image state was
+    /// first touched) never has the store keep using the path it was first constructed with.
+    public var directory: URL? {
+        directoryProvider()
+    }
+
     /// The loaded frames, or `nil` until a non-empty manifest is restored.
     public var importedImages: PetImageSet?
     /// The filenames the committed manifest references, in category order.
@@ -44,6 +51,7 @@ public final class PetImageStore {
         images.isComplete
     }
 
+    private let directoryProvider: () -> URL?
     private let legacyFiles: () -> ManifestFiles
     private let writeLegacyFiles: (ManifestFiles) -> Void
     private let imagesDidChange: (Bool) -> Void
@@ -55,7 +63,24 @@ public final class PetImageStore {
         writeLegacyFiles: @escaping (ManifestFiles) -> Void,
         imagesDidChange: @escaping (Bool) -> Void
     ) {
-        self.directory = directory
+        directoryProvider = { directory }
+        self.legacyFiles = legacyFiles
+        self.writeLegacyFiles = writeLegacyFiles
+        self.imagesDidChange = imagesDidChange
+    }
+
+    /// Builds a store whose directory is read on every operation.
+    ///
+    /// The owner passes a closure instead of a value when the directory can change after the store
+    /// exists, so a rebind takes effect for the next transaction instead of being frozen at
+    /// construction.
+    public init(
+        directoryProvider: @escaping () -> URL?,
+        legacyFiles: @escaping () -> ManifestFiles,
+        writeLegacyFiles: @escaping (ManifestFiles) -> Void,
+        imagesDidChange: @escaping (Bool) -> Void
+    ) {
+        self.directoryProvider = directoryProvider
         self.legacyFiles = legacyFiles
         self.writeLegacyFiles = writeLegacyFiles
         self.imagesDidChange = imagesDidChange

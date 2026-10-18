@@ -10,6 +10,7 @@ import WaddlyCore
     @Test func restartAfterInterruptedCommitKeepsCommittedSetAndSweepsStagedFiles() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         let images = try storeExampleImages()
         try await store.persist(images)
         let storage = try PetImageStorage(directory: #require(store.directory))
@@ -30,6 +31,7 @@ import WaddlyCore
     @Test func missingManifestMigratesLegacyMirrorBeforeReconciling() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         let directory = try #require(store.directory)
         let storage = PetImageStorage(directory: directory)
         let legacy = try storage.stage(storeExampleImages(), replacing: PetImageSet(), files: [:])
@@ -50,6 +52,7 @@ import WaddlyCore
     /// No manifest and no legacy mirror: frames of uncertain provenance must survive startup.
     @Test func noManifestAndEmptyMirrorPreservesUnknownFrames() async throws {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         let directory = try #require(store.directory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let stray = "\(UUID().uuidString).png"
@@ -67,6 +70,7 @@ import WaddlyCore
     /// An explicitly committed empty manifest is authoritative and sweeps unknown frames away.
     @Test func emptyCommittedManifestIsAuthoritative() async throws {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         let directory = try #require(store.directory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let stray = "\(UUID().uuidString).png"
@@ -85,6 +89,7 @@ import WaddlyCore
     @Test func newerFramesFromAnOlderBuildSurviveRestore() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let storage = try PetImageStorage(directory: #require(store.directory))
         let committed = try storeCommittedManifest(in: storage)
@@ -107,6 +112,7 @@ import WaddlyCore
     @Test func incompleteDecodedSetSkipsSweep() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let storage = try PetImageStorage(directory: #require(store.directory))
         let committed = try storeCommittedManifest(in: storage)
@@ -127,6 +133,7 @@ import WaddlyCore
     @Test func corruptManifestBlocksEditsAndDeletesNothing() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let storage = try PetImageStorage(directory: #require(store.directory))
         let committedFrames = try storeFrameData(in: storage.directory)

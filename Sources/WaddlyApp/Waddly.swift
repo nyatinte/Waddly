@@ -173,7 +173,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     /// The single writer for image state. Its injected closures keep preferences, alerts, and panel
     /// refresh out of the store.
     lazy var imageStore = PetImageStore(
-        directory: petImagesDirectoryURL,
+        directoryProvider: { [weak self] in self?.petImagesDirectoryURL },
         legacyFiles: { [weak self] in self?.settings.petImageFiles ?? [:] },
         writeLegacyFiles: { [weak self] files in self?.settings.petImageFiles = files },
         imagesDidChange: { [weak self] resetActivity in

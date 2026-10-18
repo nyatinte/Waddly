@@ -23,6 +23,13 @@ import WaddlyCore
     )
 }
 
+/// Removes the temporary directory a store test created. Tests call it from `defer`, matching the
+/// app fixtures' cleanup, so a run does not leak one directory per test.
+@MainActor func closeImageStore(_ store: PetImageStore) {
+    guard let directory = store.directory else { return }
+    try? FileManager.default.removeItem(at: directory)
+}
+
 func storeExampleImages() throws -> PetImageSet {
     try #require(try PetSpriteSheetImporter.frames(from: Data(contentsOf: storeExampleSheetURL())))
 }

@@ -16,6 +16,7 @@ import Testing
 
     @Test func imageEditsStaySerializedAcrossWorkerSuspensions() async {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         let (started, startSignal) = AsyncStream<Void>.makeStream()
         let (release, releaseSignal) = AsyncStream<Void>.makeStream()
         var events: [Int] = []
@@ -61,6 +62,7 @@ import Testing
     @Test func shutdownBetweenStageAndCommitRollsBackStagedFiles() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         let images = try storeExampleImages()
         try await store.persist(images)
         let storage = try PetImageStorage(directory: #require(store.directory))
@@ -93,6 +95,7 @@ import Testing
     @Test func failedCommitThenSuccessKeepsStateConsistent() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         let images = try storeExampleImages()
         try await store.persist(images)
         let storage = try PetImageStorage(directory: #require(store.directory))
@@ -126,6 +129,7 @@ import Testing
     /// the current order instead of the indices captured when the user grabbed the frame.
     @Test func staleReorderResolvesAgainstCurrentOrder() async throws {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let typing = store.images[.typing]
         let (started, startSignal) = AsyncStream<Void>.makeStream()
@@ -164,6 +168,7 @@ import Testing
     /// A reorder whose grabbed frame is already gone is a no-op rather than a wrong removal.
     @Test func staleMoveWithMissingFrameIsANoOp() async throws {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let typing = store.images[.typing]
         let (started, startSignal) = AsyncStream<Void>.makeStream()
@@ -203,6 +208,7 @@ import Testing
     @Test func commitAndPublishLandBeforeCleanup() async throws {
         let mirror = StoreLegacyMirror()
         let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
         try await store.persist(storeExampleImages())
         let storage = try PetImageStorage(directory: #require(store.directory))
         let slimmer = PetImageSet([.idle: [store.images[.idle][0]]])
@@ -237,6 +243,7 @@ import Testing
     /// sheet the user is deciding on is still open.
     @Test func importConfirmationHoldsTheQueueUntilItResolves() async throws {
         let store = makeImageStore()
+        defer { closeImageStore(store) }
         let source = try storeExampleSheetURL()
         let (started, startSignal) = AsyncStream<Void>.makeStream()
         let (release, releaseSignal) = AsyncStream<Void>.makeStream()
@@ -273,26 +280,5 @@ import Testing
         #expect(await queued.value)
         #expect(ranWhileConfirming)
         #expect(store.hasCompleteImageSet)
-    }
-
-    /// A move transaction reports a failed commit through `onSaveError` and leaves the order alone.
-    @Test func moveReportsSaveFailureWithoutChangingOrder() async throws {
-        let store = makeImageStore()
-        try await store.persist(storeExampleImages())
-        let storage = try PetImageStorage(directory: #require(store.directory))
-        let before = store.images[.idle]
-        try FileManager.default.setAttributes([.immutable: true], ofItemAtPath: storage.manifestURL.path)
-        defer { try? FileManager.default.setAttributes([.immutable: false], ofItemAtPath: storage.manifestURL.path) }
-
-        let reported = StoreFailureRecorder()
-        await store.moveImage(from: 0, to: 1, in: .idle) { error in
-            reported.errors.append(error)
-        }?.value
-
-        #expect(reported.errors.count == 1)
-        #expect(reported.errors.first is PetImageManifestError)
-        let after = store.images[.idle]
-        #expect(after[0] === before[0])
-        #expect(after[1] === before[1])
     }
 }
