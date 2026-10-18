@@ -25,25 +25,26 @@ observed-reaction confirmation.
 | `after-sample-5bf0baf-en-dark.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | English | dark |
 | `after-sample-5bf0baf-ja-light.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | Japanese | light |
 | `after-sample-5bf0baf-ja-dark.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | Japanese | dark |
-| `monitoring-awaiting-5bf0baf-en-light.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | English | light |
-| `monitoring-awaiting-5bf0baf-en-dark.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | English | dark |
-| `monitoring-awaiting-5bf0baf-ja-light.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | light |
-| `monitoring-awaiting-5bf0baf-ja-dark.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | dark |
+| `monitoring-awaiting-d5f1120-en-light.png` | `d5f1120` | Keyboard reactions, tap live, no key yet; Next disabled | English | light |
+| `monitoring-awaiting-d5f1120-en-dark.png` | `d5f1120` | Keyboard reactions, tap live, no key yet; Next disabled | English | dark |
+| `monitoring-awaiting-d5f1120-ja-light.png` | `d5f1120` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | light |
+| `monitoring-awaiting-d5f1120-ja-dark.png` | `d5f1120` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | dark |
 | `monitoring-confirmed-5bf0baf-en-light.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | English | light |
 | `monitoring-confirmed-5bf0baf-en-dark.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | English | dark |
 | `monitoring-confirmed-5bf0baf-ja-light.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | Japanese | light |
 | `monitoring-confirmed-5bf0baf-ja-dark.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | Japanese | dark |
 
-`before` is `origin/main` `e7a026d` (release v1.3.0); `after` and the other states are rendered at
-`5bf0baf`, the source head that adds the sample shortcut and the observed-reaction confirmation (and
-the pending-import guard those need). The `after-sample` state points the fixture's pet store at the
-sample frames and marks the page sample-active. The two `monitoring-*` renders use a live tap with the
+`before` is `origin/main` `e7a026d` (release v1.3.0); the `after`, `after-sample` and
+`monitoring-confirmed` states are rendered at `5bf0baf`, the source head that adds the sample shortcut
+and the observed-reaction confirmation. The four `monitoring-awaiting` renders are re-made at
+`d5f1120`, which rewrote the waiting body (it no longer claims Waddly is “listening” when a pause has
+stopped the tap) and added the guard fixes; the other 16 surfaces did not change with those fixes, so
+their `5bf0baf` files stand. The `after-sample` state points the fixture's pet store at the sample
+frames and marks the page sample-active. The two `monitoring-*` renders use a live tap with the
 fixture's observation flag false (awaiting) or true (confirmed); they do not involve a real key event,
-so they illustrate the state labels, not a live typing session. The pending-import guard and the
-paused-observation fix are control-flow only: they change which state is shown, not the layout or copy
-of the five rendered states. Because the Pet step resting layout is unchanged, the earlier
-`before-86dfce5`/`after-2b70ed0` renders from the pre-mainline branch were replaced by these
-mainline-provenanced files.
+so they illustrate the state labels, not a live typing session. Because the Pet step resting layout is
+unchanged, the earlier `before-86dfce5`/`after-2b70ed0` renders from the pre-mainline branch were
+replaced by these mainline-provenanced files.
 
 The default-font English/dark and Japanese/light renders of each surface were inspected for text and
 footer clipping: the shortcut, the sample-active line, the “waiting for a key press” status, and the

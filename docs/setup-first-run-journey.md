@@ -150,11 +150,11 @@ After (`5bf0baf`) — sample chosen, “sample is active” message:
 | --- | --- | --- | --- |
 | ![sample en light](images/setup-journey/after-sample-5bf0baf-en-light.png) | ![sample en dark](images/setup-journey/after-sample-5bf0baf-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-5bf0baf-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-5bf0baf-ja-dark.png) |
 
-Keyboard reactions (`5bf0baf`) — live tap, no key yet (“waiting for a key press”, Next disabled):
+Keyboard reactions (`d5f1120`) — live tap, no key yet (“waiting for a key press”, Next disabled):
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![awaiting en light](images/setup-journey/monitoring-awaiting-5bf0baf-en-light.png) | ![awaiting en dark](images/setup-journey/monitoring-awaiting-5bf0baf-en-dark.png) | ![awaiting ja light](images/setup-journey/monitoring-awaiting-5bf0baf-ja-light.png) | ![awaiting ja dark](images/setup-journey/monitoring-awaiting-5bf0baf-ja-dark.png) |
+| ![awaiting en light](images/setup-journey/monitoring-awaiting-d5f1120-en-light.png) | ![awaiting en dark](images/setup-journey/monitoring-awaiting-d5f1120-en-dark.png) | ![awaiting ja light](images/setup-journey/monitoring-awaiting-d5f1120-ja-light.png) | ![awaiting ja dark](images/setup-journey/monitoring-awaiting-d5f1120-ja-dark.png) |
 
 Keyboard reactions (`5bf0baf`) — a key delivered (confirmed, Next enabled):
 
