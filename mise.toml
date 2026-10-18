@@ -32,6 +32,10 @@ run = "cccc --lang swift --max-cognitive 15 --max-cyclomatic 10 --top-cognitive 
 description = "Run Swift Testing suites serially"
 run = "./macos/test.sh --no-parallel"
 
+[tasks."test:guard"]
+description = "Prove the test completion guard fails closed on incomplete runs"
+run = "bash Tools/test_test_completion_guard.sh"
+
 [tasks.build]
 description = "Build the signed Release app"
 run = "./macos/build.sh"
@@ -50,7 +54,7 @@ run = "./macos/reset-development.sh"
 
 [tasks.check]
 description = "Run all local validation and build the Release app"
-run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run safety", "mise run safety:test", "mise run test", "mise run build"]
+run = ["mise run format:check", "mise run lint", "mise run complexity", "mise run safety", "mise run safety:test", "mise run test:guard", "mise run test", "mise run build"]
 
 [tasks.safety]
 description = "Run AST-aware Swift safety checks"
