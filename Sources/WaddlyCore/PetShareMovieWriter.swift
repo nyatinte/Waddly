@@ -180,7 +180,7 @@ struct MovieWriterContext: Sendable {
             queue.async(execute: cancelOnQueue)
             // Give the queue a bounded chance to stop the writer and delete its output before this export
             // reports failure. A wedged encoder can outlast that wait, and the caller still returns: the
-            // output is deleted only by `cancelOnQueue`, so nothing touches it while the writer is active.
+            // failed output stays owned by `cancelOnQueue`; the caller never deletes an active writer's file.
             _ = finished.wait(timeout: .now() + cancellationGracePeriod)
             throw cancellation.isCancelled ? PetShareExportError.cancelled : PetShareExportError.timedOut
         }

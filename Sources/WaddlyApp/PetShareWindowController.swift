@@ -146,8 +146,8 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         isClosed = true
-        // Stop the encoder itself, not just the task that awaits it: the export polls this token and
-        // removes its partial movie before the temporary directory below disappears.
+        // Stop the encoder itself, not just the task that awaits it. The export queue retains ownership
+        // of a pending movie; the controller removes both assets only after a successful export.
         cancellation.cancel()
         generationTask?.cancel()
         shareView.stopPlayback()
