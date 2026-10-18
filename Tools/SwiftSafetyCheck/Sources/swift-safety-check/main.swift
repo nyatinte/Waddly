@@ -171,7 +171,17 @@ final class SafetyVisitor: SyntaxVisitor {
             return calledMemberName(inner)
         }
         guard let call = expression.as(FunctionCallExprSyntax.self) else { return nil }
-        return call.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.text
+        return memberName(of: call.calledExpression)
+    }
+
+    /// Peels redundant parentheses around a callee, as in `try? (file.removeItem)(at: url)`,
+    /// then reads the invoked member. Only called for `FunctionCallExprSyntax` callees, so a
+    /// parenthesized property access is not mistaken for a call.
+    private func memberName(of callee: ExprSyntax) -> String? {
+        if let inner = singleElementTuple(callee) {
+            return memberName(of: inner)
+        }
+        return callee.as(MemberAccessExprSyntax.self)?.declName.baseName.text
     }
 
     private func singleElementTuple(_ expression: ExprSyntax) -> ExprSyntax? {

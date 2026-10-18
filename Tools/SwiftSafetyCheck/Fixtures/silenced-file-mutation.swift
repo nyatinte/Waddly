@@ -1,6 +1,2 @@
 let url = URL(fileURLWithPath: "/tmp/waddly-check")
 try? FileManager.default.removeItem(at: url)
-try? (FileManager.default.removeItem(at: url))
-try? (result: FileManager.default.removeItem(at: url))
-let store = FileStore()
-try? await store.remove(name)
