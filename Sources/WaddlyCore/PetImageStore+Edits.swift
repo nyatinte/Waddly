@@ -18,8 +18,11 @@ public extension PetImageStore {
     }
 
     /// Commit a frame set the user already reviewed.
-    func confirmPetImage(_ images: PetImageSet) async -> PetImageConfirmOutcome {
-        await perform { await self.confirmPetImageInOrder(images) } ?? .aborted
+    func confirmPetImage(
+        _ images: PetImageSet,
+        accepting: @escaping @MainActor () -> Bool = { true }
+    ) async -> PetImageConfirmOutcome {
+        await perform { await self.confirmPetImageInOrder(images, accepting: accepting) } ?? .aborted
     }
 
     /// Remove the frame at `index`, resolving it by identity inside the queue so a stale index from a
@@ -127,7 +130,11 @@ public extension PetImageStore {
         return .imported
     }
 
-    private func confirmPetImageInOrder(_ images: PetImageSet) async -> PetImageConfirmOutcome {
+    private func confirmPetImageInOrder(
+        _ images: PetImageSet,
+        accepting: @escaping @MainActor () -> Bool
+    ) async -> PetImageConfirmOutcome {
+        guard accepting() else { return .aborted }
         do {
             try await persist(images, resetActivity: true)
         } catch {
