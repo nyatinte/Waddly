@@ -203,6 +203,10 @@ public enum PetShareExporter {
             throw error
         }
         guard state.writer.status == .completed else {
+            // The writer reached a terminal, non-completed status after its finalizer claimed the export.
+            // Its output is unusable and nothing else will remove it: `cancelOnQueue` can no longer claim
+            // the terminal transition, and the wait has returned, so the writer is no longer active.
+            try? FileManager.default.removeItem(at: state.writer.outputURL)
             throw state.writer.error ?? PetShareExportError.writerUnavailable
         }
     }

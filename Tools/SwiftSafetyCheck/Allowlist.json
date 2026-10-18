@@ -21,6 +21,7 @@
       "Sources/WaddlyCore/PetShareExporter.swift:66",
       "Sources/WaddlyCore/PetShareExporter.swift:94",
       "Sources/WaddlyCore/PetShareExporter.swift:187",
+      "Sources/WaddlyCore/PetShareExporter.swift:209",
       "Tests/WaddlyAppTests/AppIntegrationFixture.swift:55",
       "Tests/WaddlyAppTests/AppModelTests.swift:173",
       "Tests/WaddlyAppTests/ImageUpdateQueueTests.swift:53",
@@ -38,7 +39,8 @@
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:238",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:271",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:301",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:328"
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:328",
+      "Tests/WaddlyCoreTests/PetShareExportFinalizationTests.swift:10"
     ],
     "switch-default": [
       "Sources/WaddlyApp/AppDelegateWindow.swift:9",
