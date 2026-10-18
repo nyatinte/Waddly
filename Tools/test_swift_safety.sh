@@ -28,6 +28,18 @@ done
 "$checker" --expect-rule unsafe-cast "$package_path/Fixtures/unsafe-downcast.swift"
 "$checker" --expect-rule unsafe-pointer "$package_path/Fixtures/unsafe-unmanaged-generic.swift"
 
+# Each wrapped silenced-file-mutation form has its own fixture containing only that
+# form, so a regression in one cannot be masked by a direct call elsewhere.
+for fixture in \
+    silenced-file-mutation-parens-callee \
+    silenced-file-mutation-parens-nested \
+    silenced-file-mutation-parens-expression \
+    silenced-file-mutation-labeled-tuple \
+    silenced-file-mutation-await \
+    silenced-file-mutation-await-parens-callee; do
+    "$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/$fixture.swift"
+done
+
 syntax_error_fixture=$(mktemp)
 trap 'rm -f "$syntax_error_fixture"' EXIT
 printf 'let broken = (\n' > "$syntax_error_fixture"
