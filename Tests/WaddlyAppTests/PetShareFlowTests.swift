@@ -139,6 +139,61 @@ private func writeStub(_ url: URL) throws {
     #expect(imageStatus.stringValue == fixture.localization.string(for: .shareCopiedImage))
 }
 
+@Test @MainActor func sharePostAndRetryButtonsShowHoverStates() async throws {
+    let fixture = try ShareFixture.make(effects: PetShareEffects(writeMovie: { _, url, _ in try writeStub(url) }))
+    defer { fixture.cleanUp() }
+    fixture.controller.prepareAssets()
+    #expect(await waitFor { fixture.controller.status == .ready })
+
+    let post = try #require(fixture.button("share.postButton") as? ShareActionButton)
+    #expect(post.isEnabled)
+    #expect(post.target != nil)
+    #expect(post.action != nil)
+    #expect(post.focusRingType != .none)
+    #expect(post.accessibilityLabel() == fixture.localization.string(for: .shareXCreate))
+    #expect(post.accessibilityHelp() == fixture.localization.string(for: .shareXHelp))
+    let postResting = try #require(post.layer?.backgroundColor)
+    let postFrame = post.frame
+    post.setHovered(true)
+    #expect(post.isHovered)
+    #expect(post.layer?.backgroundColor != postResting)
+    post.setHovered(false)
+    #expect(!post.isHovered)
+    #expect(post.layer?.backgroundColor == postResting)
+    #expect(post.frame == postFrame)
+    post.setHovered(true)
+    post.isEnabled = false
+    #expect(!post.isHovered)
+    #expect(post.layer?.backgroundColor != postResting)
+    post.isEnabled = true
+
+    fixture.view.showFailure()
+    let retry = try #require(fixture.button("share.retry") as? ShareActionButton)
+    #expect(retry.isEnabled)
+    #expect(retry.target != nil)
+    #expect(retry.action != nil)
+    #expect(retry.focusRingType != .none)
+    let retryResting = try #require(retry.layer?.backgroundColor)
+    let retryFrame = retry.frame
+    retry.setHovered(true)
+    #expect(retry.isHovered)
+    #expect(retry.layer?.backgroundColor != retryResting)
+    retry.setHovered(false)
+    #expect(!retry.isHovered)
+    #expect(retry.layer?.backgroundColor == retryResting)
+    #expect(retry.frame == retryFrame)
+    retry.setHovered(true)
+    retry.isEnabled = false
+    #expect(!retry.isHovered)
+    #expect(retry.layer?.backgroundColor != retryResting)
+    retry.isEnabled = true
+
+    fixture.localization.changeLanguage(.japanese)
+    fixture.view.refreshLocalization()
+    #expect(post.accessibilityHelp() == fixture.localization.string(for: .shareXHelp))
+    #expect(post.accessibilityLabel() == fixture.localization.string(for: .shareXCreate))
+}
+
 @Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("WaddlyTests.share-paste.\(UUID().uuidString)", isDirectory: true)

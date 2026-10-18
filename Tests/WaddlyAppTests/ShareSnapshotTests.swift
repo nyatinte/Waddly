@@ -26,6 +26,7 @@ import WaddlyCore
     }
     for (state, name) in [
         (ShareSnapshotState.hover, "hover"),
+        (.retryHover, "retry-hover"),
         (.working, "working"),
         (.failed, "failed"),
         (.copied, "copied"),
@@ -39,9 +40,10 @@ import WaddlyCore
     try japaneseFailure.write(to: output.appendingPathComponent("state-failed-ja-dark.png"))
 }
 
-private enum ShareSnapshotState {
+private enum ShareSnapshotState: Equatable {
     case ready
     case hover
+    case retryHover
     case working
     case failed
     case copied
@@ -108,7 +110,7 @@ private struct ShareSnapshotFixture {
 ) throws -> Data {
     let fixture = try ShareSnapshotFixture(language: language)
     defer { fixture.cleanUp() }
-    apply(
+    try apply(
         state,
         to: fixture.view,
         localization: fixture.localization,
@@ -124,15 +126,20 @@ private struct ShareSnapshotFixture {
     localization: LocalizationController,
     poster: NSImage?,
     assets: (spriteURL: URL, movieURL: URL)
-) {
+) throws {
     switch state {
     case .working:
         view.showWorking()
-    case .failed:
+    case .failed, .retryHover:
         view.showFailure()
+        if state == .retryHover {
+            let retry = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
+                .first { $0.identifier?.rawValue == "share.retry" })
+            retry.setHovered(true)
+        }
     case .ready, .hover, .copied, .copyFailed, .composerFailed:
         view.showAssets(spriteURL: assets.spriteURL, movieURL: assets.movieURL, moviePoster: poster)
-        applyOutcome(state, to: view, localization: localization)
+        try applyOutcome(state, to: view, localization: localization)
     }
 }
 
@@ -140,13 +147,11 @@ private struct ShareSnapshotFixture {
     _ state: ShareSnapshotState,
     to view: PetShareDialogView,
     localization: LocalizationController
-) {
+) throws {
     if state == .hover {
-        for identifier in ["share.copyVideo", "share.postButton"] {
-            SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
-                .first { $0.identifier?.rawValue == identifier }?
-                .setHovered(true)
-        }
+        let post = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
+            .first { $0.identifier?.rawValue == "share.postButton" })
+        post.setHovered(true)
     }
     if state == .copied {
         view.showCopyResult(localization.string(for: .shareCopiedVideo), failed: false, for: .video)

@@ -24,20 +24,20 @@ final class PetShareDialogView: NSView {
     private let spinner = NSProgressIndicator()
     private let failure = NSStackView()
     private let failureLabel: NSTextField
-    private let retryButton: NSButton
+    private let retryButton: ShareActionButton
     private let postTitle: NSTextField
     private let xRow = NSView()
-    private let postButton: NSButton
+    private let postButton: ShareActionButton
     private let postStatusLabel: NSTextField
 
     init(localization: LocalizationController) {
         self.localization = localization
         loadingLabel = NSTextField(labelWithString: localization.string(for: .shareLoading))
         postTitle = NSTextField(labelWithString: localization.string(for: .sharePost))
-        postButton = NSButton(title: localization.string(for: .shareXCreate), target: nil, action: nil)
+        postButton = makeShareDialogActionButton(title: localization.string(for: .shareXCreate))
         postStatusLabel = NSTextField(labelWithString: "")
         failureLabel = NSTextField(wrappingLabelWithString: localization.string(for: .shareError))
-        retryButton = NSButton(title: localization.string(for: .shareRetry), target: nil, action: nil)
+        retryButton = makeShareDialogActionButton(title: localization.string(for: .shareRetry))
         videoCard = PetShareCardView(
             copyButtonIdentifier: "share.copyVideo",
             statusIdentifier: "share.videoStatus",
@@ -169,7 +169,6 @@ final class PetShareDialogView: NSView {
         xRow.wantsLayer = true
         xRow.layer?.cornerRadius = 10
         postButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postButton")
-        postButton.bezelStyle = .push
         postButton.image = ShareXLogo.image(size: 18)
         postButton.imagePosition = .imageLeading
         postButton.font = .systemFont(ofSize: 12)
@@ -204,7 +203,6 @@ final class PetShareDialogView: NSView {
         failureLabel.alignment = .center
         failureLabel.maximumNumberOfLines = 3
         retryButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.retry")
-        retryButton.bezelStyle = .push
         failure.addArrangedSubview(failureLabel)
         failure.addArrangedSubview(retryButton)
         updateAppearance()
@@ -278,4 +276,13 @@ final class PetShareDialogView: NSView {
             .priority: NSAccessibilityPriorityLevel.medium.rawValue
         ])
     }
+}
+
+@MainActor private func makeShareDialogActionButton(title: String) -> ShareActionButton {
+    ShareActionButton(
+        title: title,
+        base: .quaternaryLabelColor,
+        hover: .selectedContentBackgroundColor.withAlphaComponent(0.22),
+        pressed: .selectedContentBackgroundColor.withAlphaComponent(0.45)
+    )
 }

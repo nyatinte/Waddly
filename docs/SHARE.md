@@ -44,8 +44,9 @@ start two exports. Retrying is only possible from the failed state.
 
 ## Interaction and accessibility
 
-- Copy buttons and the post button are real `NSButton`s: they take keyboard focus, activate with Space, and show
-  the standard focus ring. The post row is a native push button rather than a click gesture on a label.
+- Copy, Post, and Retry are `ShareActionButton`/`NSButton` controls: they take keyboard focus, activate with Space,
+  show the standard focus ring, and share explicit hover/pressed/disabled feedback. The post row is a native button,
+  not a click gesture on a label.
 - Hover changes the button fill to a tinted accent color; press darkens it; disabled controls dim and stop
   responding to hover. Fills resolve system colors for the current appearance, so the control follows light and dark;
   increased-contrast behaviour has not been checked and is listed under the gaps below.
@@ -84,9 +85,13 @@ offscreen rendering approach; `dialog-after-*` and `state-*` were rendered from 
 | ![After, English, light](images/share/dialog-after-en-light.png) | ![After, Japanese, light](images/share/dialog-after-ja-light.png) |
 | ![After, English, dark](images/share/dialog-after-en-dark.png) | ![After, Japanese, dark](images/share/dialog-after-ja-dark.png) |
 
-| Hover on Copy video | Working |
+| Hover on Post on X | Hover on Try Again |
 | --- | --- |
-| ![Hover on the video copy button](images/share/state-hover-en-light.png) | ![Preparing share assets](images/share/state-working-en-light.png) |
+| ![Post on X hovered](images/share/state-hover-en-light.png) | ![Try Again hovered in failure state](images/share/state-retry-hover-en-light.png) |
+
+| Working | Copied |
+| --- | --- |
+| ![Preparing share assets](images/share/state-working-en-light.png) | ![Video copied next to the video card](images/share/state-copied-en-light.png) |
 
 | Copied | Copy failed |
 | --- | --- |

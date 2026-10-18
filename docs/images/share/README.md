@@ -11,7 +11,8 @@ throwaway preference domain, so no user images or real preferences are involved.
 | --- | --- | --- |
 | `dialog-before-{en,ja}-{light,dark}.png` | `b0e69e7`, before the share redesign | ready, pre-change controls |
 | `dialog-after-{en,ja}-{light,dark}.png` | `fc0da2394387e89332f8b3a61f104a07c976079b` | ready, native copy/post buttons with hashtag-only composer |
-| `state-hover-en-light.png` | same source | Copy video hovered |
+| `state-hover-en-light.png` | same source | Post on X hovered |
+| `state-retry-hover-en-light.png` | same source | Try Again hovered in the failed state |
 | `state-working-en-light.png` | same source | generating: spinner, post disabled |
 | `state-copied-en-light.png` | same source | “Video copied” beside the video card |
 | `state-copy-failed-en-light.png` | same source | “Couldn’t copy. Try again.” beside the image card |
