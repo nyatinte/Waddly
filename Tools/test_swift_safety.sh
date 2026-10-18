@@ -41,8 +41,14 @@ for fixture in \
 done
 
 # A parenthesized callee whose member does not mutate files must stay clean, so peeling does not over-match.
-if "$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/silenced-file-mutation-unrelated-callee.swift" >/dev/null 2>&1; then
-    printf 'Swift safety checker flagged a parenthesized non-mutating callee.\n' >&2
+# Capture the output: any non-zero exit is not enough, because a parse or usage failure must not be read as
+# the rule being correctly absent.
+if output=$("$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/silenced-file-mutation-unrelated-callee.swift" 2>&1); then
+    printf 'Swift safety checker flagged a parenthesized non-mutating callee.\n%s\n' "$output" >&2
+    exit 1
+fi
+if ! grep -q "Expected rule silenced-file-mutation was not reported" <<< "$output"; then
+    printf 'Swift safety checker failed for an unexpected reason:\n%s\n' "$output" >&2
     exit 1
 fi
 printf 'Fixture accepted as expected: silenced-file-mutation-unrelated-callee\n'
