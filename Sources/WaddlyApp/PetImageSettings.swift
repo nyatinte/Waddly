@@ -47,30 +47,26 @@ extension AppDelegate {
         return images
     }
 
-    /// Commits the decoded set; the wizard does not present a separate confirmation step. The
-    /// store's serialized queue owns persistence; the refusal rule runs inside that queue so a
-    /// sample requested by a reopened window cannot land after a user import already wrote one.
+    /// Commits the decoded set on the store's queue. The sample refusal rule runs inside that same
+    /// queue so a reopened guide cannot overwrite a user import queued by the previous guide.
     func confirmPetImage(_ images: PetImageSet, source: PetImageCommitSource = .userFile) async -> Bool {
-        await queueImageUpdate { await self.confirmPetImageInOrder(images, source: source) }
-    }
-
-    /// A user's own file always wins: a sample commit is refused once any pet is stored. Pure so the
-    /// rule is testable without a queue.
-    nonisolated static func shouldCommitPetImages(source: PetImageCommitSource, petIsStored: Bool) -> Bool {
-        source == .userFile || !petIsStored
-    }
-
-    private func confirmPetImageInOrder(_ images: PetImageSet, source: PetImageCommitSource) async -> Bool {
-        guard Self.shouldCommitPetImages(source: source, petIsStored: hasCompletePetImageSet) else {
-            return false
+        let outcome = await imageStore.confirmPetImage(images) {
+            Self.shouldCommitPetImages(source: source, petIsStored: self.hasCompletePetImageSet)
         }
-        do {
-            try await persistPetImages(images, resetActivity: true)
-        } catch {
+        switch outcome {
+        case .confirmed:
+            return true
+        case let .failed(error):
             await showImageSaveError(error)
             return false
+        case .aborted:
+            return false
         }
-        return true
+    }
+
+    /// A user's own file always wins; a sample is refused once any pet is stored.
+    nonisolated static func shouldCommitPetImages(source: PetImageCommitSource, petIsStored: Bool) -> Bool {
+        source == .userFile || !petIsStored
     }
 
     func imageSetDidChange(resetActivity: Bool = false) {

@@ -1,8 +1,7 @@
 import AppKit
 import WaddlyCore
 
-private struct PetShareAssets: Sendable {
-    let directory: URL
+struct PetShareAssets: Sendable {
     let spriteURL: URL
     let movieURL: URL
 
@@ -11,22 +10,31 @@ private struct PetShareAssets: Sendable {
         cancellation: PetShareExportCancellation,
         writeMovie: PetShareWindowController.MovieWriter
     ) throws -> PetShareAssets {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("WaddlyShare-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let spriteURL = directory.appendingPathComponent("pet-sprite.png")
-        let movieURL = directory.appendingPathComponent("pet-animation.mp4")
+        let base = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WaddlyShare-\(UUID().uuidString)")
+        let spriteURL = base.appendingPathExtension("png")
+        let movieURL = base.appendingPathExtension("mp4")
         do {
             guard let png = PetShareExporter.spriteSheetPNG(from: images) else {
                 throw PetShareExportError.incompleteImageSet
             }
             try png.write(to: spriteURL, options: .atomic)
             try writeMovie(images, movieURL, cancellation)
-            return PetShareAssets(directory: directory, spriteURL: spriteURL, movieURL: movieURL)
+            return PetShareAssets(spriteURL: spriteURL, movieURL: movieURL)
         } catch {
-            try? FileManager.default.removeItem(at: directory)
+            // The movie is the export's output: it deletes it on the queue that owns the writer, which may
+            // still be running when a stalled export gives up waiting. Removing a directory here would
+            // pull the output out from under an active `AVAssetWriter`, so this path only discards the
+            // sprite it wrote itself.
+            try? FileManager.default.removeItem(at: spriteURL)
             throw error
         }
+    }
+
+    /// Removes both assets. Only call this once the export has finished with the movie.
+    func remove() {
+        try? FileManager.default.removeItem(at: spriteURL)
+        try? FileManager.default.removeItem(at: movieURL)
     }
 }
 
@@ -101,13 +109,13 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
             }.value
             guard let self else {
                 if case let .success(assets) = result {
-                    try? FileManager.default.removeItem(at: assets.directory)
+                    assets.remove()
                 }
                 return
             }
             if isClosed {
                 if case let .success(assets) = result {
-                    try? FileManager.default.removeItem(at: assets.directory)
+                    assets.remove()
                 }
                 return
             }
@@ -138,13 +146,13 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         isClosed = true
-        // Stop the encoder itself, not just the task that awaits it: the export polls this token and
-        // removes its partial movie before the temporary directory below disappears.
+        // Stop the encoder itself, not just the task that awaits it. The export queue retains ownership
+        // of a pending movie; the controller removes both assets only after a successful export.
         cancellation.cancel()
         generationTask?.cancel()
         shareView.stopPlayback()
         if let assets {
-            try? FileManager.default.removeItem(at: assets.directory)
+            assets.remove()
         }
         onClose?()
     }
@@ -160,7 +168,17 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     private func copyMovie() {
         guard let assets, let data = try? Data(contentsOf: assets.movieURL, options: .mappedIfSafe) else { return }
-        if PetShareClipboard.copyMovie(data) {
+        // The export directory disappears with the window, so the pasteboard names a file that
+        // outlives it; paste targets attach a file, not raw video bytes.
+        guard let published = PetShareClipboard.publishForPasteboard(
+            data,
+            named: assets.movieURL.lastPathComponent
+        )
+        else {
+            NSSound.beep()
+            return
+        }
+        if PetShareClipboard.copyMovie(data, fileURL: published) {
             shareView.didCopyMovie()
         } else {
             NSSound.beep()
@@ -168,15 +186,16 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func openX() {
-        if let url = Self.xPostURL(text: localization.string(for: .shareXDraft)) {
+        if let url = Self.xPostURL() {
             NSWorkspace.shared.open(url)
         }
     }
 
-    static func xPostURL(text: String) -> URL? {
+    /// Opens the X composer with the share hashtag and no post text, so whatever the user writes in the
+    /// composer is theirs alone. The draft used to carry an instruction the user never asked for.
+    static func xPostURL() -> URL? {
         var components = URLComponents(string: "https://twitter.com/intent/tweet")
         components?.queryItems = [
-            URLQueryItem(name: "text", value: text),
             URLQueryItem(name: "hashtags", value: "ShareMyWaddly")
         ]
         return components?.url

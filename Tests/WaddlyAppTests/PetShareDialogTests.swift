@@ -96,12 +96,31 @@ import WaddlyCore
     #expect(didClose)
 }
 
-@Test @MainActor func xPostURLIncludesReminderAndShareHashtag() throws {
-    let reminder = "動画と画像をコピーしてポストに添付してください"
-    let url = try #require(PetShareWindowController.xPostURL(text: reminder))
+@Test @MainActor func aFailedGenerationLeavesTheMoviesCleanupToTheExport() throws {
+    let images = try SetupWizardFixture.sheetImages()
+    let movie = SharedValue<URL>()
+
+    #expect(throws: PetShareExportError.timedOut) {
+        // A stalled export gives up while its writer may still own the movie; the caller must not delete it.
+        _ = try PetShareAssets.make(from: images, cancellation: PetShareExportCancellation()) { _, url, _ in
+            movie.store(url)
+            try Data("partial".utf8).write(to: url)
+            throw PetShareExportError.timedOut
+        }
+    }
+
+    let movieURL = try #require(movie.current)
+    let spriteURL = movieURL.deletingPathExtension().appendingPathExtension("png")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    #expect(!FileManager.default.fileExists(atPath: spriteURL.path))
+    #expect(FileManager.default.fileExists(atPath: movieURL.path))
+}
+
+@Test @MainActor func xPostURLLeavesThePostTextEmptyAndCarriesOnlyTheShareHashtag() throws {
+    let url = try #require(PetShareWindowController.xPostURL())
     let queryItems = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
 
-    #expect(queryItems.first { $0.name == "text" }?.value == reminder)
+    #expect(queryItems.contains { $0.name == "text" } == false)
     #expect(queryItems.first { $0.name == "hashtags" }?.value == "ShareMyWaddly")
 }
 

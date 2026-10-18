@@ -102,8 +102,8 @@ screen. Run each in English and Japanese, in light and dark.
    character screen. Choose, paste, or drop a valid 3×3 PNG. Expected: the sheet is staged and
    previewed with its filename, dimensions, and cell size; nothing is written yet. Press **Continue**.
    Expected: the sheet is applied once, the sample message disappears, and the preview shows the
-   imported frames. Failure: a mid-import confirm dialog appears before Continue, the previous pet is
-   lost, or Continue advances without applying.
+   imported frames. Failure: setup writes before Continue, the previous pet is lost, or Continue
+   advances without a successful apply.
 3. **Permission honest before and after the tap.** Continue to Keyboard reactions with permission not
    granted. Expected: “not allowed” and the privacy note. Grant in System Settings and return.
    Expected: while the tap is unavailable the page says “restart required” and `Next` is disabled;
