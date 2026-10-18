@@ -61,6 +61,52 @@ import WaddlyCore
         #expect(app.hasCompletePetImageSet)
     }
 
+    @Test func setupReplacementClearsCorruptManifestFailureAndRestoresEditing() async throws {
+        let fixture = try AppIntegrationFixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        let original = try fixture.exampleImages()
+        try await app.persistPetImages(original)
+        let manifestURL = PetImageStorage(directory: fixture.directory).manifestURL
+        try #require(FileManager.default.fileExists(atPath: manifestURL.path))
+        try Data("corrupt manifest".utf8).write(to: manifestURL, options: .atomic)
+        app.showSetupWizard()
+        let restore = Task { await app.loadSavedPetImage() }
+        let alert = try await waitForSheet(app)
+        alert.sheetParent?.endSheet(alert, returnCode: .alertFirstButtonReturn)
+        await restore.value
+        #expect(app.imageLoadFailed)
+        #expect(app.imageLoadError != nil)
+
+        // A rejected sample must not repair a corrupt restore; only an accepted commit can.
+        #expect(await !app.confirmPetImage(original, source: .sample))
+        #expect(app.imageLoadFailed)
+        #expect(app.imageLoadError != nil)
+
+        let blockedDirectory = fixture.directory.appendingPathComponent("not-a-directory")
+        try #require(!FileManager.default.fileExists(atPath: blockedDirectory.path))
+        try Data("block directory creation".utf8).write(to: blockedDirectory)
+        app.petImagesDirectoryURL = blockedDirectory
+        let failedReplacement = Task { await app.confirmPetImage(original, source: .userFile) }
+        let saveAlert = try await waitForSheet(app)
+        saveAlert.sheetParent?.endSheet(saveAlert, returnCode: .alertFirstButtonReturn)
+        #expect(await !failedReplacement.value)
+        #expect(app.imageLoadFailed)
+        #expect(app.imageLoadError != nil)
+        app.petImagesDirectoryURL = fixture.directory
+
+        #expect(await app.confirmPetImage(original, source: .userFile))
+        #expect(!app.imageLoadFailed)
+        #expect(app.imageLoadError == nil)
+        #expect(app.hasCompletePetImageSet)
+
+        let before = try #require(app.settings.petImageFiles["idle"])
+        try #require(before.count > 1)
+        await app.moveImage(from: 0, to: 1, in: .idle)?.value
+        #expect(app.settings.petImageFiles["idle"] == before.reversed())
+        #expect(try fixture.manifest() == app.settings.petImageFiles)
+    }
+
     @Test func missingSavedFrameDoesNotDeleteOrCommitAPartialManifest() async throws {
         let fixture = try AppIntegrationFixture()
         defer { fixture.close() }

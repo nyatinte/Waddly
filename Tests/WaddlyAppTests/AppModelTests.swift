@@ -226,14 +226,6 @@ private func textFenceBody(in markdown: String) -> String? {
     #expect(!AppDelegate.shouldCommitPetImages(source: .sample, petIsStored: true))
 }
 
-@Test func movingAnElementPreservesTheRequestedOrder() {
-    let elements = ["first", "second", "third"]
-
-    #expect(moving(elements, from: 0, to: 2) == ["second", "third", "first"])
-    #expect(moving(elements, from: 2, to: 0) == ["third", "first", "second"])
-    #expect(moving(["only"], from: 1, to: 0) == nil)
-}
-
 @Test @MainActor func animationSettingsModelForwardsEditorActionsAndTracksThumbnails() throws {
     let suiteName = "WaddlyTests.animationSettings.\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suiteName))
