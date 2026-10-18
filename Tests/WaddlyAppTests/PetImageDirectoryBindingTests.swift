@@ -22,16 +22,20 @@ import WaddlyCore
     }
 
     let app = makeTestApp(settings: AppSettings(defaults: defaults))
+    defer {
+        app.imageStore.beginShutdown()
+        app.animationController.shutdown()
+    }
     app.settings.registerDefaults()
     app.buildPanel()
     // First touch happens while only the sentinel is known, so the store exists already.
     app.petImagesDirectoryURL = sentinel
     _ = app.petImages
-    #expect(app.imageStore.directory == sentinel)
+    try #require(app.imageStore.directory == sentinel)
 
     // Rebinding must take effect for the next transaction instead of staying on the sentinel.
     app.petImagesDirectoryURL = active
-    #expect(app.imageStore.directory == active)
+    try #require(app.imageStore.directory == active)
 
     let sheet = try #require(try PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleSheetURL())))
     try await app.persistPetImages(sheet)
@@ -42,9 +46,6 @@ import WaddlyCore
     #expect(try FileManager.default.contentsOfDirectory(atPath: active.path).count > 1)
     let sentinelEntries = (try? FileManager.default.contentsOfDirectory(atPath: sentinel.path)) ?? []
     #expect(sentinelEntries.isEmpty)
-
-    app.imageStore.beginShutdown()
-    app.animationController.shutdown()
 }
 
 private func exampleSheetURL() throws -> URL {

@@ -27,7 +27,31 @@ import WaddlyCore
 /// app fixtures' cleanup, so a run does not leak one directory per test.
 @MainActor func closeImageStore(_ store: PetImageStore) {
     guard let directory = store.directory else { return }
+    let temporaryDirectory = FileManager.default.temporaryDirectory.standardizedFileURL
+    guard directory.deletingLastPathComponent().standardizedFileURL == temporaryDirectory,
+          directory.lastPathComponent.hasPrefix("WaddlyStoreTests-")
+    else {
+        Issue.record("Refusing to remove a directory not owned by an image-store fixture.")
+        return
+    }
     try? FileManager.default.removeItem(at: directory)
+}
+
+@Test @MainActor func storeFixtureCleanupRefusesAnUnownedDirectory() throws {
+    let owner = makeImageStore()
+    defer { closeImageStore(owner) }
+    let directory = try #require(owner.directory).appendingPathComponent("unrelated", isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let unrelatedStore = PetImageStore(
+        directory: directory,
+        legacyFiles: { [:] },
+        writeLegacyFiles: { _ in },
+        imagesDidChange: { _ in }
+    )
+    withKnownIssue("The fixture must refuse cleanup outside its own temporary directory.") {
+        closeImageStore(unrelatedStore)
+    }
+    #expect(FileManager.default.fileExists(atPath: directory.path))
 }
 
 func storeExampleImages() throws -> PetImageSet {
