@@ -19,7 +19,8 @@
       "Sources/WaddlyCore/PetImageStorage.swift:173",
       "Sources/WaddlyCore/PetImageStorage.swift:182",
       "Sources/WaddlyCore/PetShareExporter.swift:66",
-      "Sources/WaddlyCore/PetShareExporter.swift:176",
+      "Sources/WaddlyCore/PetShareExporter.swift:94",
+      "Sources/WaddlyCore/PetShareExporter.swift:187",
       "Tests/WaddlyAppTests/AppIntegrationFixture.swift:55",
       "Tests/WaddlyAppTests/AppModelTests.swift:173",
       "Tests/WaddlyAppTests/ImageUpdateQueueTests.swift:53",
@@ -36,7 +37,8 @@
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:165",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:191",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:223",
-      "Tests/WaddlyCoreTests/PetShareExportTests.swift:253"
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:253",
+      "Tests/WaddlyCoreTests/PetShareExportTests.swift:280"
     ],
     "switch-default": [
       "Sources/WaddlyApp/AppDelegateWindow.swift:9",
@@ -44,7 +46,7 @@
     ],
     "unchecked-sendable": [
       "Sources/WaddlyApp/AppSettings.swift:6",
-      "Sources/WaddlyCore/PetShareMovieWriter.swift:53"
+      "Sources/WaddlyCore/PetShareMovieWriter.swift:59"
     ],
     "unsafe-pointer": [
       "Sources/WaddlyApp/Waddly.swift:104",

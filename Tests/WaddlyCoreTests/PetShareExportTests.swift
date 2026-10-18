@@ -274,6 +274,34 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     #expect(abs(CMTimeGetSeconds(duration) - 5) < 0.1)
 }
 
+@Test func aSetupFailureBeforeTheQueueOwnsTheWriterRemovesThePartialMovie() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let partialMovieWasWritten = OSAllocatedUnfairLock(initialState: false)
+
+    #expect(throws: PetShareExportError.writerUnavailable) {
+        // `startWriting` is what creates the output file, and it fails here before `appendMovieFrames`
+        // creates the queue that owns the writer. The export still owns the file at that point, so it must
+        // delete it rather than leave it to the caller, which only deletes the sprite it wrote itself.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: PetShareExportCancellation(),
+            hooks: MovieWriterHooks(startWriting: { writer in
+                try Data("partial".utf8).write(to: writer.outputURL)
+                let partialMovieIsOnDisk = FileManager.default.fileExists(atPath: writer.outputURL.path)
+                partialMovieWasWritten.withLock { $0 = partialMovieIsOnDisk }
+                throw PetShareExportError.writerUnavailable
+            })
+        )
+    }
+
+    #expect(partialMovieWasWritten.withLock { $0 })
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
+}
+
 @Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {
     let frame = try #require(fixtureImages()[.idle].first?.cgImage(forProposedRect: nil, context: nil, hints: nil))
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(

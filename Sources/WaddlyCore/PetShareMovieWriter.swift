@@ -38,6 +38,12 @@ struct MovieWriterHooks: Sendable {
 
     /// Reports the number of frames encoded so far. Tests cancel after a known, nonterminal frame count.
     var didAppendFrame: @Sendable (Int) -> Void = { _ in }
+
+    /// Starts the writer, which is what creates the output file. Tests inject a starter that fails after
+    /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+    var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+        guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    }
 }
 
 /// Owns one export's writer and the progress the waiting caller reads.
