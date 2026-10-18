@@ -158,9 +158,7 @@ private extension CharacterImportView {
                 )
         )
         .dropDestination(for: URL.self) { urls, _ in
-            let pngs = urls.filter { $0.pathExtension.lowercased() == "png" }
-            guard !pngs.isEmpty else { return false }
-            Task { await model.stageFiles(at: pngs) }
+            Task { await model.stageDroppedFiles(at: urls) }
             return true
         } isTargeted: { targeted in
             model.setDropTargeted(targeted)

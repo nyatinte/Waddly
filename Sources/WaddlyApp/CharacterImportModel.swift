@@ -48,15 +48,22 @@ final class CharacterImportModel: ObservableObject {
 
     private let currentImages: () -> PetImageSet
     private let commit: (PetImageSet) async -> CharacterCommitOutcome
+    private let loadSheet: (URL) async -> CharacterSheetLoadOutcome
+    private let decodeFrames: ([URL]) async -> [NSImage]
     private(set) var committedBaseline: PetImageSet
+    /// Invalidates suspended acquisition/editor work when the draft's authority changes.
     private var generation = 0
 
     init(
         currentImages: @escaping () -> PetImageSet,
-        commit: @escaping (PetImageSet) async -> CharacterCommitOutcome
+        commit: @escaping (PetImageSet) async -> CharacterCommitOutcome,
+        loadSheet: @escaping (URL) async -> CharacterSheetLoadOutcome = { await CharacterSheetLoader.load(from: $0) },
+        decodeFrames: @escaping ([URL]) async -> [NSImage] = { await CharacterSheetLoader.optimizedImages(from: $0) }
     ) {
         self.currentImages = currentImages
         self.commit = commit
+        self.loadSheet = loadSheet
+        self.decodeFrames = decodeFrames
         committedBaseline = currentImages()
     }
 
@@ -65,7 +72,7 @@ final class CharacterImportModel: ObservableObject {
     }
 
     var canApply: Bool {
-        hasStagedCandidate && !isApplying
+        hasStagedCandidate && !isReading && !isApplying
     }
 
     /// True when the staged frames differ from what is committed, so Cancel must confirm first.
@@ -96,18 +103,27 @@ final class CharacterImportModel: ObservableObject {
 
     /// Stage one dropped or chosen PNG. A multi-file drop is rejected rather than silently using one.
     func stageFiles(at urls: [URL]) async {
+        guard !isApplying else { return }
         guard urls.count == 1, let url = urls.first else {
-            failure = .multipleFiles
+            rejectAcquisition(with: .multipleFiles)
             return
         }
         let token = beginRead()
-        let outcome = await CharacterSheetLoader.load(from: url)
+        let outcome = url.pathExtension.lowercased() == "png"
+            ? await loadSheet(url)
+            : .invalid(.notPNG)
         guard token == generation else { return }
         apply(outcome, name: url.lastPathComponent)
     }
 
+    /// Forward every shared drop URL to the same validation path used by file picking and window drops.
+    func stageDroppedFiles(at urls: [URL]) async {
+        await stageFiles(at: urls)
+    }
+
     /// Stage the explicit paste. Reads the clipboard only now, never on focus.
     func stageClipboard(from pasteboard: NSPasteboard) async {
+        guard !isApplying else { return }
         let token = beginRead()
         let outcome = await CharacterSheetLoader.loadFromClipboard(pasteboard)
         guard token == generation else { return }
@@ -131,6 +147,13 @@ final class CharacterImportModel: ObservableObject {
         failure = nil
         commitFailed = false
         return generation
+    }
+
+    private func rejectAcquisition(with failure: CharacterImportFailure) {
+        generation += 1
+        isReading = false
+        commitFailed = false
+        self.failure = failure
     }
 
     private func apply(_ outcome: CharacterSheetLoadOutcome, name: String?) {
@@ -157,7 +180,8 @@ final class CharacterImportModel: ObservableObject {
     @discardableResult
     func apply() async -> Bool {
         // Re-entrancy guard: a primary-action double click must commit once, not twice.
-        guard !isApplying, let stagedFrames, stagedFrames.isComplete else { return false }
+        guard !isApplying, !isReading, let stagedFrames, stagedFrames.isComplete else { return false }
+        generation += 1
         isApplying = true
         let outcome = await commit(stagedFrames)
         isApplying = false
@@ -187,16 +211,24 @@ final class CharacterImportModel: ObservableObject {
     // MARK: - Advanced editing over the same draft
 
     func addFrames(_ urls: [URL], to category: PetImageCategory) async {
-        guard namedStaged else { return }
-        let decoded = await CharacterSheetLoader.optimizedImages(from: urls)
-        guard !decoded.isEmpty, var updated = stagedFrames else { return }
+        guard !isApplying, let original = stagedFrames else { return }
+        let token = generation
+        let version = draftVersion
+        let decoded = await decodeFrames(urls)
+        guard !isApplying,
+              token == generation,
+              version == draftVersion,
+              let current = stagedFrames,
+              Self.sameFrames(current, original),
+              !decoded.isEmpty else { return }
+        var updated = original
         updated[category].append(contentsOf: decoded)
         stagedFrames = updated
         draftVersion += 1
     }
 
     func removeFrame(at index: Int, from category: PetImageCategory) {
-        guard var updated = stagedFrames,
+        guard !isApplying, var updated = stagedFrames,
               updated[category].indices.contains(index),
               updated[category].count > 1 else { return }
         updated[category].remove(at: index)
@@ -205,7 +237,7 @@ final class CharacterImportModel: ObservableObject {
     }
 
     func moveFrame(from source: Int, to destination: Int, in category: PetImageCategory) {
-        guard var updated = stagedFrames,
+        guard !isApplying, var updated = stagedFrames,
               let moved = Self.moving(updated[category], from: source, to: destination) else { return }
         updated[category] = moved
         stagedFrames = updated
