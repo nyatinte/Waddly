@@ -1,6 +1,7 @@
 import AppKit
 import Testing
 @testable import WaddlyApp
+import WaddlyCore
 
 /// First-run journey coverage: the sample shortcut, and the progress that survives an interrupted
 /// permission hand-off. Kept apart from `SetupWizardTests` so each suite stays readable.
@@ -217,5 +218,70 @@ import Testing
         #expect(state.confirmCount == 1)
         #expect(wizard.didUseSamplePet)
         #expect(wizard.hasImage)
+    }
+
+    /// The user's file must win. While their import is suspended before its commit, a sample click
+    /// must not queue a commit behind it and replace the pet they asked for.
+    @Test func sampleIsIgnoredWhileAUserImportIsStillCommitting() async throws {
+        let state = Fixture.State()
+        let (started, signal) = AsyncStream<Void>.makeStream()
+        var pending: CheckedContinuation<PetImageSet?, Never>?
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            demoURL: Fixture.sheetURL(),
+            preview: { _ in
+                await withCheckedContinuation { continuation in
+                    pending = continuation
+                    signal.yield()
+                }
+            },
+            confirmResult: true
+        )
+        defer { wizard.close(); signal.finish() }
+        let userImages = try Fixture.sheetImages()
+
+        let userImport = wizard.importImage(from: URL(fileURLWithPath: "/user-pet.png"))
+        var iterator = started.makeAsyncIterator()
+        _ = await iterator.next()
+        #expect(wizard.pendingImportCount == 1)
+        #expect(!wizard.canTrySample)
+
+        // Clicking the sample now must start nothing.
+        await wizard.trySamplePet().value
+        #expect(state.confirmCount == 0)
+        #expect(!wizard.didUseSamplePet)
+
+        // The user's file finally commits, and the page still shows their pet.
+        pending?.resume(returning: userImages)
+        await userImport.value
+        #expect(wizard.pendingImportCount == 0)
+        #expect(wizard.hasImage)
+        #expect(wizard.importedFileName == "user-pet.png")
+        #expect(!wizard.didUseSamplePet)
+        #expect(wizard.currentPetImages()[.idle].first === userImages[.idle].first)
+
+        // A later sample click is refused too: a pet is already stored.
+        await wizard.trySamplePet().value
+        #expect(wizard.currentPetImages()[.idle].first === userImages[.idle].first)
+        #expect(state.confirmCount == 1)
+    }
+
+    /// A failed import must release the shortcut, so the sample is still a way to a visible pet.
+    @Test func aFailedImportReleasesTheSampleShortcut() async throws {
+        let state = Fixture.State()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            demoURL: Fixture.sheetURL(),
+            previewResult: nil
+        )
+        defer { wizard.close() }
+
+        await wizard.importImage(from: URL(fileURLWithPath: "/unreadable.png")).value
+
+        #expect(wizard.didFailImport)
+        #expect(!wizard.hasImage)
+        #expect(wizard.pendingImportCount == 0)
+        #expect(wizard.canTrySample)
+        #expect(state.confirmCount == 0)
     }
 }

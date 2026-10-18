@@ -63,17 +63,23 @@ No complete pet + close ── setupWizardSeen = false ──► relaunch reopen
 Ready + Show on desktop ── clears setupStep ──► never reopens onboarding
 ```
 
-Invariants enforced by construction:
+Invariants the flow keeps:
 
-- **No false ready.** `Next` stays disabled until a real key has reached Waddly (`isMonitoringReady`: granted *and* the tap live *and* a key observed). A missing permission, an unavailable tap, and a live-but-silent tap are each shown as their own unconfirmed state.
-- **Confirmation is ephemeral and private.** The observed signal is a single boolean set inside the event tap; it stores no key code, text, or time, and a new tap clears it. Nothing is logged or sent.
+- **No false ready.** `Next` stays disabled until a real key has reached Waddly on a tap that is
+  still running (`isMonitoringReady`: granted, tap live, key observed). A missing permission, an
+  unavailable tap, and a live-but-silent tap are each shown as their own unconfirmed state; pausing
+  stops the tap, so a confirmation from before the pause does not survive it.
+- **Confirmation is ephemeral and private.** The observed signal is a single boolean set inside the
+  event tap; it stores no key code, text, or time, and a new tap clears it. Nothing is logged or sent.
 - **Later is explicit and non-destructive.** `deferMonitoring` only sets the phase to deferred and the
   step to Ready; it does not change TCC and does not clear the pet. It never marks reactions confirmed.
 - **Resume never loses work.** Step changes record `setupStep`; only the finish action clears it.
   Closing the window keeps the frames and the step.
-- **The sample cannot clobber a pet.** “Try the sample pet first” is offered only when no complete
-  pet exists, and it commits through the same path as an import. Nothing is written until the user
-  clicks it; it never changes the step or the saved progress.
+- **The sample cannot replace a pet the user asked for.** “Try the sample pet first” is offered only
+  while no complete pet exists *and* no file import is between the user's choice and its commit.
+  While an import is pending the sample is refused, so it cannot queue a commit behind the user's
+  file; if the sample is already committing, the user's file is enqueued after it and lands last.
+  Nothing is written until the user clicks it, and it never changes the step or the saved progress.
 - **Errors are in place.** An unreadable sheet or a failed copy/open is reported inline on the current
   step and leaves the previous pet untouched (immediate-import contract from #94).
 
@@ -165,7 +171,8 @@ VoiceOver, real keyboard confirmation, and Reduce Motion still need a manual pas
 [setup-wizard-qa.md](setup-wizard-qa.md). The journey-specific additions live in the
 `SetupWizardJourneyTests` suite: `tryingTheSampleCommitsTheBundledSampleInPlace`,
 `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`,
-`rapidSampleRequestsCommitOnce`, `interruptedPermissionFlowResumesToRestartRequired`,
+`rapidSampleRequestsCommitOnce`, `sampleIsIgnoredWhileAUserImportIsStillCommitting`,
+`aFailedImportReleasesTheSampleShortcut`, `interruptedPermissionFlowResumesToRestartRequired`,
 `deferringSavesTheReadyStepSoARelaunchCanResume`, `aLiveTapStaysUnconfirmedUntilAKeyArrives`,
 `deferringFromALiveTapKeepsTheCheckWaiting`, and `aReturningUserKeepsAConfirmedReaction`. The
 readiness rules themselves are covered by `PermissionServiceTests`

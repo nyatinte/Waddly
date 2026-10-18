@@ -10,8 +10,12 @@ extension SetupWizardController {
     func importImage(from url: URL) -> Task<Void, Never> {
         clearImportFeedback()
         let generation = importFeedbackGeneration
+        // Counted before the task starts, so a sample click made while this import is still decoding
+        // or committing sees it instead of racing the first await.
+        pendingImportCount += 1
         return Task { [weak self] in
             guard let self else { return }
+            defer { pendingImportCount -= 1 }
             guard let images = await onPreviewImage(url) else {
                 // A previous decode must not restore feedback after navigation or a newer attempt.
                 guard importFeedbackGeneration == generation else { return }
@@ -34,8 +38,8 @@ extension SetupWizardController {
 
     /// Uses the bundled sample as the pet, without a file picker. The commit goes through the same
     /// path as an import, so the sample becomes a real, local pet image; the user stays on this
-    /// step and can see which pet is active. Offered only when the store is empty, so it never
-    /// replaces an existing pet, and it never touches the saved step.
+    /// step and can see which pet is active. Offered only while the store is empty and no import is
+    /// pending, so it never replaces a pet the user asked for, and it never touches the saved step.
     @discardableResult
     func trySamplePet() -> Task<Void, Never> {
         // A rapid second click must not start a second write: hand back the commit already running.

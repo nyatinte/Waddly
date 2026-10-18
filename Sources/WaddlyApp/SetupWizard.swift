@@ -66,6 +66,10 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var didRenderConfirmedReaction = false
     /// The in-flight sample commit, so a rapid second click cannot start a second write.
     var sampleCommitTask: Task<Void, Never>?
+    /// How many file imports are between the user's choice and their commit. The sample is refused
+    /// while any of them is pending, because a sample commit queued behind one would replace the pet
+    /// the user asked for.
+    var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -129,10 +133,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentPetImages().isComplete
     }
 
-    /// The sample shortcut is offered only while the pet store is empty, so choosing it can never
-    /// replace a user's own pet. It is explicit: nothing is written until the user picks it.
+    /// The sample shortcut is offered only while the pet store is empty and no file import is still
+    /// on its way to a commit, so choosing it can never replace a pet the user asked for. It is
+    /// explicit: nothing is written until the user picks it.
     var canTrySample: Bool {
-        !hasImage && demoImages != nil
+        !hasImage && demoImages != nil && pendingImportCount == 0
     }
 
     var isMonitoringGranted: Bool {

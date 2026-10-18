@@ -9,7 +9,7 @@ results; treat the two tables below separately.
 
 | Screen | State | Primary action | Other actions |
 | --- | --- | --- | --- |
-| Pet | No image yet | Create with ChatGPT / Choose a PNG | Try the sample pet first (bundled sample, offered only while no pet is stored); drag and drop a PNG onto the window; sample pet plays in the preview |
+| Pet | No image yet | Create with ChatGPT / Choose a PNG | Try the sample pet first (bundled sample, offered only while no pet is stored and no import is still committing); drag and drop a PNG onto the window; sample pet plays in the preview |
 | Pet | ChatGPT guide | Copy the prompt and open ChatGPT | Choose a PNG, Change method, inline copy/open status |
 | Pet | Image registered | Next | Change image (imports immediately and replaces the saved set) |
 | Pet | Sample in use | Next | Change image; the page states the sample is active so it is not mistaken for the user's own pet |
@@ -62,7 +62,7 @@ Command: `mise run test` (serialized Swift Testing suites). The wizard suites ar
 | “Set up later” from a live-but-unconfirmed tap keeps the check waiting and offers Confirm typing | `deferringFromALiveTapKeepsTheCheckWaiting`, `deferringDoesNotConfirmReactions` |
 | A returning user who already confirmed reactions keeps that state | `aReturningUserKeepsAConfirmedReaction` |
 | A fresh event tap has observed nothing | `aFreshKeyboardMonitorHasObservedNothing` |
-| The sample shortcut commits the bundled sample in place, keeps the step, and is offered only when no pet is stored; a real import clears the sample choice | `tryingTheSampleCommitsTheBundledSampleInPlace`, `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice` |
+| The sample shortcut commits the bundled sample in place, keeps the step, and is offered only when no pet is stored and no import is pending; a real import clears the sample choice and is never replaced by a sample click | `tryingTheSampleCommitsTheBundledSampleInPlace`, `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`, `sampleIsIgnoredWhileAUserImportIsStillCommitting`, `aFailedImportReleasesTheSampleShortcut` |
 | Two rapid sample clicks start one commit | `rapidSampleRequestsCommitOnce` |
 | A relaunch mid-permission resumes at “restart required”, not a false ready state | `interruptedPermissionFlowResumesToRestartRequired` |
 | “Set up later” records the Ready step so a relaunch resumes with the warning still shown | `deferringSavesTheReadyStepSoARelaunchCanResume` |

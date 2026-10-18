@@ -13,7 +13,12 @@ extension AppDelegate {
                 // Pausing stops the tap on purpose; that is not a permission failure.
                 return isPaused || monitor.isRunning
             },
-            hasObservedReaction: { [weak self] in self?.monitor.hasObservedKeyEvent ?? false },
+            // A key confirms reactions only while the tap that saw it is still running. Pausing stops
+            // the tap, so a confirmation from before the pause must not outlive it.
+            hasObservedReaction: { [weak self] in
+                guard let self, monitor.isRunning else { return false }
+                return monitor.hasObservedKeyEvent
+            },
             requestAccess: { [weak self] in
                 guard let self else { return false }
                 let granted = monitor.requestPermission()
