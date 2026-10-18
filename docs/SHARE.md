@@ -73,7 +73,8 @@ WADDLY_CAPTURE_SHARE=1 ./macos/test.sh --filter ShareSnapshotTests
 ```
 
 The existing `dialog-before-*` files were rendered from `b0e69e7` with the same
-offscreen rendering approach; `dialog-after-*` and `state-*` were rendered from this change.
+offscreen rendering approach; `dialog-after-*` and `state-*` were rendered from source commit
+`4977579ac05ce4de1d4f749d0c0526cb4c29adcd`, including separate Post and Retry hover states.
 
 | Before, English | Before, Japanese |
 | --- | --- |
