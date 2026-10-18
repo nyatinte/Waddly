@@ -82,14 +82,18 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             onCancel: { [weak self] in self?.cancel() },
             pickFile: { [weak self] in self?.pickFile() },
             pasteboard: .general
-        ).frame(width: Self.contentSize.width, height: Self.contentSize.height))
+        ))
         host.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(host)
         NSLayoutConstraint.activate([
             host.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             host.trailingAnchor.constraint(equalTo: root.trailingAnchor),
             host.topAnchor.constraint(equalTo: root.topAnchor),
-            host.bottomAnchor.constraint(equalTo: root.bottomAnchor)
+            host.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+            // The window is not resizable; pin the hosting view to the design size so its content
+            // height cannot pull the window taller than the layout it was designed for.
+            host.widthAnchor.constraint(equalToConstant: Self.contentSize.width),
+            host.heightAnchor.constraint(equalToConstant: Self.contentSize.height)
         ])
         window?.contentView = root
     }
