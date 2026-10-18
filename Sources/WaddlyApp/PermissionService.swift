@@ -21,8 +21,25 @@ final class PermissionService {
         case deferred
     }
 
+    /// How far keyboard reactions have actually progressed on this machine. A live event tap only
+    /// proves macOS is delivering *something* to the app, so `isReady` is the last case alone:
+    /// a real key has to have reached the app while the tap was running.
+    enum Readiness: Equatable {
+        /// Input Monitoring has not been granted.
+        case permissionMissing
+        /// Granted, but macOS has not applied it to a running event tap (a relaunch is needed).
+        case tapUnavailable
+        /// The tap is live but no key has reached the app yet, so a reaction is unproven.
+        case awaitingReaction
+        /// A key reached the app while the tap was live: reactions are confirmed.
+        case reactionObserved
+    }
+
     private let hasPermission: @MainActor () -> Bool
     private let isReceivingKeys: @MainActor () -> Bool
+    /// Whether at least one real key event has reached the app since the tap last started. The app
+    /// answers this from the event tap; it never exposes any key code, text, or time.
+    private let hasObservedReaction: @MainActor () -> Bool
     private let requestAccess: @MainActor () -> Bool
     private let restartTap: @MainActor () -> Void
     private let openSettings: @MainActor () -> Void
@@ -40,6 +57,7 @@ final class PermissionService {
     init(
         hasPermission: @escaping @MainActor () -> Bool,
         isReceivingKeys: @escaping @MainActor () -> Bool,
+        hasObservedReaction: @escaping @MainActor () -> Bool,
         requestAccess: @escaping @MainActor () -> Bool,
         restartTap: @escaping @MainActor () -> Void,
         openSettings: @escaping @MainActor () -> Void = PermissionService.openInputMonitoringSettings,
@@ -47,6 +65,7 @@ final class PermissionService {
     ) {
         self.hasPermission = hasPermission
         self.isReceivingKeys = isReceivingKeys
+        self.hasObservedReaction = hasObservedReaction
         self.requestAccess = requestAccess
         self.restartTap = restartTap
         self.openSettings = openSettings
@@ -58,9 +77,16 @@ final class PermissionService {
         hasPermission()
     }
 
-    /// Granted *and* the keyboard is actually arriving. Only this counts as ready.
+    /// The four distinct progress states the guide shows. Only `reactionObserved` is success.
+    var readiness: Readiness {
+        guard isGranted else { return .permissionMissing }
+        guard isReceivingKeys() else { return .tapUnavailable }
+        return hasObservedReaction() ? .reactionObserved : .awaitingReaction
+    }
+
+    /// Granted *and* a real key has reached the app. A live tap alone is not enough.
     var isReady: Bool {
-        isGranted && isReceivingKeys()
+        readiness == .reactionObserved
     }
 
     /// The guide is on screen and waiting for the grant. Both presentations count: the drag route
@@ -88,11 +114,13 @@ final class PermissionService {
             return
         }
         _ = requestAccess()
-        guard !isReady else {
-            onUpdate?()
+        guard isGranted else {
+            beginGuiding()
             return
         }
-        beginGuiding()
+        // The grant arrived without a relaunch: bring the tap up and let the step report whether a
+        // real key has reached the app yet. A live tap is not a confirmed reaction.
+        retryTap()
     }
 
     func beginGuiding() {

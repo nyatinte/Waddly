@@ -180,11 +180,12 @@ private func textFenceBody(in markdown: String) -> String? {
         localization: localization,
         promptResourcesURL: resourcesURL,
         onPreviewImage: { _ in nil },
-        onConfirmImage: { _ in false },
+        onConfirmImage: { _, _ in false },
         currentPetImages: { PetImageSet() },
         permission: PermissionService(
             hasPermission: { false },
             isReceivingKeys: { false },
+            hasObservedReaction: { false },
             requestAccess: { false },
             restartTap: {}
         ),
@@ -200,6 +201,29 @@ private func textFenceBody(in markdown: String) -> String? {
     #expect(KeyboardMonitor.isEnterKeyCode(36))
     #expect(KeyboardMonitor.isEnterKeyCode(76))
     #expect(!KeyboardMonitor.isEnterKeyCode(0))
+}
+
+/// The confirmation must start empty: nothing is claimed until a real key reaches a fresh tap.
+@Test @MainActor func aFreshKeyboardMonitorHasObservedNothing() {
+    let monitor = KeyboardMonitor()
+    #expect(!monitor.hasObservedKeyEvent)
+    #expect(!monitor.isRunning)
+}
+
+/// Pausing stops the event tap, so a key observed before the pause must not keep the step confirmed.
+@Test func aStoppedTapCannotConfirmAReaction() {
+    #expect(!AppDelegate.reactionIsConfirmed(tapRunning: false, observedKeyEvent: true))
+    #expect(!AppDelegate.reactionIsConfirmed(tapRunning: true, observedKeyEvent: false))
+    #expect(AppDelegate.reactionIsConfirmed(tapRunning: true, observedKeyEvent: true))
+}
+
+/// A user's own file always wins: a sample commit is refused once any pet is stored, even when a
+/// reopened window asked for it with a fresh counter.
+@Test func aSampleCommitIsRefusedOnceAPetIsStored() {
+    #expect(AppDelegate.shouldCommitPetImages(source: .userFile, petIsStored: true))
+    #expect(AppDelegate.shouldCommitPetImages(source: .userFile, petIsStored: false))
+    #expect(AppDelegate.shouldCommitPetImages(source: .sample, petIsStored: false))
+    #expect(!AppDelegate.shouldCommitPetImages(source: .sample, petIsStored: true))
 }
 
 @Test @MainActor func animationSettingsModelForwardsEditorActionsAndTracksThumbnails() throws {

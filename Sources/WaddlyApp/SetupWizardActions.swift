@@ -10,8 +10,12 @@ extension SetupWizardController {
     func importImage(from url: URL) -> Task<Void, Never> {
         clearImportFeedback()
         let generation = importFeedbackGeneration
+        // Counted before the task starts, so a sample click made while this import is still decoding
+        // or committing sees it instead of racing the first await.
+        pendingImportCount += 1
         return Task { [weak self] in
             guard let self else { return }
+            defer { pendingImportCount -= 1 }
             guard let images = await onPreviewImage(url) else {
                 // A previous decode must not restore feedback after navigation or a newer attempt.
                 guard importFeedbackGeneration == generation else { return }
@@ -20,15 +24,55 @@ extension SetupWizardController {
                 renderCurrentStep()
                 return
             }
-            if await onConfirmImage(images) {
+            if await onConfirmImage(images, .userFile) {
                 importedFileName = url.lastPathComponent
                 didRegisterPet = true
+                didUseSamplePet = false
                 if importFeedbackGeneration == generation {
                     didFailImport = false
                 }
             }
             renderCurrentStep()
         }
+    }
+
+    /// Uses the bundled sample as the pet, without a file picker. The commit goes through the same
+    /// path as an import, so the sample becomes a real, local pet image; the user stays on this
+    /// step and can see which pet is active. Offered only while the store is empty and no import is
+    /// pending, so it never replaces a pet the user asked for, and it never touches the saved step.
+    @discardableResult
+    func trySamplePet() -> Task<Void, Never> {
+        // A rapid second click must not start a second write: hand back the commit already running.
+        if let inFlight = sampleCommitTask {
+            return inFlight
+        }
+        clearImportFeedback()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            defer { sampleCommitTask = nil }
+            guard canTrySample, let sample = demoImages else { return }
+            guard await onConfirmImage(sample, .sample) else {
+                // A refusal can still change the page: another window may have committed a pet in the
+                // meantime, so repaint instead of leaving the stale option list behind.
+                renderCurrentStep()
+                return
+            }
+            didUseSamplePet = true
+            didRegisterPet = true
+            importedFileName = nil
+            renderCurrentStep()
+        }
+        sampleCommitTask = task
+        return task
+    }
+
+    /// A real key reached the app while the guide was open. Repaints the step once, when the
+    /// confirmation actually changes, so the status can move from “waiting” to “confirmed”.
+    func monitoringDidObserveReaction() {
+        guard currentStep == .monitoring || currentStep == .completed,
+              isMonitoringReady != didRenderConfirmedReaction
+        else { return }
+        renderCurrentStep()
     }
 
     /// Invalidates pending feedback without cancelling image commits already in progress.
