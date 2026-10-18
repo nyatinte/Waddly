@@ -97,6 +97,8 @@ private extension CharacterImportView {
                 Button(localization.string(for: .characterPaste), action: paste)
                     .keyboardShortcut("v", modifiers: .command)
                     .help(pasteHint)
+                    .foregroundStyle(model.clipboardHasImage ? Color.primary : Color.secondary)
+                    .opacity(model.clipboardHasImage ? 1 : 0.6)
                     .accessibilityLabel("\(localization.string(for: .characterPaste)) — \(pasteHint)")
                     .accessibilityIdentifier("characterPaste")
                 Text(localization.string(for: .characterPasteShortcut))

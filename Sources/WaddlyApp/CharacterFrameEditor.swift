@@ -23,8 +23,6 @@ struct CharacterFrameEditor: View {
                     .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(AnimationSettingsMetrics.contentInset)
-        .frame(minWidth: 660, minHeight: 520)
         .onAppear { refreshThumbnails() }
         .onChange(of: importModel.draftVersion) { _, _ in refreshThumbnails() }
     }

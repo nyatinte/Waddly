@@ -11,6 +11,9 @@ import WaddlyCore
 final class CharacterImportWindowController: NSWindowController, NSWindowDelegate {
     let model: CharacterImportModel
     let frameEditorModel: AnimationSettingsModel
+    /// The window is not resizable: the shared screen is pinned to this content size so the SwiftUI
+    /// layout and the window agree, exactly like the fixed-size setup wizard.
+    static let contentSize = NSSize(width: 880, height: 580)
     private let localization: LocalizationController
     private let presenter: WindowPresenter
     private let onClose: @MainActor () -> Void
@@ -27,12 +30,13 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         self.presenter = presenter
         self.onClose = onClose
         let window = NSWindow(
-            contentRect: NSRect(origin: .zero, size: NSSize(width: 880, height: 580)),
+            contentRect: NSRect(origin: .zero, size: Self.contentSize),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         window.title = localization.string(for: .characterWindowTitle)
+        window.contentMinSize = Self.contentSize
         window.isReleasedWhenClosed = false
         window.center()
         super.init(window: window)
@@ -78,7 +82,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             onCancel: { [weak self] in self?.cancel() },
             pickFile: { [weak self] in self?.pickFile() },
             pasteboard: .general
-        ))
+        ).frame(width: Self.contentSize.width, height: Self.contentSize.height))
         host.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(host)
         NSLayoutConstraint.activate([
