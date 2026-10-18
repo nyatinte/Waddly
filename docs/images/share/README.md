@@ -10,14 +10,14 @@ throwaway preference domain, so no user images or real preferences are involved.
 | File | Source revision | State |
 | --- | --- | --- |
 | `dialog-before-{en,ja}-{light,dark}.png` | `b0e69e7`, before the share redesign | ready, pre-change controls |
-| `dialog-after-{en,ja}-{light,dark}.png` | head of the change that adds this file | ready, native copy/post buttons |
-| `state-hover-en-light.png` | same as `dialog-after-*` | Copy video hovered |
-| `state-working-en-light.png` | same | generating: spinner, post disabled |
-| `state-copied-en-light.png` | same | “Video copied” beside the video card |
-| `state-copy-failed-en-light.png` | same | “Couldn’t copy. Try again.” beside the image card |
-| `state-composer-failed-en-light.png` | same | composer could not open |
-| `state-failed-en-light.png` | same | generation failed, native “Try Again” |
-| `state-failed-ja-dark.png` | same | generation failed, Japanese, dark |
+| `dialog-after-{en,ja}-{light,dark}.png` | `fc0da2394387e89332f8b3a61f104a07c976079b` | ready, native copy/post buttons with hashtag-only composer |
+| `state-hover-en-light.png` | same source | Copy video hovered |
+| `state-working-en-light.png` | same source | generating: spinner, post disabled |
+| `state-copied-en-light.png` | same source | “Video copied” beside the video card |
+| `state-copy-failed-en-light.png` | same source | “Couldn’t copy. Try again.” beside the image card |
+| `state-composer-failed-en-light.png` | same source | composer could not open |
+| `state-failed-en-light.png` | same source | generation failed, native “Try Again” |
+| `state-failed-ja-dark.png` | same source | generation failed, Japanese, dark |
 
 Regenerate the after/state set after any share-dialog change:
 
