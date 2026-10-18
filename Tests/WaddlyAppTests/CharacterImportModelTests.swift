@@ -260,25 +260,27 @@ import WaddlyCore
 
 @MainActor
 private final class SheetLoadGate {
-    private let started: AsyncStream<Void>
-    private let signal: AsyncStream<Void>.Continuation
+    private var didStart = false
     private var continuation: CheckedContinuation<CharacterSheetLoadOutcome, Never>?
     private let outcome: CharacterSheetLoadOutcome
 
     init(outcome: CharacterSheetLoadOutcome) {
         self.outcome = outcome
-        let (started, signal) = AsyncStream<Void>.makeStream()
-        self.started = started
-        self.signal = signal
     }
 
     func load() async -> CharacterSheetLoadOutcome {
-        signal.yield(())
+        didStart = true
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        await waitForSignal(started)
+        for _ in 0 ..< 500 {
+            if didStart {
+                return true
+            }
+            await Task.yield()
+        }
+        return didStart
     }
 
     func release() {
@@ -293,23 +295,22 @@ private final class SheetLoadGate {
 
 @MainActor
 private final class CharacterCommitOutcomeGate {
-    private let started: AsyncStream<Void>
-    private let signal: AsyncStream<Void>.Continuation
+    private var didStart = false
     private var continuation: CheckedContinuation<CharacterCommitOutcome, Never>?
 
-    init() {
-        let (started, signal) = AsyncStream<Void>.makeStream()
-        self.started = started
-        self.signal = signal
-    }
-
     func commit() async -> CharacterCommitOutcome {
-        signal.yield(())
+        didStart = true
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        await waitForSignal(started)
+        for _ in 0 ..< 500 {
+            if didStart {
+                return true
+            }
+            await Task.yield()
+        }
+        return didStart
     }
 
     func release(_ outcome: CharacterCommitOutcome) {
@@ -324,25 +325,27 @@ private final class CharacterCommitOutcomeGate {
 
 @MainActor
 private final class FrameDecodeGate {
-    private let started: AsyncStream<Void>
-    private let signal: AsyncStream<Void>.Continuation
+    private var didStart = false
     private var continuation: CheckedContinuation<[NSImage], Never>?
     private let images: [NSImage]
 
     init(images: [NSImage]) {
         self.images = images
-        let (started, signal) = AsyncStream<Void>.makeStream()
-        self.started = started
-        self.signal = signal
     }
 
     func decode() async -> [NSImage] {
-        signal.yield(())
+        didStart = true
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        await waitForSignal(started)
+        for _ in 0 ..< 500 {
+            if didStart {
+                return true
+            }
+            await Task.yield()
+        }
+        return didStart
     }
 
     func release() {
@@ -352,23 +355,6 @@ private final class FrameDecodeGate {
         }
         self.continuation = nil
         continuation.resume(returning: images)
-    }
-}
-
-@MainActor
-private func waitForSignal(_ started: AsyncStream<Void>) async -> Bool {
-    await withTaskGroup(of: Bool.self) { group in
-        group.addTask {
-            var iterator = started.makeAsyncIterator()
-            return await iterator.next() != nil
-        }
-        group.addTask {
-            try? await Task.sleep(for: .seconds(2))
-            return false
-        }
-        let result = await group.next() ?? false
-        group.cancelAll()
-        return result
     }
 }
 
