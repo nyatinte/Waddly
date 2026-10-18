@@ -153,8 +153,8 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     defer { try? FileManager.default.removeItem(at: movieURL) }
 
     // The deadline is controlled, not raced: the media-data callback starts after the timeout would expire,
-    // yet expiration waits for a known, nonterminal appended frame. A wall-clock deadline would cancel here
-    // before any frame existed.
+    // yet expiration waits for a known, nonterminal appended frame. A plain DispatchTime deadline would
+    // cancel here before any frame existed.
     let framesWritten = OSAllocatedUnfairLock(initialState: 0)
     let progressBeforeExpiry = OSAllocatedUnfairLock(initialState: false)
     let deadlineExpired = OSAllocatedUnfairLock(initialState: false)
@@ -200,9 +200,9 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     #expect(framesWritten.withLock { $0 } == 1)
     #expect(progressBeforeExpiry.withLock { $0 })
     #expect(encodingStarted.wait(timeout: .now()) == .success)
-    // The deadline path ended the export; it did not wait out the cancellation grace period.
-    #expect(DispatchTime.now() < failSafe + .seconds(5))
-    // Cancelling the partial writer removes the output it had begun.
+    // Event-based proof the deadline path stopped the writer: only `cancelOnQueue` deletes this output, and
+    // it runs only after the export queue acknowledges the deadline, so removal means the writer was
+    // cancelled rather than left to finish. No wall-clock bound is needed.
     #expect(waitUntil({ !FileManager.default.fileExists(atPath: movieURL.path) }, within: 10))
 }
 

@@ -43,7 +43,7 @@ struct MovieWriterHooks: Sendable {
     /// continues.
     var afterFrameAppended: @Sendable (Int) -> Bool = { _ in true }
 
-    /// Reports whether the export deadline has passed. Production compares the wall clock; tests replace
+    /// Reports whether the export deadline has passed. Production compares a monotonic `DispatchTime`; tests
     /// it so expiration can only happen after a known, nonterminal frame has been appended.
     var hasExpired: @Sendable (DispatchTime) -> Bool = { DispatchTime.now() >= $0 }
 
