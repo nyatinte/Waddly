@@ -34,6 +34,15 @@ struct MovieWriterHooks: Sendable {
     var finalizeWriter: @Sendable (AVAssetWriter, @escaping @Sendable () -> Void) -> Void = { writer, completion in
         writer.finishWriting(completionHandler: completion)
     }
+
+    /// Runs on the serial export queue after each appended frame, with the number of frames written so
+    /// far. Returning `false` stops the loop before the writer can complete. Tests block here to hold an
+    /// export deadline inside a real, partial encode; production always continues.
+    var afterFrameAppended: @Sendable (Int) -> Bool = { _ in true }
+
+    /// Runs on the waiting caller's thread once the deadline or cancellation ends the wait, just before
+    /// the export queue is asked to stop the writer. Tests use it to release a blocked `afterFrameAppended`.
+    var willStopWriter: @Sendable () -> Void = {}
 }
 
 /// Owns one export's writer and the progress the waiting caller reads.
@@ -154,6 +163,10 @@ struct MovieWriterContext: Sendable {
                 return
             }
             state.advanceFrame()
+            guard hooks.afterFrameAppended(state.frameIndex) else {
+                state.input.markAsFinished()
+                return
+            }
         }
         guard state.frameIndex == movieFrameCount else { return }
         state.finishEncoding()
@@ -169,6 +182,7 @@ struct MovieWriterContext: Sendable {
         let deadline = DispatchTime.now() + timeout
         while finished.wait(timeout: .now() + cancellationPollInterval) == .timedOut {
             guard cancellation.isCancelled || DispatchTime.now() >= deadline else { continue }
+            hooks.willStopWriter()
             queue.async(execute: cancelOnQueue)
             // Wait for the queue to stop the writer before the caller removes any partial output.
             _ = finished.wait(timeout: .now() + cancellationGracePeriod)

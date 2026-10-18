@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import CryptoKit
 import ImageIO
+import os
 import Testing
 import UniformTypeIdentifiers
 @testable import WaddlyCore
@@ -151,10 +152,37 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
 
+    // Hold the export queue after the first appended frame, so the deadline always lands inside a real
+    // partial encode instead of racing `finishWriting`. `willStopWriter` releases the hold once the
+    // deadline has ended the wait.
+    let framesWritten = OSAllocatedUnfairLock(initialState: 0)
+    let encodingStarted = DispatchSemaphore(value: 0)
+    let releaseEncode = DispatchSemaphore(value: 0)
+    let start = DispatchTime.now()
+
     #expect(throws: PetShareExportError.timedOut) {
-        try exportMovie(from: images, to: movieURL, timeout: .milliseconds(0))
+        try exportMovie(
+            from: images,
+            to: movieURL,
+            timeout: .milliseconds(200),
+            hooks: MovieWriterHooks(
+                afterFrameAppended: { frameCount in
+                    framesWritten.withLock { $0 = frameCount }
+                    encodingStarted.signal()
+                    _ = releaseEncode.wait(timeout: .now() + 5)
+                    return false
+                },
+                willStopWriter: { releaseEncode.signal() }
+            )
+        )
     }
 
+    // The deadline stopped the export with one frame written: progress is nonzero and not terminal.
+    #expect(framesWritten.withLock { $0 } == 1)
+    #expect(encodingStarted.wait(timeout: .now()) == .success)
+    // The timer path, not the writer, ended the export: it does not wait out the cancellation grace period.
+    #expect(DispatchTime.now() < start + .seconds(5))
+    // Cancelling the partial writer removes the output it had begun.
     #expect(waitUntil({ !FileManager.default.fileExists(atPath: movieURL.path) }, within: 10))
 }
 
