@@ -46,6 +46,7 @@ import WaddlyCore
         #expect(wizard.currentStep == .pet)
         #expect(wizard.isComposingCharacter)
         #expect(state.commitCharacterCount == 1)
+        #expect(gate.commitCount == 1)
 
         gate.resume(with: .failed)
         await first.value
@@ -53,6 +54,7 @@ import WaddlyCore
         #expect(wizard.isComposingCharacter)
         #expect(wizard.characterImportModel.commitFailed)
         #expect(state.commitCharacterCount == 1)
+        #expect(gate.commitCount == 1)
     }
 
     /// A failed persistence keeps the staged draft and the step: no advance, no committed pet, and the

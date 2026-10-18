@@ -100,7 +100,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             localization: localization,
             titleKey: .characterChangeTitle,
             primaryKey: .characterApply,
-            onPrimary: { [weak self] in self?.applyAndClose() },
+            onPrimary: { [weak self] in _ = self?.applyAndClose() },
             onCancel: { [weak self] in self?.cancel() },
             pickFile: { [weak self] in self?.pickFile() },
             pasteboard: .general
@@ -130,7 +130,8 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         return panel.url
     }
 
-    func applyAndClose() {
+    @discardableResult
+    func applyAndClose() -> Task<Void, Never> {
         Task { [weak self] in
             guard let self else { return }
             guard await model.apply() else { return }

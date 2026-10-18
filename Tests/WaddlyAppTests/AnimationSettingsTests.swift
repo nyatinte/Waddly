@@ -66,22 +66,16 @@ import WaddlyCore
         gatedController.focus()
         let window = try #require(gatedController.window)
         await gatedModel.stageFiles(at: [fixture.exampleURL])
-        gatedController.applyAndClose()
+        let firstApply = gatedController.applyAndClose()
         #expect(await gate.waitUntilEntered())
         #expect(!gatedController.windowShouldClose(window))
-        gatedController.applyAndClose()
-        for _ in 0 ..< 20 {
-            await Task.yield()
-        }
+        let duplicateApply = gatedController.applyAndClose()
+        await duplicateApply.value
         #expect(window.isVisible)
         #expect(gatedModel.isApplying)
+        #expect(gate.commitCount == 1)
         gate.resume(with: .failed)
-        for _ in 0 ..< 500 {
-            if !gatedModel.isApplying {
-                break
-            }
-            await Task.yield()
-        }
+        await firstApply.value
         #expect(gatedModel.commitFailed)
         #expect(window.isVisible)
         #expect(gatedModel.canApply)
@@ -135,10 +129,6 @@ import WaddlyCore
 
         controller.close()
         #expect(app.characterImportWindowController == nil)
-        app.showChangeCharacter()
-        let reopened = try #require(app.characterImportWindowController)
-        #expect(reopened.model.stagedFrames == nil)
-        #expect(!reopened.model.isDirty)
         app.importedImages = nil
         await app.loadSavedPetImage()
         #expect(app.petImages.isComplete)
@@ -146,6 +136,12 @@ import WaddlyCore
         for category in PetImageCategory.allCases {
             #expect(app.petImages[category].count == (manifest[category.rawValue]?.count ?? 0))
         }
+
+        app.showChangeCharacter()
+        let reopened = try #require(app.characterImportWindowController)
+        #expect(reopened.model.stagedFrames == nil)
+        #expect(!reopened.model.isDirty)
+        #expect(CharacterImportModel.sameFrames(reopened.model.committedBaseline, app.petImages))
     }
 }
 

@@ -48,7 +48,7 @@ final class CharacterImportModel: ObservableObject {
 
     private let currentImages: () -> PetImageSet
     private let commit: (PetImageSet) async -> CharacterCommitOutcome
-    private var committedBaseline: PetImageSet
+    private(set) var committedBaseline: PetImageSet
     private var generation = 0
 
     init(

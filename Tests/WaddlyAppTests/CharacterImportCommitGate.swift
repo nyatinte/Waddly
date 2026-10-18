@@ -3,17 +3,21 @@ import Testing
 
 @MainActor
 final class CharacterImportCommitGate {
-    private(set) var isEntered = false
+    private(set) var commitCount = 0
     private var outcomeContinuation: CheckedContinuation<CharacterCommitOutcome, Never>?
 
     func commit() async -> CharacterCommitOutcome {
-        isEntered = true
+        commitCount += 1
+        guard commitCount == 1, outcomeContinuation == nil else {
+            Issue.record("commit gate entered more than once")
+            return .failed
+        }
         return await withCheckedContinuation { outcomeContinuation = $0 }
     }
 
     func waitUntilEntered() async -> Bool {
         for _ in 0 ..< 500 {
-            if isEntered {
+            if commitCount > 0 {
                 return true
             }
             await Task.yield()
@@ -22,7 +26,11 @@ final class CharacterImportCommitGate {
     }
 
     func resume(with outcome: CharacterCommitOutcome) {
-        outcomeContinuation?.resume(returning: outcome)
-        outcomeContinuation = nil
+        guard let outcomeContinuation else {
+            Issue.record("commit gate resumed without a suspended commit")
+            return
+        }
+        self.outcomeContinuation = nil
+        outcomeContinuation.resume(returning: outcome)
     }
 }
