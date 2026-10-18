@@ -210,6 +210,13 @@ private func textFenceBody(in markdown: String) -> String? {
     #expect(!monitor.isRunning)
 }
 
+/// Pausing stops the event tap, so a key observed before the pause must not keep the step confirmed.
+@Test func aStoppedTapCannotConfirmAReaction() {
+    #expect(!AppDelegate.reactionIsConfirmed(tapRunning: false, observedKeyEvent: true))
+    #expect(!AppDelegate.reactionIsConfirmed(tapRunning: true, observedKeyEvent: false))
+    #expect(AppDelegate.reactionIsConfirmed(tapRunning: true, observedKeyEvent: true))
+}
+
 @Test func movingAnElementPreservesTheRequestedOrder() {
     let elements = ["first", "second", "third"]
 
