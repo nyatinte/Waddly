@@ -36,6 +36,12 @@ struct MovieWriterHooks: Sendable {
         writer.finishWriting(completionHandler: completion)
     }
 
+    /// Starts the writer, which is what creates the output file. Tests inject a starter that fails after
+    /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+    var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+        guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    }
+
     /// Runs on the serial export queue after each appended frame, with the number of frames written so
     /// far. Returning `false` stops the loop before the writer can complete; the export is then ended by
     /// the caller's deadline or cancellation path, which is the only path that signals `finished`.
@@ -44,7 +50,7 @@ struct MovieWriterHooks: Sendable {
     var afterFrameAppended: @Sendable (Int) -> Bool = { _ in true }
 
     /// Reports whether the export deadline has passed. Production compares a monotonic `DispatchTime`; tests
-    /// it so expiration can only happen after a known, nonterminal frame has been appended.
+    /// replace it so expiration can only happen after a known, nonterminal frame has been appended.
     var hasExpired: @Sendable (DispatchTime) -> Bool = { DispatchTime.now() >= $0 }
 
     /// Runs on the waiting caller's thread once the deadline or cancellation ends the wait, just before
