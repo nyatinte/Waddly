@@ -46,6 +46,49 @@ import Testing
         #expect(service.isReady)
     }
 
+    /// A live tap is not proof by itself: macOS can deliver a running tap while no key ever reaches
+    /// the app, so the reaction has to be observed before setup can call itself ready.
+    @Test func aLiveTapWithoutADeliveredKeyIsAwaitingReaction() {
+        let fake = Fake()
+        fake.granted = true
+        fake.receivingKeys = true
+        fake.observedReaction = false
+        let service = fake.makeService()
+
+        #expect(service.isGranted)
+        #expect(service.readiness == .awaitingReaction)
+        #expect(!service.isReady)
+
+        fake.observedReaction = true
+        #expect(service.readiness == .reactionObserved)
+        #expect(service.isReady)
+    }
+
+    @Test func readinessSeparatesMissingPermissionFromAnUnavailableTap() {
+        let denied = Fake()
+        #expect(denied.makeService().readiness == .permissionMissing)
+
+        let unavailable = Fake()
+        unavailable.granted = true
+        unavailable.receivingKeys = false
+        #expect(unavailable.makeService().readiness == .tapUnavailable)
+    }
+
+    /// "Set up later" is an explicit escape, not a confirmation: the reaction stays unproven.
+    @Test func deferringDoesNotConfirmReactions() {
+        let fake = Fake()
+        fake.granted = true
+        fake.receivingKeys = true
+        fake.observedReaction = false
+        let service = fake.makeService()
+
+        service.deferSetup()
+
+        #expect(service.phase == .deferred)
+        #expect(service.readiness == .awaitingReaction)
+        #expect(!service.isReady)
+    }
+
     @Test func aTickWhileWaitingFollowsTheSettingsWindow() {
         let fake = Fake()
         let service = fake.makeService()
@@ -184,6 +227,8 @@ import Testing
     private final class Fake {
         var granted = false
         var receivingKeys = true
+        /// A delivered key. `false` with a live tap models "running but nothing has arrived yet".
+        var observedReaction = true
         var settingsOpened = 0
         var tapRestarts = 0
 
@@ -191,6 +236,7 @@ import Testing
             PermissionService(
                 hasPermission: { self.granted },
                 isReceivingKeys: { self.receivingKeys },
+                hasObservedReaction: { self.observedReaction },
                 requestAccess: { self.granted },
                 restartTap: { self.tapRestarts += 1 },
                 openSettings: { self.settingsOpened += 1 },

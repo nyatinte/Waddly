@@ -152,10 +152,57 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
 
+    // The deadline is controlled, not raced: the media-data callback starts after the timeout would expire,
+    // yet expiration waits for a known, nonterminal appended frame. A plain DispatchTime deadline would
+    // cancel here before any frame existed.
+    let framesWritten = OSAllocatedUnfairLock(initialState: 0)
+    let progressBeforeExpiry = OSAllocatedUnfairLock(initialState: false)
+    let deadlineExpired = OSAllocatedUnfairLock(initialState: false)
+    let encodingStarted = DispatchSemaphore(value: 0)
+    let releaseEncode = DispatchSemaphore(value: 0)
+    let failSafe = DispatchTime.now()
+
     #expect(throws: PetShareExportError.timedOut) {
-        try exportMovie(from: images, to: movieURL, timeout: .milliseconds(0))
+        try exportMovie(
+            from: images,
+            to: movieURL,
+            timeout: .milliseconds(100),
+            hooks: MovieWriterHooks(
+                scheduleMediaData: { input, queue, block in
+                    queue.asyncAfter(deadline: .now() + .milliseconds(300)) {
+                        input.requestMediaDataWhenReady(on: queue, using: block)
+                    }
+                },
+                afterFrameAppended: { frameCount in
+                    framesWritten.withLock { $0 = frameCount }
+                    encodingStarted.signal()
+                    // Progress is known and nonterminal; only now may the deadline expire.
+                    deadlineExpired.withLock { $0 = true }
+                    _ = releaseEncode.wait(timeout: .now() + 5)
+                    return false
+                },
+                hasExpired: { _ in
+                    if deadlineExpired.withLock({ $0 }) {
+                        return true
+                    }
+                    // Bounded fail-safe: a starved encoder fails the test instead of hanging it.
+                    return DispatchTime.now() > failSafe + .seconds(20)
+                },
+                willStopWriter: {
+                    progressBeforeExpiry.withLock { $0 = framesWritten.withLock { $0 } >= 1 }
+                    releaseEncode.signal()
+                }
+            )
+        )
     }
 
+    // The callback started after the timeout, yet expiration waited for the first appended frame.
+    #expect(framesWritten.withLock { $0 } == 1)
+    #expect(progressBeforeExpiry.withLock { $0 })
+    #expect(encodingStarted.wait(timeout: .now()) == .success)
+    // Event-based proof the deadline path stopped the writer: only `cancelOnQueue` deletes this output, and
+    // it runs only after the export queue acknowledges the deadline, so removal means the writer was
+    // cancelled rather than left to finish. No wall-clock bound is needed.
     #expect(waitUntil({ !FileManager.default.fileExists(atPath: movieURL.path) }, within: 10))
 }
 
@@ -201,13 +248,14 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
             to: movieURL,
             timeout: .seconds(30),
             cancellation: cancellation,
-            hooks: MovieWriterHooks(didAppendFrame: { frameCount in
-                guard frameCount == 3 else { return }
+            hooks: MovieWriterHooks(afterFrameAppended: { frameCount in
+                guard frameCount == 3 else { return true }
                 cancelledAtFrame.withLock { $0 = frameCount }
                 partialMovieWasOnDisk.withLock {
                     $0 = FileManager.default.fileExists(atPath: movieURL.path)
                 }
                 cancellation.cancel()
+                return true
             })
         )
     }
@@ -272,6 +320,34 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
 
     let duration = try await AVURLAsset(url: movieURL).load(.duration)
     #expect(abs(CMTimeGetSeconds(duration) - 5) < 0.1)
+}
+
+@Test func aSetupFailureBeforeTheQueueOwnsTheWriterRemovesThePartialMovie() throws {
+    let images = try fixtureImages()
+    let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    let partialMovieWasWritten = OSAllocatedUnfairLock(initialState: false)
+
+    #expect(throws: PetShareExportError.writerUnavailable) {
+        // `startWriting` is what creates the output file, and it fails here before `appendMovieFrames`
+        // creates the queue that owns the writer. The export still owns the file at that point, so it must
+        // delete it rather than leave it to the caller, which only deletes the sprite it wrote itself.
+        try PetShareExporter.writeMovie(
+            from: images,
+            to: movieURL,
+            timeout: .seconds(30),
+            cancellation: PetShareExportCancellation(),
+            hooks: MovieWriterHooks(startWriting: { writer in
+                try Data("partial".utf8).write(to: writer.outputURL)
+                let partialMovieIsOnDisk = FileManager.default.fileExists(atPath: writer.outputURL.path)
+                partialMovieWasWritten.withLock { $0 = partialMovieIsOnDisk }
+                throw PetShareExportError.writerUnavailable
+            })
+        )
+    }
+
+    #expect(partialMovieWasWritten.withLock { $0 })
+    #expect(!FileManager.default.fileExists(atPath: movieURL.path))
 }
 
 @Test func moviePixelBufferConstructionFailsWhenThePoolIsUnavailable() throws {

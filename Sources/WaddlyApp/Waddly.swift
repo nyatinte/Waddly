@@ -68,6 +68,11 @@ final class KeyboardMonitor {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
+    /// Ephemeral proof that a real key-down reached the app since this tap started. It is the only
+    /// thing setup reads to confirm reactions, and it keeps no key code, text, or time. A new tap
+    /// clears it, so a stale confirmation cannot outlive the tap it belonged to.
+    private(set) var hasObservedKeyEvent = false
+
     var permissionGranted: Bool {
         CGPreflightListenEventAccess()
     }
@@ -119,6 +124,8 @@ final class KeyboardMonitor {
 
         self.tap = tap
         runLoopSource = source
+        // A fresh tap has not delivered anything yet.
+        hasObservedKeyEvent = false
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         guard isRunning else {
@@ -152,6 +159,9 @@ final class KeyboardMonitor {
         // bridge synchronous so stop() cannot race an outstanding actor hop.
         MainActor.assumeIsolated {
             if type == .keyDown {
+                // Set before the callback so a key that confirms setup is never dropped, and only
+                // the fact of delivery is kept.
+                monitor.hasObservedKeyEvent = true
                 monitor.onKeyDown?(isEnter)
             } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                 if let tap = monitor.tap {
@@ -170,21 +180,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     let presenter: WindowPresenter
     let localization: LocalizationController
     let monitor = KeyboardMonitor()
-    var pendingImageUpdate: Task<Void, Never>?
-    var isShuttingDown = false
-    var imageLoadFailed = false
-    var imageLoadError: Error?
-    var importedImages: PetImageSet?
-    var imageThumbnails: [ObjectIdentifier: NSImage] = [:]
+    /// The single writer for image state. Its injected closures keep preferences, alerts, and panel
+    /// refresh out of the store.
+    lazy var imageStore = PetImageStore(
+        directoryProvider: { [weak self] in self?.petImagesDirectoryURL },
+        legacyFiles: { [weak self] in self?.settings.petImageFiles ?? [:] },
+        writeLegacyFiles: { [weak self] files in self?.settings.petImageFiles = files },
+        imagesDidChange: { [weak self] resetActivity in
+            self?.imageSetDidChange(resetActivity: resetActivity)
+        }
+    )
+
     var petImages: PetImageSet {
-        importedImages ?? PetImageSet()
+        imageStore.images
     }
 
     var hasCompletePetImageSet: Bool {
-        petImages.isComplete
+        imageStore.hasCompleteImageSet
     }
 
-    var storedImageFiles: [String: [String]] = [:]
+    /// Forwarded read views of the store's state, kept so UI code and probes do not reach through
+    /// the store for every field.
+    var importedImages: PetImageSet? {
+        get { imageStore.importedImages }
+        set { imageStore.importedImages = newValue }
+    }
+
+    var imageThumbnails: [ObjectIdentifier: NSImage] {
+        imageStore.thumbnails
+    }
+
+    var storedImageFiles: [String: [String]] {
+        imageStore.files
+    }
+
+    var imageLoadFailed: Bool {
+        imageStore.loadFailed
+    }
+
+    var imageLoadError: Error? {
+        imageStore.loadError
+    }
+
+    var isShuttingDown: Bool {
+        imageStore.isShuttingDown
+    }
+
     lazy var panel = PetWindow(
         contentRect: NSRect(x: 0, y: 0, width: displaySize, height: displaySize),
         styleMask: [.borderless, .nonactivatingPanel],
@@ -266,7 +307,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString(.petDropTooltip)
-        monitor.onKeyDown = { [weak self] isEnter in self?.animationController.handleKeyDown(isEnter: isEnter) }
+        monitor.onKeyDown = { [weak self] isEnter in
+            guard let self else { return }
+            animationController.handleKeyDown(isEnter: isEnter)
+            // A delivered key is what actually confirms reactions; let an open guide repaint once.
+            setupWizardController?.monitoringDidObserveReaction()
+        }
         Task {
             _ = await queueImageUpdate {
                 await self.loadSavedPetImage()
@@ -329,7 +375,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        isShuttingDown = true
+        imageStore.beginShutdown()
         animationController.shutdown()
         monitor.stop()
         shareWindowController?.close()

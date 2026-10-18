@@ -36,8 +36,26 @@ struct MovieWriterHooks: Sendable {
         writer.finishWriting(completionHandler: completion)
     }
 
-    /// Reports the number of frames encoded so far. Tests cancel after a known, nonterminal frame count.
-    var didAppendFrame: @Sendable (Int) -> Void = { _ in }
+    /// Starts the writer, which is what creates the output file. Tests inject a starter that fails after
+    /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+    var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+        guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    }
+
+    /// Runs on the serial export queue after each appended frame, with the number of frames written so
+    /// far. Returning `false` stops the loop before the writer can complete; the export is then ended by
+    /// the caller's deadline or cancellation path, which is the only path that signals `finished`.
+    /// Tests block here to hold an export deadline inside a real, partial encode; production always
+    /// continues.
+    var afterFrameAppended: @Sendable (Int) -> Bool = { _ in true }
+
+    /// Reports whether the export deadline has passed. Production compares a monotonic `DispatchTime`; tests
+    /// replace it so expiration can only happen after a known, nonterminal frame has been appended.
+    var hasExpired: @Sendable (DispatchTime) -> Bool = { DispatchTime.now() >= $0 }
+
+    /// Runs on the waiting caller's thread once the deadline or cancellation ends the wait, just before
+    /// the export queue is asked to stop the writer. Tests use it to release a blocked `afterFrameAppended`.
+    var willStopWriter: @Sendable () -> Void = {}
 }
 
 /// Owns one export's writer and the progress the waiting caller reads.
@@ -119,6 +137,15 @@ final class MovieWriterState: @unchecked Sendable {
             return true
         }
     }
+
+    /// Removes the output of a writer that stopped without completing once the terminal transition is
+    /// already claimed. A writer still in `.writing` stays owned by `cancelOnQueue`, and a `.completed`
+    /// output is preserved.
+    func removeUnfinishedOutput() {
+        let status = writer.status
+        guard status != .writing, status != .completed else { return }
+        try? FileManager.default.removeItem(at: writer.outputURL)
+    }
 }
 
 /// Drives one export from the serial queue that owns its writer.
@@ -161,7 +188,10 @@ struct MovieWriterContext: Sendable {
                 return
             }
             state.advanceFrame()
-            hooks.didAppendFrame(state.frameIndex)
+            guard hooks.afterFrameAppended(state.frameIndex) else {
+                state.input.markAsFinished()
+                return
+            }
         }
         guard state.frameIndex == movieFrameCount else { return }
         state.finishEncoding()
@@ -176,12 +206,18 @@ struct MovieWriterContext: Sendable {
     func waitForWriter(cancellation: PetShareExportCancellation, timeout: DispatchTimeInterval) throws {
         let deadline = DispatchTime.now() + timeout
         while finished.wait(timeout: .now() + cancellationPollInterval) == .timedOut {
-            guard cancellation.isCancelled || DispatchTime.now() >= deadline else { continue }
+            guard cancellation.isCancelled || hooks.hasExpired(deadline) else { continue }
+            hooks.willStopWriter()
             queue.async(execute: cancelOnQueue)
             // Give the queue a bounded chance to stop the writer and delete its output before this export
-            // reports failure. A wedged encoder can outlast that wait, and the caller still returns: the
-            // output is deleted only by `cancelOnQueue`, so nothing touches it while the writer is active.
+            // reports failure. A wedged encoder can outlast that wait, and the caller still returns: a
+            // writer still in `.writing` stays owned by `cancelOnQueue`; the caller never deletes an active
+            // writer's file.
             _ = finished.wait(timeout: .now() + cancellationGracePeriod)
+            // The finalizer's completion can win the terminal transition during this grace wait, which
+            // leaves `cancelOnQueue` unable to delete an unsuccessful output. The writer is no longer
+            // active here, so remove a failed terminal output before reporting the stop.
+            state.removeUnfinishedOutput()
             throw cancellation.isCancelled ? PetShareExportError.cancelled : PetShareExportError.timedOut
         }
     }

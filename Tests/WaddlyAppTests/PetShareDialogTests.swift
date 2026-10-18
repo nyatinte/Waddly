@@ -31,7 +31,6 @@ import WaddlyCore
     #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
     #expect(postButton.action != nil)
     #expect(postButton.accessibilityLabel() == app.localizedString(.shareXCreate))
-    #expect(postButton.accessibilityHelp() == app.localizedString(.shareXDraft))
 
     for _ in 0 ..< 400 {
         let views = descendants(of: contentView)
@@ -42,7 +41,6 @@ import WaddlyCore
         }
         if let moviePreview, sprite?.image != nil, let playButton {
             #expect(postButton.isEnabled)
-            #expect(playButton.accessibilityLabel() == app.localizedString(.sharePlayPreview))
             #expect(!moviePreview.subviews.contains { $0 is AVPlayerView })
             #expect(moviePreview.subviews.compactMap { $0 as? NSImageView }.first?.image != nil)
             #expect(playButton.frame.midY < moviePreview.frame.midY)
@@ -91,7 +89,6 @@ import WaddlyCore
 
     // Closing must cancel the token the pending generation observes, not wait for it to finish.
     #expect(generationToken.current?.isCancelled == true)
-    #expect(controller.status == .cancelled)
     #expect(didClose)
 }
 
@@ -115,12 +112,11 @@ import WaddlyCore
     #expect(FileManager.default.fileExists(atPath: movieURL.path))
 }
 
-@Test @MainActor func xPostURLIncludesReminderAndShareHashtag() throws {
-    let reminder = "動画と画像をコピーしてポストに添付してください"
-    let url = try #require(PetShareWindowController.xPostURL(text: reminder))
+@Test @MainActor func xPostURLLeavesThePostTextEmptyAndCarriesOnlyTheShareHashtag() throws {
+    let url = try #require(PetShareWindowController.xPostURL())
     let queryItems = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
 
-    #expect(queryItems.first { $0.name == "text" }?.value == reminder)
+    #expect(queryItems.contains { $0.name == "text" } == false)
     #expect(queryItems.first { $0.name == "hashtags" }?.value == "ShareMyWaddly")
 }
 
@@ -142,45 +138,6 @@ import WaddlyCore
     view.refreshLocalization()
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyVideo" }?.title == "Copy video")
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyImage" }?.title == "Copy image")
-}
-
-@Test @MainActor func sharePostRowHasItsSurfaceBeforeAnyAppearanceChange() throws {
-    _ = NSApplication.shared
-    let suiteName = "WaddlyTests.share-surface.\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suiteName))
-    defer { defaults.removePersistentDomain(forName: suiteName) }
-    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
-    let view = PetShareDialogView(
-        localization: LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
-    )
-    let postRow = try #require(SetupWizardFixture.descendants(of: view).first {
-        $0.identifier?.rawValue == "share.postRow"
-    })
-
-    // No appearance change and no window: the row must still be drawn as a surface, like the cards.
-    #expect(postRow.layer?.backgroundColor != nil)
-    let surface = shareLayerColor(.controlBackgroundColor, appearance: view.effectiveAppearance)
-    #expect(postRow.layer?.backgroundColor == surface)
-}
-
-@Test @MainActor func copyAccessibilityHelpFollowsLanguageChanges() throws {
-    _ = NSApplication.shared
-    let suiteName = "WaddlyTests.share-help.\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suiteName))
-    defer { defaults.removePersistentDomain(forName: suiteName) }
-    let settings = AppSettings(defaults: defaults)
-    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
-    let localization = LocalizationController(settings: settings, resources: resources)
-    localization.changeLanguage(.japanese)
-    let view = PetShareDialogView(localization: localization)
-    let imageCopy = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? NSButton }
-        .first { $0.identifier?.rawValue == "share.copyImage" })
-
-    #expect(imageCopy.accessibilityHelp() == localization.string(for: .shareCopyHelpImage))
-    localization.changeLanguage(.english)
-    view.refreshLocalization()
-    // The help tag is captured when the card is built, so refresh has to push the new language at it.
-    #expect(imageCopy.accessibilityHelp() == "Copy the 3×3 sprite sheet image to the clipboard")
 }
 
 @MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {

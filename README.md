@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. Waddly does not force it above a fullscreen app, and it pulls the pet back into view when a display is disconnected or changed.
-- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames at your imported frame size) on your Mac. Each card previews the exact file and states its format; “Copy video” and “Copy image” copy to the clipboard and report the result next to the card. “Post on X” opens a composer prefilled with “Copy the video and image, then attach them to your post.” and the `#ShareMyWaddly` hashtag, and says so inline if it cannot open. A failed generation offers “Try Again”, closing the window cancels generation, and the dialog shows hover, press, keyboard focus, and disabled states while following macOS light and dark appearance. See [the share flow notes](docs/SHARE.md) for what each action really does and what is not supported.
+- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames at the imported frame size) locally. Each card previews its exported file and format; “Copy video” copies a file-backed movie so paste targets can attach it, and “Copy image” copies the sprite sheet. Both actions report success or failure inline. “Post on X” opens the composer with only `#ShareMyWaddly`; write your own post and attach the copied file yourself. A failed generation offers “Try Again”. The dialog follows macOS light and dark appearance and closing it cancels generation. Waddly has no share save-to-file action. See [the share flow notes](docs/SHARE.md) for behavior and QA limits.
 
 ## Use your own pet
 
@@ -92,7 +92,7 @@ An AI-generated sheet can drift slightly in pitch, shifting the character's vert
 
 Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. Animation Settings… adds several PNGs per animation.
 
-Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Use **Setup Guide…** for Input Monitoring help and **Animation Settings…** to edit its images. The status menu offers the same controls. In the Setup Guide, an unreadable sheet is reported inline at the top of the current step; a ChatGPT opening failure is reported next to its action. Closing the guide, navigating or starting another import discards obsolete pending error feedback. Drop-target borders follow appearance changes without losing an active drag highlight. The [setup state and QA matrix](docs/setup-wizard-qa.md) lists what the automated suites verify and what still needs a manual pass.
+Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Use **Setup Guide…** for Input Monitoring help and **Animation Settings…** to edit its images. The status menu offers the same controls. In the Setup Guide, an unreadable sheet is reported inline at the top of the current step; a ChatGPT opening failure is reported next to its action. Closing the guide, navigating or starting another import discards obsolete pending error feedback. Drop-target borders follow appearance changes without losing an active drag highlight. If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**. The Keyboard reactions step reports success only after a real key press has reached Waddly while its event tap is running; granting permission alone is shown as needing a restart, and a live tap with no key yet is shown as waiting for a key press, not as ready. Pausing stops the tap, so the guide waits for a new key after you resume. The [first-run journey map and QA tasks](docs/setup-first-run-journey.md) document the flow and the manual checks; the [setup state and QA matrix](docs/setup-wizard-qa.md) lists the automated coverage.
 
 Images are stored on your Mac as individual PNG frames. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
 
@@ -100,7 +100,7 @@ Waddly keeps a small manifest next to the frames that lists the saved images, an
 
 ## Privacy
 
-Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. “Post on X” only opens a post composer (prefilled with “Copy the video and image, then attach them to your post.” and `#ShareMyWaddly`); attach the asset and post it yourself. Share assets are clipboard- and composer-sized copies only: Waddly has no save-to-file share action.
+Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (carrying `#ShareMyWaddly` and no post text); attach the asset and post it yourself.
 
 ## Measured memory
 
@@ -108,7 +108,7 @@ The app targets a physical memory footprint below 100 MB in typical use. One sha
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. `mise run test` rejects Swift Testing runs that exit without reporting completion; `mise run test:guard` checks this guard without launching the app tests. For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).
 
 ## License
 

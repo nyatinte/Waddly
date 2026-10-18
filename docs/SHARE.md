@@ -8,8 +8,8 @@ what the dialog can actually do, which states it can be in, and what has not bee
 
 | Asset | Format | Details | Where it goes |
 | --- | --- | --- | --- |
-| Video | MP4 (H.264) | 384 × 384, 12 fps, 60 frames, 5 s | Clipboard as `public.mpeg-4` |
-| Image | PNG | 3 × 3 cells, nine canonical frames, transparent background; each cell matches the imported frame size, so the exported pixels follow the sheet you supplied (the bundled example is 768 × 768) | Clipboard as `public.png` |
+| Video | MP4 (H.264) | 384 × 384, 12 fps, 60 frames, 5 s | File-backed clipboard item (`public.mpeg-4` plus `public.file-url`); backing copy lives in the app's cache `Pasteboard` folder and is replaced on a later copy |
+| Image | PNG | 3 × 3 cells, nine canonical frames, transparent background; each cell matches the imported frame size, so exported pixel dimensions follow the supplied sheet | Clipboard as `public.png` |
 
 - Both files are generated on the device with AVFoundation and Core Graphics when the dialog opens. Waddly never
   uploads them.
@@ -17,9 +17,12 @@ what the dialog can actually do, which states it can be in, and what has not bee
   it does not have.
 - Preview is the exported content: the video card plays the generated MP4 in place (poster frame is the idle
   frame), and the image card shows the generated PNG. Neither preview can be out of date with what is copied.
-- The post row opens `https://twitter.com/intent/tweet` with the localized reminder and the `#ShareMyWaddly`
-  hashtag. It opens a composer only: Waddly does not attach the files and does not post. If the system cannot open
-  the URL, the dialog says so inline instead of looking successful.
+- The post row opens `https://twitter.com/intent/tweet` with only the `#ShareMyWaddly` hashtag. It opens a
+  composer only: Waddly does not prefill reminder text, attach the files, or post. The localized accessibility help
+  explains that the user writes their own text and attaches the copied file. If the system cannot open the URL, the
+  dialog says so inline instead of looking successful.
+- The clipboard's movie file remains available after the share dialog's temporary export assets are removed. The
+  app writes a stable filename in its cache-owned `Pasteboard` directory; a subsequent copy replaces that file.
 - Closing the window cancels generation: the export stops the writer on the queue that owns it and deletes the movie
   it was writing, then the dialog removes the sprite. If an encoder wedges so that cancellation cannot be acknowledged
   within the export's grace period, the movie is left to the export rather than deleted from underneath a live writer.
@@ -50,8 +53,8 @@ start two exports. Retrying is only possible from the failed state.
   plays after the user presses play. Reduce Motion has not been checked against that spinner and is listed under the
   gaps below.
 - Accessible names describe the operation: “Copy the 5-second video to the clipboard”, “Copy the 3 × 3 sprite
-  sheet image to the clipboard”, “Post on X” (with help text that the composer is prefilled and attachments are
-  manual), and “Play the exported video” / “Pause the exported video”.
+  sheet image to the clipboard”, “Post on X” (with help text that only the hashtag is prefilled and attachments
+  are manual), and “Play the exported video” / “Pause the exported video”.
 - Status changes are posted as accessibility announcements next to the card they belong to; success is only shown
   after the pasteboard write or the URL open actually succeeded.
 
@@ -68,7 +71,7 @@ Regenerate the after/state images with:
 WADDLY_CAPTURE_SHARE=1 ./macos/test.sh --filter ShareSnapshotTests
 ```
 
-The `dialog-before-*` files were rendered from `b0e69e7` (the commit this change starts from) with the same
+The existing `dialog-before-*` files were rendered from `b0e69e7` with the same
 offscreen rendering approach; `dialog-after-*` and `state-*` were rendered from this change.
 
 | Before, English | Before, Japanese |

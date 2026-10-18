@@ -46,7 +46,14 @@ struct PetShareEffects: Sendable {
     }
 
     var copyImage: @MainActor @Sendable (Data) -> Bool = { PetShareClipboard.copyPNG($0) }
-    var copyMovie: @MainActor @Sendable (Data) -> Bool = { PetShareClipboard.copyMovie($0) }
+    var publishMovie: @MainActor @Sendable (Data, String) -> URL? = { data, name in
+        PetShareClipboard.publishForPasteboard(data, named: name)
+    }
+
+    var copyMovie: @MainActor @Sendable (Data, URL) -> Bool = { data, url in
+        PetShareClipboard.copyMovie(data, fileURL: url)
+    }
+
     var openURL: @MainActor @Sendable (URL) -> Bool = { NSWorkspace.shared.open($0) }
 }
 
@@ -203,7 +210,11 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         guard let assets else { return }
         let url = asset == .video ? assets.movieURL : assets.spriteURL
         let copied = (try? Data(contentsOf: url, options: .mappedIfSafe)).map { data in
-            asset == .video ? effects.copyMovie(data) : effects.copyImage(data)
+            if asset == .video {
+                guard let published = effects.publishMovie(data, "WaddlyShare.mp4") else { return false }
+                return effects.copyMovie(data, published)
+            }
+            return effects.copyImage(data)
         } ?? false
         copyOutcome[asset] = copied
         shareView.showCopyResult(copyText(for: asset, copied: copied), failed: !copied, for: asset)
@@ -214,9 +225,9 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         return localization.string(for: asset == .video ? .shareCopiedVideo : .shareCopiedImage)
     }
 
-    /// Opens the X post composer. Waddly never posts: the composer is prefilled with the attach reminder.
+    /// Opens the X post composer with a hashtag only; the user's post text remains theirs.
     private func openX() {
-        guard let url = Self.xPostURL(text: localization.string(for: .shareXDraft)),
+        guard let url = Self.xPostURL(),
               effects.openURL(url)
         else {
             composerOpenFailed = true
@@ -227,10 +238,9 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         shareView.showXOpenFailure(nil)
     }
 
-    static func xPostURL(text: String) -> URL? {
+    static func xPostURL() -> URL? {
         var components = URLComponents(string: "https://twitter.com/intent/tweet")
         components?.queryItems = [
-            URLQueryItem(name: "text", value: text),
             URLQueryItem(name: "hashtags", value: "ShareMyWaddly")
         ]
         return components?.url

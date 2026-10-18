@@ -19,7 +19,7 @@
 "share.pausePreview" = "Pause the exported video";
 "share.post" = "Post";
 "share.xCreate" = "Post on X";
-"share.xDraft" = "Copy the video and image, then attach them to your post.";
+"share.xHelp" = "Opens the X composer with the #ShareMyWaddly hashtag. Add your own text and attach the copied file yourself.";
 "share.openXFailed" = "Couldn’t open X. Copy the video and attach it yourself.";
 "share.loading" = "Preparing share assets…";
 "share.error" = "Could not create the share assets.";
@@ -90,6 +90,8 @@
 "setup.methodChoosePNG" = "Choose a PNG file";
 "setup.methodChoosePNGDetail" = "Use a sprite sheet you already have.";
 "setup.dropHint" = "You can also drag and drop a transparent PNG onto this window.";
+"setup.trySample" = "Try the sample pet first";
+"setup.sampleActive" = "The sample pet is in use. Choose Change image to use your own.";
 "setup.chatGPTPromptTitle" = "Create an image with ChatGPT";
 "setup.chatGPTPromptBody" = "Create a nine-cell sprite sheet from a photo of your pet.";
 "setup.chatGPTStep1" = "Copy the prompt";
@@ -119,9 +121,13 @@
 "setup.later" = "Set up later";
 "setup.monitoringGrantedTitle" = "Input Monitoring is set up";
 "setup.monitoringGrantedBody" = "Your pet is ready to react when you type.";
+"setup.monitoringWaitingTitle" = "Confirm keyboard reactions";
+"setup.monitoringWaitingBody" = "Input Monitoring is allowed. Press any key and watch the pet react; if nothing happens, resume or restart Waddly. Nothing is recorded.";
+"setup.monitoringStatusWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.tryTyping" = "Press a key to check that it works.";
 "setup.notWorking" = "If it does not work";
 "setup.previewMonitoringOff" = "Keyboard reactions: off";
+"setup.previewMonitoringWaiting" = "Press a key to see it react";
 "setup.helperAlternative" = "Add it another way";
 "setup.manualTitle" = "Add it manually";
 "setup.manualStep1" = "Open Input Monitoring in System Settings.";
@@ -136,6 +142,8 @@
 "setup.checkMonitoring" = "Input Monitoring set up";
 "setup.checkMonitoringOff" = "Input Monitoring: not set";
 "setup.completeWarning" = "Your pet will not react to typing until Input Monitoring is enabled.";
+"setup.completeWarningWaiting" = "Press a key in the Setup Guide to confirm your pet reacts.";
+"setup.confirmTyping" = "Confirm typing";
 "setup.showOnDesktop" = "Show on desktop";
 "setup.setUpMonitoring" = "Set up Input Monitoring";
 "setup.completeHint" = "Right-click the pet to change its position or size.";
@@ -156,6 +164,7 @@
 "setup.restartNow" = "Restart Waddly";
 "setup.retryWithoutRestart" = "Try again without restarting";
 "setup.checkMonitoringRestart" = "Input Monitoring: restart required";
+"setup.checkMonitoringWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.troubleshootingTitle" = "If reactions still do not work";
 "setup.troubleshootingBody" = "Restart Waddly, then try typing again.";
 "setup.imageDetails" = "%1$d × %1$d px · cell %2$d × %2$d px";

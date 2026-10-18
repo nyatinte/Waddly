@@ -121,7 +121,7 @@ private func writeStub(_ url: URL) throws {
             copiedImages.withLock { $0.append(data) }
             return true
         },
-        copyMovie: { _ in false }
+        copyMovie: { _, _ in false }
     ))
     defer { fixture.cleanUp() }
     fixture.controller.prepareAssets()
@@ -137,6 +137,41 @@ private func writeStub(_ url: URL) throws {
     try fixture.button("share.copyVideo").performClick(nil)
     #expect(videoStatus.stringValue == fixture.localization.string(for: .shareCopyFailed))
     #expect(imageStatus.stringValue == fixture.localization.string(for: .shareCopiedImage))
+}
+
+@Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("WaddlyTests.share-paste.\(UUID().uuidString)", isDirectory: true)
+    let publishedURL = OSAllocatedUnfairLock<URL?>(initialState: nil)
+    let copiedURL = OSAllocatedUnfairLock<URL?>(initialState: nil)
+    let fixture = try ShareFixture.make(effects: PetShareEffects(
+        writeMovie: { _, url, _ in try writeStub(url) },
+        publishMovie: { data, name in
+            let url = directory.appendingPathComponent(name)
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                try data.write(to: url)
+                publishedURL.withLock { $0 = url }
+                return url
+            } catch {
+                return nil
+            }
+        },
+        copyMovie: { _, url in
+            copiedURL.withLock { $0 = url }
+            return true
+        }
+    ))
+    fixture.controller.prepareAssets()
+    #expect(await waitFor { fixture.controller.status == .ready })
+
+    try fixture.button("share.copyVideo").performClick(nil)
+    let outputURL = try #require(publishedURL.withLock { $0 })
+    #expect(outputURL.lastPathComponent == "WaddlyShare.mp4")
+    #expect(copiedURL.withLock { $0 } == outputURL)
+    fixture.cleanUp()
+    #expect(FileManager.default.fileExists(atPath: outputURL.path))
+    try FileManager.default.removeItem(at: directory)
 }
 
 @Test @MainActor func aComposerThatCannotOpenIsReportedInline() async throws {

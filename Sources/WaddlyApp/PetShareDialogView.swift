@@ -216,7 +216,7 @@ final class PetShareDialogView: NSView {
         imageCard.copyButton.setAccessibilityLabel(localization.string(for: .shareCopyHelpImage))
         imageCard.copyButton.setAccessibilityHelp(localization.string(for: .shareCopyHelpImage))
         postButton.setAccessibilityLabel(localization.string(for: .shareXCreate))
-        postButton.setAccessibilityHelp(localization.string(for: .shareXDraft))
+        postButton.setAccessibilityHelp(localization.string(for: .shareXHelp))
         moviePreview.setAccessibilityLabels(
             play: localization.string(for: .sharePlayPreview),
             pause: localization.string(for: .sharePausePreview)
