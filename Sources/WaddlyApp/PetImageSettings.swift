@@ -3,91 +3,34 @@ import SwiftUI
 import WaddlyCore
 
 extension AppDelegate {
-    /// Restore the last committed frame set, treating the on-disk manifest as authoritative.
+    /// Restore the last committed frame set through the store.
     ///
-    /// When the manifest is missing, the legacy `UserDefaults` mirror is committed to disk before
-    /// the reconciling sweep so the frames it still names are protected. A manifest that cannot be
-    /// read leaves the app read-only: edits and deletion stay blocked until images are imported
-    /// again. Reconciliation runs off the main actor, serialized by the image queue, and only when
-    /// the manifest fully materialized and the mirror still agrees with it; disagreement can mean
-    /// another build wrote frames after this manifest, so those frames stay until a deliberate save.
+    /// The store treats the on-disk manifest as authoritative and keeps edits blocked when it
+    /// cannot be read or decoded; the alert stays here.
     func loadSavedPetImage() async {
-        guard let directory = petImagesDirectoryURL else { return }
-        let storage = PetImageStorage(directory: directory)
-        let legacyFiles = settings.petImageFiles
         do {
-            let restored = try await Task.detached(priority: .userInitiated) {
-                try autoreleasepool { () -> RestoredPetImages in
-                    let manifest = try committedOrMigratedManifest(storage, legacy: legacyFiles)
-                    let loaded = try storage.load(manifest)
-                    return RestoredPetImages(
-                        manifest: manifest,
-                        images: loaded.0,
-                        files: loaded.1,
-                        thumbnails: PetSpriteSheetImporter.thumbnails(for: loaded.0)
-                    )
-                }
-            }.value
-            guard !isShuttingDown else { return }
-            storedImageFiles = restored.manifest
-            let referencedNames = Set(restored.manifest.values.flatMap(\.self))
-            let decodedNames = Set(restored.files.values.flatMap(\.self))
-            imageLoadFailed = referencedNames != decodedNames
-            imageLoadError = nil
-            if !restored.manifest.isEmpty {
-                importedImages = restored.images
-                imageThumbnails = restored.thumbnails
-            }
-            // Sweep only when the decoded set is complete and the mirror agrees with the manifest.
-            // Disagreement means another build updated the mirror after this manifest, so the mixed
-            // state is uncertain and unknown frames must survive until a deliberate save.
-            if !imageLoadFailed, legacyFiles == restored.manifest {
-                await reconcileSavedPetImages(storage)
-            }
+            try await imageStore.restore()
         } catch {
-            imageLoadFailed = true
-            imageLoadError = error
-            storedImageFiles = legacyFiles
             await showImageSaveError(error)
         }
-    }
-
-    /// Sweep files the committed manifest no longer references. Best effort: a failure retries on
-    /// the next launch without blocking the images that are already displayed.
-    private func reconcileSavedPetImages(_ storage: PetImageStorage) async {
-        await Task.detached(priority: .utility) {
-            _ = try? storage.reconcileFiles()
-        }.value
     }
 
     func importPetImage(from url: URL) async -> Bool {
-        await queueImageUpdate { await self.importPetImageInOrder(from: url) }
-    }
-
-    private func importPetImageInOrder(from url: URL) async -> Bool {
-        let prepared = await Task.detached(priority: .userInitiated) {
-            autoreleasepool { () -> (PetImageSet, NSImage)? in
-                guard let data = PetSpriteSheetImporter.readPNG(from: url),
-                      let images = PetSpriteSheetImporter.frames(from: data),
-                      let preview = PetSpriteSheetImporter.preview(from: data) else { return nil }
-                return (images, preview)
-            }
-        }.value
-        guard !isShuttingDown else { return false }
-        guard let (newImages, preview) = prepared else {
+        let outcome = await imageStore.importPetImage(from: url) { [weak self] preview, cellSize in
+            await self?.confirmPetImageImport(preview, cellSize: cellSize) ?? false
+        }
+        switch outcome {
+        case .imported:
+            return true
+        case .invalid:
             await showPetImageImportError()
             return false
-        }
-        guard await confirmPetImageImport(preview, cellSize: Int(newImages[.idle][0].size.width)) else { return false }
-        do {
-            try await persistPetImages(newImages, resetActivity: true)
-        } catch {
+        case let .failed(error):
             await showImageSaveError(error)
             return false
+        case .cancelled, .aborted:
+            return false
         }
-        imageLoadFailed = false
-        imageLoadError = nil
-        return true
     }
 
     /// Reads a sheet without writing. The wizard calls `confirmPetImage` immediately on success;
@@ -104,21 +47,17 @@ extension AppDelegate {
         return images
     }
 
-    /// Commits the decoded set; the wizard does not present a separate confirmation step.
+    /// Commits a set the user already reviewed.
     func confirmPetImage(_ images: PetImageSet) async -> Bool {
-        await queueImageUpdate { await self.confirmPetImageInOrder(images) }
-    }
-
-    private func confirmPetImageInOrder(_ images: PetImageSet) async -> Bool {
-        do {
-            try await persistPetImages(images, resetActivity: true)
-        } catch {
+        switch await imageStore.confirmPetImage(images) {
+        case .confirmed:
+            return true
+        case let .failed(error):
             await showImageSaveError(error)
             return false
+        case .aborted:
+            return false
         }
-        imageLoadFailed = false
-        imageLoadError = nil
-        return true
     }
 
     func imageSetDidChange(resetActivity: Bool = false) {
@@ -304,31 +243,4 @@ extension AppDelegate {
         guard picker.runModal() == .OK else { return }
         addImages(picker.urls, to: category)
     }
-}
-
-/// The manifest, decoded images, their frame names, and thumbnails restored from disk in one pass.
-private struct RestoredPetImages {
-    let manifest: [String: [String]]
-    let images: PetImageSet
-    let files: [String: [String]]
-    let thumbnails: [ObjectIdentifier: NSImage]
-}
-
-/// Read the committed manifest, or migrate the legacy defaults to disk when it is missing.
-///
-/// Migration writes the mirror first so the reconciliation that follows can never delete a frame
-/// the legacy state still referenced. With no manifest and no legacy mirror, nothing is committed:
-/// the returned empty manifest only means "show nothing", while the reconciling sweep sees `nil`
-/// and leaves the on-disk frames of uncertain provenance untouched. An explicitly committed empty
-/// manifest is different and stays authoritative.
-private func committedOrMigratedManifest(
-    _ storage: PetImageStorage,
-    legacy: [String: [String]]
-) throws -> [String: [String]] {
-    if let committed = try storage.readManifest() {
-        return committed
-    }
-    guard !legacy.isEmpty else { return [:] }
-    try storage.commitManifest(legacy)
-    return legacy
 }

@@ -11,7 +11,6 @@
       "Sources/WaddlyCore/PetShareMovieWriter.swift:4"
     ],
     "silenced-file-mutation": [
-      "Sources/WaddlyApp/PetImagePersistence.swift:77",
       "Sources/WaddlyApp/PetShareWindowController.swift:27",
       "Sources/WaddlyApp/PetShareWindowController.swift:104",
       "Sources/WaddlyApp/PetShareWindowController.swift:110",
@@ -19,6 +18,7 @@
       "Sources/WaddlyCore/PetImageCore.swift:205",
       "Sources/WaddlyCore/PetImageStorage.swift:173",
       "Sources/WaddlyCore/PetImageStorage.swift:182",
+      "Sources/WaddlyCore/PetImageStore.swift:217",
       "Sources/WaddlyCore/PetShareExporter.swift:66",
       "Sources/WaddlyCore/PetShareExporter.swift:176",
       "Tests/WaddlyAppTests/AppIntegrationFixture.swift:55",
@@ -29,6 +29,8 @@
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:123",
       "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:11",
       "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:12",
+      "Tests/WaddlyCoreTests/PetImageStoreTests.swift:102",
+      "Tests/WaddlyCoreTests/PetImageStoreTests.swift:285",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:12",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:78",
       "Tests/WaddlyCoreTests/PetShareExportTests.swift:125",

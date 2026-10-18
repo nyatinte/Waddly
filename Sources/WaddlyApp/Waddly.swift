@@ -170,21 +170,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     let presenter: WindowPresenter
     let localization: LocalizationController
     let monitor = KeyboardMonitor()
-    var pendingImageUpdate: Task<Void, Never>?
-    var isShuttingDown = false
-    var imageLoadFailed = false
-    var imageLoadError: Error?
-    var importedImages: PetImageSet?
-    var imageThumbnails: [ObjectIdentifier: NSImage] = [:]
+    /// The single writer for image state. Its injected closures keep preferences, alerts, and panel
+    /// refresh out of the store.
+    lazy var imageStore = PetImageStore(
+        directory: petImagesDirectoryURL,
+        legacyFiles: { [weak self] in self?.settings.petImageFiles ?? [:] },
+        writeLegacyFiles: { [weak self] files in self?.settings.petImageFiles = files },
+        imagesDidChange: { [weak self] resetActivity in
+            self?.imageSetDidChange(resetActivity: resetActivity)
+        }
+    )
+
     var petImages: PetImageSet {
-        importedImages ?? PetImageSet()
+        imageStore.images
     }
 
     var hasCompletePetImageSet: Bool {
-        petImages.isComplete
+        imageStore.hasCompleteImageSet
     }
 
-    var storedImageFiles: [String: [String]] = [:]
+    /// Forwarded read views of the store's state, kept so UI code and probes do not reach through
+    /// the store for every field.
+    var importedImages: PetImageSet? {
+        get { imageStore.importedImages }
+        set { imageStore.importedImages = newValue }
+    }
+
+    var imageThumbnails: [ObjectIdentifier: NSImage] {
+        imageStore.thumbnails
+    }
+
+    var storedImageFiles: [String: [String]] {
+        imageStore.files
+    }
+
+    var imageLoadFailed: Bool {
+        imageStore.loadFailed
+    }
+
+    var imageLoadError: Error? {
+        imageStore.loadError
+    }
+
+    var isShuttingDown: Bool {
+        imageStore.isShuttingDown
+    }
+
     lazy var panel = PetWindow(
         contentRect: NSRect(x: 0, y: 0, width: displaySize, height: displaySize),
         styleMask: [.borderless, .nonactivatingPanel],
@@ -329,7 +360,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        isShuttingDown = true
+        imageStore.beginShutdown()
         animationController.shutdown()
         monitor.stop()
         shareWindowController?.close()
