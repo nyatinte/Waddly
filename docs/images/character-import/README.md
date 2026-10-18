@@ -6,9 +6,10 @@ QA, and not proof of keyboard, VoiceOver, contrast, Larger Text, Reduce Motion, 
 behavior. No live interaction occurred: every state was set through the model or the embedded
 AppKit preview pane.
 
-Source head: `83492def9bbf5f7746ed1d2fd408054add974922`
-(`fix(setup): report shared-screen save failures inline`). The renders were generated from the
-working tree built on that head by the opt-in harness below, which is itself part of this change.
+Source head: `023474df4252aa4a03b3a3e25119ba9714e4ddad`
+(`test(import): cover drop routing, stale acquisitions, and the store commit`) — the commit that
+carries every behavior these renders show, including the Phase-3 hardening. The harness and the
+images are committed in the commit that follows it; re-run the command below to reproduce them.
 
 ## How they were produced
 
@@ -32,6 +33,8 @@ Two harness notes, stated so the evidence is not over-read:
   showing.
 - The advanced-editor renders show `CharacterFrameEditor` (the reused `AnimationSettingsView`
   over the staged draft) as an off-screen `NSHostingView`, not the sheet chrome.
+- The harness discards the staged draft before closing the Change Character window, because the
+  shipped window now asks before discarding a dirty close; no dialog is part of any render.
 
 ## Surfaces
 

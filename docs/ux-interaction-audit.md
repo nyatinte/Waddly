@@ -18,7 +18,7 @@ Every claim below is one of two kinds, kept apart throughout:
 | `main` (base of this document) | `f1918a0` | current sources for every surface |
 | [#94](https://github.com/nyatinte/Waddly/issues/94) setup feedback, PR [#118](https://github.com/nyatinte/Waddly/pull/118) | `agent/issue94-setup-feedback` @ `86dfce5` | inline setup failure/browser feedback, one accessibility announcement per error transition, preview backdrop follows appearance, `docs/setup-wizard-qa.md` |
 | [#95](https://github.com/nyatinte/Waddly/issues/95) editor, PR [#116](https://github.com/nyatinte/Waddly/pull/116) | `agent/issue95-swiftui-editor` @ `a38452f` | Animation Settings → SwiftUI; editor model released on close |
-| [#124](https://github.com/nyatinte/Waddly/issues/124) unified character import | `agent/issue124-unified-import` @ `83492de` | shared staged import screen in the Setup Pet step and a new Change Character window; clipboard/DnD/paste; standalone Animation Settings window and menu item retired; committed renders in `docs/images/character-import/` |
+| [#124](https://github.com/nyatinte/Waddly/issues/124) unified character import | `agent/issue124-unified-import` @ `023474d` | shared staged import screen in the Setup Pet step and a new Change Character window; clipboard/DnD/paste; standalone Animation Settings window and menu item retired; committed renders in `docs/images/character-import/` |
 | [#96](https://github.com/nyatinte/Waddly/issues/96)/[#99](https://github.com/nyatinte/Waddly/issues/99) share, PR [#115](https://github.com/nyatinte/Waddly/pull/115) | `agent/issue96-99-export-cancellation` @ `4f6398e` | closing Share cancels the in-flight export and removes partial temp assets |
 
 [#109](https://github.com/nyatinte/Waddly/issues/109) (Share flow) and
