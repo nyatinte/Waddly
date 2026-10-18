@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Testing
 @testable import WaddlyApp
 import WaddlyCore
@@ -73,67 +74,101 @@ import WaddlyCore
 
     /// A reopened window has a fresh counter, so the shortcut looks available again while the
     /// previous window's import is still waiting to be written. The serialized commit must still
-    /// refuse the sample once the user's file has landed.
+    /// refuse the sample once the user's file has landed, and the refusal must repaint the page.
     @Test func aReopenedWizardCannotSampleOverAUserImportStillCommitting() async throws {
         let state = Fixture.State()
         let userImages = try Fixture.sheetImages()
-        let (aStarted, aSignal) = AsyncStream<Void>.makeStream()
-        let (bStarted, bSignal) = AsyncStream<Void>.makeStream()
-        var aGate: CheckedContinuation<Void, Never>?
-        var bGate: CheckedContinuation<Void, Never>?
-        defer { aSignal.finish(); bSignal.finish() }
+        let firstWrite = CommitmentGate()
+        let secondWrite = CommitmentGate()
+        defer { firstWrite.finish(); secondWrite.finish() }
 
-        // Mirrors the app's serialized write: a user file always wins, a sample is refused once stored.
-        let write: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool = { images, source in
-            guard AppDelegate.shouldCommitPetImages(source: source, petIsStored: state.images.isComplete)
-            else { return false }
-            state.images = images
-            return true
-        }
-
-        let first = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            previewResult: userImages,
-            confirm: { images, source in
-                aSignal.yield()
-                await withCheckedContinuation { aGate = $0 }
-                return await write(images, source)
-            }
-        )
+        let first = try gatedWizard(state: state, previewResult: userImages, gate: firstWrite)
         let userImport = first.importImage(from: URL(fileURLWithPath: "/user-pet.png"))
-        var aIterator = aStarted.makeAsyncIterator()
-        _ = await aIterator.next()
+        await firstWrite.waitUntilStarted()
         // The user closes the guide while their import is still waiting to be written.
         first.close()
 
         // The reopened guide starts with an empty counter, so the shortcut looks available.
-        let second = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            confirm: { images, source in
-                bSignal.yield()
-                await withCheckedContinuation { bGate = $0 }
-                return await write(images, source)
-            }
-        )
+        let second = try gatedWizard(state: state, previewResult: nil, gate: secondWrite)
         defer { second.close() }
         #expect(second.canTrySample)
 
+        // A refusal can still change the page, so watch the signal the controller already publishes.
+        var repaints = 0
+        let repaintObserver = second.objectWillChange.sink { _ in repaints += 1 }
+        defer { repaintObserver.cancel() }
+
         let sample = second.trySamplePet()
-        var bIterator = bStarted.makeAsyncIterator()
-        _ = await bIterator.next()
+        await secondWrite.waitUntilStarted()
 
         // The user's file lands first; the sample's queued write then sees the stored pet.
-        aGate?.resume()
+        firstWrite.release()
         await userImport.value
         #expect(state.images[.idle].first === userImages[.idle].first)
 
-        bGate?.resume()
+        let repaintsBeforeRefusal = repaints
+        secondWrite.release()
         await sample.value
         #expect(state.images[.idle].first === userImages[.idle].first)
         #expect(!second.didUseSamplePet)
         #expect(!second.didRegisterPet)
         #expect(second.importedFileName == nil)
+
+        // The refused sample repaints: the shortcut is gone and the stored pet replaced the option
+        // list, so the footer's Next is enabled from a fresh evaluation.
+        #expect(repaints > repaintsBeforeRefusal)
+        #expect(!second.canTrySample)
+        #expect(second.hasImage)
+        #expect(second.previewPane.hasPet)
+    }
+
+    /// A wizard whose commits are held open until `gate.release()`, modelling a queued write.
+    private func gatedWizard(
+        state: Fixture.State,
+        previewResult: PetImageSet?,
+        gate: CommitmentGate
+    ) throws -> SetupWizardController {
+        try Fixture.makeWizard(
+            state: state,
+            demoURL: Fixture.sheetURL(),
+            previewResult: previewResult,
+            confirm: { images, source in await gate.commit(images, source, to: state) }
+        )
+    }
+}
+
+/// One queued pet commit the test can hold open and release, mirroring the app's serial queue.
+@MainActor private final class CommitmentGate {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private let signal: AsyncStream<Void>.Continuation
+    private let started: AsyncStream<Void>
+
+    init() {
+        (started, signal) = AsyncStream<Void>.makeStream()
+    }
+
+    /// Signals that the commit is queued, then waits for `release` before applying the app's rule.
+    func commit(_ images: PetImageSet, _ source: PetImageCommitSource, to state: Fixture.State) async -> Bool {
+        signal.yield()
+        await withCheckedContinuation { continuation = $0 }
+        guard AppDelegate.shouldCommitPetImages(source: source, petIsStored: state.images.isComplete) else {
+            return false
+        }
+        state.images = images
+        return true
+    }
+
+    func waitUntilStarted() async {
+        var iterator = started.makeAsyncIterator()
+        _ = await iterator.next()
+    }
+
+    func release() {
+        continuation?.resume()
+        continuation = nil
+    }
+
+    func finish() {
+        signal.finish()
     }
 }

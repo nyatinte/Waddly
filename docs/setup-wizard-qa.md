@@ -34,8 +34,9 @@ previous set.
 ## Automated verification (verified)
 
 Command: `mise run test` (serialized Swift Testing suites). The wizard suites are
-`SetupWizardTests`, `SetupWizardJourneyTests`, `SetupWizardPreviewTests`, `SetupWizardDropTests`,
-`SetupWizardImportFeedbackTests`, and `PermissionServiceTests`.
+`SetupWizardTests`, `SetupWizardJourneyTests`, `SetupWizardSampleGuardTests`,
+`SetupWizardPreviewTests`, `SetupWizardDropTests`, `SetupWizardImportFeedbackTests`, and
+`PermissionServiceTests`.
 
 | Behavior | Test |
 | --- | --- |

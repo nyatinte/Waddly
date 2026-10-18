@@ -170,14 +170,15 @@ VoiceOver, real keyboard confirmation, and Reduce Motion still need a manual pas
 ## Automated verification
 
 `mise run test` covers the state machine; see the tables in
-[setup-wizard-qa.md](setup-wizard-qa.md). The journey-specific additions live in the
-`SetupWizardJourneyTests` suite: `tryingTheSampleCommitsTheBundledSampleInPlace`,
-`tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`,
-`rapidSampleRequestsCommitOnce`, `sampleIsIgnoredWhileAUserImportIsStillCommitting`,
-`aReopenedWizardCannotSampleOverAUserImportStillCommitting`, `aFailedImportReleasesTheSampleShortcut`,
+[setup-wizard-qa.md](setup-wizard-qa.md). The journey additions live in the `SetupWizardJourneyTests`
+suite: `tryingTheSampleCommitsTheBundledSampleInPlace`, `tryingTheSampleNeverReplacesAnExistingPet`,
+`importingARealSheetClearsTheSampleChoice`, `rapidSampleRequestsCommitOnce`,
 `interruptedPermissionFlowResumesToRestartRequired`,
 `deferringSavesTheReadyStepSoARelaunchCanResume`, `aLiveTapStaysUnconfirmedUntilAKeyArrives`,
-`deferringFromALiveTapKeepsTheCheckWaiting`, and `aReturningUserKeepsAConfirmedReaction`. The
-readiness rules themselves are covered by `PermissionServiceTests`
-(`aLiveTapWithoutADeliveredKeyIsAwaitingReaction`,
+`deferringFromALiveTapKeepsTheCheckWaiting`, and `aReturningUserKeepsAConfirmedReaction`. The sample
+guard tests live in the `SetupWizardSampleGuardTests` suite:
+`sampleIsIgnoredWhileAUserImportIsStillCommitting`,
+`aReopenedWizardCannotSampleOverAUserImportStillCommitting`, and
+`aFailedImportReleasesTheSampleShortcut`. The readiness rules themselves are covered by
+`PermissionServiceTests` (`aLiveTapWithoutADeliveredKeyIsAwaitingReaction`,
 `readinessSeparatesMissingPermissionFromAnUnavailableTap`, `deferringDoesNotConfirmReactions`).

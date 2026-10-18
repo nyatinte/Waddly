@@ -51,7 +51,12 @@ extension SetupWizardController {
             guard let self else { return }
             defer { sampleCommitTask = nil }
             guard canTrySample, let sample = demoImages else { return }
-            guard await onConfirmImage(sample, .sample) else { return }
+            guard await onConfirmImage(sample, .sample) else {
+                // A refusal can still change the page: another window may have committed a pet in the
+                // meantime, so repaint instead of leaving the stale option list behind.
+                renderCurrentStep()
+                return
+            }
             didUseSamplePet = true
             didRegisterPet = true
             importedFileName = nil
