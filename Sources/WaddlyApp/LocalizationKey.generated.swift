@@ -151,7 +151,6 @@ enum LocalizationKey: String, CaseIterable {
     case shareTitle = "share.title"
     case shareVideo = "share.video"
     case shareXCreate = "share.xCreate"
-    case shareXDraft = "share.xDraft"
     case sizeLarge = "size.large"
     case sizeMedium = "size.medium"
     case sizeSmall = "size.small"
