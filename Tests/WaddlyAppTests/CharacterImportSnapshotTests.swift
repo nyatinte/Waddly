@@ -39,7 +39,11 @@ private extension CharacterImportSnapshotTests {
             presenter: .invisible,
             onClose: {}
         )
-        defer { controller.close() }
+        defer {
+            // Closing with a staged draft now asks first; the harness discards instead of prompting.
+            controller.model.discard()
+            controller.close()
+        }
         let content = try #require(controller.window?.contentView)
         let tag = CaptureHarness.suffix(language, dark)
 

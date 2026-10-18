@@ -86,4 +86,48 @@ import WaddlyCore
         wizard.characterImportModel.discard()
         #expect(!wizard.characterImportModel.isDropTargeted)
     }
+
+    /// The window-wide drop stages while composing and keeps the direct import otherwise; the drop
+    /// itself never commits a staged draft, so only Continue can write one.
+    @Test func windowWideDropStagesWhileComposingAndImportsOtherwise() async throws {
+        let url = try Fixture.sheetURL()
+
+        let legacyState = Fixture.State()
+        let legacy = try Fixture.makeWizard(
+            state: legacyState,
+            previewResult: Fixture.sheetImages(),
+            confirmResult: true
+        )
+        defer { legacy.close() }
+        legacy.handleWindowDrop([url])
+        #expect(await waitUntil { legacyState.confirmCount == 1 })
+
+        let composingState = Fixture.State()
+        let composing = try Fixture.makeWizard(state: composingState)
+        defer { composing.close() }
+        composing.beginCharacterImport()
+        composing.handleWindowDrop([url])
+        #expect(await waitUntil { composing.characterImportModel.stagedFrames?.isComplete == true })
+        #expect(composing.characterImportModel.canApply)
+        #expect(composingState.commitCharacterCount == 0)
+        #expect(!composing.hasImage)
+
+        // A multi-file window-wide drop is refused and still writes nothing.
+        composing.handleWindowDrop([url, url])
+        #expect(await waitUntil { composing.characterImportModel.failure == .multipleFiles })
+        #expect(composingState.commitCharacterCount == 0)
+    }
+}
+
+private extension SetupWizardCharacterImportTests {
+    /// Polls a main-actor condition, used where an action starts an unstructured task.
+    func waitUntil(_ condition: @MainActor () -> Bool) async -> Bool {
+        for _ in 0 ..< 300 {
+            if condition() {
+                return true
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        return false
+    }
 }

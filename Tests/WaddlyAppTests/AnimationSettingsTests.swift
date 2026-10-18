@@ -61,6 +61,33 @@ import WaddlyCore
         #expect(await waitForStagedIdle(controller.model, count: stagedIdleBefore + 1))
         #expect(app.petImages[.idle].count == committedIdleBefore)
     }
+
+    /// Apply through the real store: the pet is written to disk, and reopening loads the committed
+    /// pet with no stale draft.
+    @Test func applyingThroughTheStoreWritesThePetAndReopenShowsIt() async throws {
+        let fixture = try AppIntegrationFixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        app.showChangeCharacter()
+        let controller = try #require(app.characterImportWindowController)
+        await controller.model.stageFiles(at: [fixture.exampleURL])
+        let staged = try #require(controller.model.stagedFrames)
+
+        await controller.model.apply()
+
+        #expect(!controller.model.commitFailed)
+        #expect(app.petImages[.idle].first === staged[.idle].first)
+        #expect(try fixture.manifest() != nil)
+        #expect(!controller.model.isDirty)
+
+        controller.close()
+        #expect(app.characterImportWindowController == nil)
+        app.showChangeCharacter()
+        let reopened = try #require(app.characterImportWindowController)
+        #expect(reopened.model.stagedFrames == nil)
+        #expect(!reopened.model.isDirty)
+        #expect(app.petImages[.idle].first === staged[.idle].first)
+    }
 }
 
 private extension AnimationSettingsTests {

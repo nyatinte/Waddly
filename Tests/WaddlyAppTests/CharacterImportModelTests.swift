@@ -90,7 +90,9 @@ import WaddlyCore
         #expect(!model.isDirty)
     }
 
-    @Test func clipboardAvailabilityIsRecheckedWithoutReadingPixels() throws {
+    /// Availability tracks the pasteboard's types: nothing, PNG pixels, and a bitmap-only (TIFF)
+    /// clipboard each classify correctly.
+    @Test func clipboardAvailabilityTracksThePasteboardContents() throws {
         let pasteboard = NSPasteboard(name: NSPasteboard.Name("WaddlyTests.model.\(UUID().uuidString)"))
         pasteboard.clearContents()
         let model = makeModel(current: PetImageSet(), commit: { _ in .committed })
@@ -101,6 +103,11 @@ import WaddlyCore
         try pasteboard.setData(#require(PetSpriteSheetImporter.pngData(for: frame)), forType: .png)
         model.refreshClipboardAvailability(from: pasteboard)
         #expect(model.clipboardHasImage)
+
+        pasteboard.clearContents()
+        try pasteboard.setData(#require(frame.tiffRepresentation), forType: .tiff)
+        model.refreshClipboardAvailability(from: pasteboard)
+        #expect(model.clipboardHasImage)
     }
 
     @Test func aStaleAcquisitionCannotOverwriteNewerState() async throws {
@@ -108,8 +115,17 @@ import WaddlyCore
         let sheetURL = try SetupWizardFixture.sheetURL()
 
         let stalled = Task { await model.stageFiles(at: [sheetURL]) }
-        // Let the acquisition start reading, then invalidate it before it can publish.
-        await Task.yield()
+        // Handshake on the observable reading state instead of a single yield: only once the
+        // acquisition has actually begun can invalidating it be the stale case under test.
+        var beganReading = false
+        for _ in 0 ..< 500 {
+            if model.isReading {
+                beganReading = true
+                break
+            }
+            await Task.yield()
+        }
+        #expect(beganReading)
         model.discard()
         await stalled.value
 
