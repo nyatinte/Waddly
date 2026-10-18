@@ -90,6 +90,19 @@ import WaddlyCore
         #expect(!model.isDirty)
     }
 
+    @Test func clipboardAvailabilityIsRecheckedWithoutReadingPixels() throws {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("WaddlyTests.model.\(UUID().uuidString)"))
+        pasteboard.clearContents()
+        let model = makeModel(current: PetImageSet(), commit: { _ in .committed })
+        model.refreshClipboardAvailability(from: pasteboard)
+        #expect(!model.clipboardHasImage)
+
+        let frame = try #require(SetupWizardFixture.sheetImages()[.idle].first)
+        try pasteboard.setData(#require(PetSpriteSheetImporter.pngData(for: frame)), forType: .png)
+        model.refreshClipboardAvailability(from: pasteboard)
+        #expect(model.clipboardHasImage)
+    }
+
     @Test func aStaleAcquisitionCannotOverwriteNewerState() async throws {
         let model = makeModel(current: PetImageSet(), commit: { _ in .committed })
         let sheetURL = try SetupWizardFixture.sheetURL()

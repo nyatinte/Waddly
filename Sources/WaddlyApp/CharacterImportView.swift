@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
@@ -64,6 +65,10 @@ struct CharacterImportView: View {
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear { model.refreshClipboardAvailability(from: pasteboard) }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refreshClipboardAvailability(from: pasteboard)
+        }
         .sheet(isPresented: $model.isEditingFrames) {
             CharacterFrameEditor(importModel: model, editor: editor, localization: localization)
         }
@@ -91,7 +96,8 @@ private extension CharacterImportView {
                     .accessibilityIdentifier("characterChooseFile")
                 Button(localization.string(for: .characterPaste), action: paste)
                     .keyboardShortcut("v", modifiers: .command)
-                    .help(localization.string(for: .characterPasteHelp))
+                    .help(pasteHint)
+                    .accessibilityLabel("\(localization.string(for: .characterPaste)) — \(pasteHint)")
                     .accessibilityIdentifier("characterPaste")
                 Text(localization.string(for: .characterPasteShortcut))
                     .font(.caption)
@@ -115,6 +121,11 @@ private extension CharacterImportView {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The tooltip/VoiceOver hint: what paste would do right now.
+    var pasteHint: String {
+        localization.string(for: model.clipboardHasImage ? .characterPasteHelp : .characterClipboardEmpty)
     }
 
     var dropZone: some View {

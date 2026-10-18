@@ -39,6 +39,9 @@ final class CharacterImportModel: ObservableObject {
     @Published private(set) var isReading = false
     @Published private(set) var isApplying = false
     @Published var isEditingFrames = false
+    /// Whether the clipboard currently holds something Waddly can import. Checked without reading
+    /// pixels, when the screen appears or the app becomes active; never automatically imported.
+    @Published private(set) var clipboardHasImage = false
     /// Bumped on every draft mutation so the advanced editor rebuilds its thumbnails.
     @Published private(set) var draftVersion = 0
 
@@ -108,6 +111,12 @@ final class CharacterImportModel: ObservableObject {
         apply(outcome, name: nil)
     }
 
+    /// Recheck the pasteboard's shape without reading image pixels, so the Paste affordance can be
+    /// truthful before the user commits to a paste.
+    func refreshClipboardAvailability(from pasteboard: NSPasteboard) {
+        clipboardHasImage = PetClipboardImporter.hasSupportedImage(on: pasteboard)
+    }
+
     private func beginRead() -> Int {
         generation += 1
         isReading = true
@@ -128,6 +137,7 @@ final class CharacterImportModel: ObservableObject {
             draftVersion += 1
         case .empty:
             // Nothing overwrites the staged draft: the reason is reported and the last candidate stays.
+            clipboardHasImage = false
             failure = .noClipboardImage
         case let .invalid(reason):
             failure = .sheet(reason)
