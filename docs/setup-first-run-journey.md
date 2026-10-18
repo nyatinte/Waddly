@@ -136,29 +136,29 @@ Before (`e7a026d`, `origin/main` / v1.3.0) — Pet step, no pet:
 | --- | --- | --- | --- |
 | ![before en light](images/setup-journey/before-e7a026d-en-light.png) | ![before en dark](images/setup-journey/before-e7a026d-en-dark.png) | ![before ja light](images/setup-journey/before-e7a026d-ja-light.png) | ![before ja dark](images/setup-journey/before-e7a026d-ja-dark.png) |
 
-After (`a1169d7`, sample shortcut) — Pet step, no pet:
+After (`5bf0baf`, sample shortcut) — Pet step, no pet:
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![after en light](images/setup-journey/after-a1169d7-en-light.png) | ![after en dark](images/setup-journey/after-a1169d7-en-dark.png) | ![after ja light](images/setup-journey/after-a1169d7-ja-light.png) | ![after ja dark](images/setup-journey/after-a1169d7-ja-dark.png) |
+| ![after en light](images/setup-journey/after-5bf0baf-en-light.png) | ![after en dark](images/setup-journey/after-5bf0baf-en-dark.png) | ![after ja light](images/setup-journey/after-5bf0baf-ja-light.png) | ![after ja dark](images/setup-journey/after-5bf0baf-ja-dark.png) |
 
-After (`a1169d7`) — sample chosen, “sample is active” message:
-
-| English / light | English / dark | Japanese / light | Japanese / dark |
-| --- | --- | --- | --- |
-| ![sample en light](images/setup-journey/after-sample-a1169d7-en-light.png) | ![sample en dark](images/setup-journey/after-sample-a1169d7-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-a1169d7-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-a1169d7-ja-dark.png) |
-
-Keyboard reactions (`a1169d7`) — live tap, no key yet (“waiting for a key press”, Next disabled):
+After (`5bf0baf`) — sample chosen, “sample is active” message:
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![awaiting en light](images/setup-journey/monitoring-awaiting-a1169d7-en-light.png) | ![awaiting en dark](images/setup-journey/monitoring-awaiting-a1169d7-en-dark.png) | ![awaiting ja light](images/setup-journey/monitoring-awaiting-a1169d7-ja-light.png) | ![awaiting ja dark](images/setup-journey/monitoring-awaiting-a1169d7-ja-dark.png) |
+| ![sample en light](images/setup-journey/after-sample-5bf0baf-en-light.png) | ![sample en dark](images/setup-journey/after-sample-5bf0baf-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-5bf0baf-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-5bf0baf-ja-dark.png) |
 
-Keyboard reactions (`a1169d7`) — a key delivered (confirmed, Next enabled):
+Keyboard reactions (`5bf0baf`) — live tap, no key yet (“waiting for a key press”, Next disabled):
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![confirmed en light](images/setup-journey/monitoring-confirmed-a1169d7-en-light.png) | ![confirmed en dark](images/setup-journey/monitoring-confirmed-a1169d7-en-dark.png) | ![confirmed ja light](images/setup-journey/monitoring-confirmed-a1169d7-ja-light.png) | ![confirmed ja dark](images/setup-journey/monitoring-confirmed-a1169d7-ja-dark.png) |
+| ![awaiting en light](images/setup-journey/monitoring-awaiting-5bf0baf-en-light.png) | ![awaiting en dark](images/setup-journey/monitoring-awaiting-5bf0baf-en-dark.png) | ![awaiting ja light](images/setup-journey/monitoring-awaiting-5bf0baf-ja-light.png) | ![awaiting ja dark](images/setup-journey/monitoring-awaiting-5bf0baf-ja-dark.png) |
+
+Keyboard reactions (`5bf0baf`) — a key delivered (confirmed, Next enabled):
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![confirmed en light](images/setup-journey/monitoring-confirmed-5bf0baf-en-light.png) | ![confirmed en dark](images/setup-journey/monitoring-confirmed-5bf0baf-en-dark.png) | ![confirmed ja light](images/setup-journey/monitoring-confirmed-5bf0baf-ja-light.png) | ![confirmed ja dark](images/setup-journey/monitoring-confirmed-5bf0baf-ja-dark.png) |
 
 These renders were made from fixture state, not a live typing session: the awaiting/confirmed states
 were set by pointing the fixture's `hasObservedReaction` at false/true. Inspect them for text and

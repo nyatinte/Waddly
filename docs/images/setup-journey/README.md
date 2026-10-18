@@ -17,29 +17,31 @@ observed-reaction confirmation.
 | `before-e7a026d-en-dark.png` | `e7a026d` | Pet step, no pet; two import options | English | dark |
 | `before-e7a026d-ja-light.png` | `e7a026d` | Pet step, no pet; two import options | Japanese | light |
 | `before-e7a026d-ja-dark.png` | `e7a026d` | Pet step, no pet; two import options | Japanese | dark |
-| `after-a1169d7-en-light.png` | `a1169d7` | Pet step, no pet; sample shortcut added | English | light |
-| `after-a1169d7-en-dark.png` | `a1169d7` | Pet step, no pet; sample shortcut added | English | dark |
-| `after-a1169d7-ja-light.png` | `a1169d7` | Pet step, no pet; sample shortcut added | Japanese | light |
-| `after-a1169d7-ja-dark.png` | `a1169d7` | Pet step, no pet; sample shortcut added | Japanese | dark |
-| `after-sample-a1169d7-en-light.png` | `a1169d7` | Pet step, sample chosen; “sample is active” message | English | light |
-| `after-sample-a1169d7-en-dark.png` | `a1169d7` | Pet step, sample chosen; “sample is active” message | English | dark |
-| `after-sample-a1169d7-ja-light.png` | `a1169d7` | Pet step, sample chosen; “sample is active” message | Japanese | light |
-| `after-sample-a1169d7-ja-dark.png` | `a1169d7` | Pet step, sample chosen; “sample is active” message | Japanese | dark |
-| `monitoring-awaiting-a1169d7-en-light.png` | `a1169d7` | Keyboard reactions, tap live, no key yet; Next disabled | English | light |
-| `monitoring-awaiting-a1169d7-en-dark.png` | `a1169d7` | Keyboard reactions, tap live, no key yet; Next disabled | English | dark |
-| `monitoring-awaiting-a1169d7-ja-light.png` | `a1169d7` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | light |
-| `monitoring-awaiting-a1169d7-ja-dark.png` | `a1169d7` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | dark |
-| `monitoring-confirmed-a1169d7-en-light.png` | `a1169d7` | Keyboard reactions, key delivered; confirmed | English | light |
-| `monitoring-confirmed-a1169d7-en-dark.png` | `a1169d7` | Keyboard reactions, key delivered; confirmed | English | dark |
-| `monitoring-confirmed-a1169d7-ja-light.png` | `a1169d7` | Keyboard reactions, key delivered; confirmed | Japanese | light |
-| `monitoring-confirmed-a1169d7-ja-dark.png` | `a1169d7` | Keyboard reactions, key delivered; confirmed | Japanese | dark |
+| `after-5bf0baf-en-light.png` | `5bf0baf` | Pet step, no pet; sample shortcut added | English | light |
+| `after-5bf0baf-en-dark.png` | `5bf0baf` | Pet step, no pet; sample shortcut added | English | dark |
+| `after-5bf0baf-ja-light.png` | `5bf0baf` | Pet step, no pet; sample shortcut added | Japanese | light |
+| `after-5bf0baf-ja-dark.png` | `5bf0baf` | Pet step, no pet; sample shortcut added | Japanese | dark |
+| `after-sample-5bf0baf-en-light.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | English | light |
+| `after-sample-5bf0baf-en-dark.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | English | dark |
+| `after-sample-5bf0baf-ja-light.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | Japanese | light |
+| `after-sample-5bf0baf-ja-dark.png` | `5bf0baf` | Pet step, sample chosen; “sample is active” message | Japanese | dark |
+| `monitoring-awaiting-5bf0baf-en-light.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | English | light |
+| `monitoring-awaiting-5bf0baf-en-dark.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | English | dark |
+| `monitoring-awaiting-5bf0baf-ja-light.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | light |
+| `monitoring-awaiting-5bf0baf-ja-dark.png` | `5bf0baf` | Keyboard reactions, tap live, no key yet; Next disabled | Japanese | dark |
+| `monitoring-confirmed-5bf0baf-en-light.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | English | light |
+| `monitoring-confirmed-5bf0baf-en-dark.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | English | dark |
+| `monitoring-confirmed-5bf0baf-ja-light.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | Japanese | light |
+| `monitoring-confirmed-5bf0baf-ja-dark.png` | `5bf0baf` | Keyboard reactions, key delivered; confirmed | Japanese | dark |
 
 `before` is `origin/main` `e7a026d` (release v1.3.0); `after` and the other states are rendered at
-`a1169d7`, the source head that adds the sample shortcut and the observed-reaction confirmation. The
-`after-sample` state points the fixture's pet store at the sample frames and marks the page
-sample-active. The two `monitoring-*` renders use a live tap with the fixture's observation flag false
-(awaiting) or true (confirmed); they do not involve a real key event, so they illustrate the state
-labels, not a live typing session. Because the Pet step resting layout is unchanged, the earlier
+`5bf0baf`, the source head that adds the sample shortcut and the observed-reaction confirmation (and
+the pending-import guard those need). The `after-sample` state points the fixture's pet store at the
+sample frames and marks the page sample-active. The two `monitoring-*` renders use a live tap with the
+fixture's observation flag false (awaiting) or true (confirmed); they do not involve a real key event,
+so they illustrate the state labels, not a live typing session. The pending-import guard and the
+paused-observation fix are control-flow only: they change which state is shown, not the layout or copy
+of the five rendered states. Because the Pet step resting layout is unchanged, the earlier
 `before-86dfce5`/`after-2b70ed0` renders from the pre-mainline branch were replaced by these
 mainline-provenanced files.
 
