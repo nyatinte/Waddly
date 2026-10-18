@@ -25,27 +25,24 @@ import WaddlyCore
         $0.identifier?.rawValue == "share.postRow"
     })
     #expect(postRow.frame.height == 52)
-    let identity = try #require(descendants(of: postRow).first {
-        $0.identifier?.rawValue == "share.xIdentity"
-    })
-    #expect(abs(identity.frame.midX - postRow.bounds.midX) <= 1)
-    #expect((identity as? NSStackView)?.spacing == 6)
-    let logo = try #require(descendants(of: identity).first {
-        $0.identifier?.rawValue == "share.xLogo"
-    })
-    #expect(logo.frame.width == 32)
-    #expect(logo.frame.width == logo.frame.height)
-    #expect(logo.frame.midY == identity.bounds.midY)
-    #expect(logo.gestureRecognizers.contains { $0 is NSClickGestureRecognizer })
-    let label = try #require(descendants(of: identity).first { $0 is NSTextField })
-    #expect(label.gestureRecognizers.contains { $0 is NSClickGestureRecognizer })
+    let postButton = try #require(descendants(of: postRow).first {
+        $0.identifier?.rawValue == "share.postButton"
+    } as? NSButton)
+    #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
+    #expect(postButton.action != nil)
+    #expect(postButton.accessibilityLabel() == app.localizedString(.shareXCreate))
+    #expect(postButton.accessibilityHelp() == app.localizedString(.shareXDraft))
 
     for _ in 0 ..< 400 {
         let views = descendants(of: contentView)
         let moviePreview = views.first { $0.identifier?.rawValue == "share.moviePreview" }
         let sprite = views.first { $0.identifier?.rawValue == "share.spritePreview" } as? NSImageView
-        let playButton = views.compactMap { $0 as? NSButton }.first { $0.title == "▶" }
+        let playButton = views.compactMap { $0 as? NSButton }.first {
+            $0.identifier?.rawValue == "share.playButton"
+        }
         if let moviePreview, sprite?.image != nil, let playButton {
+            #expect(postButton.isEnabled)
+            #expect(playButton.accessibilityLabel() == app.localizedString(.sharePlayPreview))
             #expect(!moviePreview.subviews.contains { $0 is AVPlayerView })
             #expect(moviePreview.subviews.compactMap { $0 as? NSImageView }.first?.image != nil)
             #expect(playButton.frame.midY < moviePreview.frame.midY)
@@ -70,17 +67,18 @@ import WaddlyCore
     let images = try SetupWizardFixture.sheetImages()
     let controller = PetShareWindowController(
         images: images,
-        localization: localization
-    ) { _, _, cancellation in
-        generationToken.store(cancellation)
-        generationStarted.store(true)
-        // Stands in for the encoder: it only returns once closing the dialog cancels generation.
-        let deadline = Date().addingTimeInterval(5)
-        while !cancellation.isCancelled, Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.01)
-        }
-        throw PetShareExportError.cancelled
-    }
+        localization: localization,
+        effects: PetShareEffects(writeMovie: { _, _, cancellation in
+            generationToken.store(cancellation)
+            generationStarted.store(true)
+            // Stands in for the encoder: it only returns once closing the dialog cancels generation.
+            let deadline = Date().addingTimeInterval(5)
+            while !cancellation.isCancelled, Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.01)
+            }
+            throw PetShareExportError.cancelled
+        })
+    )
     var didClose = false
     controller.onClose = { didClose = true }
 
@@ -93,6 +91,7 @@ import WaddlyCore
 
     // Closing must cancel the token the pending generation observes, not wait for it to finish.
     #expect(generationToken.current?.isCancelled == true)
+    #expect(controller.status == .cancelled)
     #expect(didClose)
 }
 
@@ -116,12 +115,13 @@ import WaddlyCore
     localization.changeLanguage(.japanese)
     let view = PetShareDialogView(localization: localization)
     let copyButtons = SetupWizardFixture.descendants(of: view).compactMap { $0 as? NSButton }
-        .filter { $0.title == "コピー" }
+        .filter { $0.identifier?.rawValue.hasPrefix("share.copy") == true }
 
     #expect(copyButtons.count == 2)
     localization.changeLanguage(.english)
     view.refreshLocalization()
-    #expect(copyButtons.allSatisfy { $0.title == "Copy" })
+    #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyVideo" }?.title == "Copy video")
+    #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyImage" }?.title == "Copy image")
 }
 
 @MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {
