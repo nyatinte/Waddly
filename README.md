@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. Waddly does not force it above a fullscreen app, and it pulls the pet back into view when a display is disconnected or changed.
-- Right-click the pet and choose “Share Pet” to create a five-second video and a 3×3 sprite sheet. Copy either asset to the clipboard, or click the X logo or “Post on X” to open a composer prefilled with “Copy the video and image, then attach them to your post.” and the `#ShareMyWaddly` hashtag. The share window follows macOS light and dark appearance, and closing it cancels any generation still in progress.
+- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (768 × 768, nine frames) on your Mac. Each card previews the exact file and states its format; “Copy video” and “Copy image” copy to the clipboard and report the result next to the card. “Post on X” opens a composer prefilled with “Copy the video and image, then attach them to your post.” and the `#ShareMyWaddly` hashtag, and says so inline if it cannot open. A failed generation offers “Try Again”, closing the window cancels generation, and the dialog shows hover, press, keyboard focus, and disabled states while following macOS light and dark appearance. See [the share flow notes](docs/SHARE.md) for what each action really does and what is not supported.
 
 ## Use your own pet
 
@@ -100,7 +100,7 @@ Waddly keeps a small manifest next to the frames that lists the saved images, an
 
 ## Privacy
 
-Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (prefilled with “Copy the video and image, then attach them to your post.” and `#ShareMyWaddly`); attach the asset and post it yourself.
+Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. “Post on X” only opens a post composer (prefilled with “Copy the video and image, then attach them to your post.” and `#ShareMyWaddly`); attach the asset and post it yourself. Share assets are clipboard- and composer-sized copies only: Waddly has no save-to-file share action.
 
 ## Measured memory
 
