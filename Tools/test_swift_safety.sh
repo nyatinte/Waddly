@@ -40,6 +40,13 @@ for fixture in \
     "$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/$fixture.swift"
 done
 
+# A parenthesized callee whose member does not mutate files must stay clean, so peeling does not over-match.
+if "$checker" --expect-rule silenced-file-mutation "$package_path/Fixtures/silenced-file-mutation-unrelated-callee.swift" >/dev/null 2>&1; then
+    printf 'Swift safety checker flagged a parenthesized non-mutating callee.\n' >&2
+    exit 1
+fi
+printf 'Fixture accepted as expected: silenced-file-mutation-unrelated-callee\n'
+
 syntax_error_fixture=$(mktemp)
 trap 'rm -f "$syntax_error_fixture"' EXIT
 printf 'let broken = (\n' > "$syntax_error_fixture"
