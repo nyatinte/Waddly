@@ -105,6 +105,89 @@ extension SetupWizardController {
         importImage(from: url)
     }
 
+    // MARK: - Shared character import screen
+
+    /// Opens the shared import screen inside the Pet step. Staging writes nothing; the existing
+    /// Continue/commit path does, so setup progress and the sample rule are untouched.
+    func beginCharacterImport() {
+        clearImportFeedback()
+        isShowingChatGPTGuide = false
+        characterImportModel.reload()
+        isComposingCharacter = true
+        renderCurrentStep()
+    }
+
+    /// The setup shell owns commit: Continue applies the staged draft, then advances the step.
+    func commitCharacterImportAndContinue() {
+        Task { [weak self] in
+            guard let self else { return }
+            await characterImportModel.apply()
+            guard !characterImportModel.commitFailed else {
+                renderCurrentStep()
+                return
+            }
+            importedFileName = characterImportModel.sourceName
+            didRegisterPet = true
+            didUseSamplePet = false
+            isComposingCharacter = false
+            goNext()
+        }
+    }
+
+    /// Leaving the shared screen. A staged-but-uncommitted change asks first; an untouched screen
+    /// returns to the method list immediately.
+    func cancelCharacterImport() {
+        guard characterImportModel.isDirty else {
+            leaveCharacterImport()
+            return
+        }
+        confirmDiscard { [weak self] in self?.leaveCharacterImport() }
+    }
+
+    /// The native picker for the shared screen. Cancelling is not an error and stages nothing.
+    func chooseCharacterFile() -> URL? {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.png]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.prompt = localizedString(.setupChoosePNG)
+        guard panel.runModal() == .OK else { return nil }
+        return panel.url
+    }
+
+    /// Routes the window-wide drop: the shared screen stages, the legacy path imports directly.
+    func handleWindowDrop(_ urls: [URL]) {
+        if isComposingCharacter {
+            Task { [weak self] in await self?.characterImportModel.stageFiles(at: urls) }
+            return
+        }
+        guard let url = urls.first else { return }
+        importImage(from: url)
+    }
+
+    private func leaveCharacterImport() {
+        characterImportModel.discard()
+        isComposingCharacter = false
+        renderCurrentStep()
+    }
+
+    private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
+        guard let window else {
+            discard()
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = localizedString(.characterDiscardTitle)
+        alert.informativeText = localizedString(.characterDiscardMessage)
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: localizedString(.characterDiscardConfirm))
+        alert.addButton(withTitle: localizedString(.characterCancel))
+        presenter.presentAlert(alert, window) { response in
+            guard response == .alertFirstButtonReturn else { return }
+            discard()
+        }
+    }
+
     @objc func copyPromptAndOpenChatGPT() {
         pasteboard.clearContents()
         guard pasteboard.setString(prompt, forType: .string) else {

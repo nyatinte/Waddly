@@ -79,6 +79,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// of staying visible and ignoring clicks.
     @Published var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
+    /// True while the shared character import screen replaces the method list inside the Pet step.
+    @Published var isComposingCharacter = false
 
     init(
         localization: LocalizationController,
@@ -147,6 +149,23 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var canTrySample: Bool {
         !hasImage && demoImages != nil && pendingImportCount == 0
     }
+
+    /// The shared acquisition → inspect → commit state machine, created once and rebased every time
+    /// the import screen opens. Staging writes nothing; the existing Continue/commit path does.
+    lazy var characterImportModel = CharacterImportModel(
+        currentImages: { [weak self] in self?.currentPetImages() ?? PetImageSet() },
+        commit: { [weak self] images in
+            guard let self else { return .rejected }
+            return await onConfirmImage(images, .userFile) ? .committed : .rejected
+        }
+    )
+
+    /// The advanced editor's model, wired to the shared draft. Built once so the sheet reuses one
+    /// source of truth while it is open.
+    lazy var frameEditorModel = CharacterFrameEditor.makeModel(
+        importModel: characterImportModel,
+        localization: localization
+    )
 
     var isMonitoringGranted: Bool {
         permission.isGranted

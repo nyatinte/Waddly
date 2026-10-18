@@ -54,7 +54,7 @@ import WaddlyCore
     let app = makeTestApp(settings: AppSettings(defaults: defaults))
     app.petImagesDirectoryURL = directory
     let frames = try makeImageFrames()
-    let model = try await prepareImageModel(frames, app: app)
+    try await app.persistPetImages(PetImageSet([.idle: frames]))
     let updated = PetImageSet([.idle: Array(frames.dropFirst())])
     let (started, startSignal) = AsyncStream<Void>.makeStream()
     let (release, releaseSignal) = AsyncStream<Void>.makeStream()
@@ -77,36 +77,21 @@ import WaddlyCore
     }
     var iterator = started.makeAsyncIterator()
     _ = await iterator.next()
-    let thumbnails = model.thumbnails(for: .idle).map(\.image)
-    #expect(thumbnails.count == 2)
-    let visibleB = try #require(app.imageThumbnails[ObjectIdentifier(frames[1])])
-    #expect(thumbnails.first === visibleB)
-    let visibleBIndex = try #require(thumbnails.firstIndex { $0 === visibleB })
+    // The commit published its new frames before cleanup suspended, so two frames are committed.
+    #expect(app.petImages[.idle].count == 2)
+    let visibleBIndex = try #require(app.petImages[.idle].firstIndex { $0 === frames[1] })
     let removal = try #require(app.removeImage(at: visibleBIndex, from: .idle))
     releaseSignal.yield()
     #expect(await first.value)
     await removal.value
     #expect(app.petImages[.idle].count == 1)
     #expect(app.petImages[.idle].first === frames[2])
-    #expect(model.thumbnails(for: .idle).first?.image === app.imageThumbnails[ObjectIdentifier(frames[2])])
     let framesOnDisk = try FileManager.default.contentsOfDirectory(atPath: directory.path)
         .filter { $0.hasSuffix(".png") }
     #expect(framesOnDisk.count == 1)
     startSignal.finish()
     releaseSignal.finish()
     app.animationController.shutdown()
-}
-
-@MainActor private func prepareImageModel(
-    _ frames: [NSImage], app: AppDelegate
-) async throws -> AnimationSettingsModel {
-    try await app.persistPetImages(PetImageSet([.idle: frames]))
-    let model = AnimationSettingsModel(
-        thumbnailsByCategory: [.idle: frames.map(AnimationSettingsThumbnail.init)],
-        localization: app.localization
-    )
-    app.animationSettingsModel = model
-    return model
 }
 
 private func makeImageFrames() throws -> [NSImage] {

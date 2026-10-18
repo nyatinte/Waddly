@@ -24,7 +24,7 @@
 "menu.presence" = "Show in";
 "menu.showInDock" = "Dock";
 "menu.showInMenuBar" = "Menu Bar";
-"menu.imageSettings" = "Animation Settings…";
+"menu.changeCharacter" = "Change Character…";
 "menu.setupWizard" = "Setup Guide…";
 "menu.login" = "Launch at Login";
 "menu.quit" = "Quit Waddly";
@@ -165,3 +165,38 @@
 "setup.dragInstead" = "Add it by dragging";
 
 "images.memoryLimit" = "This image set exceeds the 40 MiB image memory budget. Remove images or choose smaller PNGs. Saved images are kept if loading fails.";
+
+"character.window.title" = "Change Character";
+"character.setupTitle" = "Character setup";
+"character.changeTitle" = "Change character";
+"character.subtitle" = "Import a 3×3 PNG sprite sheet to customize your desktop pet.";
+"character.dropInstruction" = "Drag & drop a PNG here";
+"character.dropHint" = "3×3 sprite sheet";
+"character.chooseFile" = "Choose File…";
+"character.paste" = "Paste from Clipboard";
+"character.pasteShortcut" = "⌘V";
+"character.pasteHelp" = "Paste a copied image or PNG file.";
+"character.emptyPreview" = "The imported pet preview appears here.";
+"character.metadataPlaceholder" = "Choose, drop, or paste a 3×3 PNG sprite sheet to see its details.";
+"character.validStatus" = "Ready to apply";
+"character.dimensionsFormat" = "%1$@ · %2$d × %2$d px · cell %3$d × %3$d px";
+"character.clipboardSource" = "Clipboard";
+"character.editFrames" = "Edit frames individually…";
+"character.editFramesDone" = "Done";
+"character.cancel" = "Cancel";
+"character.apply" = "Apply this character";
+"character.reading" = "Reading image…";
+"character.clipboardEmpty" = "No image on the clipboard.";
+"character.commitFailed" = "Could not save the character. Your current pet is unchanged; try again.";
+"character.error.notPNG" = "Choose a PNG file.";
+"character.error.unreadable" = "This file could not be read as a PNG.";
+"character.error.fileTooLarge" = "The PNG is larger than 20 MB.";
+"character.error.notSquare" = "The sprite sheet must be square.";
+"character.error.gridNotDivisible" = "The sprite sheet's side must be divisible by three.";
+"character.error.dimensionTooLarge" = "The sprite sheet must be at most 4096 × 4096 px.";
+"character.error.noTransparency" = "The PNG needs a transparent background.";
+"character.error.frameExtraction" = "Could not split the sheet into nine cells.";
+"character.error.multipleFiles" = "Choose one 3×3 PNG.";
+"character.discardTitle" = "Discard changes?";
+"character.discardMessage" = "The character you staged has not been applied. Discard it and go back?";
+"character.discardConfirm" = "Discard";

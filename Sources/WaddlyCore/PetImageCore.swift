@@ -57,6 +57,35 @@ public struct OptimizedPetImage: Sendable {
     public let wasDownsampled: Bool
 }
 
+/// A validated 3×3 sheet, ready to stage without touching persistent state.
+public struct PetSheetCandidate: Sendable {
+    public let images: PetImageSet
+    /// The source PNG's pixel width (square).
+    public let sourceDimension: Int
+    /// One cell's pixel side after the sheet is bounded to the importer's maximum.
+    public let cellSize: Int
+}
+
+/// Why a sheet could not be imported. Each case maps to one concrete inline message.
+public enum PetSheetValidationFailure: Error, Equatable, Sendable {
+    case notPNG
+    case unreadable
+    case fileTooLarge
+    case notSquare
+    case gridNotDivisible
+    case dimensionTooLarge
+    case noTransparency
+    case frameExtractionFailed
+}
+
+/// The source PNG's pixel geometry, read before any decode so an invalid grid is never resized.
+private struct SheetGeometry {
+    let side: Int
+    let isSquare: Bool
+    let isDivisibleByThree: Bool
+    let isWithinDimensionLimit: Bool
+}
+
 public enum PetSpriteSheetImporter {
     public static let maximumFileSize = 20 * 1024 * 1024
     public static let maximumImageDimension = 1024
@@ -141,40 +170,83 @@ public enum PetSpriteSheetImporter {
     }
 
     public static func frames(from data: Data) -> PetImageSet? {
-        guard data.count <= maximumFileSize,
-              let source = CGImageSourceCreateWithData(
-                  data as CFData,
-                  [kCGImageSourceShouldCache: false] as CFDictionary
-              ),
-              let sourceType = CGImageSourceGetType(source),
-              sourceType as String == UTType.png.identifier,
-              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-              let width = properties[kCGImagePropertyPixelWidth] as? Int,
-              let height = properties[kCGImagePropertyPixelHeight] as? Int,
-              width == height, width % 3 == 0, width <= 4096,
-              let image = image(from: source, maxDimension: maximumImageDimension * 3),
-              hasAlpha(image)
-        else {
-            return nil
+        if case let .success(candidate) = inspect(data) {
+            return candidate.images
         }
+        return nil
+    }
 
-        let cellSize = image.width / 3
-        let pointSize = CGFloat(cellSize)
-        var cells: [NSImage] = []
-        for row in 0 ..< 3 {
-            for column in 0 ..< 3 {
-                guard let cell = spriteFrame(from: image, row: row, column: column, size: pointSize) else {
-                    return nil
-                }
-                cells.append(cell)
-            }
+    /// Decode `data` into the nine cells plus the metadata the import screen reports.
+    ///
+    /// This is the single validation entry point: it keeps the limits `frames(from:)` always
+    /// enforced (20 MB, square, divisible by three, 4096 px) and adds a reason for each failure so
+    /// the caller can explain it instead of showing one generic message.
+    public static func inspect(_ data: Data) -> Result<PetSheetCandidate, PetSheetValidationFailure> {
+        guard data.count <= maximumFileSize else { return .failure(.fileTooLarge) }
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ), let sourceType = CGImageSourceGetType(source) else { return .failure(.unreadable) }
+        guard sourceType as String == UTType.png.identifier else { return .failure(.notPNG) }
+        guard let geometry = sheetGeometry(of: source) else { return .failure(.unreadable) }
+        guard geometry.side > 0, geometry.isSquare else { return .failure(.notSquare) }
+        guard geometry.isDivisibleByThree else { return .failure(.gridNotDivisible) }
+        guard geometry.isWithinDimensionLimit else { return .failure(.dimensionTooLarge) }
+        return cells(from: source, sourceDimension: geometry.side)
+    }
+
+    /// The source pixel dimensions, read before any decode so an invalid grid is never resized.
+    private static func sheetGeometry(of source: CGImageSource) -> SheetGeometry? {
+        guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
+        return SheetGeometry(
+            side: width,
+            isSquare: width == height,
+            isDivisibleByThree: width % 3 == 0,
+            isWithinDimensionLimit: width <= 4096
+        )
+    }
+
+    private static func cells(
+        from source: CGImageSource,
+        sourceDimension: Int
+    ) -> Result<PetSheetCandidate, PetSheetValidationFailure> {
+        guard let image = image(from: source, maxDimension: maximumImageDimension * 3) else {
+            return .failure(.unreadable)
         }
-        return PetImageSet([
-            .idle: [cells[0], cells[1]],
-            .typing: [cells[2], cells[3], cells[4], cells[5]],
-            .sleep: [cells[7], cells[8]],
-            .enter: [cells[6]]
-        ])
+        guard hasAlpha(image) else { return .failure(.noTransparency) }
+        let cellSize = image.width / 3
+        guard let nineCells = nineCells(from: image, cellSize: cellSize) else {
+            return .failure(.frameExtractionFailed)
+        }
+        return .success(
+            PetSheetCandidate(
+                images: PetImageSet([
+                    .idle: [nineCells[0], nineCells[1]],
+                    .typing: [nineCells[2], nineCells[3], nineCells[4], nineCells[5]],
+                    .sleep: [nineCells[7], nineCells[8]],
+                    .enter: [nineCells[6]]
+                ]),
+                sourceDimension: sourceDimension,
+                cellSize: cellSize
+            )
+        )
+    }
+
+    /// Split the sheet row by row into its nine cells, or `nil` if any cell cannot be cropped.
+    private static func nineCells(from image: CGImage, cellSize: Int) -> [NSImage]? {
+        let pointSize = CGFloat(cellSize)
+        let positions = (0 ..< 3).flatMap { row in (0 ..< 3).map { column in (row, column) } }
+        var cells: [NSImage] = []
+        for (row, column) in positions {
+            guard let cell = spriteFrame(from: image, row: row, column: column, size: pointSize) else {
+                return nil
+            }
+            cells.append(cell)
+        }
+        return cells
     }
 
     private static func spriteFrame(from image: CGImage, row: Int, column: Int, size: CGFloat) -> NSImage? {

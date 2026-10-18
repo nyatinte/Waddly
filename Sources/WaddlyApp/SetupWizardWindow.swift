@@ -6,14 +6,12 @@ extension SetupWizardController {
         let contentView = PetImageDropView()
         contentView.idleBorderWidth = 0
         contentView.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
+            self?.handleWindowDrop(urls)
         }
 
         previewPane.configure(localization: localization, showsControls: true)
         previewPane.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
+            self?.handleWindowDrop(urls)
         }
 
         let hostingView = NSHostingView(rootView: SetupWizardScreen(controller: self))

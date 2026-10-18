@@ -24,7 +24,7 @@
 "menu.presence" = "表示先";
 "menu.showInDock" = "Dockに表示";
 "menu.showInMenuBar" = "メニューバーに表示";
-"menu.imageSettings" = "アニメーション設定…";
+"menu.changeCharacter" = "キャラクターを変更…";
 "menu.setupWizard" = "セットアップガイド…";
 "menu.login" = "ログイン時に起動";
 "menu.quit" = "Waddlyを終了";
@@ -165,3 +165,38 @@
 "setup.dragInstead" = "ドラッグで追加する";
 
 "images.memoryLimit" = "画像セットが40 MiBの画像メモリ上限を超えています。画像を減らすか、小さいPNGを選んでください。読み込みに失敗しても保存済み画像は保持されます。";
+
+"character.window.title" = "キャラクターの変更";
+"character.setupTitle" = "キャラクターの設定";
+"character.changeTitle" = "キャラクターを変更";
+"character.subtitle" = "3×3のPNGスプライトシートを取り込んで、デスクトップペットをカスタマイズします。";
+"character.dropInstruction" = "ここにPNGをドラッグ＆ドロップ";
+"character.dropHint" = "3×3のスプライトシート";
+"character.chooseFile" = "ファイルを選択…";
+"character.paste" = "クリップボードから貼り付け";
+"character.pasteShortcut" = "⌘V";
+"character.pasteHelp" = "コピーした画像またはPNGファイルを貼り付けます。";
+"character.emptyPreview" = "取り込んだペットのプレビューがここに表示されます。";
+"character.metadataPlaceholder" = "3×3のPNGスプライトシートを選択・ドロップ・貼り付けすると詳細が表示されます。";
+"character.validStatus" = "適用できます";
+"character.dimensionsFormat" = "%1$@ ・ %2$d × %2$d px ・ 1コマ %3$d × %3$d px";
+"character.clipboardSource" = "クリップボード";
+"character.editFrames" = "コマを個別に編集…";
+"character.editFramesDone" = "完了";
+"character.cancel" = "キャンセル";
+"character.apply" = "このキャラクターを適用";
+"character.reading" = "画像を読み込んでいます…";
+"character.clipboardEmpty" = "クリップボードに画像がありません。";
+"character.commitFailed" = "キャラクターを保存できませんでした。現在のペットは変更されていません。もう一度お試しください。";
+"character.error.notPNG" = "PNGファイルを選択してください。";
+"character.error.unreadable" = "このファイルはPNGとして読み込めませんでした。";
+"character.error.fileTooLarge" = "PNGが20 MBを超えています。";
+"character.error.notSquare" = "スプライトシートは正方形にしてください。";
+"character.error.gridNotDivisible" = "スプライトシートの辺は3で割り切れる必要があります。";
+"character.error.dimensionTooLarge" = "スプライトシートは最大4096 × 4096 pxです。";
+"character.error.noTransparency" = "PNGには透明な背景が必要です。";
+"character.error.frameExtraction" = "シートを9つのセルに分割できませんでした。";
+"character.error.multipleFiles" = "3×3のPNGを1つ選んでください。";
+"character.discardTitle" = "変更を破棄しますか？";
+"character.discardMessage" = "準備したキャラクターはまだ適用されていません。破棄して戻りますか？";
+"character.discardConfirm" = "破棄";

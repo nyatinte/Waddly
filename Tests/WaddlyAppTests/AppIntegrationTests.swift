@@ -123,12 +123,12 @@ import WaddlyCore
         let delegate: any NSApplicationDelegate = app
         let handled = delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: hasImages)
         #expect(handled == false)
-        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.characterImportWindowController?.window?.isVisible != true)
         #expect(app.setupWizardController?.window?.isVisible == true)
     }
 
     /// The animation editor is menu-only. Even after setup, the Dock icon must not open it.
-    @Test func dockReopenNeverOpensAnimationSettingsAfterSetup() async throws {
+    @Test func dockReopenNeverOpensChangeCharacterAfterSetup() async throws {
         let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
         let app = fixture.app
@@ -139,7 +139,7 @@ import WaddlyCore
 
         let delegate: any NSApplicationDelegate = app
         #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
-        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.characterImportWindowController?.window?.isVisible != true)
         #expect(app.panel.isVisible == true)
         // The menu stays the deliberate route to the editor once setup is finished. Opening the menu
         // is when the app re-evaluates what it offers.
@@ -194,7 +194,7 @@ import WaddlyCore
 
         let delegate: any NSApplicationDelegate = app
         #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
-        #expect(app.imageSettingsWindow?.isVisible != true)
+        #expect(app.characterImportWindowController?.window?.isVisible != true)
         #expect(app.setupWizardController?.window?.isVisible == true)
         #expect(app.setupWizardController?.currentStep == .monitoring)
         app.menuWillOpen(app.statusMenu)
@@ -229,7 +229,7 @@ import WaddlyCore
         #expect(delegate.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: true) == false)
         #expect(app.setupWizardController === wizard)
         #expect(wizard.window?.isVisible == true)
-        #expect(app.imageSettingsWindow == nil)
+        #expect(app.characterImportWindowController == nil)
     }
 }
 
