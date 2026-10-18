@@ -120,10 +120,10 @@ real four-pose player and nine-cell grid.
 | Choose File… | native picker → stage | Y | Y | — | reading row | staged preview, status, metadata | inline reason; staged candidate kept |
 | Paste from Clipboard / ⌘V | stage clipboard pixels or a PNG file URL | Y | Y | — | reading row | as above | inline “No image on the clipboard.” or the decode reason |
 | Drop zone / window drop | stage one PNG | accent highlight + “Drop to import”, system drag eligibility (Y) | — | — | reading row | as above | inline reason; a multi-file drop → “Choose one 3×3 PNG.” |
-| Animation / 9 cells, pose buttons | preview the staged sheet | Y | Y | hidden when empty | — | real player or nine-cell grid, nearest-neighbor | — |
+| Animation / 9 cells, pose buttons | preview the staged sheet | Y | Y | pose buttons hidden when empty; the Animation / 9 cells switch stays visible | — | real player or nine-cell grid, nearest-neighbor | — |
 | Edit frames individually… | reveal the advanced editor over the same draft | Y | Y | shown only with a staged candidate | — | back returns to the parent preview | — |
 | Cancel / Back | leave without committing | Y | Y | — | — | returns to the method list; nothing written | discard confirmation only when staged changes exist |
-| Apply this character / Continue | commit the draft once | Y | Y | until a complete candidate exists | applying | pet and settings update together | inline “Could not save…”; draft kept for retry |
+| Apply this character / Continue | commit the draft once | Y | Y | until a complete candidate exists | no progress indicator: the button only greys out while the commit runs | pet and settings update together | inline “Could not save…”; draft kept for retry |
 
 The clipboard is read only on an explicit paste; availability is rechecked on appear and on app
 activation without reading pixels. The two hosts differ only in the primary label and the
@@ -161,7 +161,7 @@ language change. Hover, focus, and keyboard remain **manual-unverified**.
 
 | Sheet | Trigger | Buttons | Retry |
 | --- | --- | --- | --- |
-| Import confirm (3×3 preview, `SpriteSheetPreviewAccessory`) | editor / CLI import path | Import / Cancel | re-import from the editor or menu |
+| Import confirm (3×3 preview, `SpriteSheetPreviewAccessory`) | pet-panel PNG drop (`AppDelegate.importPetImage`) | Import / Cancel | drop another PNG |
 | Import error, save error | unreadable PNG / storage limit | OK | re-run the import |
 | Login-item error | `SMAppService` throws | OK | re-toggle from the menu |
 | Share asset error | export / generation fails | inline label only | **N: no explicit retry (#109)** |

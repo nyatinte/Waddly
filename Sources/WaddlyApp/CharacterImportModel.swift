@@ -5,8 +5,6 @@ import WaddlyCore
 /// Why the last acquisition attempt could not produce a staged candidate.
 enum CharacterImportFailure: Equatable {
     case sheet(PetSheetValidationFailure)
-    /// The file could not be read as a PNG within the size limit.
-    case unreadableFile
     /// An explicit paste found no supported image on the clipboard.
     case noClipboardImage
     /// A sheet drop carried more than one file; the sheet surface accepts exactly one.
@@ -156,7 +154,8 @@ final class CharacterImportModel: ObservableObject {
     // MARK: - Commit / discard
 
     func apply() async {
-        guard let stagedFrames, stagedFrames.isComplete else { return }
+        // Re-entrancy guard: a primary-action double click must commit once, not twice.
+        guard !isApplying, let stagedFrames, stagedFrames.isComplete else { return }
         isApplying = true
         let outcome = await commit(stagedFrames)
         isApplying = false
@@ -168,6 +167,12 @@ final class CharacterImportModel: ObservableObject {
         case .rejected, .failed:
             commitFailed = true
         }
+    }
+
+    /// The app's language lives in `AppSettings`, not the system locale, so the view re-reads its
+    /// strings from the localization controller when the menu changes it.
+    func refreshLocalization() {
+        objectWillChange.send()
     }
 
     func discard() {

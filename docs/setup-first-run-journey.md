@@ -98,9 +98,12 @@ screen. Run each in English and Japanese, in light and dark.
    “Try the sample pet first” is visible. Click it. Expected: the pet fills the preview, the page says
    the sample is in use, `Next` becomes enabled, and the step did not change. Failure: the button is
    missing, the window clips, or progress jumps.
-2. **Own pet import.** From task 1, use **Change image** and pick a valid 3×3 PNG. Expected: the image
-   registers immediately, the sample message disappears, and the preview shows the imported frames.
-   Failure: a confirm dialog appears, or the previous pet is lost.
+2. **Own pet import.** From task 1, use **Change image** (or **Choose a PNG**) to open the shared
+   character screen. Choose, paste, or drop a valid 3×3 PNG. Expected: the sheet is staged and
+   previewed with its filename, dimensions, and cell size; nothing is written yet. Press **Continue**.
+   Expected: the sheet is applied once, the sample message disappears, and the preview shows the
+   imported frames. Failure: a mid-import confirm dialog appears before Continue, the previous pet is
+   lost, or Continue advances without applying.
 3. **Permission honest before and after the tap.** Continue to Keyboard reactions with permission not
    granted. Expected: “not allowed” and the privacy note. Grant in System Settings and return.
    Expected: while the tap is unavailable the page says “restart required” and `Next` is disabled;

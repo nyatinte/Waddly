@@ -17,6 +17,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     private let localization: LocalizationController
     private let presenter: WindowPresenter
     private let onClose: @MainActor () -> Void
+    private var isConfirmingClose = false
 
     init(
         model: CharacterImportModel,
@@ -48,16 +49,32 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         nil
     }
 
-    /// Opens the window on the pet that is actually committed now, so nothing stale is shown.
+    /// Brings the window forward. A fresh open reloads the committed pet; an already visible window
+    /// is only focused, so re-invoking the menu item never discards a staged draft.
     func focus() {
-        model.reload()
         presenter.activate()
         guard let window else { return }
+        if !window.isVisible {
+            model.reload()
+        }
         presenter.focus(window)
     }
 
     func refreshLocalization() {
         window?.title = localization.string(for: .characterWindowTitle)
+        frameEditorModel.refreshLocalization()
+        model.refreshLocalization()
+    }
+
+    /// Closing with staged changes asks first; an untouched or freshly applied window closes at once.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard model.isDirty, !isConfirmingClose else { return true }
+        confirmDiscard { [weak self] in
+            guard let self else { return }
+            isConfirmingClose = true
+            close()
+        }
+        return false
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -122,8 +139,12 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             close()
             return
         }
+        confirmDiscard { [weak self] in self?.close() }
+    }
+
+    private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
         guard let window else {
-            close()
+            discard()
             return
         }
         let alert = NSAlert()
@@ -134,7 +155,11 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         alert.addButton(withTitle: localization.string(for: .characterCancel))
         presenter.presentAlert(alert, window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
-            self?.close()
+            self?.finishDiscard(discard)
         }
+    }
+
+    private func finishDiscard(_ discard: @MainActor () -> Void) {
+        discard()
     }
 }

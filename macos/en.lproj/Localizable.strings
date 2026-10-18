@@ -35,7 +35,6 @@
 "pet.dropTooltip" = "Drop a transparent 3×3 PNG on the pet to change it";
 "pet.importErrorTitle" = "Could not import the pet image";
 "pet.importErrorMessage" = "Choose a square transparent PNG no larger than 20 MB, with sides no longer than 4096 px and a 3×3 grid.";
-"images.windowTitle" = "Animation Settings";
 "images.instructions" = "Drop PNGs onto a row or use Add to select multiple files. Idle: the first image is the normal pose; others are blink variants. Typing and Enter images play in order. Sleep images cycle, then stop on the last image after five minutes.";
 "images.category.idle" = "Idle";
 "images.category.typing" = "Typing";
@@ -47,13 +46,10 @@
 "images.moveRight" = "Move image right";
 "images.thumbnail" = "Pet image";
 "images.errorTitle" = "Could not add pet images";
-"images.errorMessage" = "Choose transparent PNG images no larger than 20 MB and 4096 × 4096 px.";
 "images.saveErrorTitle" = "Could not save pet images";
 "images.saveErrorMessage" = "An image exceeds the storage limit, or disk space is low. Check the files and try again.";
 "images.readErrorTitle" = "Could not load the saved pet images";
 "images.readErrorMessage" = "Waddly could not read the saved image list, or one of its frames is missing. Import your images again to start over; nothing has been deleted.";
-"images.skippedTitle" = "Some images were skipped";
-"images.skippedMessage" = "Only transparent PNG files within the size limits can be added.";
 "pet.previewTitle" = "Import this pet image?";
 "pet.previewPrompt" = "Check all nine cells on both backgrounds before importing.";
 "pet.previewBackground" = "Check on a dark background";

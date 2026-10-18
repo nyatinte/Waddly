@@ -9,7 +9,6 @@ extension CharacterImportFailure {
     var messageKey: LocalizationKey {
         switch self {
         case let .sheet(reason): reason.messageKey
-        case .unreadableFile: .characterErrorUnreadable
         case .noClipboardImage: .characterClipboardEmpty
         case .multipleFiles: .characterErrorMultipleFiles
         }
@@ -208,6 +207,7 @@ private extension CharacterImportView {
     var footer: some View {
         HStack {
             Button(localization.string(for: .characterCancel), action: onCancel)
+                .disabled(model.isApplying)
                 .accessibilityIdentifier("characterCancel")
             Spacer()
             Button(localization.string(for: primaryKey), action: onPrimary)
