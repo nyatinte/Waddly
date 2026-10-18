@@ -168,7 +168,17 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     private func copyMovie() {
         guard let assets, let data = try? Data(contentsOf: assets.movieURL, options: .mappedIfSafe) else { return }
-        if PetShareClipboard.copyMovie(data) {
+        // The export directory disappears with the window, so the pasteboard names a file that
+        // outlives it; paste targets attach a file, not raw video bytes.
+        guard let published = PetShareClipboard.publishForPasteboard(
+            data,
+            named: assets.movieURL.lastPathComponent
+        )
+        else {
+            NSSound.beep()
+            return
+        }
+        if PetShareClipboard.copyMovie(data, fileURL: published) {
             shareView.didCopyMovie()
         } else {
             NSSound.beep()
