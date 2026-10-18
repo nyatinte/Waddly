@@ -10,7 +10,6 @@
 "share.copied" = "Copied";
 "share.post" = "Post";
 "share.xCreate" = "Post on X";
-"share.xDraft" = "Copy the video and image, then attach them to your post.";
 "share.loading" = "Preparing share assets…";
 "share.error" = "Could not create the share assets. Please try again.";
 "menu.resume" = "Resume reactions";
