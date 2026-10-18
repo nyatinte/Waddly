@@ -1,8 +1,7 @@
 import AppKit
 import WaddlyCore
 
-private struct PetShareAssets: Sendable {
-    let directory: URL
+struct PetShareAssets: Sendable {
     let spriteURL: URL
     let movieURL: URL
 
@@ -11,22 +10,31 @@ private struct PetShareAssets: Sendable {
         cancellation: PetShareExportCancellation,
         writeMovie: PetShareWindowController.MovieWriter
     ) throws -> PetShareAssets {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("WaddlyShare-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let spriteURL = directory.appendingPathComponent("pet-sprite.png")
-        let movieURL = directory.appendingPathComponent("pet-animation.mp4")
+        let base = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WaddlyShare-\(UUID().uuidString)")
+        let spriteURL = base.appendingPathExtension("png")
+        let movieURL = base.appendingPathExtension("mp4")
         do {
             guard let png = PetShareExporter.spriteSheetPNG(from: images) else {
                 throw PetShareExportError.incompleteImageSet
             }
             try png.write(to: spriteURL, options: .atomic)
             try writeMovie(images, movieURL, cancellation)
-            return PetShareAssets(directory: directory, spriteURL: spriteURL, movieURL: movieURL)
+            return PetShareAssets(spriteURL: spriteURL, movieURL: movieURL)
         } catch {
-            try? FileManager.default.removeItem(at: directory)
+            // The movie is the export's output: it deletes it on the queue that owns the writer, which may
+            // still be running when a stalled export gives up waiting. Removing a directory here would
+            // pull the output out from under an active `AVAssetWriter`, so this path only discards the
+            // sprite it wrote itself.
+            try? FileManager.default.removeItem(at: spriteURL)
             throw error
         }
+    }
+
+    /// Removes both assets. Only call this once the export has finished with the movie.
+    func remove() {
+        try? FileManager.default.removeItem(at: spriteURL)
+        try? FileManager.default.removeItem(at: movieURL)
     }
 }
 
@@ -133,7 +141,7 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
             }.value
             guard let self else {
                 if case let .success(assets) = result {
-                    Self.remove(assets)
+                    assets.remove()
                 }
                 return
             }
@@ -154,13 +162,13 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         status = .cancelled
-        // Stop the encoder itself, not just the task that awaits it: the export polls this token and
-        // removes its partial movie before the temporary directory below disappears.
+        // Stop the encoder itself, not just the task that awaits it: the export polls this token, stops
+        // the writer on its own queue, and deletes the movie it was writing.
         cancellation.cancel()
         generationTask = nil
         shareView.stopPlayback()
         if let assets {
-            Self.remove(assets)
+            assets.remove()
         }
         assets = nil
         onClose?()
@@ -171,7 +179,7 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         // Closing the window drops the result; its files must not outlive the dialog.
         guard status != .cancelled else {
             if case let .success(assets) = result {
-                Self.remove(assets)
+                assets.remove()
             }
             return
         }
@@ -217,10 +225,6 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         }
         composerOpenFailed = false
         shareView.showXOpenFailure(nil)
-    }
-
-    private static func remove(_ assets: PetShareAssets) {
-        try? FileManager.default.removeItem(at: assets.directory)
     }
 
     static func xPostURL(text: String) -> URL? {
