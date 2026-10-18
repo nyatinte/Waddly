@@ -1,8 +1,8 @@
 {
   "rules": {
     "actor-assumption": [
-      "Sources/WaddlyApp/PermissionService.swift:155",
-      "Sources/WaddlyApp/Waddly.swift:153"
+      "Sources/WaddlyApp/PermissionService.swift:183",
+      "Sources/WaddlyApp/Waddly.swift:160"
     ],
     "empty-catch": [
       "Sources/WaddlyApp/AnimationScheduler.swift:59"
@@ -52,10 +52,10 @@
       "Sources/WaddlyCore/PetShareMovieWriter.swift:46"
     ],
     "unsafe-pointer": [
-      "Sources/WaddlyApp/Waddly.swift:104",
-      "Sources/WaddlyApp/Waddly.swift:147",
-      "Sources/WaddlyApp/Waddly.swift:148",
-      "Sources/WaddlyApp/Waddly.swift:162",
+      "Sources/WaddlyApp/Waddly.swift:109",
+      "Sources/WaddlyApp/Waddly.swift:154",
+      "Sources/WaddlyApp/Waddly.swift:155",
+      "Sources/WaddlyApp/Waddly.swift:172",
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:154",
       "Tests/WaddlyCoreTests/PetImageCoreTests.swift:169"
     ]

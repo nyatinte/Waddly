@@ -47,17 +47,30 @@ extension AppDelegate {
         return images
     }
 
-    /// Commits a set the user already reviewed.
-    func confirmPetImage(_ images: PetImageSet) async -> Bool {
-        switch await imageStore.confirmPetImage(images) {
-        case .confirmed:
-            return true
-        case let .failed(error):
-            await showImageSaveError(error)
-            return false
-        case .aborted:
+    /// Commits the decoded set; the wizard does not present a separate confirmation step. The
+    /// store's serialized queue owns persistence; the refusal rule runs inside that queue so a
+    /// sample requested by a reopened window cannot land after a user import already wrote one.
+    func confirmPetImage(_ images: PetImageSet, source: PetImageCommitSource = .userFile) async -> Bool {
+        await queueImageUpdate { await self.confirmPetImageInOrder(images, source: source) }
+    }
+
+    /// A user's own file always wins: a sample commit is refused once any pet is stored. Pure so the
+    /// rule is testable without a queue.
+    nonisolated static func shouldCommitPetImages(source: PetImageCommitSource, petIsStored: Bool) -> Bool {
+        source == .userFile || !petIsStored
+    }
+
+    private func confirmPetImageInOrder(_ images: PetImageSet, source: PetImageCommitSource) async -> Bool {
+        guard Self.shouldCommitPetImages(source: source, petIsStored: hasCompletePetImageSet) else {
             return false
         }
+        do {
+            try await persistPetImages(images, resetActivity: true)
+        } catch {
+            await showImageSaveError(error)
+            return false
+        }
+        return true
     }
 
     func imageSetDidChange(resetActivity: Bool = false) {

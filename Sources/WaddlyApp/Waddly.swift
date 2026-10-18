@@ -68,6 +68,11 @@ final class KeyboardMonitor {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
+    /// Ephemeral proof that a real key-down reached the app since this tap started. It is the only
+    /// thing setup reads to confirm reactions, and it keeps no key code, text, or time. A new tap
+    /// clears it, so a stale confirmation cannot outlive the tap it belonged to.
+    private(set) var hasObservedKeyEvent = false
+
     var permissionGranted: Bool {
         CGPreflightListenEventAccess()
     }
@@ -119,6 +124,8 @@ final class KeyboardMonitor {
 
         self.tap = tap
         runLoopSource = source
+        // A fresh tap has not delivered anything yet.
+        hasObservedKeyEvent = false
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         guard isRunning else {
@@ -152,6 +159,9 @@ final class KeyboardMonitor {
         // bridge synchronous so stop() cannot race an outstanding actor hop.
         MainActor.assumeIsolated {
             if type == .keyDown {
+                // Set before the callback so a key that confirms setup is never dropped, and only
+                // the fact of delivery is kept.
+                monitor.hasObservedKeyEvent = true
                 monitor.onKeyDown?(isEnter)
             } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                 if let tap = monitor.tap {
@@ -297,7 +307,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
         petView.acceptPNGFileDrops()
         petView.toolTip = localizedString(.petDropTooltip)
-        monitor.onKeyDown = { [weak self] isEnter in self?.animationController.handleKeyDown(isEnter: isEnter) }
+        monitor.onKeyDown = { [weak self] isEnter in
+            guard let self else { return }
+            animationController.handleKeyDown(isEnter: isEnter)
+            // A delivered key is what actually confirms reactions; let an open guide repaint once.
+            setupWizardController?.monitoringDidObserveReaction()
+        }
         Task {
             _ = await queueImageUpdate {
                 await self.loadSavedPetImage()
