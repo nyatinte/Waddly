@@ -24,7 +24,7 @@ extension SetupWizardController {
                 renderCurrentStep()
                 return
             }
-            if await onConfirmImage(images) {
+            if await onConfirmImage(images, .userFile) {
                 importedFileName = url.lastPathComponent
                 didRegisterPet = true
                 didUseSamplePet = false
@@ -51,7 +51,7 @@ extension SetupWizardController {
             guard let self else { return }
             defer { sampleCommitTask = nil }
             guard canTrySample, let sample = demoImages else { return }
-            guard await onConfirmImage(sample) else { return }
+            guard await onConfirmImage(sample, .sample) else { return }
             didUseSamplePet = true
             didRegisterPet = true
             importedFileName = nil

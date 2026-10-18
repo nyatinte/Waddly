@@ -3,6 +3,13 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
 
+/// Why a pet image set is being committed. A user's own file must always win, so the sample
+/// convenience is refused once any pet is already stored, however the current window got there.
+enum PetImageCommitSource {
+    case userFile
+    case sample
+}
+
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate, ObservableObject {
     /// Two setup steps, then a completion screen that hands the pet over to the desktop.
@@ -29,7 +36,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
     /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
-    let onConfirmImage: @MainActor (PetImageSet) async -> Bool
+    let onConfirmImage: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
@@ -68,8 +75,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var sampleCommitTask: Task<Void, Never>?
     /// How many file imports are between the user's choice and their commit. The sample is refused
     /// while any of them is pending, because a sample commit queued behind one would replace the pet
-    /// the user asked for.
-    var pendingImportCount = 0
+    /// the user asked for. Published so the shortcut disappears as soon as an import starts instead
+    /// of staying visible and ignoring clicks.
+    @Published var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -77,7 +85,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         promptResourcesURL: URL? = Bundle.main.resourceURL,
         demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
         onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
-        onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
+        onConfirmImage: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,

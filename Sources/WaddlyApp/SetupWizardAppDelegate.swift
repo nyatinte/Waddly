@@ -76,7 +76,9 @@ extension AppDelegate {
         SetupWizardController(
             localization: localization,
             onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
-            onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
+            onConfirmImage: { [weak self] images, source in
+                await self?.confirmPetImage(images, source: source) ?? false
+            },
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,
             presenter: presenter,

@@ -111,7 +111,7 @@
 "setup.monitoringGrantedTitle" = "Input Monitoring is set up";
 "setup.monitoringGrantedBody" = "Your pet is ready to react when you type.";
 "setup.monitoringWaitingTitle" = "Confirm keyboard reactions";
-"setup.monitoringWaitingBody" = "Input Monitoring is allowed and Waddly is listening. Press any key and watch the pet react; nothing is recorded.";
+"setup.monitoringWaitingBody" = "Input Monitoring is allowed. Press any key and watch the pet react; if nothing happens, resume or restart Waddly. Nothing is recorded.";
 "setup.monitoringStatusWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.tryTyping" = "Press a key to check that it works.";
 "setup.notWorking" = "If it does not work";

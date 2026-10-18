@@ -63,6 +63,7 @@ Command: `mise run test` (serialized Swift Testing suites). The wizard suites ar
 | A returning user who already confirmed reactions keeps that state | `aReturningUserKeepsAConfirmedReaction` |
 | A fresh event tap has observed nothing | `aFreshKeyboardMonitorHasObservedNothing` |
 | A stopped tap (paused app) cannot confirm a reaction | `aStoppedTapCannotConfirmAReaction` |
+| A sample commit is refused once any pet is stored, even from a reopened guide | `aSampleCommitIsRefusedOnceAPetIsStored`, `aReopenedWizardCannotSampleOverAUserImportStillCommitting` |
 | The sample shortcut commits the bundled sample in place, keeps the step, and is offered only when no pet is stored and no import is pending; a real import clears the sample choice and is never replaced by a sample click | `tryingTheSampleCommitsTheBundledSampleInPlace`, `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`, `sampleIsIgnoredWhileAUserImportIsStillCommitting`, `aFailedImportReleasesTheSampleShortcut` |
 | Two rapid sample clicks start one commit | `rapidSampleRequestsCommitOnce` |
 | A relaunch mid-permission resumes at “restart required”, not a false ready state | `interruptedPermissionFlowResumesToRestartRequired` |

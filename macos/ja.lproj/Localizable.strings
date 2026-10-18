@@ -111,7 +111,7 @@
 "setup.monitoringGrantedTitle" = "入力監視を設定しました";
 "setup.monitoringGrantedBody" = "キー入力に合わせてペットが動く準備ができました。";
 "setup.monitoringWaitingTitle" = "キー入力への反応を確認";
-"setup.monitoringWaitingBody" = "入力監視は許可され、Waddlyはキー入力を待っています。何かキーを押して、ペットが実際に反応することを確認してください。入力内容は記録しません。";
+"setup.monitoringWaitingBody" = "入力監視は許可されています。何かキーを押して、ペットが反応するか確認してください。反応しない場合はWaddlyを再開または再起動してください。入力内容は記録しません。";
 "setup.monitoringStatusWaiting" = "キー入力への反応：キー入力を待っています";
 "setup.tryTyping" = "実際にキーを押して動作を確認できます。";
 "setup.notWorking" = "動作しない場合";

@@ -27,6 +27,7 @@ enum SetupWizardFixture {
         previewResult: PetImageSet? = nil,
         preview: (@MainActor (URL) async -> PetImageSet?)? = nil,
         confirmResult: Bool = false,
+        confirm: (@MainActor (PetImageSet, PetImageCommitSource) async -> Bool)? = nil,
         requestPermission: @escaping @MainActor () -> Bool = { false },
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
@@ -57,8 +58,15 @@ enum SetupWizardFixture {
                 }
                 return state.previewResult
             },
-            onConfirmImage: { images in
-                // Mirrors the app: committing is what updates the stored set.
+            onConfirmImage: { images, source in
+                if let confirm {
+                    return await confirm(images, source)
+                }
+                // Mirrors the app: a sample is refused once a pet is stored, and committing is what
+                // updates the stored set.
+                guard AppDelegate.shouldCommitPetImages(source: source, petIsStored: state.images.isComplete) else {
+                    return false
+                }
                 state.confirmCount += 1
                 if state.confirmResult {
                     state.images = images

@@ -78,8 +78,10 @@ Invariants the flow keeps:
 - **The sample cannot replace a pet the user asked for.** “Try the sample pet first” is offered only
   while no complete pet exists *and* no file import is between the user's choice and its commit.
   While an import is pending the sample is refused, so it cannot queue a commit behind the user's
-  file; if the sample is already committing, the user's file is enqueued after it and lands last.
-  Nothing is written until the user clicks it, and it never changes the step or the saved progress.
+  file; if the sample is already committing, the user's file is enqueued after it and lands last. The
+  refusal is re-checked inside the app's serialized image commit, so a reopened guide cannot sample
+  over an import that a previous window already wrote. Nothing is written until the user clicks it,
+  and it never changes the step or the saved progress.
 - **Errors are in place.** An unreadable sheet or a failed copy/open is reported inline on the current
   step and leaves the previous pet untouched (immediate-import contract from #94).
 
@@ -172,7 +174,8 @@ VoiceOver, real keyboard confirmation, and Reduce Motion still need a manual pas
 `SetupWizardJourneyTests` suite: `tryingTheSampleCommitsTheBundledSampleInPlace`,
 `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`,
 `rapidSampleRequestsCommitOnce`, `sampleIsIgnoredWhileAUserImportIsStillCommitting`,
-`aFailedImportReleasesTheSampleShortcut`, `interruptedPermissionFlowResumesToRestartRequired`,
+`aReopenedWizardCannotSampleOverAUserImportStillCommitting`, `aFailedImportReleasesTheSampleShortcut`,
+`interruptedPermissionFlowResumesToRestartRequired`,
 `deferringSavesTheReadyStepSoARelaunchCanResume`, `aLiveTapStaysUnconfirmedUntilAKeyArrives`,
 `deferringFromALiveTapKeepsTheCheckWaiting`, and `aReturningUserKeepsAConfirmedReaction`. The
 readiness rules themselves are covered by `PermissionServiceTests`
