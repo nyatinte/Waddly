@@ -19,7 +19,7 @@ trap 'rm -f "$STATUS_FILE" "$OUTPUT_FILE"' EXIT
 
 STATUS=$(cat "$STATUS_FILE")
 STARTED=$(grep -c 'Test run started' "$OUTPUT_FILE" || true)
-COMPLETED=$(grep -Ec 'Test run with [0-9]+ tests? in ' "$OUTPUT_FILE" || true)
+COMPLETED=$(grep -Ec 'Test run with [0-9]+ tests?([[:space:]]|$)' "$OUTPUT_FILE" || true)
 
 if [ "$STATUS" -eq 0 ] && [ "$STARTED" -gt "$COMPLETED" ]; then
   printf 'error: %s Swift Testing run(s) started but only %s reported completion; the test process exited early.\n' "$STARTED" "$COMPLETED" >&2

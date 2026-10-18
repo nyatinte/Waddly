@@ -38,6 +38,12 @@ run_case "incomplete-run-fails" 1 \
     "printf '◇ Test run started.\n'"
 run_case "complete-run-passes" 0 \
     "printf '◇ Test run started.\n✔ Test run with 1 tests in 0 suites passed after 0.1 seconds.\n'"
+run_case "complete-footer-without-suites-passes" 0 \
+    "printf '◇ Test run started.\n✔ Test run with 3 tests passed after 0.1 seconds.\n'"
+run_case "singular-test-footer-passes" 0 \
+    "printf '◇ Test run started.\n✔ Test run with 1 test passed after 0.1 seconds.\n'"
+run_case "failed-footer-without-suites-preserves-nonzero" 2 \
+    "printf '◇ Test run started.\n✘ Test run with 2 tests failed after 0.1 seconds with 1 issue.\n'; exit 2"
 run_case "nonzero-exit-preserved" 7 \
     "printf '◇ Test run started.\n'; exit 7"
 run_case "multiple-runs-incomplete-fails" 1 \
