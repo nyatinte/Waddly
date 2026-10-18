@@ -72,7 +72,7 @@ final class PetShareDialogView: NSView {
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        xRow.layer?.backgroundColor = shareLayerColor(.controlBackgroundColor, appearance: effectiveAppearance)
+        updateAppearance()
     }
 
     func showWorking() {
@@ -156,6 +156,12 @@ final class PetShareDialogView: NSView {
         onRetry?()
     }
 
+    /// Settles the surfaces the dialog owns. Called at init and on every appearance change, like the
+    /// cards do for themselves.
+    private func updateAppearance() {
+        xRow.layer?.backgroundColor = shareLayerColor(.controlBackgroundColor, appearance: effectiveAppearance)
+    }
+
     private func configureAppearance() {
         postTitle.font = .systemFont(ofSize: 11, weight: .semibold)
         postTitle.textColor = .secondaryLabelColor
@@ -201,11 +207,14 @@ final class PetShareDialogView: NSView {
         retryButton.bezelStyle = .push
         failure.addArrangedSubview(failureLabel)
         failure.addArrangedSubview(retryButton)
+        updateAppearance()
     }
 
     private func refreshAccessibilityLabels() {
         videoCard.copyButton.setAccessibilityLabel(localization.string(for: .shareCopyHelpVideo))
+        videoCard.copyButton.setAccessibilityHelp(localization.string(for: .shareCopyHelpVideo))
         imageCard.copyButton.setAccessibilityLabel(localization.string(for: .shareCopyHelpImage))
+        imageCard.copyButton.setAccessibilityHelp(localization.string(for: .shareCopyHelpImage))
         postButton.setAccessibilityLabel(localization.string(for: .shareXCreate))
         postButton.setAccessibilityHelp(localization.string(for: .shareXDraft))
         moviePreview.setAccessibilityLabels(

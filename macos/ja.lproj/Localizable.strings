@@ -14,7 +14,7 @@
 "share.copied.image" = "画像をコピーしました";
 "share.copyFailed" = "コピーできませんでした。もう一度お試しください。";
 "share.videoDetail" = "MP4 · 5秒 · 384 × 384";
-"share.spriteDetail" = "PNG · 768 × 768 · 9コマ";
+"share.spriteDetail" = "PNG · 3 × 3 · 9コマ";
 "share.playPreview" = "書き出した動画を再生";
 "share.pausePreview" = "書き出した動画を一時停止";
 "share.post" = "投稿する";

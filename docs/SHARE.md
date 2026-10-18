@@ -9,7 +9,7 @@ what the dialog can actually do, which states it can be in, and what has not bee
 | Asset | Format | Details | Where it goes |
 | --- | --- | --- | --- |
 | Video | MP4 (H.264) | 384 × 384, 12 fps, 60 frames, 5 s | Clipboard as `public.mpeg-4` |
-| Image | PNG | 768 × 768, 3 × 3 cells, nine canonical frames, transparent background | Clipboard as `public.png` |
+| Image | PNG | 3 × 3 cells, nine canonical frames, transparent background; each cell matches the imported frame size, so the exported pixels follow the sheet you supplied (the bundled example is 768 × 768) | Clipboard as `public.png` |
 
 - Both files are generated on the device with AVFoundation and Core Graphics when the dialog opens. Waddly never
   uploads them.
@@ -20,8 +20,9 @@ what the dialog can actually do, which states it can be in, and what has not bee
 - The post row opens `https://twitter.com/intent/tweet` with the localized reminder and the `#ShareMyWaddly`
   hashtag. It opens a composer only: Waddly does not attach the files and does not post. If the system cannot open
   the URL, the dialog says so inline instead of looking successful.
-- Closing the window cancels generation. The encoder is stopped on the queue that owns it and its partial movie is
-  deleted before the temporary files disappear.
+- Closing the window cancels generation: the export stops the writer on the queue that owns it and deletes the movie
+  it was writing, then the dialog removes the sprite. If an encoder wedges so that cancellation cannot be acknowledged
+  within the export's grace period, the movie is left to the export rather than deleted from underneath a live writer.
 
 ## States
 
@@ -43,10 +44,11 @@ start two exports. Retrying is only possible from the failed state.
 - Copy buttons and the post button are real `NSButton`s: they take keyboard focus, activate with Space, and show
   the standard focus ring. The post row is a native push button rather than a click gesture on a label.
 - Hover changes the button fill to a tinted accent color; press darkens it; disabled controls dim and stop
-  responding to hover. Fills use system colors resolved for the current appearance, so light, dark, and increased
-  contrast stay legible.
-- Feedback is color and text only. No animation is added, so there is nothing to reduce for Reduce Motion; the
-  video preview only plays after the user presses play.
+  responding to hover. Fills resolve system colors for the current appearance, so the control follows light and dark;
+  increased-contrast behaviour has not been checked and is listed under the gaps below.
+- Feedback is color and text only, plus the standard indeterminate spinner while generating; the video preview only
+  plays after the user presses play. Reduce Motion has not been checked against that spinner and is listed under the
+  gaps below.
 - Accessible names describe the operation: “Copy the 5-second video to the clipboard”, “Copy the 3 × 3 sprite
   sheet image to the clipboard”, “Post on X” (with help text that the composer is prefilled and attachments are
   manual), and “Play the exported video” / “Pause the exported video”.

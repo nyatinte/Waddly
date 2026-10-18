@@ -14,7 +14,7 @@
 "share.copied.image" = "Image copied";
 "share.copyFailed" = "Couldn’t copy. Try again.";
 "share.videoDetail" = "MP4 · 5 s · 384 × 384";
-"share.spriteDetail" = "PNG · 768 × 768 · 9 frames";
+"share.spriteDetail" = "PNG · 3 × 3 · 9 frames";
 "share.playPreview" = "Play the exported video";
 "share.pausePreview" = "Pause the exported video";
 "share.post" = "Post";

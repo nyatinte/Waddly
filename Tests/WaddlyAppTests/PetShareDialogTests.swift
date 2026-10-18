@@ -144,6 +144,45 @@ import WaddlyCore
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyImage" }?.title == "Copy image")
 }
 
+@Test @MainActor func sharePostRowHasItsSurfaceBeforeAnyAppearanceChange() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-surface.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let view = PetShareDialogView(
+        localization: LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
+    )
+    let postRow = try #require(SetupWizardFixture.descendants(of: view).first {
+        $0.identifier?.rawValue == "share.postRow"
+    })
+
+    // No appearance change and no window: the row must still be drawn as a surface, like the cards.
+    #expect(postRow.layer?.backgroundColor != nil)
+    let surface = shareLayerColor(.controlBackgroundColor, appearance: view.effectiveAppearance)
+    #expect(postRow.layer?.backgroundColor == surface)
+}
+
+@Test @MainActor func copyAccessibilityHelpFollowsLanguageChanges() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-help.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let settings = AppSettings(defaults: defaults)
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let localization = LocalizationController(settings: settings, resources: resources)
+    localization.changeLanguage(.japanese)
+    let view = PetShareDialogView(localization: localization)
+    let imageCopy = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? NSButton }
+        .first { $0.identifier?.rawValue == "share.copyImage" })
+
+    #expect(imageCopy.accessibilityHelp() == localization.string(for: .shareCopyHelpImage))
+    localization.changeLanguage(.english)
+    view.refreshLocalization()
+    // The help tag is captured when the card is built, so refresh has to push the new language at it.
+    #expect(imageCopy.accessibilityHelp() == "Copy the 3×3 sprite sheet image to the clipboard")
+}
+
 @MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {
     window.appearance = NSAppearance(named: .darkAqua)
     contentView.layoutSubtreeIfNeeded()
