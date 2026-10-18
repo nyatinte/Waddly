@@ -152,20 +152,7 @@ private func writeStub(_ url: URL) throws {
     #expect(post.focusRingType != .none)
     #expect(post.accessibilityLabel() == fixture.localization.string(for: .shareXCreate))
     #expect(post.accessibilityHelp() == fixture.localization.string(for: .shareXHelp))
-    let postResting = try #require(post.layer?.backgroundColor)
-    let postFrame = post.frame
-    post.setHovered(true)
-    #expect(post.isHovered)
-    #expect(post.layer?.backgroundColor != postResting)
-    post.setHovered(false)
-    #expect(!post.isHovered)
-    #expect(post.layer?.backgroundColor == postResting)
-    #expect(post.frame == postFrame)
-    post.setHovered(true)
-    post.isEnabled = false
-    #expect(!post.isHovered)
-    #expect(post.layer?.backgroundColor != postResting)
-    post.isEnabled = true
+    try assertHoverStates(post)
 
     fixture.view.showFailure()
     let retry = try #require(fixture.button("share.retry") as? ShareActionButton)
@@ -173,25 +160,34 @@ private func writeStub(_ url: URL) throws {
     #expect(retry.target != nil)
     #expect(retry.action != nil)
     #expect(retry.focusRingType != .none)
-    let retryResting = try #require(retry.layer?.backgroundColor)
-    let retryFrame = retry.frame
-    retry.setHovered(true)
-    #expect(retry.isHovered)
-    #expect(retry.layer?.backgroundColor != retryResting)
-    retry.setHovered(false)
-    #expect(!retry.isHovered)
-    #expect(retry.layer?.backgroundColor == retryResting)
-    #expect(retry.frame == retryFrame)
-    retry.setHovered(true)
-    retry.isEnabled = false
-    #expect(!retry.isHovered)
-    #expect(retry.layer?.backgroundColor != retryResting)
-    retry.isEnabled = true
+    try assertHoverStates(retry)
 
     fixture.localization.changeLanguage(.japanese)
     fixture.view.refreshLocalization()
     #expect(post.accessibilityHelp() == fixture.localization.string(for: .shareXHelp))
     #expect(post.accessibilityLabel() == fixture.localization.string(for: .shareXCreate))
+}
+
+@MainActor private func assertHoverStates(_ button: ShareActionButton) throws {
+    let resting = try #require(button.layer?.backgroundColor)
+    let frame = button.frame
+    button.setHovered(true)
+    #expect(button.isHovered)
+    #expect(button.layer?.backgroundColor != resting)
+    let hovered = try #require(button.layer?.backgroundColor)
+    button.highlight(true)
+    #expect(button.layer?.backgroundColor != hovered)
+    button.highlight(false)
+    #expect(button.layer?.backgroundColor == hovered)
+    button.setHovered(false)
+    #expect(!button.isHovered)
+    #expect(button.layer?.backgroundColor == resting)
+    #expect(button.frame == frame)
+    button.setHovered(true)
+    button.isEnabled = false
+    #expect(!button.isHovered)
+    #expect(button.layer?.backgroundColor != resting)
+    button.isEnabled = true
 }
 
 @Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
