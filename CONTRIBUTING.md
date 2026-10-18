@@ -88,7 +88,7 @@ identifier, app name, and image folder (`Waddly-<suffix>`, dots included), so `s
 refuses to touch state while that variant is still running. `WADDLY_DEVELOPMENT_DIR` changes where
 the app is installed.
 
-The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, complexity checks, tests, and this Release build—the full local validation path used by CI. `cccc` may print Swift parser warnings for syntax it cannot fully analyze; investigate these warnings because results for those files can be incomplete.
+The build script checks formatting with SwiftFormat, verifies the generated localization accessors, runs SwiftLint in strict mode, builds the arm64 Release app, and creates `build/Waddly.app`. The `mise run check` task runs formatting, lint, complexity checks, the test-completion guard fixture, tests, and this Release build—the full local validation path used by CI. `cccc` may print Swift parser warnings for syntax it cannot fully analyze; investigate these warnings because results for those files can be incomplete.
 
 ## Tests
 
@@ -98,7 +98,7 @@ Run the test suite:
 mise run test
 ```
 
-The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path.
+The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path. It also fails closed: if a Swift Testing run starts but never reports completion, `./macos/test.sh` exits nonzero even when the test process itself exits 0, so an interrupted run cannot pass as green. `mise run test:guard` proves that guard against a fake `swift` without building the suites.
 
 The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames. [docs/setup-wizard-qa.md](docs/setup-wizard-qa.md) maps each Setup Guide state to the suite that verifies it and lists the manual checks that are still unverified.
 

@@ -13,6 +13,15 @@ extension AppDelegate {
                 // Pausing stops the tap on purpose; that is not a permission failure.
                 return isPaused || monitor.isRunning
             },
+            // A key confirms reactions only while the tap that saw it is still running. Pausing stops
+            // the tap, so a confirmation from before the pause must not outlive it.
+            hasObservedReaction: { [weak self] in
+                guard let self else { return false }
+                return AppDelegate.reactionIsConfirmed(
+                    tapRunning: monitor.isRunning,
+                    observedKeyEvent: monitor.hasObservedKeyEvent
+                )
+            },
             requestAccess: { [weak self] in
                 guard let self else { return false }
                 let granted = monitor.requestPermission()
@@ -31,6 +40,12 @@ extension AppDelegate {
         )
         permissionServiceStorage = service
         return service
+    }
+
+    /// A key confirms reactions only while the tap that saw it is still running. Pausing stops the
+    /// tap, so a confirmation from before the pause must not outlive it. Pure so the rule is testable.
+    nonisolated static func reactionIsConfirmed(tapRunning: Bool, observedKeyEvent: Bool) -> Bool {
+        tapRunning && observedKeyEvent
     }
 
     @objc func showSetupWizard() {
@@ -61,7 +76,9 @@ extension AppDelegate {
         SetupWizardController(
             localization: localization,
             onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
-            onConfirmImage: { [weak self] in await self?.confirmPetImage($0) ?? false },
+            onConfirmImage: { [weak self] images, source in
+                await self?.confirmPetImage(images, source: source) ?? false
+            },
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,
             presenter: presenter,

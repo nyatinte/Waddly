@@ -96,6 +96,26 @@ import WaddlyCore
     #expect(didClose)
 }
 
+@Test @MainActor func aFailedGenerationLeavesTheMoviesCleanupToTheExport() throws {
+    let images = try SetupWizardFixture.sheetImages()
+    let movie = SharedValue<URL>()
+
+    #expect(throws: PetShareExportError.timedOut) {
+        // A stalled export gives up while its writer may still own the movie; the caller must not delete it.
+        _ = try PetShareAssets.make(from: images, cancellation: PetShareExportCancellation()) { _, url, _ in
+            movie.store(url)
+            try Data("partial".utf8).write(to: url)
+            throw PetShareExportError.timedOut
+        }
+    }
+
+    let movieURL = try #require(movie.current)
+    let spriteURL = movieURL.deletingPathExtension().appendingPathExtension("png")
+    defer { try? FileManager.default.removeItem(at: movieURL) }
+    #expect(!FileManager.default.fileExists(atPath: spriteURL.path))
+    #expect(FileManager.default.fileExists(atPath: movieURL.path))
+}
+
 @Test @MainActor func xPostURLLeavesThePostTextEmptyAndCarriesOnlyTheShareHashtag() throws {
     let url = try #require(PetShareWindowController.xPostURL())
     let queryItems = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)

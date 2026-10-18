@@ -3,6 +3,13 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
 
+/// Why a pet image set is being committed. A user's own file must always win, so the sample
+/// convenience is refused once any pet is already stored, however the current window got there.
+enum PetImageCommitSource {
+    case userFile
+    case sample
+}
+
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate, ObservableObject {
     /// Two setup steps, then a completion screen that hands the pet over to the desktop.
@@ -29,7 +36,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
     /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
-    let onConfirmImage: @MainActor (PetImageSet) async -> Bool
+    let onConfirmImage: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
@@ -53,12 +60,24 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var currentStep = Step.pet
     @Published var isShowingChatGPTGuide = false
     @Published var didRegisterPet = false
+    /// Set only when the user explicitly chose the bundled sample, so the page can say which pet
+    /// is active. It is session state, like `importedFileName`.
+    @Published var didUseSamplePet = false
     @Published var importedFileName: String?
     @Published var promptFeedback: PromptActionFeedback?
     /// Set when a chosen sheet could not be read, so the page can explain it in place.
     @Published var didFailImport = false
     /// Identifies the interaction that may publish asynchronous import feedback.
     var importFeedbackGeneration = UUID()
+    /// The confirmation the step last repainted, so a delivered key repaints the page once.
+    var didRenderConfirmedReaction = false
+    /// The in-flight sample commit, so a rapid second click cannot start a second write.
+    var sampleCommitTask: Task<Void, Never>?
+    /// How many file imports are between the user's choice and their commit. The sample is refused
+    /// while any of them is pending, because a sample commit queued behind one would replace the pet
+    /// the user asked for. Published so the shortcut disappears as soon as an import starts instead
+    /// of staying visible and ignoring clicks.
+    @Published var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
 
     init(
@@ -66,7 +85,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         promptResourcesURL: URL? = Bundle.main.resourceURL,
         demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
         onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
-        onConfirmImage: @escaping @MainActor (PetImageSet) async -> Bool,
+        onConfirmImage: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> Bool,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,
@@ -122,13 +141,47 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentPetImages().isComplete
     }
 
+    /// The sample shortcut is offered only while the pet store is empty and no file import is still
+    /// on its way to a commit, so choosing it can never replace a pet the user asked for. It is
+    /// explicit: nothing is written until the user picks it.
+    var canTrySample: Bool {
+        !hasImage && demoImages != nil && pendingImportCount == 0
+    }
+
     var isMonitoringGranted: Bool {
         permission.isGranted
     }
 
-    /// True only when permission is granted and the keyboard is genuinely reaching Waddly.
+    /// The four progress states the Keyboard reactions step distinguishes: permission missing, tap
+    /// unavailable, tap live but no key observed, and a key observed. Only the last is ready.
+    var monitoringReadiness: PermissionService.Readiness {
+        permission.readiness
+    }
+
+    /// True only when permission is granted and a real key has reached Waddly since the tap started.
     var isMonitoringReady: Bool {
         permission.isReady
+    }
+
+    /// The completion page states the monitoring outcome truthfully for each readiness state.
+    var monitoringCheckKey: LocalizationKey {
+        switch monitoringReadiness {
+        case .reactionObserved: .setupCheckMonitoring
+        case .awaitingReaction: .setupCheckMonitoringWaiting
+        case .tapUnavailable: .setupCheckMonitoringRestart
+        case .permissionMissing: .setupCheckMonitoringOff
+        }
+    }
+
+    /// The completion page's warning when the monitoring check is incomplete.
+    var monitoringIncompleteWarningKey: LocalizationKey {
+        monitoringReadiness == .awaitingReaction ? .setupCompleteWarningWaiting : .setupCompleteWarning
+    }
+
+    /// What the completion page offers next: confirm by typing when the tap is already live,
+    /// otherwise send the user back to set Input Monitoring up.
+    var monitoringIncompleteActionKey: LocalizationKey {
+        monitoringReadiness == .awaitingReaction ? .setupConfirmTyping : .setupSetUpMonitoring
     }
 
     /// The wizard itself is the drag guide, so it never hands off to a floating panel.
@@ -226,6 +279,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 extension SetupWizardController {
     func renderCurrentStep() {
         updatePreview()
+        didRenderConfirmedReaction = isMonitoringReady
         objectWillChange.send()
     }
 
@@ -248,15 +302,23 @@ extension SetupWizardController {
         }
     }
 
-    /// While reactions are missing, the pet sleeps on the permission step.
+    /// While reactions cannot work yet, the pet sleeps on the permission step. Once the tap is live
+    /// (even before a key arrives), the pet stays awake so the user can watch for the reaction.
     private var shouldSleepInPreview: Bool {
-        currentStep == .monitoring && !isMonitoringReady
+        guard currentStep == .monitoring else { return false }
+        switch monitoringReadiness {
+        case .permissionMissing, .tapUnavailable: return true
+        case .awaitingReaction, .reactionObserved: return false
+        }
     }
 
     /// The completion screen states the outcome, so the stage carries no repeated caption.
     private var previewCaption: String {
         guard currentStep == .monitoring else { return "" }
-        // The ready page already says this in the column; only the failure state needs a caption.
-        return isMonitoringReady ? "" : localizedString(.setupPreviewMonitoringOff)
+        switch monitoringReadiness {
+        case .reactionObserved: return ""
+        case .awaitingReaction: return localizedString(.setupPreviewMonitoringWaiting)
+        case .permissionMissing, .tapUnavailable: return localizedString(.setupPreviewMonitoringOff)
+        }
     }
 }

@@ -82,7 +82,18 @@ public enum PetShareExporter {
         )
         guard writer.canAdd(input) else { throw PetShareExportError.writerUnavailable }
         writer.add(input)
-        guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+        do {
+            try hooks.startWriting(writer)
+        } catch {
+            // `startWriting` is what creates the output file, and `appendMovieFrames` has not created the
+            // serial queue that owns it yet, so this thread still owns both: stop a writer that started and
+            // delete the output it created. The caller only ever deletes its own sprite.
+            if writer.status == .writing {
+                writer.cancelWriting()
+            }
+            try? FileManager.default.removeItem(at: url)
+            throw error
+        }
         writer.startSession(atSourceTime: .zero)
         try appendMovieFrames(
             MovieWriterState(writer: writer, input: input, adaptor: adaptor, shots: shots),
@@ -192,6 +203,10 @@ public enum PetShareExporter {
             throw error
         }
         guard state.writer.status == .completed else {
+            // The writer reached a terminal, non-completed status after its finalizer claimed the export.
+            // Its output is unusable and nothing else will remove it: `cancelOnQueue` can no longer claim
+            // the terminal transition, and the wait has returned, so the writer is no longer active.
+            try? FileManager.default.removeItem(at: state.writer.outputURL)
             throw state.writer.error ?? PetShareExportError.writerUnavailable
         }
     }
