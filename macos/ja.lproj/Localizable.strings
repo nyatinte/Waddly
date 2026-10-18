@@ -171,6 +171,7 @@
 "character.changeTitle" = "キャラクターを変更";
 "character.subtitle" = "3×3のPNGスプライトシートを取り込んで、デスクトップペットをカスタマイズします。";
 "character.dropInstruction" = "ここにPNGをドラッグ＆ドロップ";
+"character.dropHighlight" = "ドロップして取り込む";
 "character.dropHint" = "3×3のスプライトシート";
 "character.chooseFile" = "ファイルを選択…";
 "character.paste" = "クリップボードから貼り付け";

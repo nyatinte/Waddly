@@ -130,12 +130,14 @@ private extension CharacterImportView {
 
     var dropZone: some View {
         VStack(spacing: 8) {
-            Image(systemName: "photo.badge.plus")
+            Image(systemName: model.isDropTargeted ? "arrow.down.doc" : "photo.badge.plus")
                 .font(.system(size: 34, weight: .light))
-                .foregroundStyle(.secondary)
-            Text(localization.string(for: .characterDropInstruction))
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(model.isDropTargeted ? Color.accentColor : Color.secondary)
+            Text(localization.string(
+                for: model.isDropTargeted ? .characterDropHighlight : .characterDropInstruction
+            ))
+            .font(.callout)
+            .foregroundStyle(model.isDropTargeted ? Color.accentColor : Color.secondary)
             Text(localization.string(for: .characterDropHint))
                 .font(.caption)
                 .foregroundStyle(.tertiary)
@@ -143,13 +145,15 @@ private extension CharacterImportView {
         .frame(maxWidth: .infinity, minHeight: 150)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(model.isDropTargeted
+                    ? Color.accentColor.opacity(0.12)
+                    : Color(nsColor: .controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(
-                    Color(nsColor: .separatorColor),
-                    style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    model.isDropTargeted ? Color.accentColor : Color(nsColor: .separatorColor),
+                    style: StrokeStyle(lineWidth: model.isDropTargeted ? 2 : 1.5, dash: [6, 4])
                 )
         )
         .dropDestination(for: URL.self) { urls, _ in
@@ -157,9 +161,13 @@ private extension CharacterImportView {
             guard !pngs.isEmpty else { return false }
             Task { await model.stageFiles(at: pngs) }
             return true
+        } isTargeted: { targeted in
+            model.setDropTargeted(targeted)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(localization.string(for: .characterDropInstruction))
+        .accessibilityLabel(localization.string(
+            for: model.isDropTargeted ? .characterDropHighlight : .characterDropInstruction
+        ))
     }
 
     var metadata: some View {

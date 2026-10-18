@@ -118,7 +118,9 @@ extension SetupWizardController {
     }
 
     /// The setup shell owns commit: Continue applies the staged draft, then advances the step.
-    func commitCharacterImportAndContinue() {
+    /// A failed save stays on this step with the shared screen's inline retry and the draft intact.
+    @discardableResult
+    func commitCharacterImportAndContinue() -> Task<Void, Never> {
         Task { [weak self] in
             guard let self else { return }
             await characterImportModel.apply()

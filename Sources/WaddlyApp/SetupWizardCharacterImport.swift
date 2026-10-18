@@ -11,7 +11,7 @@ extension SetupWizardScreen {
             localization: controller.localization,
             titleKey: .characterSetupTitle,
             primaryKey: .setupNext,
-            onPrimary: controller.commitCharacterImportAndContinue,
+            onPrimary: { _ = controller.commitCharacterImportAndContinue() },
             onCancel: controller.cancelCharacterImport,
             pickFile: controller.chooseCharacterFile,
             pasteboard: controller.pasteboard

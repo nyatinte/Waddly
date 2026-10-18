@@ -171,6 +171,7 @@
 "character.changeTitle" = "Change character";
 "character.subtitle" = "Import a 3×3 PNG sprite sheet to customize your desktop pet.";
 "character.dropInstruction" = "Drag & drop a PNG here";
+"character.dropHighlight" = "Drop to import";
 "character.dropHint" = "3×3 sprite sheet";
 "character.chooseFile" = "Choose File…";
 "character.paste" = "Paste from Clipboard";

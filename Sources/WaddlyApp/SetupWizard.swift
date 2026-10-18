@@ -37,6 +37,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
     /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
     let onConfirmImage: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool
+    /// Commits a reviewed draft with the outcome the shared import screen needs. Defaults to deriving
+    /// from `onConfirmImage`, so a caller that has not migrated keeps the same behavior.
+    let onCommitCharacter: @MainActor (PetImageSet) async -> CharacterCommitOutcome
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
@@ -88,6 +91,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
         onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
         onConfirmImage: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> Bool,
+        onCommitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,
@@ -103,6 +107,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.promptResourcesURL = promptResourcesURL
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
+        self.onCommitCharacter = onCommitCharacter ?? { images in
+            await onConfirmImage(images, .userFile) ? .committed : .rejected
+        }
         self.currentPetImages = currentPetImages
         self.permission = permission
         self.pasteboard = pasteboard
@@ -156,7 +163,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentImages: { [weak self] in self?.currentPetImages() ?? PetImageSet() },
         commit: { [weak self] images in
             guard let self else { return .rejected }
-            return await onConfirmImage(images, .userFile) ? .committed : .rejected
+            return await onCommitCharacter(images)
         }
     )
 

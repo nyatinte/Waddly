@@ -14,6 +14,7 @@ enum LocalizationKey: String, CaseIterable {
     case characterDiscardConfirm = "character.discardConfirm"
     case characterDiscardMessage = "character.discardMessage"
     case characterDiscardTitle = "character.discardTitle"
+    case characterDropHighlight = "character.dropHighlight"
     case characterDropHint = "character.dropHint"
     case characterDropInstruction = "character.dropInstruction"
     case characterEditFrames = "character.editFrames"

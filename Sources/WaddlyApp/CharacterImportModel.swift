@@ -42,6 +42,9 @@ final class CharacterImportModel: ObservableObject {
     /// Whether the clipboard currently holds something Waddly can import. Checked without reading
     /// pixels, when the screen appears or the app becomes active; never automatically imported.
     @Published private(set) var clipboardHasImage = false
+    /// The system's drag-eligibility report for the drop zone, so one highlight can show without
+    /// moving the layout.
+    @Published private(set) var isDropTargeted = false
     /// Bumped on every draft mutation so the advanced editor rebuilds its thumbnails.
     @Published private(set) var draftVersion = 0
 
@@ -86,6 +89,7 @@ final class CharacterImportModel: ObservableObject {
         isReading = false
         isApplying = false
         isEditingFrames = false
+        isDropTargeted = false
         draftVersion += 1
     }
 
@@ -115,6 +119,11 @@ final class CharacterImportModel: ObservableObject {
     /// truthful before the user commits to a paste.
     func refreshClipboardAvailability(from pasteboard: NSPasteboard) {
         clipboardHasImage = PetClipboardImporter.hasSupportedImage(on: pasteboard)
+    }
+
+    /// The drop zone reports the system's drag eligibility here; only a valid PNG drag is targeted.
+    func setDropTargeted(_ targeted: Bool) {
+        isDropTargeted = targeted
     }
 
     private func beginRead() -> Int {
