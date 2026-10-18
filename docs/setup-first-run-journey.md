@@ -3,8 +3,9 @@
 Time-to-first-pet is the goal: a new user should see the pet react to typing without learning
 settings, and should never be shown a success state that the machine has not actually reached. This
 page is the audited map of the setup journey, the saved state that survives relaunch, and the
-scripted tasks that still need a real GUI session. It reflects the code at `agent/issue110-first-run`
-and is written from the actual `SetupWizardController`, `PermissionService`, and `AppSettings`.
+scripted tasks that still need a real GUI session. It reflects the code at
+`agent/issue110-journey-mainline` and is written from the actual `SetupWizardController`,
+`PermissionService`, and `AppSettings`.
 
 Scope: journey, task completion, and recovery. Visual polish is #94; the SwiftUI architecture
 migration is #95; the animation/permission lifecycle is #63/#98. Nothing here adds a mandatory step.
@@ -78,9 +79,12 @@ Invariants enforced by construction:
 
 ## Scripted first-run tasks (manual QA — not yet run)
 
-Each task needs a fresh data directory (`mise run dev:reset` with `mise run dev:install`) and a real
-Input Monitoring decision. Completion criteria are observable; a task is not a pass until the
-observable state is seen on screen. Run each in English and Japanese, in light and dark.
+Each task needs the development app's own data directory (`mise run dev:install`, then
+`mise run dev:reset` to clear it) and a real Input Monitoring decision. `mise run dev:reset` only
+touches the development app's own images and preferences (its separate bundle id); never run it
+against a release or a user's installed app, where it would discard their pet and settings.
+Completion criteria are observable; a task is not a pass until the observable state is seen on
+screen. Run each in English and Japanese, in light and dark.
 
 1. **Fresh pet in one click.** Launch with no pet. Expected: the sample animates in the preview and
    “Try the sample pet first” is visible. Click it. Expected: the pet fills the preview, the page says
@@ -120,26 +124,40 @@ of the named revision with the repository example sheet as the sample and isolat
 preferences. Full provenance, including language and appearance per file, is in
 [docs/images/setup-journey/README.md](images/setup-journey/README.md).
 
-Before (`86dfce5`, #94 setup-feedback head) — Pet step, no pet:
+Before (`e7a026d`, `origin/main` / v1.3.0) — Pet step, no pet:
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![before en light](images/setup-journey/before-86dfce5-en-light.png) | ![before en dark](images/setup-journey/before-86dfce5-en-dark.png) | ![before ja light](images/setup-journey/before-86dfce5-ja-light.png) | ![before ja dark](images/setup-journey/before-86dfce5-ja-dark.png) |
+| ![before en light](images/setup-journey/before-e7a026d-en-light.png) | ![before en dark](images/setup-journey/before-e7a026d-en-dark.png) | ![before ja light](images/setup-journey/before-e7a026d-ja-light.png) | ![before ja dark](images/setup-journey/before-e7a026d-ja-dark.png) |
 
-After (`d4bc89b`, sample shortcut) — Pet step, no pet:
-
-| English / light | English / dark | Japanese / light | Japanese / dark |
-| --- | --- | --- | --- |
-| ![after en light](images/setup-journey/after-d4bc89b-en-light.png) | ![after en dark](images/setup-journey/after-d4bc89b-en-dark.png) | ![after ja light](images/setup-journey/after-d4bc89b-ja-light.png) | ![after ja dark](images/setup-journey/after-d4bc89b-ja-dark.png) |
-
-After (`d4bc89b`) — sample chosen, “sample is active” message:
+After (`a1169d7`, sample shortcut) — Pet step, no pet:
 
 | English / light | English / dark | Japanese / light | Japanese / dark |
 | --- | --- | --- | --- |
-| ![sample en light](images/setup-journey/after-sample-d4bc89b-en-light.png) | ![sample en dark](images/setup-journey/after-sample-d4bc89b-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-d4bc89b-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-d4bc89b-ja-dark.png) |
+| ![after en light](images/setup-journey/after-a1169d7-en-light.png) | ![after en dark](images/setup-journey/after-a1169d7-en-dark.png) | ![after ja light](images/setup-journey/after-a1169d7-ja-light.png) | ![after ja dark](images/setup-journey/after-a1169d7-ja-dark.png) |
 
-Inspect them for text and footer clipping at the default font; the Japanese sample-active line is the
-worst case. Larger text, contrast, VoiceOver, keyboard, and Reduce Motion still need a manual pass.
+After (`a1169d7`) — sample chosen, “sample is active” message:
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![sample en light](images/setup-journey/after-sample-a1169d7-en-light.png) | ![sample en dark](images/setup-journey/after-sample-a1169d7-en-dark.png) | ![sample ja light](images/setup-journey/after-sample-a1169d7-ja-light.png) | ![sample ja dark](images/setup-journey/after-sample-a1169d7-ja-dark.png) |
+
+Keyboard reactions (`a1169d7`) — live tap, no key yet (“waiting for a key press”, Next disabled):
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![awaiting en light](images/setup-journey/monitoring-awaiting-a1169d7-en-light.png) | ![awaiting en dark](images/setup-journey/monitoring-awaiting-a1169d7-en-dark.png) | ![awaiting ja light](images/setup-journey/monitoring-awaiting-a1169d7-ja-light.png) | ![awaiting ja dark](images/setup-journey/monitoring-awaiting-a1169d7-ja-dark.png) |
+
+Keyboard reactions (`a1169d7`) — a key delivered (confirmed, Next enabled):
+
+| English / light | English / dark | Japanese / light | Japanese / dark |
+| --- | --- | --- | --- |
+| ![confirmed en light](images/setup-journey/monitoring-confirmed-a1169d7-en-light.png) | ![confirmed en dark](images/setup-journey/monitoring-confirmed-a1169d7-en-dark.png) | ![confirmed ja light](images/setup-journey/monitoring-confirmed-a1169d7-ja-light.png) | ![confirmed ja dark](images/setup-journey/monitoring-confirmed-a1169d7-ja-dark.png) |
+
+These renders were made from fixture state, not a live typing session: the awaiting/confirmed states
+were set by pointing the fixture's `hasObservedReaction` at false/true. Inspect them for text and
+footer clipping at the default font; the Japanese lines are the worst case. Larger text, contrast,
+VoiceOver, real keyboard confirmation, and Reduce Motion still need a manual pass.
 
 ## Automated verification
 
@@ -147,5 +165,9 @@ worst case. Larger text, contrast, VoiceOver, keyboard, and Reduce Motion still 
 [setup-wizard-qa.md](setup-wizard-qa.md). The journey-specific additions live in the
 `SetupWizardJourneyTests` suite: `tryingTheSampleCommitsTheBundledSampleInPlace`,
 `tryingTheSampleNeverReplacesAnExistingPet`, `importingARealSheetClearsTheSampleChoice`,
-`interruptedPermissionFlowResumesToRestartRequired`, and
-`deferringSavesTheReadyStepSoARelaunchCanResume`.
+`rapidSampleRequestsCommitOnce`, `interruptedPermissionFlowResumesToRestartRequired`,
+`deferringSavesTheReadyStepSoARelaunchCanResume`, `aLiveTapStaysUnconfirmedUntilAKeyArrives`,
+`deferringFromALiveTapKeepsTheCheckWaiting`, and `aReturningUserKeepsAConfirmedReaction`. The
+readiness rules themselves are covered by `PermissionServiceTests`
+(`aLiveTapWithoutADeliveredKeyIsAwaitingReaction`,
+`readinessSeparatesMissingPermissionFromAnUnavailableTap`, `deferringDoesNotConfirmReactions`).
