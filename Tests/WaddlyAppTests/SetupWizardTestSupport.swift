@@ -29,6 +29,7 @@ enum SetupWizardFixture {
         confirmResult: Bool = false,
         confirm: (@MainActor (PetImageSet, PetImageCommitSource) async -> Bool)? = nil,
         commitCharacterOutcome: CharacterCommitOutcome? = nil,
+        commitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
         requestPermission: @escaping @MainActor () -> Bool = { false },
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
@@ -69,7 +70,7 @@ enum SetupWizardFixture {
                 }
                 return state.confirmResult
             },
-            onCommitCharacter: makeCommitCharacter(state: state, outcome: commitCharacterOutcome),
+            onCommitCharacter: commitCharacter ?? makeCommitCharacter(state: state, outcome: commitCharacterOutcome),
             currentPetImages: { state.images },
             permission: permission,
             presenter: .invisible,

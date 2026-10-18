@@ -27,6 +27,34 @@ import WaddlyCore
         #expect(recordedBefore == .pet)
     }
 
+    @Test func duplicateSetupApplyDoesNotAdvanceBeforeTheSuspendedCommitFails() async throws {
+        let state = Fixture.State()
+        let gate = CharacterImportCommitGate()
+        let wizard = try Fixture.makeWizard(state: state, commitCharacter: { _ in
+            state.commitCharacterCount += 1
+            return await gate.commit()
+        })
+        defer { wizard.close() }
+        wizard.beginCharacterImport()
+        try await wizard.characterImportModel.stageFiles(at: [Fixture.sheetURL()])
+
+        let first = wizard.commitCharacterImportAndContinue()
+        #expect(await gate.waitUntilEntered())
+        await wizard.commitCharacterImportAndContinue().value
+        wizard.cancelCharacterImport()
+        #expect(try !wizard.windowShouldClose(#require(wizard.window)))
+        #expect(wizard.currentStep == .pet)
+        #expect(wizard.isComposingCharacter)
+        #expect(state.commitCharacterCount == 1)
+
+        gate.resume(with: .failed)
+        await first.value
+        #expect(wizard.currentStep == .pet)
+        #expect(wizard.isComposingCharacter)
+        #expect(wizard.characterImportModel.commitFailed)
+        #expect(state.commitCharacterCount == 1)
+    }
+
     /// A failed persistence keeps the staged draft and the step: no advance, no committed pet, and the
     /// shared screen's inline retry is what the user sees.
     @Test func aFailedSetupCommitStaysOnTheStepWithAnInlineRetry() async throws {

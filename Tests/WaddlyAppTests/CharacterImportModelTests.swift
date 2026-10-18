@@ -58,7 +58,7 @@ import WaddlyCore
         let model = makeModel(current: PetImageSet(), commit: { _ in .failed })
         try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
 
-        await model.apply()
+        #expect(await !(model.apply()))
 
         #expect(model.commitFailed)
         #expect(model.stagedFrames?.isComplete == true)
@@ -71,7 +71,7 @@ import WaddlyCore
         try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
         #expect(model.isDirty)
 
-        await model.apply()
+        #expect(await model.apply())
 
         #expect(!model.commitFailed)
         #expect(!model.isDirty)

@@ -76,6 +76,7 @@ final class CharacterImportModel: ObservableObject {
 
     /// Rebase the draft on the pet that is committed now, so reopening shows the real pet.
     func reload() {
+        guard !isApplying else { return }
         generation += 1
         committedBaseline = currentImages()
         stagedFrames = nil
@@ -153,9 +154,10 @@ final class CharacterImportModel: ObservableObject {
 
     // MARK: - Commit / discard
 
-    func apply() async {
+    @discardableResult
+    func apply() async -> Bool {
         // Re-entrancy guard: a primary-action double click must commit once, not twice.
-        guard !isApplying, let stagedFrames, stagedFrames.isComplete else { return }
+        guard !isApplying, let stagedFrames, stagedFrames.isComplete else { return false }
         isApplying = true
         let outcome = await commit(stagedFrames)
         isApplying = false
@@ -164,8 +166,10 @@ final class CharacterImportModel: ObservableObject {
             committedBaseline = stagedFrames
             failure = nil
             commitFailed = false
+            return true
         case .rejected, .failed:
             commitFailed = true
+            return false
         }
     }
 
@@ -176,6 +180,7 @@ final class CharacterImportModel: ObservableObject {
     }
 
     func discard() {
+        guard !isApplying else { return }
         reload()
     }
 

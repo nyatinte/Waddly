@@ -54,10 +54,14 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     func focus() {
         presenter.activate()
         guard let window else { return }
-        if !window.isVisible {
+        if Self.shouldReloadDraft(isVisible: window.isVisible, isMiniaturized: window.isMiniaturized) {
             model.reload()
         }
         presenter.focus(window)
+    }
+
+    static func shouldReloadDraft(isVisible: Bool, isMiniaturized: Bool) -> Bool {
+        !isVisible && !isMiniaturized
     }
 
     func refreshLocalization() {
@@ -68,6 +72,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     /// Closing with staged changes asks first; an untouched or freshly applied window closes at once.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard !model.isApplying else { return false }
         guard model.isDirty, !isConfirmingClose else { return true }
         confirmDiscard { [weak self] in
             guard let self else { return }
@@ -125,16 +130,16 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         return panel.url
     }
 
-    private func applyAndClose() {
+    func applyAndClose() {
         Task { [weak self] in
             guard let self else { return }
-            await model.apply()
-            guard !model.commitFailed else { return }
+            guard await model.apply() else { return }
             close()
         }
     }
 
     private func cancel() {
+        guard !model.isApplying else { return }
         guard model.isDirty else {
             close()
             return
@@ -143,6 +148,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     }
 
     private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
+        guard !model.isApplying else { return }
         guard let window else {
             discard()
             return
@@ -160,6 +166,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     }
 
     private func finishDiscard(_ discard: @MainActor () -> Void) {
+        guard !model.isApplying else { return }
         discard()
     }
 }

@@ -123,8 +123,7 @@ extension SetupWizardController {
     func commitCharacterImportAndContinue() -> Task<Void, Never> {
         Task { [weak self] in
             guard let self else { return }
-            await characterImportModel.apply()
-            guard !characterImportModel.commitFailed else {
+            guard await characterImportModel.apply() else {
                 renderCurrentStep()
                 return
             }
@@ -139,6 +138,7 @@ extension SetupWizardController {
     /// Leaving the shared screen. A staged-but-uncommitted change asks first; an untouched screen
     /// returns to the method list immediately.
     func cancelCharacterImport() {
+        guard !characterImportModel.isApplying else { return }
         guard characterImportModel.isDirty else {
             leaveCharacterImport()
             return
@@ -168,12 +168,14 @@ extension SetupWizardController {
     }
 
     private func leaveCharacterImport() {
+        guard !characterImportModel.isApplying else { return }
         characterImportModel.discard()
         isComposingCharacter = false
         renderCurrentStep()
     }
 
     private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
+        guard !characterImportModel.isApplying else { return }
         guard let window else {
             discard()
             return

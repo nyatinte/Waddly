@@ -270,6 +270,10 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         following.recordMove(to: window.frame.origin)
     }
 
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        !characterImportModel.isApplying
+    }
+
     func windowWillClose(_ notification: Notification) {
         clearImportFeedback()
         permission.stop()

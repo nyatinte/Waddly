@@ -28,6 +28,12 @@ import WaddlyCore
         #expect(second !== first)
     }
 
+    @Test func aMiniaturizedWindowDoesNotReloadItsDraftOnRefocus() {
+        #expect(!CharacterImportWindowController.shouldReloadDraft(isVisible: false, isMiniaturized: true))
+        #expect(!CharacterImportWindowController.shouldReloadDraft(isVisible: true, isMiniaturized: false))
+        #expect(CharacterImportWindowController.shouldReloadDraft(isVisible: false, isMiniaturized: false))
+    }
+
     /// The editor's minimum must be a *content* minimum that fits all four fixed rows plus the
     /// instructions. The old frame-based `minSize` subtracted the title bar and clipped the last row.
     @Test func minimumContentFitsAllFourRows() {
@@ -38,6 +44,49 @@ import WaddlyCore
             + AnimationSettingsMetrics.instructionBlockHeight + AnimationSettingsMetrics.contentInset * 2)
         // 640 was the old frame height, which left the content shorter than four rows.
         #expect(minimum.height > 640)
+    }
+
+    @Test func duplicateWindowApplyCannotCloseWhileTheCommitIsSuspendedOrFails() async throws {
+        let fixture = try AppIntegrationFixture()
+        defer { fixture.close() }
+        let gate = CharacterImportCommitGate()
+        let app = fixture.app
+        let gatedModel = CharacterImportModel(
+            currentImages: { app.petImages },
+            commit: { _ in await gate.commit() }
+        )
+        let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+        let localization = LocalizationController(settings: app.settings, resources: resources)
+        let gatedController = CharacterImportWindowController(
+            model: gatedModel,
+            localization: localization,
+            presenter: .invisible,
+            onClose: {}
+        )
+        gatedController.focus()
+        let window = try #require(gatedController.window)
+        await gatedModel.stageFiles(at: [fixture.exampleURL])
+        gatedController.applyAndClose()
+        #expect(await gate.waitUntilEntered())
+        #expect(!gatedController.windowShouldClose(window))
+        gatedController.applyAndClose()
+        for _ in 0 ..< 20 {
+            await Task.yield()
+        }
+        #expect(window.isVisible)
+        #expect(gatedModel.isApplying)
+        gate.resume(with: .failed)
+        for _ in 0 ..< 500 {
+            if !gatedModel.isApplying {
+                break
+            }
+            await Task.yield()
+        }
+        #expect(gatedModel.commitFailed)
+        #expect(window.isVisible)
+        #expect(gatedModel.canApply)
+        gatedModel.discard()
+        gatedController.close()
     }
 
     /// An advanced edit is staged, not committed: it reaches the change flow's own draft and leaves
@@ -77,7 +126,11 @@ import WaddlyCore
 
         #expect(!controller.model.commitFailed)
         #expect(app.petImages[.idle].first === staged[.idle].first)
-        #expect(try fixture.manifest() != nil)
+        let manifest = try #require(try fixture.manifest())
+        #expect(manifest == app.settings.petImageFiles)
+        #expect(manifest[PetImageCategory.idle.rawValue]?.isEmpty == false)
+        let diskLoaded = try PetImageStorage(directory: fixture.directory).load(manifest).0
+        #expect(diskLoaded.isComplete)
         #expect(!controller.model.isDirty)
 
         controller.close()
@@ -86,7 +139,13 @@ import WaddlyCore
         let reopened = try #require(app.characterImportWindowController)
         #expect(reopened.model.stagedFrames == nil)
         #expect(!reopened.model.isDirty)
-        #expect(app.petImages[.idle].first === staged[.idle].first)
+        app.importedImages = nil
+        await app.loadSavedPetImage()
+        #expect(app.petImages.isComplete)
+        #expect(try fixture.manifest() == manifest)
+        for category in PetImageCategory.allCases {
+            #expect(app.petImages[category].count == (manifest[category.rawValue]?.count ?? 0))
+        }
     }
 }
 
