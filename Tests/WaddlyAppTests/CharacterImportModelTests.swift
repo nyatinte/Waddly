@@ -91,6 +91,27 @@ import WaddlyCore
         #expect(!model.isReading)
     }
 
+    @Test func releasingEachGateBeforeStartReturnsTheLatchedResult() async throws {
+        let sheetOutcome = CharacterSheetLoadOutcome.empty
+        let sheetGate = SheetLoadGate(outcome: sheetOutcome)
+        sheetGate.release()
+        guard case .empty = await sheetGate.load() else {
+            Issue.record("sheet gate did not return its latched result")
+            return
+        }
+
+        let images = try [#require(SetupWizardFixture.sheetImages()[.idle].first)]
+        let frameGate = FrameDecodeGate(images: images)
+        frameGate.release()
+        let decoded = await frameGate.decode()
+        #expect(decoded.count == images.count)
+        #expect(decoded.first === images.first)
+
+        let commitGate = CharacterCommitOutcomeGate()
+        commitGate.release(.rejected)
+        #expect(await commitGate.commit() == .rejected)
+    }
+
     @Test func staleEditorAddCannotAppendToReplacementDraft() async throws {
         let sheetURL = try SetupWizardFixture.sheetURL()
         let original = await CharacterSheetLoader.load(from: sheetURL)
@@ -258,10 +279,13 @@ import WaddlyCore
     }
 }
 
+/// Startup observation is bounded; release results are latched so a late-starting operation still
+/// completes instead of suspending after the test's release call.
 @MainActor
 private final class SheetLoadGate {
     private var didStart = false
     private var continuation: CheckedContinuation<CharacterSheetLoadOutcome, Never>?
+    private var releasedOutcome: CharacterSheetLoadOutcome?
     private let outcome: CharacterSheetLoadOutcome
 
     init(outcome: CharacterSheetLoadOutcome) {
@@ -270,24 +294,23 @@ private final class SheetLoadGate {
 
     func load() async -> CharacterSheetLoadOutcome {
         didStart = true
+        if let releasedOutcome {
+            return releasedOutcome
+        }
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        for _ in 0 ..< 500 {
-            if didStart {
-                return true
-            }
-            await Task.yield()
-        }
-        return didStart
+        await waitForBoundedStartupObservation { didStart }
     }
 
     func release() {
-        guard let continuation else {
-            Issue.record("sheet load gate released before it started")
+        guard releasedOutcome == nil else {
+            Issue.record("sheet load gate released more than once")
             return
         }
+        releasedOutcome = outcome
+        guard let continuation else { return }
         self.continuation = nil
         continuation.resume(returning: outcome)
     }
@@ -297,27 +320,27 @@ private final class SheetLoadGate {
 private final class CharacterCommitOutcomeGate {
     private var didStart = false
     private var continuation: CheckedContinuation<CharacterCommitOutcome, Never>?
+    private var releasedOutcome: CharacterCommitOutcome?
 
     func commit() async -> CharacterCommitOutcome {
         didStart = true
+        if let releasedOutcome {
+            return releasedOutcome
+        }
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        for _ in 0 ..< 500 {
-            if didStart {
-                return true
-            }
-            await Task.yield()
-        }
-        return didStart
+        await waitForBoundedStartupObservation { didStart }
     }
 
     func release(_ outcome: CharacterCommitOutcome) {
-        guard let continuation else {
-            Issue.record("character commit gate released before it started")
+        guard releasedOutcome == nil else {
+            Issue.record("character commit gate released more than once")
             return
         }
+        releasedOutcome = outcome
+        guard let continuation else { return }
         self.continuation = nil
         continuation.resume(returning: outcome)
     }
@@ -327,6 +350,7 @@ private final class CharacterCommitOutcomeGate {
 private final class FrameDecodeGate {
     private var didStart = false
     private var continuation: CheckedContinuation<[NSImage], Never>?
+    private var releasedImages: [NSImage]?
     private let images: [NSImage]
 
     init(images: [NSImage]) {
@@ -335,27 +359,34 @@ private final class FrameDecodeGate {
 
     func decode() async -> [NSImage] {
         didStart = true
+        if let releasedImages {
+            return releasedImages
+        }
         return await withCheckedContinuation { continuation = $0 }
     }
 
     func waitUntilStarted() async -> Bool {
-        for _ in 0 ..< 500 {
-            if didStart {
-                return true
-            }
-            await Task.yield()
-        }
-        return didStart
+        await waitForBoundedStartupObservation { didStart }
     }
 
     func release() {
-        guard let continuation else {
-            Issue.record("frame decode gate released before it started")
+        guard releasedImages == nil else {
+            Issue.record("frame decode gate released more than once")
             return
         }
+        releasedImages = images
+        guard let continuation else { return }
         self.continuation = nil
         continuation.resume(returning: images)
     }
+}
+
+@MainActor
+private func waitForBoundedStartupObservation(_ isStarted: () -> Bool) async -> Bool {
+    for _ in 0 ..< 500 where !isStarted() {
+        await Task.yield()
+    }
+    return isStarted()
 }
 
 @MainActor
