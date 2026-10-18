@@ -116,12 +116,11 @@ import WaddlyCore
     #expect(FileManager.default.fileExists(atPath: movieURL.path))
 }
 
-@Test @MainActor func xPostURLIncludesReminderAndShareHashtag() throws {
-    let reminder = "動画と画像をコピーしてポストに添付してください"
-    let url = try #require(PetShareWindowController.xPostURL(text: reminder))
+@Test @MainActor func xPostURLLeavesThePostTextEmptyAndCarriesOnlyTheShareHashtag() throws {
+    let url = try #require(PetShareWindowController.xPostURL())
     let queryItems = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
 
-    #expect(queryItems.first { $0.name == "text" }?.value == reminder)
+    #expect(queryItems.contains { $0.name == "text" } == false)
     #expect(queryItems.first { $0.name == "hashtags" }?.value == "ShareMyWaddly")
 }
 

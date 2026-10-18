@@ -176,15 +176,16 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func openX() {
-        if let url = Self.xPostURL(text: localization.string(for: .shareXDraft)) {
+        if let url = Self.xPostURL() {
             NSWorkspace.shared.open(url)
         }
     }
 
-    static func xPostURL(text: String) -> URL? {
+    /// Opens the X composer with the share hashtag and no post text, so whatever the user writes in the
+    /// composer is theirs alone. The draft used to carry an instruction the user never asked for.
+    static func xPostURL() -> URL? {
         var components = URLComponents(string: "https://twitter.com/intent/tweet")
         components?.queryItems = [
-            URLQueryItem(name: "text", value: text),
             URLQueryItem(name: "hashtags", value: "ShareMyWaddly")
         ]
         return components?.url
