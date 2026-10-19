@@ -33,6 +33,7 @@ enum SetupWizardFixture {
         requestPermission: @escaping @MainActor () -> Bool = { false },
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
+        presenter: WindowPresenter = .invisible,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {}
     ) throws -> SetupWizardController {
@@ -73,7 +74,7 @@ enum SetupWizardFixture {
             onCommitCharacter: commitCharacter ?? makeCommitCharacter(state: state, outcome: commitCharacterOutcome),
             currentPetImages: { state.images },
             permission: permission,
-            presenter: .invisible,
+            presenter: presenter,
             savedStep: savedStep,
             pasteboard: pasteboard,
             openBrowser: openBrowser,

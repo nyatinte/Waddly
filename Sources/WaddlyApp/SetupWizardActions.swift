@@ -130,6 +130,7 @@ extension SetupWizardController {
             importedFileName = characterImportModel.sourceName
             didRegisterPet = true
             didUseSamplePet = false
+            stopEmbeddedCharacterPreview()
             isComposingCharacter = false
             goNext()
         }
@@ -170,8 +171,14 @@ extension SetupWizardController {
     private func leaveCharacterImport() {
         guard !characterImportModel.isApplying else { return }
         characterImportModel.discard()
+        stopEmbeddedCharacterPreview()
         isComposingCharacter = false
         renderCurrentStep()
+    }
+
+    func stopEmbeddedCharacterPreview() {
+        embeddedCharacterPreviewPane?.stopPlayback()
+        embeddedCharacterPreviewPane = nil
     }
 
     private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {

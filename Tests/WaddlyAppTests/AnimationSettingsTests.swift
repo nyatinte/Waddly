@@ -139,7 +139,8 @@ import WaddlyCore
 
         app.showChangeCharacter()
         let reopened = try #require(app.characterImportWindowController)
-        #expect(reopened.model.stagedFrames == nil)
+        let reopenedFrames = try #require(reopened.model.stagedFrames)
+        #expect(CharacterImportModel.sameFrames(reopenedFrames, app.petImages))
         #expect(!reopened.model.isDirty)
         #expect(CharacterImportModel.sameFrames(reopened.model.committedBaseline, app.petImages))
     }

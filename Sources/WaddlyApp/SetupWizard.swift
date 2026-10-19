@@ -58,6 +58,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let onClose: @MainActor () -> Void
 
     let previewPane = SetupPreviewPane(frame: .zero)
+    var embeddedCharacterPreviewPane: SetupPreviewPane?
     var demoImages: PetImageSet?
 
     @Published var currentStep = Step.pet
@@ -229,6 +230,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     private var following = GuideFollowing()
     private var wasShowingGuide = false
     private var isMovingProgrammatically = false
+    private var isConfirmingWindowClose = false
+    private var mayCloseAfterConfirmedDiscard = false
 
     var isFollowingSystemSettings: Bool {
         following.isActive
@@ -271,7 +274,32 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        !characterImportModel.isApplying
+        guard !characterImportModel.isApplying else { return false }
+        if mayCloseAfterConfirmedDiscard {
+            return true
+        }
+        guard isComposingCharacter, characterImportModel.isDirty else { return true }
+        guard !isConfirmingWindowClose else { return false }
+        isConfirmingWindowClose = true
+        guard let window else {
+            mayCloseAfterConfirmedDiscard = true
+            close()
+            return true
+        }
+        let alert = NSAlert()
+        alert.messageText = localizedString(.characterDiscardTitle)
+        alert.informativeText = localizedString(.characterDiscardMessage)
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: localizedString(.characterDiscardConfirm))
+        alert.addButton(withTitle: localizedString(.characterCancel))
+        presenter.presentAlert(alert, window) { [weak self] response in
+            guard let self else { return }
+            isConfirmingWindowClose = false
+            guard response == .alertFirstButtonReturn else { return }
+            mayCloseAfterConfirmedDiscard = true
+            close()
+        }
+        return false
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -279,6 +307,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
+        stopEmbeddedCharacterPreview()
         window?.contentView = nil
         window?.delegate = nil
         onClose()

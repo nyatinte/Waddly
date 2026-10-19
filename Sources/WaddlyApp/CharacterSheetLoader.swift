@@ -13,8 +13,10 @@ enum CharacterSheetLoadOutcome: Sendable {
 enum CharacterSheetLoader {
     static func load(from url: URL) async -> CharacterSheetLoadOutcome {
         await Task.detached(priority: .userInitiated) {
-            guard let data = PetSpriteSheetImporter.readPNG(from: url) else { return .invalid(.unreadable) }
-            return inspect(data)
+            switch PetSpriteSheetImporter.inspectFile(at: url) {
+            case let .success(candidate): .valid(candidate)
+            case let .failure(reason): .invalid(reason)
+            }
         }.value
     }
 

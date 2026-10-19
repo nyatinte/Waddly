@@ -10,6 +10,7 @@ enum LocalizationKey: String, CaseIterable {
     case characterClipboardEmpty = "character.clipboardEmpty"
     case characterClipboardSource = "character.clipboardSource"
     case characterCommitFailed = "character.commitFailed"
+    case characterCommitRejected = "character.commitRejected"
     case characterDimensionsFormat = "character.dimensionsFormat"
     case characterDiscardConfirm = "character.discardConfirm"
     case characterDiscardMessage = "character.discardMessage"

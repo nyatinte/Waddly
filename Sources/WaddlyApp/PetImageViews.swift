@@ -22,6 +22,7 @@ final class SpriteSheetGridOverlay: NSView {
 @MainActor
 class PetImageDropView: NSView {
     var onDrop: (([URL]) -> Void)?
+    var shouldPreserveUnsupportedDropURLs: () -> Bool = { false }
 
     /// Keep the semantic drag state separate from the CGColor captured for the current appearance.
     var isDropTargeted = false {
@@ -55,7 +56,7 @@ class PetImageDropView: NSView {
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        guard !fileURLs(from: sender).isEmpty else { return [] }
+        guard !fileURLs(from: sender.draggingPasteboard).isEmpty else { return [] }
         isDropTargeted = true
         return .copy
     }
@@ -65,8 +66,13 @@ class PetImageDropView: NSView {
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        let urls = fileURLs(from: sender)
         restoreDropAppearance()
+        return performFileURLDrop(from: sender.draggingPasteboard)
+    }
+
+    @discardableResult
+    func performFileURLDrop(from pasteboard: NSPasteboard) -> Bool {
+        let urls = fileURLs(from: pasteboard)
         guard !urls.isEmpty else { return false }
         onDrop?(urls)
         return true
@@ -83,10 +89,14 @@ class PetImageDropView: NSView {
         }
     }
 
-    private func fileURLs(from sender: NSDraggingInfo) -> [URL] {
-        (sender.draggingPasteboard.readObjects(
+    private func fileURLs(from pasteboard: NSPasteboard) -> [URL] {
+        let urls = pasteboard.readObjects(
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
-        ) as? [URL] ?? []).filter { $0.pathExtension.lowercased() == "png" }
+        ) as? [URL] ?? []
+        guard shouldPreserveUnsupportedDropURLs() else {
+            return urls.filter { $0.pathExtension.lowercased() == "png" }
+        }
+        return urls
     }
 }

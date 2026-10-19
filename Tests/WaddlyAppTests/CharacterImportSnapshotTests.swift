@@ -18,6 +18,26 @@ import WaddlyCore
         }
     }
 
+    @Test func capturesSavedCharacterEditingEntry() throws {
+        guard CaptureHarness.isEnabled else { return }
+        try CaptureHarness.prepare()
+        for language in [AppLanguage.english, .japanese] {
+            for dark in [false, true] {
+                try captureSavedCharacter(language: language, dark: dark)
+            }
+        }
+    }
+
+    @Test func capturesRejectedCommitFeedback() async throws {
+        guard CaptureHarness.isEnabled else { return }
+        try CaptureHarness.prepare()
+        for language in [AppLanguage.english, .japanese] {
+            for dark in [false, true] {
+                try await captureRejectedCommit(language: language, dark: dark)
+            }
+        }
+    }
+
     @Test func capturesSetupPetStepSurfaces() async throws {
         guard CaptureHarness.isEnabled else { return }
         try CaptureHarness.prepare()
@@ -31,6 +51,48 @@ import WaddlyCore
 
 @MainActor
 private extension CharacterImportSnapshotTests {
+    func captureRejectedCommit(language: AppLanguage, dark: Bool) async throws {
+        let frames = try SetupWizardFixture.sheetImages()
+        let model = CharacterImportModel(currentImages: { frames }, commit: { _ in .rejected })
+        let localization = try CaptureHarness.localized(language)
+        let controller = CharacterImportWindowController(
+            model: model,
+            localization: localization,
+            presenter: .invisible,
+            onClose: {}
+        )
+        controller.focus()
+        defer { controller.close() }
+        #expect(await !model.apply())
+        await Task.yield()
+        try CaptureHarness.write(
+            #require(controller.window?.contentView),
+            dark: dark,
+            named: "change-rejected-commit-\(CaptureHarness.suffix(language, dark))"
+        )
+    }
+
+    func captureSavedCharacter(language: AppLanguage, dark: Bool) throws {
+        var frames = try SetupWizardFixture.sheetImages()
+        frames[.idle].append(frames[.typing][0])
+        frames[.typing].removeFirst()
+        let model = CharacterImportModel(currentImages: { frames }, commit: { _ in .committed })
+        let localization = try CaptureHarness.localized(language)
+        let controller = CharacterImportWindowController(
+            model: model,
+            localization: localization,
+            presenter: .invisible,
+            onClose: {}
+        )
+        controller.focus()
+        defer { controller.close() }
+        try CaptureHarness.write(
+            #require(controller.window?.contentView),
+            dark: dark,
+            named: "change-saved-character-\(CaptureHarness.suffix(language, dark))"
+        )
+    }
+
     func captureChangeCharacter(language: AppLanguage, dark: Bool) async throws {
         let model = CharacterImportModel(currentImages: { PetImageSet() }, commit: { _ in .committed })
         let controller = try CharacterImportWindowController(

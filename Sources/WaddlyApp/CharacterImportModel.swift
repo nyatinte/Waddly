@@ -14,7 +14,7 @@ enum CharacterImportFailure: Equatable {
 /// What a commit attempt did, so the screen can retry truthfully.
 enum CharacterCommitOutcome: Equatable {
     case committed
-    /// The store refused the write (for example the sample rule, or shutdown).
+    /// The store declined the commit without a persistence failure (for example, during shutdown).
     case rejected
     /// Persistence failed; the committed pet is unchanged and the draft stays for retry.
     case failed
@@ -34,6 +34,7 @@ final class CharacterImportModel: ObservableObject {
     @Published private(set) var cellSize: Int?
     @Published private(set) var failure: CharacterImportFailure?
     @Published private(set) var commitFailed = false
+    @Published private(set) var commitRejected = false
     @Published private(set) var isReading = false
     @Published private(set) var isApplying = false
     @Published var isEditingFrames = false
@@ -86,12 +87,13 @@ final class CharacterImportModel: ObservableObject {
         guard !isApplying else { return }
         generation += 1
         committedBaseline = currentImages()
-        stagedFrames = nil
+        stagedFrames = committedBaseline.isComplete ? committedBaseline : nil
         sourceName = nil
         sourceDimension = nil
         cellSize = nil
         failure = nil
         commitFailed = false
+        commitRejected = false
         isReading = false
         isApplying = false
         isEditingFrames = false
@@ -146,6 +148,7 @@ final class CharacterImportModel: ObservableObject {
         isReading = true
         failure = nil
         commitFailed = false
+        commitRejected = false
         return generation
     }
 
@@ -153,6 +156,7 @@ final class CharacterImportModel: ObservableObject {
         generation += 1
         isReading = false
         commitFailed = false
+        commitRejected = false
         self.failure = failure
     }
 
@@ -182,6 +186,9 @@ final class CharacterImportModel: ObservableObject {
         // Re-entrancy guard: a primary-action double click must commit once, not twice.
         guard !isApplying, !isReading, let stagedFrames, stagedFrames.isComplete else { return false }
         generation += 1
+        failure = nil
+        commitFailed = false
+        commitRejected = false
         isApplying = true
         let outcome = await commit(stagedFrames)
         isApplying = false
@@ -190,8 +197,12 @@ final class CharacterImportModel: ObservableObject {
             committedBaseline = stagedFrames
             failure = nil
             commitFailed = false
+            commitRejected = false
             return true
-        case .rejected, .failed:
+        case .rejected:
+            commitRejected = true
+            return false
+        case .failed:
             commitFailed = true
             return false
         }

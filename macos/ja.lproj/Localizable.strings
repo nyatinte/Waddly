@@ -184,6 +184,7 @@
 "character.reading" = "画像を読み込んでいます…";
 "character.clipboardEmpty" = "クリップボードに画像がありません。";
 "character.commitFailed" = "キャラクターを保存できませんでした。現在のペットは変更されていません。もう一度お試しください。";
+"character.commitRejected" = "キャラクターの変更は適用されませんでした。下書きは保持されています。";
 "character.error.notPNG" = "PNGファイルを選択してください。";
 "character.error.unreadable" = "このファイルはPNGとして読み込めませんでした。";
 "character.error.fileTooLarge" = "PNGが20 MBを超えています。";

@@ -18,6 +18,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     private let presenter: WindowPresenter
     private let onClose: @MainActor () -> Void
     private var isConfirmingClose = false
+    private weak var embeddedPreviewPane: SetupPreviewPane?
 
     init(
         model: CharacterImportModel,
@@ -83,6 +84,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     }
 
     func windowWillClose(_ notification: Notification) {
+        stopEmbeddedPreview()
         window?.contentView = nil
         window?.delegate = nil
         onClose()
@@ -91,6 +93,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     private func buildContent() {
         let root = PetImageDropView()
         root.idleBorderWidth = 0
+        root.shouldPreserveUnsupportedDropURLs = { true }
         root.onDrop = { [weak self] urls in
             Task { await self?.model.stageFiles(at: urls) }
         }
@@ -102,6 +105,9 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             primaryKey: .characterApply,
             onPrimary: { [weak self] in _ = self?.applyAndClose() },
             onCancel: { [weak self] in self?.cancel() },
+            onPreviewPaneCreated: { [weak self] pane in self?.embeddedPreviewPane = pane },
+            isPreviewActive: { true },
+            onPreviewHostDisappear: { [weak self] in self?.stopEmbeddedPreview() },
             pickFile: { [weak self] in self?.pickFile() },
             pasteboard: .general
         ))
@@ -137,6 +143,11 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             guard await model.apply() else { return }
             close()
         }
+    }
+
+    private func stopEmbeddedPreview() {
+        embeddedPreviewPane?.stopPlayback()
+        embeddedPreviewPane = nil
     }
 
     private func cancel() {

@@ -13,6 +13,9 @@ extension SetupWizardScreen {
             primaryKey: .setupNext,
             onPrimary: { _ = controller.commitCharacterImportAndContinue() },
             onCancel: controller.cancelCharacterImport,
+            onPreviewPaneCreated: { [weak controller] pane in controller?.embeddedCharacterPreviewPane = pane },
+            isPreviewActive: { controller.isComposingCharacter },
+            onPreviewHostDisappear: { [weak controller] in controller?.stopEmbeddedCharacterPreview() },
             pickFile: controller.chooseCharacterFile,
             pasteboard: controller.pasteboard
         )

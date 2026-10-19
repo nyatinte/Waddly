@@ -231,7 +231,8 @@ import WaddlyCore
 
         model.discard()
 
-        #expect(model.stagedFrames == nil)
+        let discarded = try #require(model.stagedFrames)
+        #expect(CharacterImportModel.sameFrames(discarded, committed))
         #expect(!model.isDirty)
     }
 

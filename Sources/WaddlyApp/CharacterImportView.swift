@@ -41,6 +41,9 @@ struct CharacterImportView: View {
     let primaryKey: LocalizationKey
     let onPrimary: () -> Void
     let onCancel: () -> Void
+    let onPreviewPaneCreated: (SetupPreviewPane) -> Void
+    let isPreviewActive: () -> Bool
+    let onPreviewHostDisappear: () -> Void
     /// Opens the native picker. Returns `nil` when the user cancels.
     let pickFile: () -> URL?
     let pasteboard: NSPasteboard
@@ -53,7 +56,10 @@ struct CharacterImportView: View {
                 CharacterPreviewHost(
                     localization: localization,
                     frames: model.stagedFrames,
-                    placeholder: localization.string(for: .characterEmptyPreview)
+                    placeholder: localization.string(for: .characterEmptyPreview),
+                    onDrop: { urls in Task { await model.stageDroppedFiles(at: urls) } },
+                    isActive: isPreviewActive,
+                    onPaneCreated: onPreviewPaneCreated
                 )
                 .frame(width: 320, height: 300)
             }
@@ -65,6 +71,7 @@ struct CharacterImportView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { model.refreshClipboardAvailability(from: pasteboard) }
+        .onDisappear(perform: onPreviewHostDisappear)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.refreshClipboardAvailability(from: pasteboard)
         }
@@ -119,6 +126,10 @@ private extension CharacterImportView {
             if model.commitFailed {
                 statusLine(.characterCommitFailed, symbol: "exclamationmark.triangle.fill", positive: false)
                     .accessibilityIdentifier("characterCommitError")
+            }
+            if model.commitRejected {
+                statusLine(.characterCommitRejected, symbol: "exclamationmark.triangle.fill", positive: false)
+                    .accessibilityIdentifier("characterCommitRejected")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -179,14 +190,16 @@ private extension CharacterImportView {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Button(localization.string(for: .characterEditFrames)) {
-                    model.isEditingFrames = true
-                }
-                .accessibilityIdentifier("characterEditFrames")
             } else {
                 Text(localization.string(for: .characterMetadataPlaceholder))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+            }
+            if model.hasStagedCandidate {
+                Button(localization.string(for: .characterEditFrames)) {
+                    model.isEditingFrames = true
+                }
+                .accessibilityIdentifier("characterEditFrames")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -239,18 +252,34 @@ private struct CharacterPreviewHost: NSViewRepresentable {
     let localization: LocalizationController
     let frames: PetImageSet?
     let placeholder: String
+    let onDrop: ([URL]) -> Void
+    let isActive: () -> Bool
+    let onPaneCreated: (SetupPreviewPane) -> Void
 
     func makeNSView(context: Context) -> SetupPreviewPane {
         let pane = SetupPreviewPane(frame: .zero)
         pane.configure(localization: localization, showsControls: true)
+        pane.shouldPreserveUnsupportedDropURLs = { true }
+        pane.onDrop = onDrop
+        onPaneCreated(pane)
         return pane
     }
 
     func updateNSView(_ pane: SetupPreviewPane, context: Context) {
+        guard isActive() else {
+            pane.stopPlayback()
+            return
+        }
+        pane.onDrop = onDrop
         if let frames, frames.isComplete {
             pane.showPet(frames, caption: "", sleeping: false)
         } else {
             pane.showPlaceholder(symbol: "pawprint", message: placeholder, caption: "")
         }
+    }
+
+    static func dismantleNSView(_ pane: SetupPreviewPane, coordinator: ()) {
+        pane.stopPlayback()
+        pane.onDrop = nil
     }
 }

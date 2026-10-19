@@ -184,6 +184,7 @@
 "character.reading" = "Reading image…";
 "character.clipboardEmpty" = "No image on the clipboard.";
 "character.commitFailed" = "Could not save the character. Your current pet is unchanged; try again.";
+"character.commitRejected" = "Character changes were not applied. Your draft is still available.";
 "character.error.notPNG" = "Choose a PNG file.";
 "character.error.unreadable" = "This file could not be read as a PNG.";
 "character.error.fileTooLarge" = "The PNG is larger than 20 MB.";

@@ -77,6 +77,47 @@ import WaddlyCore
     }
 
     /// Leaving an untouched shared screen returns to the method list immediately and never commits.
+    @Test func closingTheWizardConfirmsDiscardOfADirtySharedDraft() async throws {
+        let state = Fixture.State()
+        let alertState = AlertResponseState()
+        var presenter = WindowPresenter.invisible
+        presenter.presentAlert = { _, _, completion in
+            alertState.presentationCount += 1
+            completion(alertState.response)
+        }
+        let wizard = try Fixture.makeWizard(state: state, presenter: presenter)
+        defer {
+            wizard.characterImportModel.discard()
+            wizard.close()
+        }
+        wizard.beginCharacterImport()
+        try await wizard.characterImportModel.stageFiles(at: [Fixture.sheetURL()])
+        let window = try #require(wizard.window)
+        wizard.showWindow(nil)
+        #expect(wizard.characterImportModel.isDirty)
+
+        #expect(!wizard.windowShouldClose(window))
+        #expect(alertState.presentationCount == 1)
+        #expect(window.isVisible)
+        #expect(wizard.characterImportModel.isDirty)
+        #expect(state.commitCharacterCount == 0)
+        #expect(wizard.currentStep == .pet)
+
+        alertState.response = .alertFirstButtonReturn
+        #expect(!wizard.windowShouldClose(window))
+        #expect(alertState.presentationCount == 2)
+        #expect(!window.isVisible)
+        #expect(state.closed)
+        #expect(state.commitCharacterCount == 0)
+        #expect(wizard.currentStep == .pet)
+    }
+
+    @Test func anUntouchedWizardCanCloseWithoutConfirmation() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        #expect(try wizard.windowShouldClose(#require(wizard.window)))
+    }
+
     @Test func cancellingAnUntouchedSharedScreenLeavesWithoutPrompting() throws {
         let state = Fixture.State()
         let wizard = try Fixture.makeWizard(state: state)
@@ -147,6 +188,12 @@ import WaddlyCore
         #expect(await waitUntil { composing.characterImportModel.failure == .multipleFiles })
         #expect(composingState.commitCharacterCount == 0)
     }
+}
+
+@MainActor
+private final class AlertResponseState {
+    var response: NSApplication.ModalResponse = .alertSecondButtonReturn
+    var presentationCount = 0
 }
 
 private extension SetupWizardCharacterImportTests {

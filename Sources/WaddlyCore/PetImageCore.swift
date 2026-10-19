@@ -165,6 +165,17 @@ public enum PetSpriteSheetImporter {
         return try? Data(contentsOf: url, options: .mappedIfSafe)
     }
 
+    /// Reads and validates one PNG file while preserving the reason an oversized file was rejected.
+    public static func inspectFile(at url: URL) -> Result<PetSheetCandidate, PetSheetValidationFailure> {
+        guard url.pathExtension.lowercased() == "png" else { return .failure(.notPNG) }
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let size = attributes[.size] as? NSNumber
+        else { return .failure(.unreadable) }
+        guard size.intValue <= maximumFileSize else { return .failure(.fileTooLarge) }
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return .failure(.unreadable) }
+        return inspect(data)
+    }
+
     public static func image(from data: Data) -> NSImage? {
         optimizedImage(from: data)?.image
     }
