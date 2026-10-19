@@ -76,7 +76,47 @@ import WaddlyCore
         #expect(!wizard.hasImage)
     }
 
-    /// Leaving an untouched shared screen returns to the method list immediately and never commits.
+    /// A pending close confirmation cannot bypass the apply guard and close the wizard mid-commit.
+    @Test func confirmationCannotCloseWhileCharacterApplyIsRunning() async throws {
+        let state = Fixture.State()
+        let alertState = AlertResponseState()
+        let gate = CharacterImportCommitGate()
+        var presenter = WindowPresenter.invisible
+        presenter.presentAlert = { _, _, completion in
+            alertState.pendingResponse = completion
+        }
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            commitCharacter: { _ in await gate.commit() },
+            presenter: presenter
+        )
+        defer {
+            if wizard.characterImportModel.isApplying {
+                gate.resume(with: .rejected)
+            }
+            wizard.characterImportModel.discard()
+            wizard.close()
+        }
+        wizard.beginCharacterImport()
+        try await wizard.characterImportModel.stageFiles(at: [Fixture.sheetURL()])
+        let window = try #require(wizard.window)
+        wizard.showWindow(nil)
+
+        #expect(!wizard.windowShouldClose(window))
+        #expect(alertState.pendingResponse != nil)
+        let applying = wizard.commitCharacterImportAndContinue()
+        #expect(await gate.waitUntilEntered())
+        alertState.pendingResponse?(.alertFirstButtonReturn)
+
+        #expect(window.isVisible)
+        #expect(wizard.characterImportModel.isApplying)
+        gate.resume(with: .rejected)
+        await applying.value
+        #expect(window.isVisible)
+        #expect(!wizard.characterImportModel.commitFailed)
+        #expect(wizard.characterImportModel.commitRejected)
+    }
+
     @Test func closingTheWizardConfirmsDiscardOfADirtySharedDraft() async throws {
         let state = Fixture.State()
         let alertState = AlertResponseState()
@@ -194,6 +234,7 @@ import WaddlyCore
 private final class AlertResponseState {
     var response: NSApplication.ModalResponse = .alertSecondButtonReturn
     var presentationCount = 0
+    var pendingResponse: ((NSApplication.ModalResponse) -> Void)?
 }
 
 private extension SetupWizardCharacterImportTests {

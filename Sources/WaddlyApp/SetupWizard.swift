@@ -295,7 +295,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         presenter.presentAlert(alert, window) { [weak self] response in
             guard let self else { return }
             isConfirmingWindowClose = false
-            guard response == .alertFirstButtonReturn else { return }
+            guard response == .alertFirstButtonReturn, !characterImportModel.isApplying else { return }
             mayCloseAfterConfirmedDiscard = true
             close()
         }
