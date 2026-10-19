@@ -18,12 +18,12 @@ import WaddlyCore
         }
     }
 
-    @Test func capturesSavedCharacterEditingEntry() throws {
+    @Test func capturesSavedCharacterEditingEntry() async throws {
         guard CaptureHarness.isEnabled else { return }
         try CaptureHarness.prepare()
         for language in [AppLanguage.english, .japanese] {
             for dark in [false, true] {
-                try captureSavedCharacter(language: language, dark: dark)
+                try await captureSavedCharacter(language: language, dark: dark)
             }
         }
     }
@@ -72,7 +72,7 @@ private extension CharacterImportSnapshotTests {
         )
     }
 
-    func captureSavedCharacter(language: AppLanguage, dark: Bool) throws {
+    func captureSavedCharacter(language: AppLanguage, dark: Bool) async throws {
         var frames = try SetupWizardFixture.sheetImages()
         frames[.idle].append(frames[.typing][0])
         frames[.typing].removeFirst()
@@ -86,6 +86,8 @@ private extension CharacterImportSnapshotTests {
         )
         controller.focus()
         defer { controller.close() }
+        #expect(model.stagedFrames?.isComplete == true)
+        await Task.yield()
         try CaptureHarness.write(
             #require(controller.window?.contentView),
             dark: dark,
