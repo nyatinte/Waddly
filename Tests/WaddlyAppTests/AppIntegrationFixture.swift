@@ -46,7 +46,7 @@ import WaddlyCore
         app.imageStore.beginShutdown()
         app.animationController.shutdown()
         app.setupWizardController?.close()
-        app.imageSettingsWindow?.close()
+        app.characterImportWindowController?.close()
         // Closing setup can start monitoring; stop it after closing all windows.
         app.monitor.stop()
         app.panel.close()
@@ -69,7 +69,7 @@ import WaddlyCore
 /// Validation is what the menu actually asks, so the tests ask it the same way.
 @MainActor func editorItem(of app: AppDelegate) throws -> NSMenuItem {
     try #require(menuItems(app.statusMenu).first {
-        $0.action == #selector(AppDelegate.showImageSettings)
+        $0.action == #selector(AppDelegate.showChangeCharacter)
     })
 }
 

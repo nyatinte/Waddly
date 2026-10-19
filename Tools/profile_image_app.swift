@@ -51,15 +51,15 @@ struct ImageAppProbe {
             }
             guard saved else { throw CocoaError(.fileWriteUnknown) }
             if iteration == 0 {
-                delegate.showImageSettings()
+                delegate.showChangeCharacter()
             }
             withExtendedLifetime(preview) {}
             try await Task.sleep(for: .milliseconds(500))
             snapshot("import-\(iteration)")
         }
         try await Task.sleep(for: .seconds(30))
-        snapshot("image-settings-30s")
-        delegate.imageSettingsWindow?.close()
+        snapshot("character-import-30s")
+        delegate.characterImportWindowController?.window?.close()
         try await Task.sleep(for: .seconds(30))
         snapshot("return-idle-30s")
     }

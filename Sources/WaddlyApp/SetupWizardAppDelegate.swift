@@ -79,6 +79,11 @@ extension AppDelegate {
             onConfirmImage: { [weak self] images, source in
                 await self?.confirmPetImage(images, source: source) ?? false
             },
+            // The shared screen reports persistence failures inline and keeps the draft for retry, so
+            // this path never raises the legacy save alert.
+            onCommitCharacter: { [weak self] images in
+                await self?.commitCharacterImages(images) ?? .rejected
+            },
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,
             presenter: presenter,

@@ -19,28 +19,32 @@ struct SetupWizardScreen: View {
                 .padding(.top, 22)
             }
 
-            HStack(alignment: .top, spacing: 24) {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Window-wide drops stay live on every step, so the failure has to be visible
-                    // here too; `setStep` clears it when the user moves on.
-                    if controller.didFailImport {
-                        errorMessage(.petImportErrorMessage)
+            if controller.isComposingCharacter {
+                characterImport
+            } else {
+                HStack(alignment: .top, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Window-wide drops stay live on every step, so the failure has to be visible
+                        // here too; `setStep` clears it when the user moves on.
+                        if controller.didFailImport {
+                            errorMessage(.petImportErrorMessage)
+                        }
+                        page
                     }
-                    page
+                    .frame(width: 410, alignment: .leading)
+                    .frame(maxHeight: .infinity, alignment: .topLeading)
+                    SetupPreviewHost(pane: controller.previewPane)
+                        .frame(width: 330)
+                        .frame(maxHeight: .infinity)
                 }
-                .frame(width: 410, alignment: .leading)
-                .frame(maxHeight: .infinity, alignment: .topLeading)
-                SetupPreviewHost(pane: controller.previewPane)
-                    .frame(width: 330)
-                    .frame(maxHeight: .infinity)
-            }
-            .padding(.horizontal, 28)
-            .padding(.top, 16)
-            .padding(.bottom, 18)
-
-            footer
                 .padding(.horizontal, 28)
-                .padding(.bottom, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 18)
+
+                footer
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 20)
+            }
         }
         .frame(width: SetupMetrics.contentSize.width, height: SetupMetrics.contentSize.height)
         .background(Color(nsColor: .windowBackgroundColor))
@@ -87,7 +91,7 @@ private extension SetupWizardScreen {
                     Int(image.size.width)
                 ))
             }
-            Button(action: controller.importFromPanel) {
+            Button(action: controller.beginCharacterImport) {
                 Text(verbatim: controller.localizedString(.setupChangeImage))
             }
             .accessibilityElement(children: .combine)
@@ -113,7 +117,7 @@ private extension SetupWizardScreen {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             bodyText(.setupWhenReady)
-            Button(controller.localizedString(.setupChoosePNG), action: controller.importFromPanel)
+            Button(controller.localizedString(.setupChoosePNG), action: controller.beginCharacterImport)
                 .accessibilityLabel(controller.localizedString(.setupChoosePNG))
                 .accessibilityIdentifier("importFromPanel")
             Button(controller.localizedString(.setupChangeMethod), action: controller.changeMethod)
@@ -137,7 +141,7 @@ private extension SetupWizardScreen {
                 .setupMethodChoosePNG,
                 detail: .setupMethodChoosePNGDetail,
                 symbol: "square.and.arrow.down",
-                action: controller.importFromPanel
+                action: controller.beginCharacterImport
             )
             .accessibilityIdentifier("importFromPanel")
             sampleOption

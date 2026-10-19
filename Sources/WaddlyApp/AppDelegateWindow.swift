@@ -78,4 +78,22 @@ extension AppDelegate {
         panel.setFrameOrigin(origin)
         saveOrigin()
     }
+
+    /// Post-setup character management. Opens the shared import screen on the committed pet.
+    @objc func showChangeCharacter() {
+        if characterImportWindowController == nil {
+            characterImportWindowController = CharacterImportWindowController(
+                model: CharacterImportModel(
+                    currentImages: { [weak self] in self?.petImages ?? PetImageSet() },
+                    commit: { [weak self] images in
+                        await self?.commitCharacterImages(images) ?? .rejected
+                    }
+                ),
+                localization: localization,
+                presenter: presenter,
+                onClose: { [weak self] in self?.characterImportWindowController = nil }
+            )
+        }
+        characterImportWindowController?.focus()
+    }
 }

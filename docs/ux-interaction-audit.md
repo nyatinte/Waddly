@@ -18,6 +18,7 @@ Every claim below is one of two kinds, kept apart throughout:
 | `main` (base of this document) | `f1918a0` | current sources for every surface |
 | [#94](https://github.com/nyatinte/Waddly/issues/94) setup feedback, PR [#118](https://github.com/nyatinte/Waddly/pull/118) | `agent/issue94-setup-feedback` @ `86dfce5` | inline setup failure/browser feedback, one accessibility announcement per error transition, preview backdrop follows appearance, `docs/setup-wizard-qa.md` |
 | [#95](https://github.com/nyatinte/Waddly/issues/95) editor, PR [#116](https://github.com/nyatinte/Waddly/pull/116) | `agent/issue95-swiftui-editor` @ `a38452f` | Animation Settings → SwiftUI; editor model released on close |
+| [#124](https://github.com/nyatinte/Waddly/issues/124) unified character import | `agent/issue124-unified-import` @ `023474d` | shared staged import screen in the Setup Pet step and a new Change Character window; clipboard/DnD/paste; standalone Animation Settings window and menu item retired; committed renders in `docs/images/character-import/` |
 | [#96](https://github.com/nyatinte/Waddly/issues/96)/[#99](https://github.com/nyatinte/Waddly/issues/99) share, PR [#115](https://github.com/nyatinte/Waddly/pull/115) | `agent/issue96-99-export-cancellation` @ `4f6398e` | closing Share cancels the in-flight export and removes partial temp assets |
 
 [#109](https://github.com/nyatinte/Waddly/issues/109) (Share flow) and
@@ -37,7 +38,8 @@ AppKit `cacheDisplay` renders, not screen captures, and prove default-font layou
 | Dock icon | click | setup complete → `bringPetToFront()`; otherwise `showSetupWizard()` | never opens the editor |
 | Menu bar item | click | opens the status menu; tooltip reads reaction state (paused / active / permission) | menus rebuild after a language change |
 | Status/pet menu | “Setup Guide…” | opens or resumes the guide | close keeps the saved step |
-| Status/pet menu | “Animation Settings…” | opens the editor (disabled until setup is complete) | close clears content; reopen rebuilds |
+| Status/pet menu | “Change Character…” | opens the shared character screen on the committed pet (disabled until setup is complete) | close clears content; reopen reloads the committed pet |
+| Setup Guide — Pet step | “Choose a PNG” / “Change image” | opens the shared character screen inside the step | Cancel discards the staged draft, confirming only when it has changes |
 | Status/pet menu | “Share Pet” (pet menu only) | opens the Share window | close cancels export and deletes temp assets (#115) |
 
 Setup navigation contract:
@@ -75,7 +77,7 @@ are about *reason* and *outcome*, not plumbing.
 | Breathing animation | toggles idle breathing | — | check state | — |
 | Language ▸ System/日本語/English | switches the string catalog | — | radio state; menus rebuild on next open | — |
 | Show in ▸ Dock / Menu Bar | toggles presence | **N: greyed when it would hide both entry points, with no reason shown** | check state | — |
-| Animation Settings… | opens the editor | **N: greyed until setup is complete, with no reason** | — | — |
+| Change Character… | opens the shared character screen | **N: greyed until setup is complete, with no reason** | — | — |
 | Setup Guide… | opens or resumes the guide | — | — | — |
 | Launch at Login | register/unregister `SMAppService` | — | check reflects real status | **~: warning sheet opens only after the menu closes; no inline retry** |
 | Quit Waddly | terminates | — | — | — |
@@ -88,7 +90,7 @@ are about *reason* and *outcome*, not plumbing.
 | Option card “Choose a PNG” | open picker | N | dims | ~ | — | — | — | — |
 | Copy the prompt and open ChatGPT | copy + open browser | Y | Y | Y | — | — | inline “copied” | inline copy / open failure (#118) |
 | Change method | back to options | Y | Y | Y | — | — | — | — |
-| Choose a PNG / Change image | picker → read → commit | Y | Y | Y | — | — | inline “Added *file*” | inline failure, previous set kept (#118) |
+| Choose a PNG / Change image | open the shared character screen (see 2c) | Y | Y | Y | — | — | staged review, then Continue | inline; staged candidate kept |
 | Enable Input Monitoring | request + open Settings | Y | Y | Y | — | status polling | guide ends when keys arrive | — |
 | Add it another way | toggle manual steps | Y | Y | Y | — | — | manual steps | — |
 | Back / Next / Set up later | navigate | Y | Y | Y | **~: Next greyed with no inline reason** | — | step changes | — |
@@ -97,24 +99,49 @@ are about *reason* and *outcome*, not plumbing.
 | Preview: Animation / 9 cells | switch the stage | Y | Y | Y | — | — | — | — |
 | Preview: Idle/Typing/Enter/Sleep | play that animation | Y | Y | Y | — | — | — | — |
 | Preview: Light / Dark | grid background | Y | Y | Y | — | — | — | — |
-| Window drop (any step) | import a dropped PNG | — | — | — | — | — | inline “Added” | inline failure, stays on the step (#118) |
+| Window drop (any step) | stage a dropped PNG while composing, else the direct import | — | — | — | — | — | staged review | inline failure, stays on the step |
 
-The wizard commits a valid sheet immediately — there is **no** review-before-write confirm step
-(PR #118 documented this in `docs/setup-wizard-qa.md`, which also holds the state/test map). The
-cards have no explicit custom focus treatment in source; their actual native focus rendering still needs a manual keyboard pass.
+The shared import screen stages a sheet before anything is written: the Pet step’s Continue applies the
+staged draft through the store, so review-before-write holds in both hosts (#124). The ChatGPT and
+sample paths still commit on choice. The cards have no explicit custom focus treatment in source;
+their actual native focus rendering still needs a manual keyboard pass. `docs/setup-wizard-qa.md`
+holds the setup state/test map.
 
-### 2c. Animation Settings editor
+### 2c. Character import screen (Setup Pet step and Change Character)
 
-Two revisions: `main` (AppKit rows, `PetImageViews.swift`) and #95 / PR #116 (SwiftUI,
-`AnimationSettingsView.swift`); the state contract is the same.
+One SwiftUI component (`CharacterImportView`) renders in both hosts: inside the Setup Pet step and in
+the post-setup **Change Character…** window. Import is staged, never written on acquisition: only
+Apply/Continue commits through the store’s serialized queue. `CharacterImportModel` owns the draft,
+the validation outcome, and the clipboard availability; the AppKit `SetupPreviewPane` supplies the
+real four-pose player and nine-cell grid.
 
 | Control | Action | Hover | Focus | Disabled | Working | Success | Error |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Add (per category) | picker → append PNGs | Y (bordered) | Y | — | — | thumbnail appears | alert sheet |
-| Remove thumbnail (`×`) | delete a frame | **N: borderless icon, no hover/press affordance** | ~ | **~: allowed only when more than one image; position is the only reason** | — | — | — |
+| Choose File… | native picker → stage | Y | Y | — | reading row | staged preview, status, metadata | inline reason; staged candidate kept |
+| Paste from Clipboard / ⌘V | stage clipboard pixels or a PNG file URL | Y | Y | — | reading row | as above | inline “No image on the clipboard.” or the decode reason |
+| Drop zone / window drop | stage one PNG | accent highlight + “Drop to import”, system drag eligibility (Y) | — | — | reading row | as above | inline reason; a multi-file drop → “Choose one 3×3 PNG.” |
+| Animation / 9 cells, pose buttons | preview the staged sheet | Y | Y | pose buttons hidden when empty; the Animation / 9 cells switch stays visible | — | real player or nine-cell grid, nearest-neighbor | — |
+| Edit frames individually… | reveal the advanced editor over the same draft | Y | Y | shown only with a staged candidate | — | back returns to the parent preview | — |
+| Cancel / Back | leave without committing | Y | Y | — | — | returns to the method list; nothing written | discard confirmation only when staged changes exist |
+| Apply this character / Continue | commit the draft once | Y | Y | until a complete candidate exists | no progress indicator: the button only greys out while the commit runs | pet and settings update together | inline “Could not save…”; draft kept for retry |
+
+The clipboard is read only on an explicit paste; availability is rechecked on appear and on app
+activation without reading pixels. The two hosts differ only in the primary label and the
+surrounding navigation.
+
+**Advanced editor** (reused `AnimationSettingsView`, reached from “Edit frames individually…”, no
+longer a top-level destination):
+
+| Control | Action | Hover | Focus | Disabled | Working | Success | Error |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Add (per category) | picker → append PNGs to the draft | Y (bordered) | Y | — | — | thumbnail appears | unreadable file skipped |
+| Remove thumbnail (`×`) | delete a draft frame | **N: borderless icon, no hover/press affordance** | ~ | **~: allowed only when more than one image; position is the only reason** | — | — | — |
 | Move left / right (`‹` / `›`) | reorder within the category | N | ~ | ~: disabled at the ends, position-only reason | — | order updates | — |
-| Row drop target | add dropped PNGs | accent border while targeted (Y) | — | non-PNG drag rejected | — | thumbnails appended | alert sheet |
-| Window | resize / close | — | — | content minimum covers all four rows (#116) | — | — | — |
+| Row drop target | add dropped PNGs to the draft | accent border while targeted (Y) | — | non-PNG drag rejected | — | thumbnails appended | unreadable file skipped |
+
+Nothing in the advanced editor commits: closing it returns to the parent preview with the draft
+intact, and the parent’s Cancel discards it. The former standalone **Animation Settings** window and
+its status-menu item are retired (#124).
 
 ### 2d. Share dialog
 
@@ -134,7 +161,7 @@ language change. Hover, focus, and keyboard remain **manual-unverified**.
 
 | Sheet | Trigger | Buttons | Retry |
 | --- | --- | --- | --- |
-| Import confirm (3×3 preview, `SpriteSheetPreviewAccessory`) | editor / CLI import path | Import / Cancel | re-import from the editor or menu |
+| Import confirm (3×3 preview, `SpriteSheetPreviewAccessory`) | pet-panel PNG drop (`AppDelegate.importPetImage`) | Import / Cancel | drop another PNG |
 | Import error, save error | unreadable PNG / storage limit | OK | re-run the import |
 | Login-item error | `SMAppService` throws | OK | re-toggle from the menu |
 | Share asset error | export / generation fails | inline label only | **N: no explicit retry (#109)** |
@@ -165,13 +192,13 @@ execution; an automated state test does not verify every interaction in its row.
 | Screen | Pointer | Keyboard-only | VoiceOver | Appearance / contrast | Reduce Motion | JA / EN | Failure + retry | Coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Pet panel | drag, right-click, PNG drop, Dock re-front | no keyboard surface (non-key panel) | label + drop tooltip | transparent, follows system | reveal fade suppressed | tooltip localized | invalid/oversized drop → alert sheet | auto: placement, menu; manual: drag feel |
-| Setup — Pet | cards, picker, window drop | Tab to cards + Next | grouping and labels | preview backdrop follows appearance (#118) | step cross-fade off | fixed 410 pt column | unreadable PNG → inline, keeps set | auto: `SetupWizardTests`; manual: focus ring |
+| Setup — Pet | cards, picker, window drop, shared staged screen | Tab to cards + Next | grouping and labels | preview backdrop follows appearance (#118) | step cross-fade off | fixed 820 × 520 window; shared screen fits | unreadable PNG → inline, keeps set; failed save → inline retry | auto: `SetupWizardTests`, `SetupWizardCharacterImportTests`; manual: focus ring |
 | Setup — ChatGPT guide | copy+open, Change method, Choose PNG | Tab order | hint on cards | text contrast | — | copy strings | copy/open failure inline (#118) | auto; manual: real browser |
 | Setup — permission | Enable, manual steps, Settings hand-off | Tab through the guide | status updates announced | off vs granted distinguishable | polling unaffected | instructions | granted-not-receiving → restart / retry | auto: `PermissionServiceTests`; manual: real TCC |
 | Setup — Ready | Back, Show on desktop, Set up monitoring | Tab | checks read out | warning visible | celebrate hop suppressed | checks localized | non-ready never looks like success | auto; manual: spoken order |
 | Share | copy, play, X row | **gap: X row not focusable** | roles set; not spoken | checkerboard + card colors (#106 dark mode) | no animation | labels refresh | beep-only, no retry (#109) | auto: `PetShareDialogTests`; manual: hover |
 | Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`; manual: disabled reason |
-| Animation Settings | add, remove, move, drop | Tab (AppKit buttons focusable) | labels + index names | controlBackground rows | — | titles localized | invalid / save → alert | auto: branch `AnimationSettingsTests` (#116) |
+| Character import (Change Character) | Choose / Paste / drop, pose + 9-cells, edit frames | **unverified: Tab order and ⌘V routing in a live window** | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
 
 ## 5. Walkthroughs (with retry)
 
@@ -196,11 +223,16 @@ sync. 3) Show in → turning off the last visible entry point is greyed (reason 
 at Login → check reflects `SMAppService` status; failure shows a warning sheet after the menu closes.
 5) *Retry:* reopen the menu and toggle again.
 
-**Animation Settings.** 1) Right-click pet → Animation Settings… (enabled only after setup). 2) Add
-→ pick PNGs; drop a PNG on a row → accent border while targeted, thumbnails append. 3) Reorder with
-`‹` / `›`, remove with `×` (disabled at a single image or at the ends). *Retry:* a corrupt or unreadable
-file with a `.png` extension shows an alert sheet; add again. Non-PNG files are filtered out by the
-picker or rejected by the drop target before import. 4) Close → content cleared; reopen → rebuilt.
+**Character import.** 1) First run: Pet step → “Choose a PNG”; after setup: right-click pet →
+Change Character… (enabled only after setup), which opens the same screen on the committed pet.
+2) Choose a file, paste, or drop one PNG → the draft is staged and previewed; nothing is written.
+*Retry:* a corrupt or unreadable file with a `.png` extension shows an inline reason and keeps the
+staged candidate; a paste with an empty clipboard says so inline; a multi-file sheet drop is refused.
+3) Toggle nine cells or a pose to inspect the staged sheet; “Edit frames individually…” adds/removes/
+reorders frames over the same draft. 4) Apply this character (*or the Pet step’s Continue*) commits
+once through the store; a failed save shows an inline retry and keeps the draft. 5) Cancel with staged
+changes asks before discarding; an untouched screen leaves immediately. 6) Close → content cleared;
+reopen → the committed pet is loaded again.
 
 ## 6. Prioritized gaps by task impact
 
@@ -209,8 +241,9 @@ picker or rejected by the drop target before import. 4) Close → content cleare
 | P1 | Share: clipboard failure only beeps, with no inline error or retry | copy is the primary action; the user cannot tell it failed | #109 |
 | P1 | Share: no hover/focus feedback on the copy buttons or the X row; X row is not keyboard reachable | wrong target / keyboard users blocked | #108, #109 |
 | P2 | Setup: `.plain` option cards have no explicit hover/focus styling; native focus is unverified | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
-| P2 | Editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
-| P2 | Menus: “Animation Settings…” and the presence guard are disabled with no reason | the user cannot tell why a feature is unavailable | #94 |
+| P2 | Advanced editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
+| P2 | Character import: the Paste control is subdued but not disabled when the clipboard is empty, and its tooltip is the only visual difference | a user may click a control that cannot succeed | #124 |
+| P2 | Menus: “Change Character…” and the presence guard are disabled with no reason | the user cannot tell why a feature is unavailable | #94 |
 | P3 | Login-item failure is a post-menu sheet with no inline retry | recoverable but easy to miss | #94 |
 | P3 | Share movie Play / Pause has no hover state | minor affordance | #108 |
 
@@ -234,6 +267,14 @@ Animation Settings, PR [#116](https://github.com/nyatinte/Waddly/pull/116):
 - After, SwiftUI (EN / light): https://raw.githubusercontent.com/nyatinte/Waddly/a38452fcee8dd7d54f2d11d3d8ea793b17ed1c52/docs/images/animation-settings/after-swiftui-c5f8fcf-en-light.png
 - After, SwiftUI (JA / dark): https://raw.githubusercontent.com/nyatinte/Waddly/a38452fcee8dd7d54f2d11d3d8ea793b17ed1c52/docs/images/animation-settings/after-swiftui-c5f8fcf-ja-dark.png
 
+Character import, #124 (committed in-repo at this revision):
+
+- Renders and provenance: `docs/images/character-import/` (40 files) — empty, drag-eligible,
+  clipboard ready/empty, valid + nine cells, invalid, advanced editor, and the Setup Pet step host;
+  EN/JA × light/dark. What they do not claim:
+  [`docs/images/character-import/README.md`](images/character-import/README.md).
+- These are content renders, not screen captures, and were not produced by a GUI session.
+
 Provenance and limits are recorded in each revision's `docs/images/*/README.md`. These immutable
 commit URLs survive branch deletion; update the source-audit rows separately when behavior changes.
 
@@ -244,6 +285,8 @@ commit URLs survive branch deletion; update the source-audit rows separately whe
 - §4 matrix: revisit the Share and Setup rows.
 - §6: re-rank and drop rows whose trackers are closed.
 - §7: replace the links with the merged revisions and re-check reachability.
+- §2c/§4 after #124: re-run the manual keyboard / VoiceOver / contrast passes for the shared screen and
+  the Change Character window, and re-check the clipboard-empty affordance decision above.
 
 ## 9. Capturing new screenshots (manual, native)
 

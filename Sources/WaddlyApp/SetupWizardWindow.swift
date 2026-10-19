@@ -5,15 +5,15 @@ extension SetupWizardController {
     func buildWindow() {
         let contentView = PetImageDropView()
         contentView.idleBorderWidth = 0
+        contentView.shouldPreserveUnsupportedDropURLs = { [weak self] in self?.isComposingCharacter ?? false }
         contentView.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
+            self?.handleWindowDrop(urls)
         }
 
         previewPane.configure(localization: localization, showsControls: true)
+        previewPane.shouldPreserveUnsupportedDropURLs = { [weak self] in self?.isComposingCharacter ?? false }
         previewPane.onDrop = { [weak self] urls in
-            guard let url = urls.first else { return }
-            self?.importImage(from: url)
+            self?.handleWindowDrop(urls)
         }
 
         let hostingView = NSHostingView(rootView: SetupWizardScreen(controller: self))

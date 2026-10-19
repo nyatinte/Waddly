@@ -28,28 +28,22 @@ extension AppDelegate {
         )
     }
 
-    func addImages(_ urls: [URL], to category: PetImageCategory) {
-        Task { [weak self] in
-            guard let self else { return }
-            switch await imageStore.addImages(urls, to: category) {
-            case .blocked:
-                await showImageLoadError()
-            case let .failed(error):
-                await showImageSaveError(error)
-            case let .added(skipped) where skipped > 0:
-                await showAlert(.imagesSkippedTitle, .imagesSkippedMessage)
-            case .added, .aborted:
-                break
-            case .skippedAll:
-                await showAlert(.imagesErrorTitle, .imagesErrorMessage)
-            }
-        }
-    }
-
     @discardableResult
     func removeImage(at index: Int, from category: PetImageCategory) -> Task<Void, Never>? {
         imageStore.removeImage(at: index, from: category) { [weak self] error in
             await self?.showImageSaveError(error)
+        }
+    }
+
+    /// Commit a reviewed character draft through the store's serialized queue.
+    ///
+    /// No alert: the shared import screen shows its own inline retry message, so a save failure must
+    /// come back as `.failed` rather than as a sheet over a window the user is still working in.
+    func commitCharacterImages(_ images: PetImageSet) async -> CharacterCommitOutcome {
+        switch await imageStore.confirmPetImage(images) {
+        case .confirmed: .committed
+        case .failed: .failed
+        case .aborted: .rejected
         }
     }
 

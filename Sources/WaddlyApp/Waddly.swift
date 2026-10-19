@@ -251,8 +251,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var pendingLocalizationRefresh = false
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
-    var imageSettingsWindow: NSWindow?
-    var animationSettingsModel: AnimationSettingsModel?
+    var characterImportWindowController: CharacterImportWindowController?
     var shareWindowController: PetShareWindowController?
 
     var isPaused: Bool {
@@ -384,10 +383,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func windowDidMove(_ notification: Notification) {
         guard notification.object as? NSWindow === panel else { return }
         saveOrigin()
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        guard notification.object as? NSWindow === imageSettingsWindow else { return }
-        closeImageSettingsWindow()
     }
 }

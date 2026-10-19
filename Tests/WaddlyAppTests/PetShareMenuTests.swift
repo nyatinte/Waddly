@@ -17,7 +17,7 @@ import WaddlyCore
     #expect(menu.items.first?.action == #selector(AppDelegate.showPetShare))
     #expect(menu.items.dropFirst().first?.isSeparatorItem == true)
     #expect(menu.items.contains { $0.title == app.localizedString(.menuSetupWizard) })
-    #expect(menu.items.contains { $0.title == app.localizedString(.menuImageSettings) })
+    #expect(menu.items.contains { $0.title == app.localizedString(.menuChangeCharacter) })
     #expect(menu.items.contains { $0.title == app.localizedString(.menuLogin) })
     #expect(!menu.items.contains { $0.title == "Settings…" || $0.title == "設定…" })
     #expect(!app.validateMenuItem(share))

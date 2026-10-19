@@ -37,6 +37,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
     /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
     let onConfirmImage: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool
+    /// Commits a reviewed draft with the outcome the shared import screen needs. Defaults to deriving
+    /// from `onConfirmImage`, so a caller that has not migrated keeps the same behavior.
+    let onCommitCharacter: @MainActor (PetImageSet) async -> CharacterCommitOutcome
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
@@ -55,6 +58,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let onClose: @MainActor () -> Void
 
     let previewPane = SetupPreviewPane(frame: .zero)
+    var embeddedCharacterPreviewPane: SetupPreviewPane?
     var demoImages: PetImageSet?
 
     @Published var currentStep = Step.pet
@@ -79,6 +83,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// of staying visible and ignoring clicks.
     @Published var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
+    /// True while the shared character import screen replaces the method list inside the Pet step.
+    @Published var isComposingCharacter = false
 
     init(
         localization: LocalizationController,
@@ -86,6 +92,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
         onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
         onConfirmImage: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> Bool,
+        onCommitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,
@@ -101,6 +108,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.promptResourcesURL = promptResourcesURL
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
+        self.onCommitCharacter = onCommitCharacter ?? { images in
+            await onConfirmImage(images, .userFile) ? .committed : .rejected
+        }
         self.currentPetImages = currentPetImages
         self.permission = permission
         self.pasteboard = pasteboard
@@ -147,6 +157,23 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var canTrySample: Bool {
         !hasImage && demoImages != nil && pendingImportCount == 0
     }
+
+    /// The shared acquisition → inspect → commit state machine, created once and rebased every time
+    /// the import screen opens. Staging writes nothing; the existing Continue/commit path does.
+    lazy var characterImportModel = CharacterImportModel(
+        currentImages: { [weak self] in self?.currentPetImages() ?? PetImageSet() },
+        commit: { [weak self] images in
+            guard let self else { return .rejected }
+            return await onCommitCharacter(images)
+        }
+    )
+
+    /// The advanced editor's model, wired to the shared draft. Built once so the sheet reuses one
+    /// source of truth while it is open.
+    lazy var frameEditorModel = CharacterFrameEditor.makeModel(
+        importModel: characterImportModel,
+        localization: localization
+    )
 
     var isMonitoringGranted: Bool {
         permission.isGranted
@@ -203,6 +230,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     private var following = GuideFollowing()
     private var wasShowingGuide = false
     private var isMovingProgrammatically = false
+    private var isConfirmingWindowClose = false
+    private var mayCloseAfterConfirmedDiscard = false
 
     var isFollowingSystemSettings: Bool {
         following.isActive
@@ -244,11 +273,41 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         following.recordMove(to: window.frame.origin)
     }
 
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard !characterImportModel.isApplying else { return false }
+        if mayCloseAfterConfirmedDiscard {
+            return true
+        }
+        guard isComposingCharacter, characterImportModel.isDirty else { return true }
+        guard !isConfirmingWindowClose else { return false }
+        isConfirmingWindowClose = true
+        guard let window else {
+            mayCloseAfterConfirmedDiscard = true
+            close()
+            return true
+        }
+        let alert = NSAlert()
+        alert.messageText = localizedString(.characterDiscardTitle)
+        alert.informativeText = localizedString(.characterDiscardMessage)
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: localizedString(.characterDiscardConfirm))
+        alert.addButton(withTitle: localizedString(.characterCancel))
+        presenter.presentAlert(alert, window) { [weak self] response in
+            guard let self else { return }
+            isConfirmingWindowClose = false
+            guard response == .alertFirstButtonReturn, !characterImportModel.isApplying else { return }
+            mayCloseAfterConfirmedDiscard = true
+            close()
+        }
+        return false
+    }
+
     func windowWillClose(_ notification: Notification) {
         clearImportFeedback()
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
+        stopEmbeddedCharacterPreview()
         window?.contentView = nil
         window?.delegate = nil
         onClose()

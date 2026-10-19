@@ -28,9 +28,12 @@ enum SetupWizardFixture {
         preview: (@MainActor (URL) async -> PetImageSet?)? = nil,
         confirmResult: Bool = false,
         confirm: (@MainActor (PetImageSet, PetImageCommitSource) async -> Bool)? = nil,
+        commitCharacterOutcome: CharacterCommitOutcome? = nil,
+        commitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
         requestPermission: @escaping @MainActor () -> Bool = { false },
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
+        presenter: WindowPresenter = .invisible,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {}
     ) throws -> SetupWizardController {
@@ -52,12 +55,7 @@ enum SetupWizardFixture {
         return SetupWizardController(
             localization: LocalizationController(settings: settings, resources: resources),
             demoPetURL: demoURL,
-            onPreviewImage: { url in
-                if let preview {
-                    return await preview(url)
-                }
-                return state.previewResult
-            },
+            onPreviewImage: makePreviewImage(state: state, preview: preview),
             onConfirmImage: { images, source in
                 if let confirm {
                     return await confirm(images, source)
@@ -73,9 +71,10 @@ enum SetupWizardFixture {
                 }
                 return state.confirmResult
             },
+            onCommitCharacter: commitCharacter ?? makeCommitCharacter(state: state, outcome: commitCharacterOutcome),
             currentPetImages: { state.images },
             permission: permission,
-            presenter: .invisible,
+            presenter: presenter,
             savedStep: savedStep,
             pasteboard: pasteboard,
             openBrowser: openBrowser,
@@ -87,6 +86,39 @@ enum SetupWizardFixture {
                 state.closed = true
             }
         )
+    }
+
+    /// The shared screen's commit: records the call and, when it succeeds, the stored set. A fixed
+    /// `outcome` lets a test pin a persistence failure without a real store.
+    @MainActor
+    private static func makePreviewImage(
+        state: State,
+        preview: (@MainActor (URL) async -> PetImageSet?)?
+    ) -> @MainActor (URL) async -> PetImageSet? {
+        { url in
+            if let preview {
+                return await preview(url)
+            }
+            return state.previewResult
+        }
+    }
+
+    @MainActor
+    private static func makeCommitCharacter(
+        state: State,
+        outcome: CharacterCommitOutcome?
+    ) -> @MainActor (PetImageSet) async -> CharacterCommitOutcome {
+        { images in
+            state.commitCharacterCount += 1
+            guard let outcome else {
+                state.images = images
+                return .committed
+            }
+            if outcome == .committed {
+                state.images = images
+            }
+            return outcome
+        }
     }
 
     /// The wizard no longer knows about CGPreflight or event taps; the service does.
@@ -133,6 +165,8 @@ enum SetupWizardFixture {
         var settingsOpened = 0
         /// How many times the wizard committed an image set; a duplicate sample click must stay at 1.
         var confirmCount = 0
+        /// How many times the shared character screen committed a reviewed draft.
+        var commitCharacterCount = 0
         /// Messages the wizard asked to announce; the fixture records them instead of speaking.
         var announcements: [String] = []
     }

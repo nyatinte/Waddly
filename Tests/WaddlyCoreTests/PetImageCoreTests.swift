@@ -221,3 +221,39 @@ private func makePNG(
     guard CGImageDestinationFinalize(destination) else { return nil }
     return data as Data
 }
+
+@Test func inspectionReportsTheReasonForEveryInvalidSheet() throws {
+    func failure(_ data: Data) -> PetSheetValidationFailure? {
+        if case let .failure(reason) = PetSpriteSheetImporter.inspect(data) {
+            return reason
+        }
+        return nil
+    }
+
+    #expect(failure(Data("not a PNG".utf8)) == .unreadable)
+    #expect(try failure(#require(makePNG(width: 6, height: 3))) == .notSquare)
+    #expect(try failure(#require(makePNG(width: 4, height: 4))) == .gridNotDivisible)
+    #expect(try failure(#require(makePNG(width: 6, height: 6, alphaInfo: .noneSkipLast))) == .noTransparency)
+}
+
+@Test func inspectionReturnsTheSourceAndCellGeometry() throws {
+    let candidate: PetSheetCandidate? = try? PetSpriteSheetImporter.inspect(
+        try #require(makePNG(width: 9, height: 9))
+    ).get()
+
+    #expect(candidate?.sourceDimension == 9)
+    #expect(candidate?.cellSize == 3)
+    #expect(candidate?.images[.idle].count == 2)
+    #expect(candidate?.images[.typing].count == 4)
+    #expect(candidate?.images[.enter].count == 1)
+    #expect(candidate?.images[.sleep].count == 2)
+}
+
+@Test func inspectionUsesTheSameFileLimitAsFrames() throws {
+    let data = try #require(makeLargePNG(width: 3072, height: 3072))
+    guard case let .failure(reason) = PetSpriteSheetImporter.inspect(data) else {
+        Issue.record("a PNG over the file limit must fail inspection")
+        return
+    }
+    #expect(reason == .fileTooLarge)
+}

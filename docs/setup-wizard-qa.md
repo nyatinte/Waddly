@@ -11,7 +11,7 @@ results; treat the two tables below separately.
 | --- | --- | --- | --- |
 | Pet | No image yet | Create with ChatGPT / Choose a PNG | Try the sample pet first (bundled sample, offered only while no pet is stored and no import is still committing); drag and drop a PNG onto the window; sample pet plays in the preview |
 | Pet | ChatGPT guide | Copy the prompt and open ChatGPT | Choose a PNG, Change method, inline copy/open status |
-| Pet | Image registered | Next | Change image (imports immediately and replaces the saved set) |
+| Pet | Image registered | Next | Change image (opens the shared character screen; Continue applies the staged sheet) |
 | Pet | Sample in use | Next | Change image; the page states the sample is active so it is not mistaken for the user's own pet |
 | Any step | Import failed (drop or picker) | Choose a PNG again | Inline message in the page column; nothing is written and the previous set stays; clears when the step changes |
 | Keyboard reactions | Not granted | Enable Input Monitoring | Privacy note; guide opens System Settings and parks beside it; manual steps remain available |
@@ -26,17 +26,24 @@ Inline status text is used instead of a modal alert for two paths: the copy/open
 ChatGPT guide (`copied` / `copy failed` / `open failed`) and an unreadable pet sheet. The window-wide
 drop target stays live on every step, so the import message is shown in the page column on the step
 where the drop happened and clears when the step changes. When an error appears, the wizard posts one
-native accessibility announcement with the localized message; re-rendering never re-announces. The
-wizard reads a chosen sheet and, if the read succeeds, commits it immediately — there is no
-review-before-write step and no wizard confirm dialog. A failed read writes nothing and keeps the
-previous set.
+native accessibility announcement with the localized message; re-rendering never re-announces.
+Choosing a PNG or Change image opens the shared character screen inside the Pet step. A chosen,
+pasted, or dropped sheet is staged and previewed there; the step's Continue applies it once, so no
+review-before-write step was added, but nothing is written before Continue either. A failed read or
+paste shows an inline reason and keeps the staged candidate and saved pet; a failed save shows an
+inline retry, keeps the draft, and stays on the step. A window-wide drop outside the shared screen
+(for example on the Keyboard reactions step) still uses the direct import path, which writes on a
+successful read. In the Change Character window, Apply commits the staged draft and closes only on
+success; a failed save remains retryable.
 
 ## Automated verification (verified)
 
 Command: `mise run test` (serialized Swift Testing suites). The wizard suites are
 `SetupWizardTests`, `SetupWizardJourneyTests`, `SetupWizardSampleGuardTests`,
-`SetupWizardPreviewTests`, `SetupWizardDropTests`, `SetupWizardImportFeedbackTests`, and
-`PermissionServiceTests`.
+`SetupWizardPreviewTests`, `SetupWizardDropTests`, `SetupWizardImportFeedbackTests`,
+`SetupWizardCharacterImportTests` (the shared screen hosted in the Pet step), and
+`PermissionServiceTests`. The shared screen model is covered by `CharacterImportModelTests`; its
+render fixtures are listed in `docs/images/character-import/README.md`.
 
 | Behavior | Test |
 | --- | --- |

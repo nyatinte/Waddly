@@ -141,13 +141,13 @@ extension AppDelegate {
     }
 
     private func addWindowMenuItems() {
-        let imageSettingsItem = NSMenuItem(
-            title: localizedString(.menuImageSettings),
-            action: #selector(showImageSettings),
+        let characterItem = NSMenuItem(
+            title: localizedString(.menuChangeCharacter),
+            action: #selector(showChangeCharacter),
             keyEquivalent: ""
         )
-        imageSettingsItem.target = self
-        statusMenu.addItem(imageSettingsItem)
+        characterItem.target = self
+        statusMenu.addItem(characterItem)
 
         let setupItem = NSMenuItem(
             title: localizedString(.menuSetupWizard),
@@ -321,7 +321,7 @@ extension AppDelegate {
             buildMenu()
             petView.toolTip = localizedString(.petDropTooltip)
             setupWizardController?.refreshLocalization()
-            refreshImageSettingsLocalization()
+            characterImportWindowController?.refreshLocalization()
             shareWindowController?.refreshLocalization()
         }
         guard pendingMenuError else { return }
@@ -346,7 +346,7 @@ extension AppDelegate: NSMenuItemValidation {
         if action == #selector(showPetShare) {
             return hasCompletePetImageSet
         }
-        if action == #selector(showImageSettings) {
+        if action == #selector(showChangeCharacter) {
             return isSetupComplete
         }
         if action == #selector(toggleDockVisibility) {
