@@ -38,34 +38,62 @@ struct PetShareAssets: Sendable {
     }
 }
 
+/// The system effects the dialog performs. Tests replace them to drive outcomes the system would refuse.
+struct PetShareEffects: Sendable {
+    /// Writes the dialog's movie. Tests inject a writer that reports when closing cancels generation.
+    var writeMovie: PetShareWindowController.MovieWriter = { images, url, cancellation in
+        try PetShareExporter.writeMovie(from: images, to: url, cancellation: cancellation)
+    }
+
+    var copyImage: @MainActor @Sendable (Data) -> Bool = { PetShareClipboard.copyPNG($0) }
+    var publishMovie: @MainActor @Sendable (Data, String) -> URL? = { data, name in
+        PetShareClipboard.publishForPasteboard(data, named: name)
+    }
+
+    var copyMovie: @MainActor @Sendable (Data, URL) -> Bool = { data, url in
+        PetShareClipboard.copyMovie(data, fileURL: url)
+    }
+
+    var openURL: @MainActor @Sendable (URL) -> Bool = { NSWorkspace.shared.open($0) }
+}
+
 @MainActor
 final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     /// Writes the dialog's movie. Tests inject a writer that reports when closing cancels generation.
     typealias MovieWriter = @Sendable (PetImageSet, URL, PetShareExportCancellation) throws -> Void
 
+    /// What the dialog can do right now. The view renders exactly one of these.
+    enum Status: Equatable {
+        case idle
+        case working
+        case ready
+        case cancelled
+        case failed
+    }
+
     private let images: PetImageSet
     private let localization: LocalizationController
     private let presenter: WindowPresenter
     private let shareView: PetShareDialogView
-    private let writeMovie: MovieWriter
+    private let effects: PetShareEffects
     private let cancellation = PetShareExportCancellation()
     private var generationTask: Task<Void, Never>?
     private var assets: PetShareAssets?
-    private var isClosed = false
+    private var copyOutcome: [PetShareAssetKind: Bool] = [:]
+    private var composerOpenFailed = false
+    private(set) var status: Status = .idle
     var onClose: (() -> Void)?
 
     init(
         images: PetImageSet,
         localization: LocalizationController,
         presenter: WindowPresenter = .live,
-        writeMovie: @escaping MovieWriter = { images, url, cancellation in
-            try PetShareExporter.writeMovie(from: images, to: url, cancellation: cancellation)
-        }
+        effects: PetShareEffects = PetShareEffects()
     ) {
         self.images = images
         self.localization = localization
         self.presenter = presenter
-        self.writeMovie = writeMovie
+        self.effects = effects
         shareView = PetShareDialogView(localization: localization)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 410),
@@ -78,9 +106,10 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         super.init(window: window)
         window.delegate = self
-        shareView.onCopySprite = { [weak self] in self?.copySprite() }
-        shareView.onCopyMovie = { [weak self] in self?.copyMovie() }
+        shareView.onCopySprite = { [weak self] in self?.copy(.image) }
+        shareView.onCopyMovie = { [weak self] in self?.copy(.video) }
         shareView.onOpenX = { [weak self] in self?.openX() }
+        shareView.onRetry = { [weak self] in self?.prepareAssets() }
     }
 
     @available(*, unavailable)
@@ -91,19 +120,29 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     func refreshLocalization() {
         window?.title = localization.string(for: .shareTitle)
         shareView.refreshLocalization()
+        for (asset, copied) in copyOutcome {
+            shareView.showCopyResult(copyText(for: asset, copied: copied), failed: !copied, for: asset)
+        }
+        shareView.showXOpenFailure(composerOpenFailed ? localization.string(for: .shareOpenXFailed) : nil)
     }
 
+    /// Generates the assets once. A second call while one exists or is running is ignored; a failed
+    /// generation can be started again.
     func prepareAssets() {
-        guard generationTask == nil else { return }
+        guard generationTask == nil, status == .idle || status == .failed else { return }
+        status = .working
+        copyOutcome.removeAll()
+        composerOpenFailed = false
+        shareView.showWorking()
         let exportCancellation = cancellation
-        let movieWriter = writeMovie
+        let effects = effects
         generationTask = Task { [weak self, images] in
             let result = await Task.detached(priority: .userInitiated) {
                 Result {
                     try PetShareAssets.make(
                         from: images,
                         cancellation: exportCancellation,
-                        writeMovie: movieWriter
+                        writeMovie: effects.writeMovie
                     )
                 }
             }.value
@@ -113,23 +152,7 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
                 }
                 return
             }
-            if isClosed {
-                if case let .success(assets) = result {
-                    assets.remove()
-                }
-                return
-            }
-            switch result {
-            case let .success(assets):
-                self.assets = assets
-                shareView.showAssets(
-                    spriteURL: assets.spriteURL,
-                    movieURL: assets.movieURL,
-                    moviePoster: images[.idle].first
-                )
-            case .failure:
-                shareView.showError()
-            }
+            finishGeneration(result)
         }
     }
 
@@ -145,54 +168,76 @@ final class PetShareWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
-        isClosed = true
-        // Stop the encoder itself, not just the task that awaits it. The export queue retains ownership
-        // of a pending movie; the controller removes both assets only after a successful export.
+        status = .cancelled
+        // Stop the encoder itself, not just the task that awaits it: the export polls this token, stops
+        // the writer on its own queue, and deletes the movie it was writing.
         cancellation.cancel()
-        generationTask?.cancel()
+        generationTask = nil
         shareView.stopPlayback()
         if let assets {
             assets.remove()
         }
+        assets = nil
         onClose?()
     }
 
-    private func copySprite() {
-        guard let assets, let data = try? Data(contentsOf: assets.spriteURL, options: .mappedIfSafe) else { return }
-        if PetShareClipboard.copyPNG(data) {
-            shareView.didCopySprite()
-        } else {
-            NSSound.beep()
-        }
-    }
-
-    private func copyMovie() {
-        guard let assets, let data = try? Data(contentsOf: assets.movieURL, options: .mappedIfSafe) else { return }
-        // The export directory disappears with the window, so the pasteboard names a file that
-        // outlives it; paste targets attach a file, not raw video bytes.
-        guard let published = PetShareClipboard.publishForPasteboard(
-            data,
-            named: assets.movieURL.lastPathComponent
-        )
-        else {
-            NSSound.beep()
+    private func finishGeneration(_ result: Result<PetShareAssets, Error>) {
+        generationTask = nil
+        // Closing the window drops the result; its files must not outlive the dialog.
+        guard status != .cancelled else {
+            if case let .success(assets) = result {
+                assets.remove()
+            }
             return
         }
-        if PetShareClipboard.copyMovie(data, fileURL: published) {
-            shareView.didCopyMovie()
-        } else {
-            NSSound.beep()
+        switch result {
+        case let .success(assets):
+            self.assets = assets
+            status = .ready
+            shareView.showAssets(
+                spriteURL: assets.spriteURL,
+                movieURL: assets.movieURL,
+                moviePoster: images[.idle].first
+            )
+        case .failure:
+            status = .failed
+            shareView.showFailure()
         }
     }
 
+    /// Copies one generated file and reports what the pasteboard actually did.
+    private func copy(_ asset: PetShareAssetKind) {
+        guard let assets else { return }
+        let url = asset == .video ? assets.movieURL : assets.spriteURL
+        let copied = (try? Data(contentsOf: url, options: .mappedIfSafe)).map { data in
+            if asset == .video {
+                guard let published = effects.publishMovie(data, "WaddlyShare.mp4") else { return false }
+                return effects.copyMovie(data, published)
+            }
+            return effects.copyImage(data)
+        } ?? false
+        copyOutcome[asset] = copied
+        shareView.showCopyResult(copyText(for: asset, copied: copied), failed: !copied, for: asset)
+    }
+
+    private func copyText(for asset: PetShareAssetKind, copied: Bool) -> String {
+        guard copied else { return localization.string(for: .shareCopyFailed) }
+        return localization.string(for: asset == .video ? .shareCopiedVideo : .shareCopiedImage)
+    }
+
+    /// Opens the X post composer with a hashtag only; the user's post text remains theirs.
     private func openX() {
-        if let url = Self.xPostURL() {
-            NSWorkspace.shared.open(url)
+        guard let url = Self.xPostURL(),
+              effects.openURL(url)
+        else {
+            composerOpenFailed = true
+            shareView.showXOpenFailure(localization.string(for: .shareOpenXFailed))
+            return
         }
+        composerOpenFailed = false
+        shareView.showXOpenFailure(nil)
     }
 
-    /// Opens the X composer with the share hashtag and no post text, so whatever the user writes in the
-    /// composer is theirs alone. The draft used to carry an instruction the user never asked for.
     static func xPostURL() -> URL? {
         var components = URLComponents(string: "https://twitter.com/intent/tweet")
         components?.queryItems = [

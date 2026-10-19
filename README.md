@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. Waddly does not force it above a fullscreen app, and it pulls the pet back into view when a display is disconnected or changed.
-- Right-click the pet and choose “Share Pet” to create a five-second video and a 3×3 sprite sheet. Copy either asset to the clipboard — the video is copied as a file, so the X composer and chat apps attach it when you paste — or click the X logo or “Post on X” to open the composer carrying only the `#ShareMyWaddly` hashtag, with the post text left for you to write. The share window follows macOS light and dark appearance, and closing it cancels any generation still in progress.
+- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames at the imported frame size) locally. Each card previews its exported file and format; “Copy video” copies a file-backed movie so paste targets can attach it, and “Copy image” copies the sprite sheet. Both actions report success or failure inline. “Post on X” opens the composer with only `#ShareMyWaddly`; write your own post and attach the copied file yourself. A failed generation offers “Try Again”. The dialog follows macOS light and dark appearance and closing it cancels generation. Waddly has no share save-to-file action. See [the share flow notes](docs/SHARE.md) for behavior and QA limits.
 
 ## Use your own pet
 
