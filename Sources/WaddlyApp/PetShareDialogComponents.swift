@@ -1,43 +1,130 @@
 import AppKit
 import AVKit
 
+/// Resolves a dynamic system color for an appearance, so layer fills follow light, dark, and contrast settings.
 @MainActor
-final class ShareXLogoView: NSView {
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.black.setFill()
-        NSBezierPath(ovalIn: bounds.insetBy(dx: 0.5, dy: 0.5)).fill()
-        let label = NSAttributedString(
-            string: "𝕏",
-            attributes: [.font: NSFont.systemFont(ofSize: 15, weight: .bold), .foregroundColor: NSColor.white]
-        )
-        let size = label.size()
-        label.draw(in: NSRect(
-            x: (bounds.width - size.width) / 2,
-            y: (bounds.height - size.height) / 2,
-            width: size.width,
-            height: size.height
-        ))
+func shareLayerColor(_ color: NSColor, appearance: NSAppearance) -> CGColor {
+    var result = color.cgColor
+    appearance.performAsCurrentDrawingAppearance { result = color.cgColor }
+    return result
+}
+
+/// Renders the X logo at the requested size as a template image, so a button tints it for light and dark.
+@MainActor
+enum ShareXLogo {
+    static func image(size: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            NSColor.black.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: 0.5, dy: 0.5)).fill()
+            let label = NSAttributedString(
+                string: "𝕏",
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: size * 0.47, weight: .bold),
+                    .foregroundColor: NSColor.black
+                ]
+            )
+            NSGraphicsContext.current?.cgContext.setBlendMode(.destinationOut)
+            let labelSize = label.size()
+            label.draw(at: NSPoint(
+                x: rect.midX - labelSize.width / 2,
+                y: rect.midY - labelSize.height / 2
+            ))
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 }
 
-@MainActor
-final class ShareXIdentityView: NSStackView {
+/// A share action that shows hover, press, focus, and disabled states.
+///
+/// AppKit draws no hover feedback for a borderless button, so the layer tints system colors that follow the
+/// appearance and the accent color. Press and focus stay native: `NSButton` tracks the press and draws the
+/// focus ring around the button's bounds.
+final class ShareActionButton: NSButton {
+    private let baseColor: NSColor
+    private let hoverColor: NSColor
+    private let pressedColor: NSColor
+    private(set) var isHovered = false
+    private var isPressed = false
+
+    init(title: String, base: NSColor, hover: NSColor, pressed: NSColor) {
+        baseColor = base
+        hoverColor = hover
+        pressedColor = pressed
+        super.init(frame: .zero)
+        self.title = title
+        isBordered = false
+        wantsLayer = true
+        layer?.cornerRadius = 6
+        focusRingType = .default
+        updateBackground()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var isEnabled: Bool {
+        didSet {
+            isHovered = isHovered && isEnabled
+            updateTrackingAreas()
+            updateBackground()
+        }
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         trackingAreas.forEach(removeTrackingArea)
+        guard isEnabled else { return }
         addTrackingArea(NSTrackingArea(
-            rect: bounds,
-            options: [.cursorUpdate, .activeInKeyWindow, .inVisibleRect],
-            owner: self,
-            userInfo: nil
+            rect: .zero,
+            options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+            owner: self
         ))
     }
 
-    override func cursorUpdate(with event: NSEvent) {
-        NSCursor.pointingHand.set()
+    override func mouseEntered(with event: NSEvent) {
+        setHovered(true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        setHovered(false)
+    }
+
+    /// Sets the hover state the tracking area would report.
+    func setHovered(_ hovered: Bool) {
+        isHovered = hovered && isEnabled
+        updateBackground()
+    }
+
+    override func highlight(_ flag: Bool) {
+        super.highlight(flag)
+        isPressed = flag
+        updateBackground()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateBackground()
+    }
+
+    private func updateBackground() {
+        let color = if !isEnabled {
+            baseColor.withAlphaComponent(0.45)
+        } else if isPressed {
+            pressedColor
+        } else if isHovered {
+            hoverColor
+        } else {
+            baseColor
+        }
+        layer?.backgroundColor = shareLayerColor(color, appearance: effectiveAppearance)
     }
 }
 
+/// A checkerboard surface that keeps transparent sprite frames readable in both appearances.
 @MainActor
 final class CheckerboardView: NSView {
     override func draw(_ dirtyRect: NSRect) {
@@ -54,14 +141,22 @@ final class CheckerboardView: NSView {
     }
 }
 
+/// Plays the exported movie in place, so the preview shows the exact file that copying and posting use.
 @MainActor
 final class PetMoviePreviewView: NSView {
     private var playerView: AVPlayerView?
     private let posterView = NSImageView()
-    private let playButton = NSButton(title: "▶", target: nil, action: nil)
+    private let playButton = ShareActionButton(
+        title: "",
+        base: NSColor.black.withAlphaComponent(0.55),
+        hover: NSColor.black.withAlphaComponent(0.7),
+        pressed: NSColor.black.withAlphaComponent(0.85)
+    )
     private var movieURL: URL?
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
+    private var playLabel = ""
+    private var pauseLabel = ""
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -70,13 +165,10 @@ final class PetMoviePreviewView: NSView {
         posterView.imageAlignment = .alignCenter
         posterView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(posterView)
-        playButton.title = "▶"
-        playButton.isBordered = false
-        playButton.wantsLayer = true
-        playButton.layer?.backgroundColor = NSColor(calibratedWhite: 0.22, alpha: 0.88).cgColor
+        playButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.playButton")
         playButton.layer?.cornerRadius = 20
-        playButton.contentTintColor = .white
-        playButton.font = .systemFont(ofSize: 17, weight: .semibold)
+        playButton.image = PetMoviePreviewView.symbol("play.fill")
+        playButton.imagePosition = .imageOnly
         playButton.translatesAutoresizingMaskIntoConstraints = false
         playButton.target = self
         playButton.action = #selector(togglePlayback)
@@ -103,6 +195,12 @@ final class PetMoviePreviewView: NSView {
         posterView.image = poster
     }
 
+    func setAccessibilityLabels(play: String, pause: String) {
+        playLabel = play
+        pauseLabel = pause
+        setPlaying(player?.timeControlStatus == .playing)
+    }
+
     func stop() {
         player?.pause()
         playerView?.player = nil
@@ -112,6 +210,7 @@ final class PetMoviePreviewView: NSView {
         posterView.image = nil
         movieURL = nil
         player = nil
+        setPlaying(false)
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
         }
@@ -145,19 +244,30 @@ final class PetMoviePreviewView: NSView {
         guard let player else { return }
         if player.timeControlStatus == .playing {
             player.pause()
-            playButton.title = "▶"
+            setPlaying(false)
         } else {
             if player.currentItem?.currentTime() == player.currentItem?.duration {
                 player.seek(to: .zero)
             }
             player.play()
-            playButton.title = "Ⅱ"
+            setPlaying(true)
         }
+    }
+
+    private func setPlaying(_ isPlaying: Bool) {
+        playButton.image = Self.symbol(isPlaying ? "pause.fill" : "play.fill")
+        playButton.setAccessibilityLabel(isPlaying ? pauseLabel : playLabel)
+    }
+
+    /// The overlay sits on the animation itself, so the symbol must stay white in both appearances.
+    private static func symbol(_ name: String) -> NSImage? {
+        NSImage(systemSymbolName: name, accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [.white]))
     }
 
     private func resetPlayback() {
         player?.pause()
         player?.seek(to: .zero)
-        playButton.title = "▶"
+        setPlaying(false)
     }
 }
