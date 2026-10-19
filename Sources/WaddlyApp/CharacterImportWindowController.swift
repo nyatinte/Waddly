@@ -73,13 +73,9 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     /// Closing with staged changes asks first; an untouched or freshly applied window closes at once.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        guard !model.isApplying else { return false }
-        guard model.isDirty, !isConfirmingClose else { return true }
-        confirmDiscard { [weak self] in
-            guard let self else { return }
-            isConfirmingClose = true
-            close()
-        }
+        guard !model.isApplying, !isConfirmingClose else { return false }
+        guard model.isDirty else { return true }
+        confirmDiscard { [weak self] in self?.close() }
         return false
     }
 
@@ -160,11 +156,12 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     }
 
     private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
-        guard !model.isApplying else { return }
+        guard !model.isApplying, !isConfirmingClose else { return }
         guard let window else {
             discard()
             return
         }
+        isConfirmingClose = true
         let alert = NSAlert()
         alert.messageText = localization.string(for: .characterDiscardTitle)
         alert.informativeText = localization.string(for: .characterDiscardMessage)
@@ -172,8 +169,10 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         alert.addButton(withTitle: localization.string(for: .characterDiscardConfirm))
         alert.addButton(withTitle: localization.string(for: .characterCancel))
         presenter.presentAlert(alert, window) { [weak self] response in
+            guard let self else { return }
+            isConfirmingClose = false
             guard response == .alertFirstButtonReturn else { return }
-            self?.finishDiscard(discard)
+            finishDiscard(discard)
         }
     }
 

@@ -49,6 +49,43 @@ import WaddlyCore
         #expect(CharacterImportModel.sameFrames(stored, persisted))
     }
 
+    @Test func repeatedCloseWaitsForTheOutstandingDiscardConfirmation() async throws {
+        let wizard = try SetupWizardFixture.makeWizard()
+        defer { wizard.close() }
+        let model = CharacterImportModel(currentImages: { PetImageSet() }, commit: { _ in .committed })
+        var respond: ((NSApplication.ModalResponse) -> Void)?
+        var alertCount = 0
+        var closeCount = 0
+        var presenter = WindowPresenter.invisible
+        presenter.presentAlert = { _, _, response in
+            alertCount += 1
+            respond = response
+        }
+        let controller = CharacterImportWindowController(
+            model: model, localization: wizard.localization, presenter: presenter,
+            onClose: { closeCount += 1 }
+        )
+        defer { controller.close() }
+        controller.focus()
+        try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
+        let window = try #require(controller.window)
+        #expect(model.isDirty)
+        #expect(!controller.windowShouldClose(window))
+        let cancel = try #require(respond)
+        #expect(!controller.windowShouldClose(window))
+        #expect(alertCount == 1)
+        cancel(.alertSecondButtonReturn)
+        #expect(window.isVisible)
+        #expect(model.isDirty)
+        #expect(closeCount == 0)
+        #expect(!controller.windowShouldClose(window))
+        #expect(alertCount == 2)
+        let confirm = try #require(respond)
+        confirm(.alertFirstButtonReturn)
+        #expect(!window.isVisible)
+        #expect(closeCount == 1)
+    }
+
     @Test func rejectedCommitIsNotReportedAsPersistenceFailure() async throws {
         let model = CharacterImportModel(currentImages: { PetImageSet() }, commit: { _ in .rejected })
         try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
