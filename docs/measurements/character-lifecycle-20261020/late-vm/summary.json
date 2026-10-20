@@ -258,5 +258,10 @@
     }
   },
   "maximum_sample_gap_seconds": 1.686239166650921,
+  "query_contract_validation": {
+    "columns": 10,
+    "samples": 62,
+    "task_info_flavor": "TASK_VM_INFO"
+  },
   "samples": 602
 }

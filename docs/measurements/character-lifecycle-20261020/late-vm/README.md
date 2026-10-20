@@ -102,8 +102,8 @@ device remain **unavailable**, irrespective of their zero placeholders. An alloc
 not a kernel purgeability classification. These counters do not identify internal allocation owners.
 
 Thus the similar early RSS ramp also occurs without VM inspection, but **neither process explains
-the original late ramp**. The queried compressed counter shows no recorded increase, but **volatile memory remains unmeasured
-and cannot be ruled out**. These data are not grounds to subtract RSS into an artificial passing
+the original late ramp**. The queried compressed counter shows no recorded increase, but
+**volatile memory remains unmeasured and cannot be ruled out**. These data are not grounds to subtract RSS into an artificial passing
 budget, declare all remaining memory harmless, or reinterpret the earlier run's unrecorded counters.
 
 ## Validation, artifacts and remaining work
@@ -115,7 +115,8 @@ python3 docs/measurements/character-lifecycle-20261020/late-vm/analyze.py > /tmp
 
 The stdlib-only analyzer verifies both sequences, marker/exit receipts, fixture/signature/disabled
 stack-logging provenance, matching product-source hashes, inspection PID/phase bounds, monotonic
-sample times and the stated counter observations before generating `summary.json`. It extracts only
+sample times and the stated counter observations before generating `summary.json`. It explicitly
+classifies the three unqueried fields as unavailable, not measured zeros. It extracts only
 the selected rounded VM columns; full summaries and complete wrapper output are retained too.
 `collect.sh.txt` archives the one-off collector (edit its ROOT and output directory before reuse;
 use harness checkout `b11e696` to replay that original inspected protocol). The counter harness is
@@ -126,6 +127,13 @@ fixture, stack logging off and no inspection; the counter fields are always part
 Full `mise run check` after the Swift change passed 241 tests / 25 suites (one existing known issue),
 format/lint/localization/complexity/safety/completion-guard checks and the signed arm64 Release build.
 Neither diagnostic is a subset substituted for that validation.
+
+`query-contract.*` records a separate **one-cycle CSV-contract smoke check** after the review correction,
+using harness `6f692feb065cab0e4729396904336cfe66cd6aec`. It exited 0 with 62 ordered samples and a
+completion marker; the analyzer requires exactly ten columns, all four queried extra counters,
+absence of the three unavailable columns, and the explicit flavor sidecar. It is not a shorter
+replacement for the ten-cycle diagnostics or full test validation and is not used for budget or
+plateau acceptance. Both original ten-cycle CSVs and their receipts remain byte-for-byte unchanged.
 
 **#98 remains open.** Next attribution targets include the growing owned-unmapped regions and
 internal accounting, using appropriately identified allocation/VM diagnostics. No exact owner,

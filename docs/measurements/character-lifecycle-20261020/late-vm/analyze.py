@@ -87,4 +87,18 @@ summary["counter_run"] = {
         for row in counters if "-closed-30s" in row["state"]
     ],
 }
+# A separate one-cycle smoke check of the corrected CSV contract, not memory acceptance.
+with (ROOT / "query-contract.csv").open(newline="") as source:
+    validation = list(csv.DictReader(source))
+validation_states = ["launch"] + [
+    f"cycle-0-{phase}-{second}s" for phase in ("staged", "closed") for second in range(1, 31)
+] + ["lifecycle-complete"]
+assert [row["state"] for row in validation] == validation_states
+assert len(validation[0]) == 10
+assert all(key not in validation[0] for key in unavailable_fields)
+assert all(key in validation[0] for key in ("reusable_bytes", "compressed_bytes", "internal_bytes", "external_bytes"))
+assert "task_info_flavor=TASK_VM_INFO\n" in (ROOT / "query-contract.environment.txt").read_text()
+validation_status = (ROOT / "query-contract.status.txt").read_text()
+assert validation_status.startswith("probe_wrapper_exit_code=0\n") and "lifecycle-complete," in validation_status
+summary["query_contract_validation"] = {"samples": len(validation), "columns": 10, "task_info_flavor": "TASK_VM_INFO"}
 print(json.dumps(summary, indent=2, sort_keys=True))
