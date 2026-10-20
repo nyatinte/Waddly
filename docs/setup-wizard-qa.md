@@ -45,6 +45,8 @@ is missing. Both image-drop registrations are removed, and the window-drop handl
 The existing permission/retry/restart/troubleshooting behavior and paused-tap rules are reused.
 Opening, navigating, or closing this mode does not write setup progress or the saved character.
 First-run and incomplete saved steps keep the normal Setup Guide and navigation unchanged.
+Paired JA/EN light/dark [content-view renders and native-attempt limitations](images/input-monitoring-settings/README.md)
+are recorded separately; they are not live permission or accessibility acceptance.
 
 ## Automated verification (verified)
 
