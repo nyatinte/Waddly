@@ -31,7 +31,9 @@ struct ImageAppProbe {
         try await Task.sleep(for: .seconds(2))
         print(
             "state,physical_footprint_bytes,peak_physical_footprint_bytes," +
-                "rss_bytes,peak_rss_bytes,system_uptime_seconds"
+                "rss_bytes,peak_rss_bytes,system_uptime_seconds,reusable_bytes," +
+                "purgeable_volatile_resident_bytes,purgeable_volatile_virtual_bytes," +
+                "compressed_bytes,internal_bytes,external_bytes,device_bytes"
         )
         snapshot("launch")
         delegate.setupWizardController?.close()
@@ -127,7 +129,9 @@ struct ImageAppProbe {
         guard result == KERN_SUCCESS else { exit(1) }
         print(
             "\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)," +
-                "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)"
+                "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)," +
+                "\(info.reusable),\(info.purgeable_volatile_resident),\(info.purgeable_volatile_virtual)," +
+                "\(info.compressed),\(info.internal),\(info.external),\(info.device)"
         )
         fflush(stdout)
     }

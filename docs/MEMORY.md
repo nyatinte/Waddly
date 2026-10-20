@@ -136,7 +136,10 @@ The opt-in mode defaults to three real Change Character model/controller cycles 
 staged and closed states for 30 seconds each and sampling `task_info` every nominal second.
 Set `WADDLY_PROFILE_CHARACTER_CYCLES=10` for a longer series (positive integers only).
 Each CSV also records monotonic system uptime, so sample gaps can be measured rather than inferred
-from nominal state labels. A final `lifecycle-complete` sample is emitted only after every release
+from nominal state labels. New runs append raw `task_vm_info` reusable, purgeable-volatile resident
+and virtual, compressed, internal, external and device byte counters to distinguish accounting
+movements; they do not define an adjusted RSS, add up to an asserted partition, or replace footprint
+as the budget metric. These fields come from the existing self-task query, not remote inspection. A final `lifecycle-complete` sample is emitted only after every release
 check succeeds; retain the wrapper's successful exit as well as that marker.
 
 For a typical-size fixture rather than the default large-sheet exception:
