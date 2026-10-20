@@ -84,12 +84,15 @@
     ],
     "elapsed_seconds": 661.4343494166969,
     "maximum_sample_gap_seconds": 1.6591656249947846,
+    "measured_zero_fields_in_all_samples": [
+      "compressed_bytes"
+    ],
     "observed_rss_identity_in_all_samples": "internal_bytes + external_bytes + reusable_bytes",
     "samples": 602,
-    "zero_fields_in_all_samples": [
+    "task_info_flavor": "TASK_VM_INFO",
+    "unavailable_fields_for_selected_flavor": [
       "purgeable_volatile_resident_bytes",
       "purgeable_volatile_virtual_bytes",
-      "compressed_bytes",
       "device_bytes"
     ]
   },

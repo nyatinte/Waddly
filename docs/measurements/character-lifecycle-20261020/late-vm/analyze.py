@@ -65,8 +65,11 @@ assert re.findall(source_pattern, environment, re.MULTILINE) == re.findall(sourc
 # An observation of these retained samples, not a portable API identity or adjusted-RSS budget.
 assert all(int(row["rss_bytes"]) == sum(int(row[key]) for key in
            ("internal_bytes", "external_bytes", "reusable_bytes")) for row in counters)
-zero_fields = ("purgeable_volatile_resident_bytes", "purgeable_volatile_virtual_bytes", "compressed_bytes", "device_bytes")
-assert all(int(row[key]) == 0 for row in counters for key in zero_fields)
+# TASK_VM_INFO does not query the volatile fields; public XNU also hardcodes device to zero.
+# Preserve the raw CSV placeholders, but never group them with actually queried zero counters.
+unavailable_fields = ("purgeable_volatile_resident_bytes", "purgeable_volatile_virtual_bytes", "device_bytes")
+measured_zero_fields = ("compressed_bytes",)
+assert all(int(row[key]) == 0 for row in counters for key in measured_zero_fields)
 counter_times = [float(row["system_uptime_seconds"]) for row in counters]
 counter_gaps = [right - left for left, right in zip(counter_times, counter_times[1:])]
 assert min(counter_gaps) > 0
@@ -75,7 +78,9 @@ summary["counter_run"] = {
     "samples": len(counters),
     "elapsed_seconds": counter_times[-1] - counter_times[0],
     "maximum_sample_gap_seconds": max(counter_gaps),
-    "zero_fields_in_all_samples": list(zero_fields),
+    "task_info_flavor": "TASK_VM_INFO",
+    "unavailable_fields_for_selected_flavor": list(unavailable_fields),
+    "measured_zero_fields_in_all_samples": list(measured_zero_fields),
     "observed_rss_identity_in_all_samples": "internal_bytes + external_bytes + reusable_bytes",
     "closed_30s_endpoints": [
         {"state": row["state"], **{key: int(row[key]) for key in endpoint_fields}}

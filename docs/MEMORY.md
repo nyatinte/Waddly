@@ -136,10 +136,12 @@ The opt-in mode defaults to three real Change Character model/controller cycles 
 staged and closed states for 30 seconds each and sampling `task_info` every nominal second.
 Set `WADDLY_PROFILE_CHARACTER_CYCLES=10` for a longer series (positive integers only).
 Each CSV also records monotonic system uptime, so sample gaps can be measured rather than inferred
-from nominal state labels. New runs append raw `task_vm_info` reusable, purgeable-volatile resident
-and virtual, compressed, internal, external and device byte counters to distinguish accounting
-movements; they do not define an adjusted RSS, add up to an asserted partition, or replace footprint
-as the budget metric. These fields come from the existing self-task query, not remote inspection. A final `lifecycle-complete` sample is emitted only after every release
+from nominal state labels. New runs append ledger-backed `task_vm_info` reusable, compressed,
+internal and external byte counters from the existing self-task query, not remote inspection.
+Sidecars record `task_info_flavor=TASK_VM_INFO`. This flavor does not query volatile resident/virtual
+fields, and public XNU hardcodes device fields to zero, so those placeholders are not emitted as
+measurements. These counters do not define an adjusted RSS, an asserted portable partition, or a
+replacement for footprint as the budget metric. A final `lifecycle-complete` sample is emitted only after every release
 check succeeds; retain the wrapper's successful exit as well as that marker.
 
 For a typical-size fixture rather than the default large-sheet exception:
@@ -202,8 +204,10 @@ open in #98. No product cache, residency limit, or gate was changed.
 A [separate four-checkpoint VM diagnostic and uninspected native-counter run](measurements/character-lifecycle-20261020/late-vm/README.md)
 retain further evidence without replacing those budget results. The inspected process has stable CG
 Raster Data but growing generic owned-unmapped regions. The counter process's RSS rise primarily
-appears in its internal counter; reported reusable growth is small and compressed/volatile-resident
-counters report zero. Neither process reproduces the original late timing or establishes an owner,
+appears in its internal counter; reported reusable growth is small and the queried compressed
+counter reports zero. Review found that the original CSV also exposed unqueried volatile/device
+placeholders: those raw artifacts are preserved but marked unavailable, not evidence excluding
+volatile memory. Neither process reproduces the original late timing or establishes an owner,
 a fix, a universal accounting formula, or a harmless plateau. These raw counters must not become an
 invented adjusted-RSS budget.
 

@@ -11,9 +11,10 @@ not another budget median, a product fix, or a retroactive explanation of that p
    the requested state, command, UTC bounds, and actual CSV rows before/after inspection: all stayed
    at closed-20s or closed-21s, with no phase substitution.
 2. A second, uninspected ten-cycle process used
-   `7934e8dbe0122d733bcac99de42551575e7c23c8`. Only the probe's CSV changes: seven additional raw
-   `task_vm_info` fields are appended to the existing self-task query. It has **no external VM
-   inspection**. Stack-logging variables were removed from its environment explicitly.
+   `7934e8dbe0122d733bcac99de42551575e7c23c8`. Its CSV initially exposed seven extra `task_vm_info`
+   fields, but review found three are not queried by the selected API; see the correction below.
+   Its original raw CSV is preserved unchanged. It has **no external VM inspection**. Stack-logging
+   variables were removed from its environment explicitly.
 
 The analyzer verifies that both sidecars' product-source hashes match exactly. Application code,
 fixture, signing and cycle protocol are unchanged; the second probe's different hash records its
@@ -62,9 +63,25 @@ late jump. Its elapsed sample duration was 662.82 seconds; the maximum adjacent 
 
 ## Raw native counters: a narrower accounting observation
 
-The extra columns are the SDK's raw `reusable`, `purgeable_volatile_resident`,
-`purgeable_volatile_virtual`, `compressed`, `internal`, `external`, and `device` byte counters. No
-new kernel call, subtraction-based budget metric, or application behavior is introduced.
+### Query-contract correction from review
+
+The retained CSV exposed seven struct fields, but `TASK_VM_INFO` only queries the added **reusable,
+compressed, internal and external** counters. Public XNU initializes volatile-resident/virtual fields
+to zero and queries them only for `TASK_VM_INFO_PURGEABLE`; it also hardcodes device/device-peak to
+zero. Thus the three retained columns `purgeable_volatile_resident_bytes`,
+`purgeable_volatile_virtual_bytes`, and `device_bytes` are **unavailable placeholders, not measured
+zeros**. They cannot exclude volatile or graphics memory, even though every raw cell contains zero.
+
+API evidence: [macOS 14 public XNU task_info implementation](https://github.com/apple-oss-distributions/xnu/blob/xnu-10002.1.13/osfmk/kern/task.c#L5763-L5814)
+and the [current public source](https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/kern/task.c)
+retain this distinction. These public sources are not claimed to identify the exact installed macOS
+27 kernel. The earlier interpretation of the placeholders as volatility measurements is **withdrawn**.
+
+Future CSVs omit these three unavailable columns, and sidecars explicitly record
+`task_info_flavor=TASK_VM_INFO`. The analyzer marks them unavailable for these retained runs instead
+of grouping them with sampled zero counters. No query-flavor change, extra kernel call, invented
+adjusted-RSS budget, or product behavior is introduced. Actual volatile measurements would require
+the appropriate query and separately recorded protocol; none are claimed here.
 
 The second process completed 602 samples over 661.43 seconds (maximum gap 1.659 seconds). Selected
 closed-30s endpoints, **MiB**:
@@ -80,15 +97,14 @@ Across **these retained 602 samples**, RSS exactly equals the reported internal 
 bytes. This is an empirical identity for this dataset/kernel, not a newly promised portable API
 identity. The substantial early rise sits primarily in the **internal counter**, not in the small
 reusable change or external counter. Reusable stays at most 3.52 MiB across the whole process.
-Purgeable-volatile resident/virtual, compressed and device counters all **report zero** in every
-sample. Zero device does not rule out graphics allocations; an allocator zone's name is not a
-kernel purgeability classification. These counters do not identify internal allocation owners.
+The queried compressed ledger counter reports zero in every sample. Volatile-resident/virtual and
+device remain **unavailable**, irrespective of their zero placeholders. An allocator zone's name is
+not a kernel purgeability classification. These counters do not identify internal allocation owners.
 
 Thus the similar early RSS ramp also occurs without VM inspection, but **neither process explains
-the original late ramp**. The native counters do not support simply calling this process's RSS gap
-compression or reported volatile-resident memory. They are not grounds to subtract RSS into an
-artificial passing budget, declare all remaining memory harmless, or reinterpret the earlier run's
-unrecorded counters.
+the original late ramp**. The queried compressed counter shows no recorded increase, but **volatile memory remains unmeasured
+and cannot be ruled out**. These data are not grounds to subtract RSS into an artificial passing
+budget, declare all remaining memory harmless, or reinterpret the earlier run's unrecorded counters.
 
 ## Validation, artifacts and remaining work
 
