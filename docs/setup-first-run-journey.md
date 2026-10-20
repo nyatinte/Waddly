@@ -15,7 +15,7 @@ migration is #95; the animation/permission lifecycle is #63/#98. Nothing here ad
 | Journey | Entry | What the user sees | Actions | Exit / saved state |
 | --- | --- | --- | --- | --- |
 | Fresh install | No pet frames and `setupWizardSeen == false` | Pet step. The bundled sample animates in the preview, labelled “Sample”, with a one-line body. | Create with ChatGPT / Choose a PNG / **Try the sample pet first** / drop a PNG | Import or sample writes frames; `setupStep` still `nil` until a step change |
-| Existing-user upgrade | `setupWizardSeen == true` and a complete pet | No wizard on launch; the pet is on the desktop. `Setup Guide…` opens it deliberately. | Menu actions | Setup does not reopen; `setupStep` stays `nil` |
+| Finished setup / existing-user upgrade | `setupWizardSeen == true`, a complete pet, and `setupStep == nil` | No wizard on launch; the pet is on the desktop. `Set Up Input Monitoring…` opens only permission/status/recovery, without character setup, progress indicator, Back, or Later. | Permission/recovery actions, Close; Change Character remains a separate menu action | Opening/closing monitoring settings leaves the saved character and setup state unchanged |
 | Denied permission | On the Keyboard reactions step | “not allowed”, the privacy note, and **Enable Input Monitoring** | Enable → guide opens System Settings; or **Add it another way**; or **Set up later** | Granted lands in `setupStep = 1`; Later records `setupStep = 2`, permission TCC untouched |
 | Interrupted setup | The window closed before the finish action | With a complete pet, nothing reopens by itself; the Dock click or **Setup Guide…** resumes at the saved step. With no pet yet, the next launch reopens the guide. | Continue, or reopen from the Dock/menu | Closing a complete pet sets `setupWizardSeen = true`; closing without a pet clears it; `setupStep` is kept either way |
 | Returning user | Completed once, then reopened | Finish page with the pet check and the monitoring check as they truly are | **Show on desktop**, or **Set up Input Monitoring** if the check is empty | No onboarding restart; a completed guide never traps the user in setup |
@@ -58,7 +58,8 @@ launch ─ no pet or unseen ─► Pet ──(import / Try the sample)──► 
   └─(Later on Keyboard reactions)─────────────────────────────────────────► Ready (incomplete warning)
 
 Close any step ── keeps setupStep ──► the Dock click or the menu's Setup Guide resumes that step
-Complete pet + close ── setupWizardSeen = true ──► relaunch does NOT reopen the guide; Dock/menu resumes
+Complete pet + close ── setupWizardSeen = true ──► relaunch does NOT reopen the guide; unfinished steps resume from Dock/menu
+Finished setup + menu ──► Input Monitoring settings only; Close preserves setupStep = nil
 No complete pet + close ── setupWizardSeen = false ──► relaunch reopens the guide
 Ready + Show on desktop ── clears setupStep ──► never reopens onboarding
 ```

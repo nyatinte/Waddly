@@ -1,0 +1,63 @@
+import AppKit
+import WaddlyCore
+
+@main
+@MainActor
+struct RenderInputMonitoring {
+    static func main() {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+        Task { @MainActor in
+            do {
+                try await capture()
+                print("CAPTURE_COMPLETED")
+                app.terminate(nil)
+            } catch {
+                fputs("Capture failed: \(error)\n", stderr)
+                exit(1)
+            }
+        }
+        app.run()
+    }
+
+    static func capture() async throws {
+        let args = CommandLine.arguments
+        let root = URL(fileURLWithPath: args[1])
+        let output = URL(fileURLWithPath: args[2])
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let sheet = root.appendingPathComponent("assets/examples/nyatinte-bot-3x3.png")
+        guard let images = PetSpriteSheetImporter.frames(from: try Data(contentsOf: sheet)) else { throw NSError(domain: "Render", code: 4) }
+        for language in [AppLanguage.english, .japanese] {
+            let suite = "Waddly146Render.\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suite)!
+            defer { defaults.removePersistentDomain(forName: suite) }
+            let settings = AppSettings(defaults: defaults)
+            settings.appLanguage = language
+            let localization = LocalizationController(settings: settings, resources: Bundle(url: root.appendingPathComponent("macos"))!)
+            for dark in [false, true] {
+                let permission = PermissionService(hasPermission: { false }, isReceivingKeys: { false }, hasObservedReaction: { false }, requestAccess: { false }, restartTap: {}, openSettings: {})
+                let presenter = WindowPresenter(activate: {}, reveal: { $0.alphaValue = 0; $0.orderFrontRegardless() }, focus: { $0.alphaValue = 0; $0.orderFrontRegardless() }, hide: { $0.orderOut(nil) }, revealFadingIn: { window, _ in window.alphaValue = 0; window.orderFrontRegardless() }, presentAlert: { _, _, _ in fatalError("Unexpected alert") })
+#if MONITORING_SETTINGS_CHANGED
+                let wizard = SetupWizardController(localization: localization, demoPetURL: sheet, onPreviewImage: { _ in nil }, onConfirmImage: { _, _ in false }, currentPetImages: { images }, permission: permission, presenter: presenter, isMonitoringSettings: true, onClose: {})
+#else
+                let wizard = SetupWizardController(localization: localization, demoPetURL: sheet, onPreviewImage: { _ in nil }, onConfirmImage: { _, _ in false }, currentPetImages: { images }, permission: permission, presenter: presenter, onClose: {})
+#endif
+                guard let window = wizard.window, let view = window.contentView else { throw NSError(domain: "Render", code: 1) }
+                window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+                wizard.showWindow(nil)
+                for _ in 0..<3 {
+                    view.layoutSubtreeIfNeeded()
+                    view.displayIfNeeded()
+                    try await Task.sleep(for: .milliseconds(200))
+                }
+                guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { throw NSError(domain: "Render", code: 2) }
+                view.cacheDisplay(in: view.bounds, to: bitmap)
+                guard let png = bitmap.representation(using: .png, properties: [:]) else { throw NSError(domain: "Render", code: 3) }
+                let name = "\(language == .english ? "en" : "ja")-\(dark ? "dark" : "light").png"
+                try png.write(to: output.appendingPathComponent(name))
+                print("CAPTURE", name, view.bounds.size, bitmap.pixelsWide, bitmap.pixelsHigh)
+                wizard.close()
+            }
+        }
+    }
+}

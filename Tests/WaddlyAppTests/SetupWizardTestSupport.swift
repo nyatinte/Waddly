@@ -34,6 +34,7 @@ enum SetupWizardFixture {
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
         presenter: WindowPresenter = .invisible,
+        isMonitoringSettings: Bool = false,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {}
     ) throws -> SetupWizardController {
@@ -75,6 +76,7 @@ enum SetupWizardFixture {
             currentPetImages: { state.images },
             permission: permission,
             presenter: presenter,
+            isMonitoringSettings: isMonitoringSettings,
             savedStep: savedStep,
             pasteboard: pasteboard,
             openBrowser: openBrowser,

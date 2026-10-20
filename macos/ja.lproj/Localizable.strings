@@ -37,6 +37,8 @@
 "menu.showInMenuBar" = "メニューバーに表示";
 "menu.changeCharacter" = "キャラクターを変更…";
 "menu.setupWizard" = "セットアップガイド…";
+"menu.inputMonitoring" = "入力監視を設定…";
+"setup.close" = "閉じる";
 "menu.login" = "ログイン時に起動";
 "menu.quit" = "Waddlyを終了";
 "menu.loginError" = "ログイン時起動を設定できませんでした。";

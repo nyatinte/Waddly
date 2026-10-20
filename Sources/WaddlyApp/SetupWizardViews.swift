@@ -29,7 +29,7 @@ extension SetupWizardController {
     }
 
     func refreshLocalization() {
-        window?.title = localizedString(.setupWindowTitle)
+        window?.title = localizedString(isMonitoringSettings ? .setupSetUpMonitoring : .setupWindowTitle)
         renderCurrentStep()
     }
 }

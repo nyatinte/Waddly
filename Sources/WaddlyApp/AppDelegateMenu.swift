@@ -150,7 +150,7 @@ extension AppDelegate {
         statusMenu.addItem(characterItem)
 
         let setupItem = NSMenuItem(
-            title: localizedString(.menuSetupWizard),
+            title: localizedString(setupMenuTitleKey),
             action: #selector(showSetupWizard),
             keyEquivalent: ""
         )
@@ -343,6 +343,10 @@ extension AppDelegate: NSMenuItemValidation {
     /// surface the user can reach.
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let action = menuItem.action
+        if action == #selector(showSetupWizard) {
+            menuItem.title = localizedString(setupMenuTitleKey)
+            return true
+        }
         if action == #selector(showPetShare) {
             return hasCompletePetImageSet
         }
