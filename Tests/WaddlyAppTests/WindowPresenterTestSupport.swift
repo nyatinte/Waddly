@@ -1,4 +1,5 @@
 import AppKit
+import Testing
 @testable import WaddlyApp
 
 extension WindowPresenter {
@@ -31,6 +32,15 @@ extension WindowPresenter {
         }
         return presenter
     }()
+}
+
+/// Dispatch the real target/action without `performClick`'s nested event-tracking loop. Its delayed
+/// WindowServer wakeup can stop the Swift async-main host's outer CFRunLoop (#131). This is action
+/// wiring coverage, not a physical click/pressed-state check; those belong to native GUI QA (#111).
+@MainActor
+func sendTestAction(_ control: NSControl) throws {
+    try #require(control.isEnabled)
+    #expect(control.sendAction(control.action, to: control.target))
 }
 
 /// Builds an app whose windows never reach the desktop. Every suite that touches windows uses this

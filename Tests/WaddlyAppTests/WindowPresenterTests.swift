@@ -22,6 +22,25 @@ import Testing
         #expect(window.alphaValue == 0)
     }
 
+    /// Yield with a real transparent window before and after closing it. A nested `performClick`
+    /// tracking loop can leave a WindowServer wakeup that terminates the async-main test host here.
+    @Test func controlActionsFinishAcrossWindowServerWakeups() async throws {
+        _ = NSApplication.shared
+        let window = makeWindow()
+        defer { window.close() }
+        let target = ActionTarget()
+        let button = NSButton(title: "action", target: target, action: #selector(ActionTarget.invoke(_:)))
+        window.contentView = button
+        WindowPresenter.invisible.reveal(window)
+
+        try sendTestAction(button)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(target.count == 1)
+        window.close()
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(target.count == 1)
+    }
+
     /// Sheets are how the app asks the user to confirm an import, and the suites end them
     /// themselves, so an invisible alert still has to attach for real.
     @Test func invisibleAlertsStillAttachAsSheets() async {
@@ -53,5 +72,14 @@ import Testing
         )
         window.isReleasedWhenClosed = false
         return window
+    }
+}
+
+@MainActor
+private final class ActionTarget: NSObject {
+    var count = 0
+
+    @objc func invoke(_ sender: NSButton) {
+        count += 1
     }
 }
