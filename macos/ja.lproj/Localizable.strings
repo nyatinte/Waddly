@@ -53,6 +53,9 @@
 "images.category.enter" = "Enter";
 "images.add" = "追加";
 "images.remove" = "画像を削除";
+"images.keepOneFrame" = "各ポーズには少なくとも1枚の画像が必要です。";
+"images.firstFrame" = "すでに先頭の画像です。";
+"images.lastFrame" = "すでに最後の画像です。";
 "images.moveLeft" = "画像を左へ移動";
 "images.moveRight" = "画像を右へ移動";
 "images.thumbnail" = "ペット画像";

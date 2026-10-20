@@ -164,6 +164,7 @@ private struct AnimationSettingsCategoryRow: View {
                             thumbnail: thumbnail,
                             index: index,
                             imageCount: thumbnails.count,
+                            categoryTitle: title,
                             localization: localization,
                             onRemove: { onRemove(index) },
                             onMove: { onMove(index, $0) }
@@ -202,6 +203,7 @@ private struct AnimationSettingsThumbnailView: View {
     let thumbnail: AnimationSettingsThumbnail
     let index: Int
     let imageCount: Int
+    let categoryTitle: String
     let localization: LocalizationController
     let onRemove: () -> Void
     let onMove: (Int) -> Void
@@ -214,7 +216,7 @@ private struct AnimationSettingsThumbnailView: View {
                     .interpolation(.none)
                     .scaledToFit()
                     .frame(width: 64, height: 64)
-                    .accessibilityLabel("\(localization.string(for: .imagesThumbnail)) \(index + 1)")
+                    .accessibilityLabel("\(categoryTitle) — \(localization.string(for: .imagesThumbnail)) \(index + 1)")
 
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")
@@ -223,7 +225,8 @@ private struct AnimationSettingsThumbnailView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(imageCount <= 1)
-                .accessibilityLabel("\(localization.string(for: .imagesRemove)) \(index + 1)")
+                .help(localization.string(for: imageCount <= 1 ? .imagesKeepOneFrame : .imagesRemove))
+                .accessibilityLabel("\(categoryTitle) — \(localization.string(for: .imagesRemove)) \(index + 1)")
             }
 
             HStack {
@@ -232,7 +235,8 @@ private struct AnimationSettingsThumbnailView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(index == 0)
-                .accessibilityLabel("\(localization.string(for: .imagesMoveLeft)) \(index + 1)")
+                .help(localization.string(for: index == 0 ? .imagesFirstFrame : .imagesMoveLeft))
+                .accessibilityLabel("\(categoryTitle) — \(localization.string(for: .imagesMoveLeft)) \(index + 1)")
 
                 Spacer()
 
@@ -241,7 +245,8 @@ private struct AnimationSettingsThumbnailView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(index >= imageCount - 1)
-                .accessibilityLabel("\(localization.string(for: .imagesMoveRight)) \(index + 1)")
+                .help(localization.string(for: index >= imageCount - 1 ? .imagesLastFrame : .imagesMoveRight))
+                .accessibilityLabel("\(categoryTitle) — \(localization.string(for: .imagesMoveRight)) \(index + 1)")
             }
             .frame(width: 64)
         }

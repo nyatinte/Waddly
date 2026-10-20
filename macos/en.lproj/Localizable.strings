@@ -53,6 +53,9 @@
 "images.category.enter" = "Enter";
 "images.add" = "Add";
 "images.remove" = "Remove image";
+"images.keepOneFrame" = "Keep at least one image in each pose.";
+"images.firstFrame" = "This is already the first image.";
+"images.lastFrame" = "This is already the last image.";
 "images.moveLeft" = "Move image left";
 "images.moveRight" = "Move image right";
 "images.thumbnail" = "Pet image";
