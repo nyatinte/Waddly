@@ -1,0 +1,259 @@
+{
+  "counter_run": {
+    "closed_30s_endpoints": [
+      {
+        "external_bytes": 70402048,
+        "internal_bytes": 199852032,
+        "physical_footprint_bytes": 77022576,
+        "reusable_bytes": 2359296,
+        "rss_bytes": 272613376,
+        "state": "cycle-0-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 250281984,
+        "physical_footprint_bytes": 77301200,
+        "reusable_bytes": 3227648,
+        "rss_bytes": 325664768,
+        "state": "cycle-1-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 305102848,
+        "physical_footprint_bytes": 76072472,
+        "reusable_bytes": 3227648,
+        "rss_bytes": 380485632,
+        "state": "cycle-2-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271368192,
+        "physical_footprint_bytes": 75646488,
+        "reusable_bytes": 3440640,
+        "rss_bytes": 346963968,
+        "state": "cycle-3-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271351808,
+        "physical_footprint_bytes": 77514288,
+        "reusable_bytes": 3538944,
+        "rss_bytes": 347045888,
+        "state": "cycle-4-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271319040,
+        "physical_footprint_bytes": 77465088,
+        "reusable_bytes": 3670016,
+        "rss_bytes": 347144192,
+        "state": "cycle-5-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271351808,
+        "physical_footprint_bytes": 75695664,
+        "reusable_bytes": 3686400,
+        "rss_bytes": 347193344,
+        "state": "cycle-6-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271433728,
+        "physical_footprint_bytes": 77432392,
+        "reusable_bytes": 3604480,
+        "rss_bytes": 347193344,
+        "state": "cycle-7-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271564800,
+        "physical_footprint_bytes": 77563440,
+        "reusable_bytes": 3604480,
+        "rss_bytes": 347324416,
+        "state": "cycle-8-closed-30s"
+      },
+      {
+        "external_bytes": 72155136,
+        "internal_bytes": 271613952,
+        "physical_footprint_bytes": 77628976,
+        "reusable_bytes": 3653632,
+        "rss_bytes": 347422720,
+        "state": "cycle-9-closed-30s"
+      }
+    ],
+    "elapsed_seconds": 661.4343494166969,
+    "maximum_sample_gap_seconds": 1.6591656249947846,
+    "observed_rss_identity_in_all_samples": "internal_bytes + external_bytes + reusable_bytes",
+    "samples": 602,
+    "zero_fields_in_all_samples": [
+      "purgeable_volatile_resident_bytes",
+      "purgeable_volatile_virtual_bytes",
+      "compressed_bytes",
+      "device_bytes"
+    ]
+  },
+  "elapsed_seconds": 662.8216805416741,
+  "final_physical_footprint_bytes": 82331208,
+  "final_rss_bytes": 348307456,
+  "inspections": {
+    "0": {
+      "purgeable_zone": {
+        "allocated": "117.2M",
+        "allocations": 29,
+        "resident": "304K"
+      },
+      "regions": {
+        "CG Raster Data": {
+          "dirty": "36.8M",
+          "regions": 36,
+          "resident": "36.8M",
+          "virtual": "36.8M"
+        },
+        "CoreAnimation": {
+          "dirty": "176K",
+          "regions": 9,
+          "resident": "176K",
+          "virtual": "176K"
+        },
+        "IOAccelerator (graphics)": {
+          "dirty": "16K",
+          "regions": 1,
+          "resident": "16K",
+          "virtual": "64K"
+        },
+        "IOSurface": {
+          "dirty": "1808K",
+          "regions": 30,
+          "resident": "1808K",
+          "virtual": "5856K"
+        },
+        "owned unmapped": {
+          "dirty": "288K",
+          "regions": 15,
+          "resident": "288K",
+          "virtual": "320K"
+        }
+      }
+    },
+    "2": {
+      "purgeable_zone": {
+        "allocated": "217.2M",
+        "allocations": 32,
+        "resident": "432K"
+      },
+      "regions": {
+        "CG Raster Data": {
+          "dirty": "36.8M",
+          "regions": 36,
+          "resident": "36.8M",
+          "virtual": "36.8M"
+        },
+        "CoreAnimation": {
+          "dirty": "176K",
+          "regions": 9,
+          "resident": "176K",
+          "virtual": "176K"
+        },
+        "IOAccelerator (graphics)": {
+          "dirty": "16K",
+          "regions": 1,
+          "resident": "16K",
+          "virtual": "64K"
+        },
+        "IOSurface": {
+          "dirty": "1808K",
+          "regions": 30,
+          "resident": "1808K",
+          "virtual": "5856K"
+        },
+        "owned unmapped": {
+          "dirty": "1904K",
+          "regions": 34,
+          "resident": "1904K",
+          "virtual": "1936K"
+        }
+      }
+    },
+    "7": {
+      "purgeable_zone": {
+        "allocated": "185.4M",
+        "allocations": 32,
+        "resident": "368K"
+      },
+      "regions": {
+        "CG Raster Data": {
+          "dirty": "36.8M",
+          "regions": 36,
+          "resident": "36.8M",
+          "virtual": "36.8M"
+        },
+        "CoreAnimation": {
+          "dirty": "176K",
+          "regions": 9,
+          "resident": "176K",
+          "virtual": "176K"
+        },
+        "IOAccelerator (graphics)": {
+          "dirty": "16K",
+          "regions": 1,
+          "resident": "16K",
+          "virtual": "64K"
+        },
+        "IOSurface": {
+          "dirty": "3616K",
+          "regions": 30,
+          "resident": "3616K",
+          "virtual": "5856K"
+        },
+        "owned unmapped": {
+          "dirty": "3568K",
+          "regions": 56,
+          "resident": "3568K",
+          "virtual": "3600K"
+        }
+      }
+    },
+    "9": {
+      "purgeable_zone": {
+        "allocated": "185.4M",
+        "allocations": 32,
+        "resident": "368K"
+      },
+      "regions": {
+        "CG Raster Data": {
+          "dirty": "36.8M",
+          "regions": 36,
+          "resident": "36.8M",
+          "virtual": "36.8M"
+        },
+        "CoreAnimation": {
+          "dirty": "176K",
+          "regions": 9,
+          "resident": "176K",
+          "virtual": "176K"
+        },
+        "IOAccelerator (graphics)": {
+          "dirty": "16K",
+          "regions": 1,
+          "resident": "16K",
+          "virtual": "64K"
+        },
+        "IOSurface": {
+          "dirty": "3616K",
+          "regions": 30,
+          "resident": "3616K",
+          "virtual": "5856K"
+        },
+        "owned unmapped": {
+          "dirty": "5184K",
+          "regions": 75,
+          "resident": "5184K",
+          "virtual": "5216K"
+        }
+      }
+    }
+  },
+  "maximum_sample_gap_seconds": 1.686239166650921,
+  "samples": 602
+}

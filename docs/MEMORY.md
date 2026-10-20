@@ -199,6 +199,14 @@ within holds; the low final value must not be called a plateau or a memory fix. 
 required remaining UI states and representative packaged-app budget/regression acceptance remain
 open in #98. No product cache, residency limit, or gate was changed.
 
+A [separate four-checkpoint VM diagnostic and uninspected native-counter run](measurements/character-lifecycle-20261020/late-vm/README.md)
+retain further evidence without replacing those budget results. The inspected process has stable CG
+Raster Data but growing generic owned-unmapped regions. The counter process's RSS rise primarily
+appears in its internal counter; reported reusable growth is small and compressed/volatile-resident
+counters report zero. Neither process reproduces the original late timing or establishes an owner,
+a fix, a universal accounting formula, or a harmless plateau. These raw counters must not become an
+invented adjusted-RSS budget.
+
 ## Share dialog profile (2026-10-13)
 
 One 30-second sample used the isolated `dev.nyatinte.waddly.sharepreview` Release app, macOS 27.0.1 on arm64, and the existing nine 418 × 418 pet frames. The dialog generated the 3 × 3 PNG and a 384 × 384, five-second MP4. The poster is shown without constructing an `AVPlayerView`; the player view is created only after the user presses Play.

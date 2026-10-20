@@ -1,0 +1,76 @@
+Tue Oct 20 14:08:31 UTC 2026
+source_revision=b11e696e2dc673ae46aed73f675226527a608f45
+Production Waddly PID 35688 is left untouched; ambient activity is uncontrolled.
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 58%
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                    23590.
+Pages active:                                 586050.
+Pages inactive:                               563481.
+Pages speculative:                             26226.
+Pages throttled:                                   0.
+Pages wired down:                             194557.
+Pages purgeable:                               42694.
+"Translation faults":                    10979621895.
+Pages copy-on-write:                       149445549.
+Pages zero filled:                        4199687767.
+Pages reactivated:                          45479075.
+Pages purged:                               20326813.
+File-backed pages:                            470197.
+Anonymous pages:                              705560.
+Pages stored in compressor:                  1651583.
+Pages occupied by compressor:                 662591.
+Decompressions:                             19715745.
+Compressions:                               30300818.
+Pageins:                                    72034245.
+Pageouts:                                      58932.
+Swapins:                                           0.
+Swapouts:                                          0.
+Pages tagged:                                 169484.
+Pages tagged resident:                        120986.
+Pages tagged compressed:                       48498.
+Pages tag-storage:                             65536.
+Pages tag-storage holding tags:                 9171.
+Pages tag-storage free:                           47.
+Pages tag-storage non-tag pageable:            56130.
+Pages tag-storage non-tag wired:                  85.
+Bytes of compressed tags:                    7384512.
+Tagged compressions:                         1172994.
+Tagged decompressions:                       1011622.
+Tue Oct 20 14:19:54 UTC 2026
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 58%
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                    36382.
+Pages active:                                 584862.
+Pages inactive:                               583130.
+Pages speculative:                              1192.
+Pages throttled:                                   0.
+Pages wired down:                             189979.
+Pages purgeable:                               45798.
+"Translation faults":                    10984220108.
+Pages copy-on-write:                       149670344.
+Pages zero filled:                        4201982654.
+Pages reactivated:                          45481339.
+Pages purged:                               20329305.
+File-backed pages:                            447545.
+Anonymous pages:                              721639.
+Pages stored in compressor:                  1647572.
+Pages occupied by compressor:                 660950.
+Decompressions:                             19719797.
+Compressions:                               30300818.
+Pageins:                                    72059691.
+Pageouts:                                      58932.
+Swapins:                                           0.
+Swapouts:                                          0.
+Pages tagged:                                 170041.
+Pages tagged resident:                        122049.
+Pages tagged compressed:                       47992.
+Pages tag-storage:                             65536.
+Pages tag-storage holding tags:                 9168.
+Pages tag-storage free:                           71.
+Pages tag-storage non-tag pageable:            56106.
+Pages tag-storage non-tag wired:                  85.
+Bytes of compressed tags:                    7281600.
+Tagged compressions:                         1172994.
+Tagged decompressions:                       1012128.
