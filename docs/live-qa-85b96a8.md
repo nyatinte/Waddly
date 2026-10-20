@@ -61,6 +61,22 @@ user's TCC handoff or verify every intermediate granted-but-not-receiving state.
 but does not complete their remaining acceptance criteria. The same evidence advances #109/#110
 without certifying their complete journeys. Do not add duplicate issues for the unverified items.
 
+## Follow-up: native keyboard baseline
+
+A temporary, independent Swift 6 AppKit executable (no Waddly imports) displayed a titled window
+with an ordinary `NSButton` and a borderless `NSButton` in an `NSStackView`. In the live window,
+`NSApplication.isFullKeyboardAccessEnabled` reported `false` and the standard button's
+`canBecomeKeyView` reported `false`. Orca's synthetic Tab again left accessibility focus on the
+window. The system Keyboard Navigation UI had shown enabled, while the global
+`AppleKeyboardUIMode` preference was `1`; these observations do not establish why the runtime
+reported otherwise. No global keyboard preference was changed.
+
+This reproduces the observation without Waddly's custom controls or key-loop code, so it is not
+evidence for a Waddly-specific key-loop patch. The unresolved boundary is macOS configuration/runtime
+versus synthetic input/observation. Next: compare physical Tab in this native baseline and Waddly on
+the same Mac before changing application code. The temporary probe is not a product change or a
+substitute for acceptance, and its capture is not included in the 17 product screenshots.
+
 ## Build and test evidence
 
 - `mise run dev:install` with the isolated suffix/directory: passed (includes Release build).
