@@ -137,6 +137,9 @@ staged and closed states for 30 seconds each and sampling `task_info` every nomi
 It fails on invalid staging, failed commit/close, or a controller/model still alive after the closed
 hold. Normal invocation retains the earlier ten-persistence-replacements workload. New runs write
 an environment sidecar with toolchain and source/fixture hashes alongside the CSV.
+For a separate, memory-perturbing allocation-stack diagnostic, also set
+`WADDLY_PROFILE_STACK_LOGGING=1`; this enables `MallocStackLogging=1` only in the target app, not
+the compiler or fixture generator. Do not combine logged and unlogged runs into budget medians.
 
 Three sequential runs against product source `f1a450e` confirmed all nine controller/model releases.
 For the generated 3072 × 3072 large-sheet exception, median peak/final physical footprints were
@@ -147,9 +150,17 @@ A separate diagnostic found stable raster accounting but growing purgeable alloc
 `leaks` reported a stable, nonzero 416 allocations / 19,936 bytes with inspection restrictions.
 
 [Full workload, raw CSVs, environment records and diagnostic reports](measurements/character-lifecycle-20261020/README.md)
-are checked in. This is an optimized whole-process source probe, not the signed packaged app, a
-historical comparison, or full #98/#95/#124 acceptance. The typical-input budget and other lifecycle
-states still need their own measurements.
+are checked in. Review subsequently found that the original probe could accept a failed later
+acquisition by applying the preserved old pet; these three-run records are exploratory, not proof
+of nine fresh imports. The corrected guard requires no acquisition failure and a dirty, applicable
+candidate. A real corrupt-replacement check now fails closed, and a corrected single normal run
+completes. The [follow-up stack investigation](measurements/character-lifecycle-20261020/follow-up/README.md)
+finds growth in selected GPU/IOSurface-related stacks with stable raster accounting, but does not
+explain all purgeable/RSS growth or justify a product fix.
+
+This is an optimized whole-process source probe, not the signed packaged app, a historical
+comparison, or full #98/#95/#124 acceptance. The typical-input budget and other lifecycle states
+still need their own measurements.
 
 ## Share dialog profile (2026-10-13)
 

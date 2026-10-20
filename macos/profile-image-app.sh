@@ -43,9 +43,14 @@ OUTPUT="$ROOT/dist/memory/image-app-$LABEL-$(date -u +%Y%m%dT%H%M%SZ).csv"
   git -C "$ROOT" rev-parse HEAD
   printf 'baseline_revision=%s\n' "$LABEL"
   printf 'character_lifecycle=%s\n' "${WADDLY_PROFILE_CHARACTER_LIFECYCLE:-0}"
+  printf 'target_stack_logging=%s\n' "${WADDLY_PROFILE_STACK_LOGGING:-0}"
   shasum -a 256 "$ROOT/Tools/profile_image_app.swift" "$TEMP/source.png"
   (cd "$TEMP" && find Sources -type f -name '*.swift' | LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 "$file"; done)
 } > "${OUTPUT%.csv}.environment.txt"
-"$APP/Contents/MacOS/WaddlyMemoryProbe" "$TEMP/source.png" "$TEMP/images" > "$OUTPUT"
+if [ "${WADDLY_PROFILE_STACK_LOGGING:-0}" = 1 ]; then
+  MallocStackLogging=1 "$APP/Contents/MacOS/WaddlyMemoryProbe" "$TEMP/source.png" "$TEMP/images" > "$OUTPUT"
+else
+  "$APP/Contents/MacOS/WaddlyMemoryProbe" "$TEMP/source.png" "$TEMP/images" > "$OUTPUT"
+fi
 awk -F, 'NR > 1 { if ($3 > peak) peak = $3; final = $2 } END { printf "Peak physical footprint %.2f MiB, final physical footprint %.2f MiB\n", peak/1048576, final/1048576 }' "$OUTPUT"
 printf 'Measurements: %s\n' "$OUTPUT"

@@ -93,7 +93,9 @@ struct ImageAppProbe {
             throw LifecycleFailure.commitOrCloseFailed
         }
         await controller.model.stageFiles(at: [source])
-        guard controller.model.canApply else { throw LifecycleFailure.invalidCandidate }
+        guard controller.model.failure == nil,
+              controller.model.isDirty,
+              controller.model.canApply else { throw LifecycleFailure.invalidCandidate }
         for second in 1 ... 30 {
             try await Task.sleep(for: .seconds(1))
             snapshot("cycle-\(cycle)-staged-\(second)s")

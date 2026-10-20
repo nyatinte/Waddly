@@ -6,7 +6,13 @@ This is a pre-refactor baseline for #98, #95 and #124, **not a before/after comp
 of their memory acceptance**. Product sources are unchanged from merged main
 `f1a450e99ed226085e0956157df2a95308b59dbe`. The new measurement mode lives only in
 `Tools/profile_image_app.swift`; its measured SHA-256 is
-`459e3b5cbcd3c3d973d59b82a601bbec384879b9818485cc782f4f4f9aea4c9d`.
+`459e3b5cbcd3c3d973d59b82a601bbec384879b9818485cc782f4f4f9aea4c9d` (the original probe at `d433a98`).
+
+**Review limitation:** that probe checked `canApply` but could accept a preserved old pet after a
+failed later acquisition. The CSVs below are exploratory data, not proof of nine fresh replacements.
+[The follow-up](follow-up/README.md) records the stronger guard, an actual failed-acquisition check,
+one corrected normal run, and a separate stack-logging investigation. Original files and medians
+are preserved, not retrospectively reclassified as stronger-guard passes.
 
 - Apple Silicon, macOS 27.0.1 (`26A434`), Apple Swift 6.4; three sequential independent processes.
 - Actual AppDelegate/Core/SwiftUI sources compiled with `-O -swift-version 6` into the temporary
@@ -31,7 +37,9 @@ WADDLY_PROFILE_CHARACTER_LIFECYCLE=1 ./macos/profile-image-app.sh
 After launch and closing the empty setup guide, repeat three cycles in the same process:
 
 1. Open the real Change Character window; call its model's normal `stageFiles` acquisition path.
-2. Require a valid candidate, then keep the staged preview visible for 30 seconds.
+2. Require `canApply` (the original guard), then keep the staged preview visible for 30 seconds.
+   The corrected current probe additionally requires `failure == nil` and `isDirty`; see the
+   review limitation above.
 3. Await the controller's real `applyAndClose()` task (including the serialized store commit).
 4. Require a complete committed pet, a clean draft, no commit failure/rejection, a hidden window,
    and a cleared AppDelegate controller reference.
@@ -113,6 +121,7 @@ one allocation-budget test passed and the opt-in strict leak test was skipped as
 the guard rejected two starts with only one completion (#131). No retry-until-green or reduced
 full-test selection was used.
 
-Next: longer-cycle allocation-stack sampling to classify the purgeable/RSS growth, and an identical
-workload against a suitable historical baseline before claiming no regression. Keep #98/#95/#124
-open; this report supplies a reproducible baseline and narrowly verifies closed-session release.
+The [follow-up](follow-up/README.md) now supplies selected allocation-stack evidence and corrects
+the acquisition guard. A longer corrected workload and a suitable historical comparison are still
+needed before claiming bounded retention or no regression. Keep #98/#95/#124 open; the original
+records narrowly verify closed-session release, not every intended acquisition.
