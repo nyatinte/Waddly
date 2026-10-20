@@ -1,0 +1,184 @@
+[
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "待機 — 画像を削除 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "追加 — 待機",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "待機 — 画像を削除 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに先頭の画像です。",
+    "label": "待機 — 画像を左へ移動 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を右へ移動",
+    "label": "待機 — 画像を右へ移動 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を左へ移動",
+    "label": "待機 — 画像を左へ移動 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに最後の画像です。",
+    "label": "待機 — 画像を右へ移動 2",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "タイピング — 画像を削除 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "追加 — タイピング",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "タイピング — 画像を削除 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "タイピング — 画像を削除 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "タイピング — 画像を削除 4",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに先頭の画像です。",
+    "label": "タイピング — 画像を左へ移動 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を右へ移動",
+    "label": "タイピング — 画像を右へ移動 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を左へ移動",
+    "label": "タイピング — 画像を左へ移動 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を右へ移動",
+    "label": "タイピング — 画像を右へ移動 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を左へ移動",
+    "label": "タイピング — 画像を左へ移動 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を右へ移動",
+    "label": "タイピング — 画像を右へ移動 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を左へ移動",
+    "label": "タイピング — 画像を左へ移動 4",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに最後の画像です。",
+    "label": "タイピング — 画像を右へ移動 4",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "スリープ — 画像を削除 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "追加 — スリープ",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を削除",
+    "label": "スリープ — 画像を削除 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに先頭の画像です。",
+    "label": "スリープ — 画像を左へ移動 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を右へ移動",
+    "label": "スリープ — 画像を右へ移動 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "画像を左へ移動",
+    "label": "スリープ — 画像を左へ移動 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに最後の画像です。",
+    "label": "スリープ — 画像を右へ移動 2",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "各ポーズには少なくとも1枚の画像が必要です。",
+    "label": "Enter — 画像を削除 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "label": "追加 — Enter",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに先頭の画像です。",
+    "label": "Enter — 画像を左へ移動 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "すでに最後の画像です。",
+    "label": "Enter — 画像を右へ移動 1",
+    "enabled": false
+  }
+]
