@@ -6,12 +6,19 @@ intentionally **not** a design system and it adds no runtime behavior.
 
 ## Evidence status — read first
 
-Every claim below is one of two kinds, kept apart throughout:
+**Latest live evidence:** [QA at merged main `85b96a8`](live-qa-85b96a8.md) records executed
+Setup, Share and character-import checks, real window captures, and remaining blockers for #108,
+#111 and #124. This was live GUI automation, not human keyboard/VoiceOver acceptance. The refreshed
+Share contract below supersedes its old gaps; other source-audit sections retain their stated
+historical revisions and must not be mistaken for a fresh audit of all of main.
 
-- **Source-audited** — read directly from the code at the revisions in the table. Describes current
-  behavior.
+Baseline claims below are one of two kinds, kept apart throughout:
+
+- **Source-audited** — read directly from the code at the revisions in the table. Describes behavior
+  at those revisions, not necessarily current main.
 - **Manual-unverified** — needs a real GUI session (VoiceOver, System Settings, live keyboard).
-  **Nothing here claims these were run.** Do not tick a manual row until it is executed on a Mac.
+  The baseline did not execute these. Consult the linked live report for the limited checks since
+  performed; do not tick an entire manual row from source tests or partial GUI evidence.
 
 | Source | Revision audited | Delta relevant to this audit |
 | --- | --- | --- |
@@ -21,12 +28,12 @@ Every claim below is one of two kinds, kept apart throughout:
 | [#124](https://github.com/nyatinte/Waddly/issues/124) unified character import | `agent/issue124-unified-import` @ `023474d` | shared staged import screen in the Setup Pet step and a new Change Character window; clipboard/DnD/paste; standalone Animation Settings window and menu item retired; committed renders in `docs/images/character-import/` |
 | [#96](https://github.com/nyatinte/Waddly/issues/96)/[#99](https://github.com/nyatinte/Waddly/issues/99) share, PR [#115](https://github.com/nyatinte/Waddly/pull/115) | `agent/issue96-99-export-cancellation` @ `4f6398e` | closing Share cancels the in-flight export and removes partial temp assets |
 
-[#109](https://github.com/nyatinte/Waddly/issues/109) (Share flow) and
-[#110](https://github.com/nyatinte/Waddly/issues/110) (first-run journey) are in progress. Their
-contracts are marked **proposal** here, never verified implementation.
+The baseline preceded the merged #109 (Share flow) and #110 (first-run journey) implementations.
+Unrefreshed baseline descriptions are historical, not current implementation claims. Share is
+source-refreshed at `85b96a8` below; the live report records only observed first-run states.
 
-Screenshot evidence: only the native renders committed on the PR branches are linked (§7). They are
-AppKit `cacheDisplay` renders, not screen captures, and prove default-font layout only.
+Screenshot evidence in §7 is historical AppKit `cacheDisplay` rendering, not screen capture.
+The linked live report adds separately identified ScreenCaptureKit window captures.
 
 ## 1. Entry points and window lifecycle (source-audited)
 
@@ -145,17 +152,21 @@ its status-menu item are retired (#124).
 
 ### 2d. Share dialog
 
+Source-refreshed at `85b96a8`; live observations are restricted to the linked report's configuration.
+
 | Control | Action | Hover | Focus | Working | Success | Error |
 | --- | --- | --- | --- | --- | --- | --- |
-| Movie preview Play / Pause | toggle local playback | **N** | ~ | poster → player | loops, resets at end | — |
-| Copy video | `PetShareClipboard.copyMovie` | **N (#108)** | ~ | — | button title → “Copied” | **N: `NSSound.beep()` only, no message or retry (#109)** |
-| Copy sprite | `PetShareClipboard.copyPNG` | **N (#108)** | ~ | — | title → “Copied” | N: beep only |
-| X row (logo + “Post on X”) | open a prefilled composer | **cursor only: pointing hand, no fill** | **N: `NSView` + click gesture, not keyboard-focusable** | — | composer opens | **N: no feedback when no handler exists** |
-| Window | close | — | — | spinner “Preparing share assets…” | assets shown | inline “Could not create…” (#109 wants a retry) |
-| Window close during export | cancels generation | — | — | — | partial temp removed (#115) | — |
+| Movie preview Play / Pause | toggle local playback | Y: background darkens | unverified live | poster → player | action label switches Play/Pause | — |
+| Copy video | `PetShareClipboard.copyMovie` | Y: accent tint | unverified live | — | inline video outcome; stable button title | inline per-asset error; same button retries |
+| Copy sprite | `PetShareClipboard.copyPNG` | Y: accent tint | unverified live | — | inline image outcome; stable button title | inline per-asset error; same button retries |
+| Post on X (single native button with logo) | open a prefilled composer | Y: accent tint | native button; traversal unverified | disabled until assets are ready | composer opens | inline composer-open failure |
+| Retry | retry failed generation | shared button treatment; live unverified | unverified live | returns to generation | assets shown | failure message remains recoverable |
+| Window | close | — | — | spinner while generating | assets shown | inline failure plus Retry |
+| Window close during export | cancels generation | — | — | — | partial temp removed | — |
 
-`PetShareDialogTests` covers asset prep, close-cancels-generation, the X URL, and label refresh on
-language change. Hover, focus, and keyboard remain **manual-unverified**.
+`PetShareDialogTests` and `PetShareFlowTests` cover state/effect contracts. The live session observed
+hover, copy outcomes and playback, but did not pass Tab traversal, held-press, disabled/Retry states,
+VoiceOver, physical pointer input, or light/contrast/Reduce Motion. Do not close #108 on that basis.
 
 ### 2e. Sheets and alerts
 
@@ -164,21 +175,22 @@ language change. Hover, focus, and keyboard remain **manual-unverified**.
 | Import confirm (3×3 preview, `SpriteSheetPreviewAccessory`) | pet-panel PNG drop (`AppDelegate.importPetImage`) | Import / Cancel | drop another PNG |
 | Import error, save error | unreadable PNG / storage limit | OK | re-run the import |
 | Login-item error | `SMAppService` throws | OK | re-toggle from the menu |
-| Share asset error | export / generation fails | inline label only | **N: no explicit retry (#109)** |
+| Share asset error | export / generation fails | inline label plus Retry (`85b96a8`) | Retry starts generation again; live failure walkthrough still unverified |
 
 ## 3. Lightweight native principles (as applied)
 
 1. **Recognizable controls** — standard `NSButton`, `NSSegmentedControl`, SwiftUI `Button`; no custom
-   control chrome. The Share X row (gesture on an `NSView`) is the one non-control control.
+   control chrome. Share's former gesture row is now a native Post button (`85b96a8`).
 2. **Consistent hit area** — option cards are 72 pt, but the thumbnail `×` is 20 × 20 pt and the
    chevrons 26 × 20 pt, below a comfortable ~24 pt target (`PetImageViews.swift`,
    `AnimationSettingsView.swift`).
-3. **Pointer / cursor** — only the Share X row sets a pointing hand; everything else, including the
-   copy buttons, uses the default arrow. #108 owns consistency.
+3. **Pointer / cursor** — Share now uses native buttons with background hover feedback instead of
+   the historical gesture row's pointing-hand-only affordance. #108 owns consistency and remaining
+   live acceptance.
 4. **Visible keyboard focus** — native for menus, buttons, and segments; unverified for SwiftUI
-   `.plain` cards and the Share gesture row.
-5. **Inline outcomes, no layout shift** — setup uses inline copy/import/error text (#118); Share uses
-   a button-title change plus a beep. Hover feedback must never shift layout.
+   `.plain` cards; live traversal is still unverified for Share's native buttons.
+5. **Inline outcomes, no layout shift** — setup uses inline copy/import/error text (#118); Share now
+   uses per-asset inline outcomes with stable button labels. Hover feedback must never shift layout.
 6. **Action hierarchy and motion** — one `borderedProminent` primary per state (Next / Enable /
    Restart / Show on desktop), secondary actions bordered or link. Motion is limited to 180–250 ms
    step cross-fades and the pet reveal, and `MotionPreference.isReduced` disables both.
@@ -196,9 +208,9 @@ execution; an automated state test does not verify every interaction in its row.
 | Setup — ChatGPT guide | copy+open, Change method, Choose PNG | Tab order | hint on cards | text contrast | — | copy strings | copy/open failure inline (#118) | auto; manual: real browser |
 | Setup — permission | Enable, manual steps, Settings hand-off | Tab through the guide | status updates announced | off vs granted distinguishable | polling unaffected | instructions | granted-not-receiving → restart / retry | auto: `PermissionServiceTests`; manual: real TCC |
 | Setup — Ready | Back, Show on desktop, Set up monitoring | Tab | checks read out | warning visible | celebrate hop suppressed | checks localized | non-ready never looks like success | auto; manual: spoken order |
-| Share | copy, play, X row | **gap: X row not focusable** | roles set; not spoken | checkerboard + card colors (#106 dark mode) | no animation | labels refresh | beep-only, no retry (#109) | auto: `PetShareDialogTests`; manual: hover |
+| Share | live synthetic hover/copy/play observed | native Post button; Tab traversal still unverified | roles set; not spoken | dark live captures only; light/contrast unverified | no added hover animation; live setting unverified | EN/JA dark live captures | inline outcomes + Retry in source; live failure walkthrough pending | auto: `PetShareDialogTests`, `PetShareFlowTests`; live: [bounded results](live-qa-85b96a8.md) |
 | Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`; manual: disabled reason |
-| Character import (Change Character) | Choose / Paste / drop, pose + 9-cells, edit frames | **unverified: Tab order and ⌘V routing in a live window** | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
+| Character import (Change Character) | Choose / Paste / drop, pose + 9-cells, edit frames | ⌘V observed live; Tab traversal still unverified | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
 
 ## 5. Walkthroughs (with retry)
 
@@ -213,9 +225,10 @@ or “Try again without restarting”. 6) Ready shows both checks filled; withou
 
 **Share.** 1) Right-click the pet (complete image set) → Share Pet. 2) Spinner “Preparing share
 assets…” → two cards (5-second video, 3×3 sheet). 3) Play/pause the movie; Copy video / Copy sprite
-→ the button title becomes “Copied”. 4) Logo or “Post on X” → composer opens with the draft and
-`#ShareMyWaddly`. 5) *Retry:* generation failure shows an inline message but no explicit retry
-today (#109); a clipboard failure only beeps today.
+→ an inline outcome appears next to each asset, with stable button labels. 4) The single native
+“Post on X” button → composer opens with the draft and `#ShareMyWaddly` (not exercised live in this
+session). 5) *Retry:* generation failure offers Retry; clipboard failure is inline and the same copy
+button retries. These failure paths still need a live walkthrough.
 
 **Preferences menus.** 1) Click the menu bar item, or right-click the pet. 2) Change size → the pet
 resizes immediately; motion / breathing / language apply immediately and radio/check state stays in
@@ -238,22 +251,22 @@ reopen → the committed pet is loaded again.
 
 | Priority | Gap | Impact on the task | Tracked by |
 | --- | --- | --- | --- |
-| P1 | Share: clipboard failure only beeps, with no inline error or retry | copy is the primary action; the user cannot tell it failed | #109 |
-| P1 | Share: no hover/focus feedback on the copy buttons or the X row; X row is not keyboard reachable | wrong target / keyboard users blocked | #108, #109 |
+| P1 | Share: keyboard focus/traversal not established by the live session | native Post and hover implementation exist, but keyboard acceptance remains unverified | #108, #111 |
+| P2 | Share: live generation/copy failure and Retry walkthrough still pending | inline outcomes and retry exist in source; failure recovery not yet demonstrated live | #109, #111 |
 | P2 | Setup: `.plain` option cards have no explicit hover/focus styling; native focus is unverified | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
 | P2 | Advanced editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
 | P2 | Character import: the Paste control is subdued but not disabled when the clipboard is empty, and its tooltip is the only visual difference | a user may click a control that cannot succeed | #124 |
 | P2 | Menus: “Change Character…” and the presence guard are disabled with no reason | the user cannot tell why a feature is unavailable | #94 |
 | P3 | Login-item failure is a post-menu sheet with no inline retry | recoverable but easy to miss | #94 |
-| P3 | Share movie Play / Pause has no hover state | minor affordance | #108 |
+| P3 | Share hover checked only with synthetic pointer input in dark appearance | light/contrast and physical-device acceptance remain outstanding | #108 |
 
 No duplicate issues are created; every gap points at an existing tracker.
 
-## 7. Screenshot evidence (existing committed renders only)
+## 7. Historical screenshot evidence (committed renders)
 
-The only assets that exist today, verified reachable (HTTP 200) at audit time. They are AppKit
-`cacheDisplay` content renders on their branch — **not** screen captures — and were not produced by
-this audit.
+Assets verified reachable (HTTP 200) at the original audit time; newer live captures are linked above.
+These are AppKit `cacheDisplay` content renders on their branch — **not** screen captures — and were
+not produced by this audit.
 
 Setup feedback, PR [#118](https://github.com/nyatinte/Waddly/pull/118):
 
@@ -278,13 +291,16 @@ Character import, #124 (committed in-repo at this revision):
 Provenance and limits are recorded in each revision's `docs/images/*/README.md`. These immutable
 commit URLs survive branch deletion; update the source-audit rows separately when behavior changes.
 
-## 8. Post-#109 / #110 update spots
+## 8. Remaining refresh and acceptance work
 
-- §2d Share table: add hover, focus, working, success, and error/retry rows once #109 lands.
-- §2b Setup: record any new first-run step, permission wording, or “try sample now” shortcut (#110).
-- §4 matrix: revisit the Share and Setup rows.
-- §6: re-rank and drop rows whose trackers are closed.
-- §7: replace the links with the merged revisions and re-check reachability.
+- §2d/§4/§6 Share contracts are refreshed at `85b96a8`; complete the remaining live checks in the
+  [session report](live-qa-85b96a8.md), especially keyboard traversal and accessibility.
+- §2b Setup: refresh the historical source inventory against merged #110, including the sample path
+  and functional monitoring readiness. The session report verifies only selected live states.
+- §4 matrix: complete full Setup, preferences and advanced-editor walkthroughs; partial passes do not
+  establish entire screen/input/appearance rows.
+- §6: re-rank and drop source gaps once actually resolved; retain unverified acceptance work.
+- §7: preserve render provenance; add live evidence separately rather than relabeling old fixtures.
 - §2c/§4 after #124: re-run the manual keyboard / VoiceOver / contrast passes for the shared screen and
   the Change Character window, and re-check the clipboard-empty affordance decision above.
 
