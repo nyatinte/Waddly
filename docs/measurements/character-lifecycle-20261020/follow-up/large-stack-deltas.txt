@@ -1,0 +1,227 @@
+Derived from malloc_history -allBySize -fullStacks; blocks >=32768 bytes only.
+Normalized frame addresses and trailing instruction offsets; allocation byte totals are not RSS/footprint.
+
+DELTA 1851392 bytes; before=0; after=1851392
+com.apple.IOSurface IOSurfaceClientCreateChild
+com.apple.IOSurface -[IOSurface initWithProperties:]
+com.apple.IOSurface IOSurfaceCreate
+com.apple.QuartzCore CA::SurfaceUtil::CAIOSurfaceCreate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned long long, CA::SurfaceUtil::SurfaceAlignment, __CFString const*)
+com.apple.QuartzCore CA::Render::create_iosurface_with_pixel_format(unsigned int, unsigned int, unsigned int, unsigned int, unsigned long long, __CFString const*)
+com.apple.QuartzCore CABackingStorePrepareUpdates_(CABackingStore*, unsigned long, unsigned long, unsigned int, unsigned int, unsigned int, unsigned long long, CA::GenericContext*, UpdateState*)
+com.apple.QuartzCore CABackingStoreUpdate_
+com.apple.QuartzCore invocation function for block in CA::Layer::display_()
+com.apple.QuartzCore -[CALayer _display]
+com.apple.AppKit 0x1a41df000
+com.apple.AppKit 0x1a41df000
+com.apple.AppKit 0x1a41df000
+com.apple.QuartzCore CA::Layer::display_if_needed(CA::Transaction*)
+com.apple.QuartzCore CA::Context::commit_transaction(CA::Transaction*, double, double*)
+com.apple.QuartzCore CA::Transaction::commit()
+com.apple.QuartzCore CA::Transaction::flush()
+com.apple.QuartzCore CA::Transaction::flush_as_runloop_observer(bool)
+com.apple.AppKit stepTransactionFlush
+com.apple.UpdateCycle UC::DriverCore::continueProcessing()
+com.apple.CoreFoundation __CFMachPortPerform
+com.apple.CoreFoundation __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE1_PERFORM_FUNCTION__
+com.apple.CoreFoundation __CFRunLoopDoSource1
+com.apple.CoreFoundation __CFRunLoopRun
+com.apple.CoreFoundation _CFRunLoopRunSpecificWithOptions
+com.apple.HIToolbox RunCurrentEventLoopInMode
+com.apple.HIToolbox ReceiveNextEventCommon
+com.apple.HIToolbox _BlockUntilNextEventMatchingListInMode
+com.apple.AppKit _DPSBlockUntilNextEventMatchingListInMode
+com.apple.AppKit _DPSNextEvent
+com.apple.AppKit -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:]
+com.apple.AppKit -[NSApplication(NSEventRouting) nextEventMatchingMask:untilDate:inMode:dequeue:]
+com.apple.AppKit -[NSApplication run]
+dev.nyatinte.waddly.memoryprobe static ImageAppProbe.main()
+dev.nyatinte.waddly.memoryprobe main
+dyld start
+
+DELTA 1556480 bytes; before=1556480; after=3112960
+com.apple.IOGPU IOGPUResourceCreate
+com.apple.IOGPU -[IOGPUMetalResource initWithDevice:remoteStorageResource:options:args:argsSize:]
+com.apple.IOGPU IOGPUMetalResourcePoolCreatePooledResource
+com.apple.IOGPU IOGPUMetalCommandBufferStorageAllocResourceAtIndex
+com.apple.AGXMetalG17G AGX::ContextCommon<AGX::HAL300::Encoders, AGX::HAL300::Classes, AGX::HAL300::ObjClasses, AGX::HAL300::DataBufferAllocator>::newCommand(unsigned long, bool)
+com.apple.AGXMetalG17G AGX::RenderContext<AGX::HAL300::Encoders, AGX::HAL300::Classes, AGX::HAL300::ObjClasses, AGX::HAL300::CommandEncoding>::beginRenderPass()
+com.apple.AGXMetalG17G -[AGXG17GFamilyRenderContext initWithCommandBuffer:descriptor:subEncoderIndex:framebuffer:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandBuffer renderCommandEncoderWithDescriptor:]
+com.apple.QuartzCore CA::OGL::MetalContext::start_render_encoder(CA::OGL::MetalSurface*, bool)
+com.apple.QuartzCore CA::OGL::MetalContext::draw(MTLPrimitiveType, unsigned int, unsigned int, void const*, unsigned long, unsigned long, CA::OGL::Metal::VertexLayout, unsigned int, unsigned int, unsigned short const*, CA::OGL::ClipPlane const*, CA::OGL::MetalBufferPool::MetalBuffer const*)
+com.apple.QuartzCore CA::OGL::MetalContext::draw_elements(CA::OGL::PrimitiveMode, unsigned int, unsigned short const*, CA::OGL::Vertex const*, unsigned int, unsigned int, CA::OGL::ClipPlane const*)
+com.apple.QuartzCore CA::OGL::emit_combine(CA::OGL::Context&, CA::OGL::TextureFunction, CA::OGL::Surface*, int, CA::OGL::Surface*, int, CA::Shape const*, CA::Vec4<float> const&)
+com.apple.QuartzCore CA::CG::FillRects::draw_shape(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::DrawOp::render(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::Queue::render_slab_ops(CA::CG::Queue::Slab*, bool)
+com.apple.QuartzCore CA::CG::Queue::batch_render_callback(void*)
+libdispatch.dylib _dispatch_client_callout
+libdispatch.dylib _dispatch_lane_serial_drain
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 786432 bytes; before=786432; after=1572864
+com.apple.IOGPU IOGPUResourceCreate
+com.apple.IOGPU -[IOGPUMetalResource initWithDevice:remoteStorageResource:options:args:argsSize:]
+com.apple.IOGPU IOGPUMetalResourcePoolCreatePooledResource
+com.apple.IOGPU IOGPUMetalCommandBufferStorageAllocResourceAtIndex
+com.apple.AGXMetalG17G AGX::DataBufferAllocator<45ul>::initializeOnDemandDataBufferSlow(unsigned int)
+com.apple.AGXMetalG17G AGX::RenderContext<AGX::HAL300::Encoders, AGX::HAL300::Classes, AGX::HAL300::ObjClasses, AGX::HAL300::CommandEncoding>::beginRenderPass()
+com.apple.AGXMetalG17G -[AGXG17GFamilyRenderContext initWithCommandBuffer:descriptor:subEncoderIndex:framebuffer:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandBuffer renderCommandEncoderWithDescriptor:]
+com.apple.QuartzCore CA::OGL::MetalContext::start_render_encoder(CA::OGL::MetalSurface*, bool)
+com.apple.QuartzCore CA::OGL::MetalContext::draw(MTLPrimitiveType, unsigned int, unsigned int, void const*, unsigned long, unsigned long, CA::OGL::Metal::VertexLayout, unsigned int, unsigned int, unsigned short const*, CA::OGL::ClipPlane const*, CA::OGL::MetalBufferPool::MetalBuffer const*)
+com.apple.QuartzCore CA::OGL::MetalContext::draw_elements(CA::OGL::PrimitiveMode, unsigned int, unsigned short const*, CA::OGL::Vertex const*, unsigned int, unsigned int, CA::OGL::ClipPlane const*)
+com.apple.QuartzCore CA::OGL::emit_combine(CA::OGL::Context&, CA::OGL::TextureFunction, CA::OGL::Surface*, int, CA::OGL::Surface*, int, CA::Shape const*, CA::Vec4<float> const&)
+com.apple.QuartzCore CA::CG::FillRects::draw_shape(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::DrawOp::render(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::Queue::render_slab_ops(CA::CG::Queue::Slab*, bool)
+com.apple.QuartzCore CA::CG::Queue::batch_render_callback(void*)
+libdispatch.dylib _dispatch_client_callout
+libdispatch.dylib _dispatch_lane_serial_drain
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 98304 bytes; before=98304; after=196608
+libsystem_malloc.dylib _malloc_zone_calloc_instrumented_or_legacy
+libsystem_malloc.dylib _calloc
+libobjc.A.dylib _objc_rootAllocWithZone
+com.apple.Metal MTLResourceListPoolCreateResourceList
+com.apple.IOGPU IOGPUMetalCommandBufferStorageCreateExt
+com.apple.IOGPU IOGPUMetalCommandBufferStoragePoolCreateStorage
+com.apple.IOGPU -[IOGPUMetalCommandBuffer initWithQueue:retainedReferences:synchronousDebugMode:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandBuffer initWithQueue:retainedReferences:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandQueue commandBuffer]
+com.apple.QuartzCore CA::OGL::MetalContext::start_command_buffer(unsigned long long, char const*)
+com.apple.QuartzCore CA::OGL::MetalContext::start_render_encoder(CA::OGL::MetalSurface*, bool)
+com.apple.QuartzCore CA::OGL::MetalContext::draw(MTLPrimitiveType, unsigned int, unsigned int, void const*, unsigned long, unsigned long, CA::OGL::Metal::VertexLayout, unsigned int, unsigned int, unsigned short const*, CA::OGL::ClipPlane const*, CA::OGL::MetalBufferPool::MetalBuffer const*)
+com.apple.QuartzCore CA::OGL::MetalContext::draw_elements(CA::OGL::PrimitiveMode, unsigned int, unsigned short const*, CA::OGL::Vertex const*, unsigned int, unsigned int, CA::OGL::ClipPlane const*)
+com.apple.QuartzCore CA::OGL::emit_combine(CA::OGL::Context&, CA::OGL::TextureFunction, CA::OGL::Surface*, int, CA::OGL::Surface*, int, CA::Shape const*, CA::Vec4<float> const&)
+com.apple.QuartzCore CA::CG::FillRects::draw_shape(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::DrawOp::render(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::Queue::render_slab_ops(CA::CG::Queue::Slab*, bool)
+com.apple.QuartzCore CA::CG::Queue::batch_render_callback(void*)
+libdispatch.dylib _dispatch_client_callout
+libdispatch.dylib _dispatch_lane_serial_drain
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 92160 bytes; before=92160; after=184320
+libsystem_malloc.dylib _malloc_zone_calloc_instrumented_or_legacy
+libsystem_malloc.dylib _calloc
+com.apple.CoreGraphics img_data_lock
+com.apple.CoreGraphics CGSImageDataLock
+com.apple.CoreGraphics ripc_AcquireRIPImageData
+com.apple.CoreGraphics ripc_DrawImage
+com.apple.CoreGraphics CGContextDrawImageWithOptions
+com.apple.CoreGraphics CGContextDrawImage
+dev.nyatinte.waddly.memoryprobe static PetSpriteSheetImporter.thumbnails(for:)
+dev.nyatinte.waddly.memoryprobe closure #1 in PetImageStore.persist(_:encodedImages:resetActivity:cleanup:)
+libswift_Concurrency.dylib swift::runJobInEstablishedExecutorContext(swift::Job*, swift::SerialExecutorRef, swift::TaskExecutorRef)
+libswift_Concurrency.dylib swift_job_runImpl(swift::Job*, swift::SerialExecutorRef)
+libdispatch.dylib _dispatch_root_queue_drain
+libdispatch.dylib _dispatch_worker_thread2
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 65536 bytes; before=0; after=65536
+com.apple.IOGPU IOGPUDeviceCreateDeviceShmem
+com.apple.IOGPU -[IOGPUMetalDeviceShmem initWithDevice:shmemSize:shmemType:]
+com.apple.IOGPU IOGPUMetalDeviceShmemPoolCreateShmem
+com.apple.IOGPU _iogpuMetalCommandBufferStorageSetupShmems(IOGPUMetalCommandBufferStorage*, IOGPUMetalCommandBufferStorageCreateParams*)
+com.apple.IOGPU IOGPUMetalCommandBufferStorageCreateExt
+com.apple.IOGPU IOGPUMetalCommandBufferStoragePoolCreateStorage
+com.apple.IOGPU -[IOGPUMetalCommandBuffer initWithQueue:retainedReferences:synchronousDebugMode:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandBuffer initWithQueue:retainedReferences:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandQueue commandBuffer]
+com.apple.QuartzCore CA::OGL::MetalContext::start_command_buffer(unsigned long long, char const*)
+com.apple.QuartzCore CA::OGL::MetalContext::start_render_encoder(CA::OGL::MetalSurface*, bool)
+com.apple.QuartzCore CA::OGL::MetalContext::draw(MTLPrimitiveType, unsigned int, unsigned int, void const*, unsigned long, unsigned long, CA::OGL::Metal::VertexLayout, unsigned int, unsigned int, unsigned short const*, CA::OGL::ClipPlane const*, CA::OGL::MetalBufferPool::MetalBuffer const*)
+com.apple.QuartzCore CA::OGL::MetalContext::draw_elements(CA::OGL::PrimitiveMode, unsigned int, unsigned short const*, CA::OGL::Vertex const*, unsigned int, unsigned int, CA::OGL::ClipPlane const*)
+com.apple.QuartzCore CA::OGL::emit_combine(CA::OGL::Context&, CA::OGL::TextureFunction, CA::OGL::Surface*, int, CA::OGL::Surface*, int, CA::Shape const*, CA::Vec4<float> const&)
+com.apple.QuartzCore CA::CG::FillRects::draw_shape(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::DrawOp::render(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::Queue::render_slab_ops(CA::CG::Queue::Slab*, bool)
+com.apple.QuartzCore CA::CG::Queue::batch_render_callback(void*)
+libdispatch.dylib _dispatch_client_callout
+libdispatch.dylib _dispatch_lane_serial_drain
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 40960 bytes; before=0; after=40960
+libsystem_malloc.dylib _malloc_zone_malloc_instrumented_or_legacy
+libsystem_malloc.dylib _malloc
+com.apple.IOGPU IOGPUResourceListInit
+com.apple.IOGPU IOGPUMetalCommandBufferStorageCreateExt
+com.apple.IOGPU IOGPUMetalCommandBufferStoragePoolCreateStorage
+com.apple.IOGPU -[IOGPUMetalCommandBuffer initWithQueue:retainedReferences:synchronousDebugMode:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandBuffer initWithQueue:retainedReferences:]
+com.apple.AGXMetalG17G -[AGXG17GFamilyCommandQueue commandBuffer]
+com.apple.QuartzCore CA::OGL::MetalContext::start_command_buffer(unsigned long long, char const*)
+com.apple.QuartzCore CA::OGL::MetalContext::start_render_encoder(CA::OGL::MetalSurface*, bool)
+com.apple.QuartzCore CA::OGL::MetalContext::draw(MTLPrimitiveType, unsigned int, unsigned int, void const*, unsigned long, unsigned long, CA::OGL::Metal::VertexLayout, unsigned int, unsigned int, unsigned short const*, CA::OGL::ClipPlane const*, CA::OGL::MetalBufferPool::MetalBuffer const*)
+com.apple.QuartzCore CA::OGL::MetalContext::draw_elements(CA::OGL::PrimitiveMode, unsigned int, unsigned short const*, CA::OGL::Vertex const*, unsigned int, unsigned int, CA::OGL::ClipPlane const*)
+com.apple.QuartzCore CA::OGL::emit_combine(CA::OGL::Context&, CA::OGL::TextureFunction, CA::OGL::Surface*, int, CA::OGL::Surface*, int, CA::Shape const*, CA::Vec4<float> const&)
+com.apple.QuartzCore CA::CG::FillRects::draw_shape(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::DrawOp::render(CA::CG::Renderer&) const
+com.apple.QuartzCore CA::CG::Queue::render_slab_ops(CA::CG::Queue::Slab*, bool)
+com.apple.QuartzCore CA::CG::Queue::batch_render_callback(void*)
+libdispatch.dylib _dispatch_client_callout
+libdispatch.dylib _dispatch_lane_serial_drain
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 32768 bytes; before=0; after=32768
+libsystem_kernel.dylib mach_vm_allocate
+com.apple.MallocStackLogging sld_allocate_pages
+com.apple.MallocStackLogging sld_allocate_pages_no_footprint
+com.apple.MallocStackLogging msl_get_hash_cache
+com.apple.MallocStackLogging uniquing_table_stack_retain
+com.apple.MallocStackLogging add_stack_to_ptr
+com.apple.MallocStackLogging stack_logging_lite_memalign
+libsystem_malloc.dylib _malloc_zone_memalign
+libsystem_malloc.dylib _posix_memalign
+libsystem_malloc.dylib _posix_memalign
+libobjc.A.dylib AutoreleasePoolPage::autoreleaseNoPage(objc_object*)
+libobjc.A.dylib objc_autoreleasePoolPush
+libdispatch.dylib _dispatch_last_resort_autorelease_pool_push
+libdispatch.dylib _dispatch_lane_invoke
+libdispatch.dylib _dispatch_root_queue_drain_deferred_wlh
+libdispatch.dylib _dispatch_workloop_worker_thread
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread
+
+DELTA 20480 bytes; before=46080; after=66560
+libsystem_malloc.dylib _malloc_zone_calloc_instrumented_or_legacy
+libsystem_malloc.dylib _calloc
+com.apple.CoreGraphics img_data_lock
+com.apple.CoreGraphics CGSImageDataLock
+com.apple.CoreGraphics ripc_AcquireRIPImageData
+com.apple.CoreGraphics ripc_DrawImage
+com.apple.CoreGraphics CGContextDrawImageWithOptions
+com.apple.CoreGraphics CGContextDrawImage
+dev.nyatinte.waddly.memoryprobe specialized static PetSpriteSheetImporter.cells(from:sourceDimension:)
+dev.nyatinte.waddly.memoryprobe specialized static PetSpriteSheetImporter.inspect(_:)
+dev.nyatinte.waddly.memoryprobe static PetSpriteSheetImporter.inspectFile(at:)
+dev.nyatinte.waddly.memoryprobe closure #1 in static CharacterSheetLoader.load(from:)
+libswift_Concurrency.dylib swift::runJobInEstablishedExecutorContext(swift::Job*, swift::SerialExecutorRef, swift::TaskExecutorRef)
+libswift_Concurrency.dylib swift_job_runImpl(swift::Job*, swift::SerialExecutorRef)
+libdispatch.dylib _dispatch_root_queue_drain
+libdispatch.dylib _dispatch_worker_thread2
+libsystem_pthread.dylib _pthread_wqthread
+libsystem_pthread.dylib start_wqthread

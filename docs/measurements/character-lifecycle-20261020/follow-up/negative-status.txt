@@ -1,0 +1,2 @@
+probe_exit=1
+csv=dist/memory/image-app-working-tree-20261020T060423Z.csv

@@ -111,7 +111,7 @@ Reproduce the UI comparison with:
 ./macos/profile-image-app.sh
 ```
 
-This compiles the actual AppDelegate and Core sources with `-O` into a temporary app with its own bundle identifier, a fresh preference suite, and a temporary image directory. It generates the deterministic transparent 3072 × 3072 sheet in a separate process (677,976 bytes; SHA-256 `73f012dc8add9366d821e9603addd680047414c34d6bdcd29737c2ac438727be`). It imports the sheet ten times through the real serialized staging/commit path, holds image settings open, waits 30 seconds, closes settings, and waits another 30 seconds. Preview preparation is included; interactive preview confirmation is bypassed to keep the workload consistent. It records physical footprint and the kernel peak ledger. It does not grant Input Monitoring permission or synthesize keyboard events. This probe supports historical revisions with the async image transaction API (`3426fc4` onward); use the standalone probe for older revisions.
+This compiles the actual AppDelegate and Core sources with `-O` into a temporary app with its own bundle identifier, a fresh preference suite, and a temporary image directory. It generates the deterministic transparent 3072 × 3072 sheet in a separate process (677,976 bytes; SHA-256 `73f012dc8add9366d821e9603addd680047414c34d6bdcd29737c2ac438727be`). It imports the sheet ten times through the real serialized staging/commit path, holds image settings open, waits 30 seconds, closes settings, and waits another 30 seconds. Preview preparation is included; interactive preview confirmation is bypassed to keep the workload consistent. It records physical footprint and the kernel peak ledger. It does not grant Input Monitoring permission or synthesize keyboard events. That historical harness supported revisions with the async image transaction API (`3426fc4` onward). The current harness targets the unified Change Character API from #124 and is not compatible with every older revision: reproduce old measurements using the matching historical harness, not the current Swift file against incompatible sources. Changed UI workloads are not interchangeable before/after evidence; use the standalone pipeline probe for older pipeline comparisons.
 
 Three sequential paired runs on the same Apple Silicon / macOS 27.0.1 system produced these medians (MiB):
 
@@ -122,7 +122,45 @@ Three sequential paired runs on the same Apple Silicon / macOS 27.0.1 system pro
 
 Peak ranges were 192.95–195.49 MiB before and 125.11–128.30 MiB after. Final footprint ranges were 120.11–122.03 MiB before and 96.72–99.50 MiB after. Later imports plateaued in each run. Raw CSV samples are not retained in the repository.
 
-This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. Closing the settings window retains its controller/views for reuse, so it need not immediately return memory. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
+This is about a 34% peak reduction and an 18% final-footprint reduction for this UI workload. It still exceeds the **100 MB decimal** whole-app goal, especially during replacement; 98.72 MiB is about 103.5 MB. At those historical revisions, closing the settings window retained its controller/views for reuse, so it did not need to immediately return memory. The current unified character window instead releases its session on close; see the lifecycle baseline below. These measurements establish an improvement and bounded retention for the measured configuration, not a universal 100 MB guarantee or a complete typing/sleep/frozen lifecycle baseline.
+
+## Unified character lifecycle baseline (2026-10-20)
+
+For repeatable shared-screen staging, Apply, close and session-release checks on the current app:
+
+```sh
+WADDLY_PROFILE_CHARACTER_LIFECYCLE=1 ./macos/profile-image-app.sh
+```
+
+The opt-in mode repeats three real Change Character model/controller cycles per process, keeping
+staged and closed states for 30 seconds each and sampling `task_info` every nominal second.
+It fails on invalid staging, failed commit/close, or a controller/model still alive after the closed
+hold. Normal invocation retains the earlier ten-persistence-replacements workload. New runs write
+an environment sidecar with toolchain and source/fixture hashes alongside the CSV.
+For a separate, memory-perturbing allocation-stack diagnostic, also set
+`WADDLY_PROFILE_STACK_LOGGING=1`; this enables `MallocStackLogging=1` only in the target app, not
+the compiler or fixture generator. Do not combine logged and unlogged runs into budget medians.
+
+Three sequential runs against product source `f1a450e` confirmed all nine controller/model releases.
+For the generated 3072 × 3072 large-sheet exception, median peak/final physical footprints were
+169.94/123.33 MiB (about 178.19/129.32 decimal MB). Final footprint varied from 82.28 to 124.05 MiB;
+RSS still rose about 9 MiB between the second and third closed snapshots. **A consistent return to
+the original footprint, absence of leaks, and absence of regression have not been established.**
+A separate diagnostic found stable raster accounting but growing purgeable allocation accounting;
+`leaks` reported a stable, nonzero 416 allocations / 19,936 bytes with inspection restrictions.
+
+[Full workload, raw CSVs, environment records and diagnostic reports](measurements/character-lifecycle-20261020/README.md)
+are checked in. Review subsequently found that the original probe could accept a failed later
+acquisition by applying the preserved old pet; these three-run records are exploratory, not proof
+of nine fresh imports. The corrected guard requires no acquisition failure and a dirty, applicable
+candidate. A real corrupt-replacement check now fails closed, and a corrected single normal run
+completes. The [follow-up stack investigation](measurements/character-lifecycle-20261020/follow-up/README.md)
+finds growth in selected GPU/IOSurface-related stacks with stable raster accounting, but does not
+explain all purgeable/RSS growth or justify a product fix.
+
+This is an optimized whole-process source probe, not the signed packaged app, a historical
+comparison, or full #98/#95/#124 acceptance. The typical-input budget and other lifecycle states
+still need their own measurements.
 
 ## Share dialog profile (2026-10-13)
 

@@ -1,0 +1,6 @@
+pid=83324
+csv=dist/memory/image-app-working-tree-20261020T054557Z.csv
+vmmap_cycle_0_exit=0
+leaks_cycle_0_exit=1
+vmmap_cycle_2_exit=0
+leaks_cycle_2_exit=1

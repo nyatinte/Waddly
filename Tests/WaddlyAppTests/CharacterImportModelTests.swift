@@ -33,6 +33,19 @@ import WaddlyCore
         #expect(model.stagedFrames?[.idle].first === staged[.idle].first)
     }
 
+    @Test func aFailedReplacementOfALoadedPetIsApplicableButNotAFreshImport() async throws {
+        let committed = try SetupWizardFixture.sheetImages()
+        let model = makeModel(current: committed, commit: { _ in .committed })
+        model.reload()
+
+        await model.stageFiles(at: [URL(fileURLWithPath: "/tmp/waddly-\(UUID().uuidString).png")])
+
+        #expect(model.failure == .sheet(.unreadable))
+        #expect(model.canApply)
+        #expect(!model.isDirty)
+        #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), committed))
+    }
+
     @Test func aMultiFileSheetDropIsRejected() async throws {
         let sheetURL = try SetupWizardFixture.sheetURL()
         let model = makeModel(current: PetImageSet(), commit: { _ in .committed })

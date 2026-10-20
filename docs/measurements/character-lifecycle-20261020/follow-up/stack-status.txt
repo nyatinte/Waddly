@@ -1,0 +1,7 @@
+pid=80029
+csv=dist/memory/image-app-working-tree-20261020T061004Z.csv
+command=malloc_history PID -allBySize -fullStacks
+malloc_history_cycle_0_exit=0
+vmmap_cycle_0_exit=0
+malloc_history_cycle_2_exit=0
+vmmap_cycle_2_exit=0
