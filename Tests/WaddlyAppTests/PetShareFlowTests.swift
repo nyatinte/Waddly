@@ -107,7 +107,7 @@ private func writeStub(_ url: URL) throws {
     #expect(!failure.isHiddenOrHasHiddenAncestor)
     #expect(failure.stringValue == fixture.localization.string(for: .shareError))
 
-    retry.performClick(nil)
+    try sendTestAction(retry)
     #expect(await waitFor { fixture.controller.status == .ready })
     #expect(calls.withLock { $0 } == 2)
     #expect(failure.isHiddenOrHasHiddenAncestor)
@@ -129,12 +129,12 @@ private func writeStub(_ url: URL) throws {
 
     let imageStatus = try fixture.label("share.imageStatus")
     let videoStatus = try fixture.label("share.videoStatus")
-    try fixture.button("share.copyImage").performClick(nil)
+    try sendTestAction(fixture.button("share.copyImage"))
     #expect(imageStatus.stringValue == fixture.localization.string(for: .shareCopiedImage))
     #expect(videoStatus.stringValue.isEmpty)
     #expect(copiedImages.withLock { $0.first } != nil)
 
-    try fixture.button("share.copyVideo").performClick(nil)
+    try sendTestAction(fixture.button("share.copyVideo"))
     #expect(videoStatus.stringValue == fixture.localization.string(for: .shareCopyFailed))
     #expect(imageStatus.stringValue == fixture.localization.string(for: .shareCopiedImage))
 }
@@ -216,7 +216,7 @@ private func writeStub(_ url: URL) throws {
     fixture.controller.prepareAssets()
     #expect(await waitFor { fixture.controller.status == .ready })
 
-    try fixture.button("share.copyVideo").performClick(nil)
+    try sendTestAction(fixture.button("share.copyVideo"))
     let outputURL = try #require(publishedURL.withLock { $0 })
     #expect(outputURL.lastPathComponent == "WaddlyShare.mp4")
     #expect(copiedURL.withLock { $0 } == outputURL)
@@ -236,11 +236,11 @@ private func writeStub(_ url: URL) throws {
     #expect(await waitFor { fixture.controller.status == .ready })
     let postStatus = try fixture.label("share.postStatus")
 
-    try fixture.button("share.postButton").performClick(nil)
+    try sendTestAction(fixture.button("share.postButton"))
     #expect(postStatus.stringValue == fixture.localization.string(for: .shareOpenXFailed))
 
     opens.withLock { $0 = true }
-    try fixture.button("share.postButton").performClick(nil)
+    try sendTestAction(fixture.button("share.postButton"))
     #expect(postStatus.stringValue.isEmpty)
 }
 

@@ -14,13 +14,15 @@ struct SpriteSheetPreviewAccessoryTests {
         #expect(checkbox.state == .off)
         let light = try #require(background())
 
-        checkbox.performClick(nil)
+        checkbox.setNextState()
+        try sendTestAction(checkbox)
         #expect(checkbox.state == .on)
         let dark = try #require(background())
         #expect(dark != light)
 
         // And back: the checkbox has to keep matching the preview in both directions.
-        checkbox.performClick(nil)
+        checkbox.setNextState()
+        try sendTestAction(checkbox)
         #expect(checkbox.state == .off)
         #expect(background() == light)
     }

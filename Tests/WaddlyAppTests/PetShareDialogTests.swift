@@ -44,7 +44,7 @@ import WaddlyCore
             #expect(!moviePreview.subviews.contains { $0 is AVPlayerView })
             #expect(moviePreview.subviews.compactMap { $0 as? NSImageView }.first?.image != nil)
             #expect(playButton.frame.midY < moviePreview.frame.midY)
-            playButton.performClick(nil)
+            try sendTestAction(playButton)
             #expect(moviePreview.subviews.compactMap { $0 as? AVPlayerView }.first?.player != nil)
             return
         }
@@ -80,8 +80,8 @@ import WaddlyCore
     var didClose = false
     controller.onClose = { didClose = true }
 
-    // The window stays off screen: showing it activates the app, and a later test in this headless host
-    // then loses the process. Closing it still delivers `windowWillClose`, which is what this covers.
+    // Presentation is covered above. This test only needs `windowWillClose` to cancel the pending
+    // export; preparing without showing keeps that cancellation assertion independent of presentation.
     controller.prepareAssets()
     #expect(await waitFor({ generationStarted.current == true }, within: 5))
 
