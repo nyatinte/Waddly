@@ -132,8 +132,26 @@ For repeatable shared-screen staging, Apply, close and session-release checks on
 WADDLY_PROFILE_CHARACTER_LIFECYCLE=1 ./macos/profile-image-app.sh
 ```
 
-The opt-in mode repeats three real Change Character model/controller cycles per process, keeping
+The opt-in mode defaults to three real Change Character model/controller cycles per process, keeping
 staged and closed states for 30 seconds each and sampling `task_info` every nominal second.
+Set `WADDLY_PROFILE_CHARACTER_CYCLES=10` for a longer series (positive integers only).
+Each CSV also records monotonic system uptime, so sample gaps can be measured rather than inferred
+from nominal state labels. A final `lifecycle-complete` sample is emitted only after every release
+check succeeds; retain the wrapper's successful exit as well as that marker.
+
+For a typical-size fixture rather than the default large-sheet exception:
+
+```sh
+WADDLY_PROFILE_CHARACTER_LIFECYCLE=1 WADDLY_PROFILE_CHARACTER_CYCLES=10 \
+  WADDLY_PROFILE_IMAGE_FIXTURE="$PWD/assets/examples/nyatinte-bot-3x3.png" \
+  ./macos/profile-image-app.sh
+```
+
+The optional fixture is copied into the temporary directory; the original is not modified. Its hash
+is recorded. The temporary app is now ad-hoc signed and verified before either workload, with signing
+metadata and the shell/probe hashes included in its sidecar. This remains a custom-entry-point,
+optimized source probe, not a notarized/signed distribution app. Do not compare these new signed runs
+with older unsigned runs as if signing and tooling were unchanged.
 It fails on invalid staging, failed commit/close, or a controller/model still alive after the closed
 hold. Normal invocation retains the earlier ten-persistence-replacements workload. New runs write
 an environment sidecar with toolchain and source/fixture hashes alongside the CSV.
@@ -158,7 +176,7 @@ completes. The [follow-up stack investigation](measurements/character-lifecycle-
 finds growth in selected GPU/IOSurface-related stacks with stable raster accounting, but does not
 explain all purgeable/RSS growth or justify a product fix.
 
-This is an optimized whole-process source probe, not the signed packaged app, a historical
+This earlier evidence uses an optimized whole-process source probe, not the signed packaged app, a historical
 comparison, or full #98/#95/#124 acceptance. The typical-input budget and other lifecycle states
 still need their own measurements.
 
