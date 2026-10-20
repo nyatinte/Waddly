@@ -32,9 +32,15 @@ rm "$TEMP/Sources/WaddlyApp/AppMain.swift"
 swiftc -O -swift-version 6 -I "$TEMP/core" -L "$TEMP/core" -lWaddlyCore \
   "$TEMP"/Sources/WaddlyApp/*.swift "$ROOT/Tools/profile_image_app.swift" \
   -o "$APP/Contents/MacOS/WaddlyMemoryProbe"
-swiftc -O -swift-version 6 "$TEMP"/Sources/WaddlyCore/PetImageCore.swift \
-  "$ROOT/Tools/profile_image_pipeline.swift" -o "$TEMP/fixture"
-"$TEMP/fixture" "$TEMP/source.png"
+if [ -n "${WADDLY_PROFILE_IMAGE_FIXTURE:-}" ]; then
+  cp "$WADDLY_PROFILE_IMAGE_FIXTURE" "$TEMP/source.png"
+else
+  swiftc -O -swift-version 6 "$TEMP"/Sources/WaddlyCore/PetImageCore.swift \
+    "$ROOT/Tools/profile_image_pipeline.swift" -o "$TEMP/fixture"
+  "$TEMP/fixture" "$TEMP/source.png"
+fi
+codesign --force --sign - --identifier dev.nyatinte.waddly.memoryprobe "$APP"
+codesign --verify --strict "$APP"
 OUTPUT="$ROOT/dist/memory/image-app-$LABEL-$(date -u +%Y%m%dT%H%M%SZ).csv"
 {
   sw_vers
@@ -43,8 +49,11 @@ OUTPUT="$ROOT/dist/memory/image-app-$LABEL-$(date -u +%Y%m%dT%H%M%SZ).csv"
   git -C "$ROOT" rev-parse HEAD
   printf 'baseline_revision=%s\n' "$LABEL"
   printf 'character_lifecycle=%s\n' "${WADDLY_PROFILE_CHARACTER_LIFECYCLE:-0}"
+  printf 'character_cycles=%s\n' "${WADDLY_PROFILE_CHARACTER_CYCLES-3}"
+  printf 'provided_fixture=%s\n' "${WADDLY_PROFILE_IMAGE_FIXTURE:+1}"
   printf 'target_stack_logging=%s\n' "${WADDLY_PROFILE_STACK_LOGGING:-0}"
-  shasum -a 256 "$ROOT/Tools/profile_image_app.swift" "$TEMP/source.png"
+  codesign --display --verbose=2 "$APP" 2>&1
+  shasum -a 256 "$ROOT/Tools/profile_image_app.swift" "$ROOT/macos/profile-image-app.sh" "$TEMP/source.png"
   (cd "$TEMP" && find Sources -type f -name '*.swift' | LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 "$file"; done)
 } > "${OUTPUT%.csv}.environment.txt"
 if [ "${WADDLY_PROFILE_STACK_LOGGING:-0}" = 1 ]; then

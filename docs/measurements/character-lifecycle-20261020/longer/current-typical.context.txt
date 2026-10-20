@@ -1,0 +1,79 @@
+Tue Oct 20 13:27:58 UTC 2026
+label=current-typical
+source_revision=182fcd381524f65ee4f5ec918201a823ced7ab96
+cycles=10
+fixture=/Users/nyatinte/orca/workspaces/nyatinte-animation/loach/assets/examples/nyatinte-bot-3x3.png
+Production Waddly PID 35688 is left untouched; ambient user activity is not controlled.
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 54%
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                   117877.
+Pages active:                                 500152.
+Pages inactive:                               493133.
+Pages speculative:                             16148.
+Pages throttled:                                   0.
+Pages wired down:                             230073.
+Pages purgeable:                               19920.
+"Translation faults":                    10964113820.
+Pages copy-on-write:                       148913457.
+Pages zero filled:                        4190335535.
+Pages reactivated:                          45470710.
+Pages purged:                               20303405.
+File-backed pages:                            453880.
+Anonymous pages:                              555553.
+Pages stored in compressor:                  1708827.
+Pages occupied by compressor:                 699112.
+Decompressions:                             19660641.
+Compressions:                               30300818.
+Pageins:                                    71912432.
+Pageouts:                                      58932.
+Swapins:                                           0.
+Swapouts:                                          0.
+Pages tagged:                                 168261.
+Pages tagged resident:                        116960.
+Pages tagged compressed:                       51301.
+Pages tag-storage:                             65536.
+Pages tag-storage holding tags:                 9174.
+Pages tag-storage free:                          524.
+Pages tag-storage non-tag pageable:            55622.
+Pages tag-storage non-tag wired:                  87.
+Bytes of compressed tags:                    7925952.
+Tagged compressions:                         1172994.
+Tagged decompressions:                       1008975.
+Tue Oct 20 13:38:36 UTC 2026
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 55%
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                    97248.
+Pages active:                                 516897.
+Pages inactive:                               505779.
+Pages speculative:                             17528.
+Pages throttled:                                   0.
+Pages wired down:                             226791.
+Pages purgeable:                               24177.
+"Translation faults":                    10968837024.
+Pages copy-on-write:                       149051323.
+Pages zero filled:                        4193223866.
+Pages reactivated:                          45473008.
+Pages purged:                               20311498.
+File-backed pages:                            455484.
+Anonymous pages:                              584720.
+Pages stored in compressor:                  1691896.
+Pages occupied by compressor:                 692251.
+Decompressions:                             19676400.
+Compressions:                               30300818.
+Pageins:                                    71929102.
+Pageouts:                                      58932.
+Swapins:                                           0.
+Swapouts:                                          0.
+Pages tagged:                                 168535.
+Pages tagged resident:                        118878.
+Pages tagged compressed:                       49657.
+Pages tag-storage:                             65536.
+Pages tag-storage holding tags:                 9174.
+Pages tag-storage free:                          520.
+Pages tag-storage non-tag pageable:            55627.
+Pages tag-storage non-tag wired:                  86.
+Bytes of compressed tags:                    7609792.
+Tagged compressions:                         1172994.
+Tagged decompressions:                       1010465.

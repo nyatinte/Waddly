@@ -29,7 +29,10 @@ struct ImageAppProbe {
 
     @MainActor private static func measure(_ delegate: AppDelegate, source: URL) async throws {
         try await Task.sleep(for: .seconds(2))
-        print("state,physical_footprint_bytes,peak_physical_footprint_bytes,rss_bytes,peak_rss_bytes")
+        print(
+            "state,physical_footprint_bytes,peak_physical_footprint_bytes," +
+                "rss_bytes,peak_rss_bytes,system_uptime_seconds"
+        )
         snapshot("launch")
         delegate.setupWizardController?.close()
         if ProcessInfo.processInfo.environment["WADDLY_PROFILE_CHARACTER_LIFECYCLE"] == "1" {
@@ -69,13 +72,15 @@ struct ImageAppProbe {
     }
 
     private enum LifecycleFailure: Error {
-        case invalidCandidate, commitOrCloseFailed, retainedClosedSession
+        case invalidCandidate, commitOrCloseFailed, retainedClosedSession, invalidCycleCount
     }
 
     /// Uses the real staged import and Apply path, not a direct persistence replacement. The first
     /// cycle warms the renderer; compare later closed plateaus, not empty launch with a loaded pet.
     @MainActor private static func measureCharacterLifecycle(_ delegate: AppDelegate, source: URL) async throws {
-        for cycle in 0 ..< 3 {
+        let configuredCount = ProcessInfo.processInfo.environment["WADDLY_PROFILE_CHARACTER_CYCLES"] ?? "3"
+        guard let cycles = Int(configuredCount), cycles > 0 else { throw LifecycleFailure.invalidCycleCount }
+        for cycle in 0 ..< cycles {
             let released = try await stageAndApplyCharacter(delegate, source: source, cycle: cycle)
             for second in 1 ... 30 {
                 try await Task.sleep(for: .seconds(1))
@@ -83,6 +88,7 @@ struct ImageAppProbe {
             }
             guard released() else { throw LifecycleFailure.retainedClosedSession }
         }
+        snapshot("lifecycle-complete")
     }
 
     @MainActor private static func stageAndApplyCharacter(
@@ -121,7 +127,7 @@ struct ImageAppProbe {
         guard result == KERN_SUCCESS else { exit(1) }
         print(
             "\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)," +
-                "\(info.resident_size),\(info.resident_size_peak)"
+                "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)"
         )
         fflush(stdout)
     }

@@ -106,6 +106,8 @@ Keyboard events are used only to control animation. Waddly does not store, log, 
 
 The app targets a physical memory footprint below 100 MB in typical use. One share-dialog sample settled at 53.5 MB while open and 90.5 MB after closing, with a transient 105.0 MB peak during generation; repeat runs are needed before claiming the peak target is met. Importing a very large sheet (for example 3072 × 3072 with nine frames) can also exceed the target (known exception for 1.0). See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). `mise run memory:test` runs the isolated regression suite (Swift 6.2 and macOS 26+; the production app still supports macOS 14).
 
+For longer isolated character-lifecycle measurements, use `WADDLY_PROFILE_CHARACTER_LIFECYCLE=1 WADDLY_PROFILE_CHARACTER_CYCLES=10 ./macos/profile-image-app.sh`. The probe ad-hoc signs its temporary app, records monotonic sample times and completion, and supports a copied fixture through `WADDLY_PROFILE_IMAGE_FIXTURE`; see the workflow above. These measurements do not by themselves establish a distribution-app memory budget.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions. `mise run test` rejects Swift Testing runs that exit without reporting completion; `mise run test:guard` checks this guard without launching the app tests. AppKit action tests use target/action dispatch rather than a synthetic event-tracking loop; see the [early-exit diagnosis and reproducer](docs/test-runloop-early-exit.md). For a source-audited map of the screens, entry points, interaction states, and a manual QA checklist, see the [UX interaction audit](docs/ux-interaction-audit.md).

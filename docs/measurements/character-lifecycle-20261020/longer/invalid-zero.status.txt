@@ -1,0 +1,3 @@
+exit_code=1
+expected_exit_code=1
+Image app probe failed: invalidCycleCount
