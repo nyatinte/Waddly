@@ -32,6 +32,10 @@ struct ImageAppProbe {
         print("state,physical_footprint_bytes,peak_physical_footprint_bytes,rss_bytes,peak_rss_bytes")
         snapshot("launch")
         delegate.setupWizardController?.close()
+        if ProcessInfo.processInfo.environment["WADDLY_PROFILE_CHARACTER_LIFECYCLE"] == "1" {
+            try await measureCharacterLifecycle(delegate, source: source)
+            return
+        }
         for iteration in 0 ..< 10 {
             let prepared = await Task.detached {
                 autoreleasepool { () -> (PetImageSet, NSImage)? in
@@ -62,6 +66,46 @@ struct ImageAppProbe {
         delegate.characterImportWindowController?.window?.close()
         try await Task.sleep(for: .seconds(30))
         snapshot("return-idle-30s")
+    }
+
+    private enum LifecycleFailure: Error {
+        case invalidCandidate, commitOrCloseFailed, retainedClosedSession
+    }
+
+    /// Uses the real staged import and Apply path, not a direct persistence replacement. The first
+    /// cycle warms the renderer; compare later closed plateaus, not empty launch with a loaded pet.
+    @MainActor private static func measureCharacterLifecycle(_ delegate: AppDelegate, source: URL) async throws {
+        for cycle in 0 ..< 3 {
+            let released = try await stageAndApplyCharacter(delegate, source: source, cycle: cycle)
+            for second in 1 ... 30 {
+                try await Task.sleep(for: .seconds(1))
+                snapshot("cycle-\(cycle)-closed-\(second)s")
+            }
+            guard released() else { throw LifecycleFailure.retainedClosedSession }
+        }
+    }
+
+    @MainActor private static func stageAndApplyCharacter(
+        _ delegate: AppDelegate, source: URL, cycle: Int
+    ) async throws -> @MainActor () -> Bool {
+        delegate.showChangeCharacter()
+        guard let controller = delegate.characterImportWindowController else {
+            throw LifecycleFailure.commitOrCloseFailed
+        }
+        await controller.model.stageFiles(at: [source])
+        guard controller.model.canApply else { throw LifecycleFailure.invalidCandidate }
+        for second in 1 ... 30 {
+            try await Task.sleep(for: .seconds(1))
+            snapshot("cycle-\(cycle)-staged-\(second)s")
+        }
+        await controller.applyAndClose().value
+        guard delegate.characterImportWindowController == nil,
+              delegate.hasCompletePetImageSet,
+              !controller.model.isDirty,
+              !controller.model.commitFailed,
+              !controller.model.commitRejected,
+              controller.window?.isVisible == false else { throw LifecycleFailure.commitOrCloseFailed }
+        return { [weak controller, weak model = controller.model] in controller == nil && model == nil }
     }
 
     private static func snapshot(_ label: String) {

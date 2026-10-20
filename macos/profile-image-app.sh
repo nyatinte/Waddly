@@ -36,6 +36,16 @@ swiftc -O -swift-version 6 "$TEMP"/Sources/WaddlyCore/PetImageCore.swift \
   "$ROOT/Tools/profile_image_pipeline.swift" -o "$TEMP/fixture"
 "$TEMP/fixture" "$TEMP/source.png"
 OUTPUT="$ROOT/dist/memory/image-app-$LABEL-$(date -u +%Y%m%dT%H%M%SZ).csv"
+{
+  sw_vers
+  uname -m
+  swiftc --version
+  git -C "$ROOT" rev-parse HEAD
+  printf 'baseline_revision=%s\n' "$LABEL"
+  printf 'character_lifecycle=%s\n' "${WADDLY_PROFILE_CHARACTER_LIFECYCLE:-0}"
+  shasum -a 256 "$ROOT/Tools/profile_image_app.swift" "$TEMP/source.png"
+  (cd "$TEMP" && find Sources -type f -name '*.swift' | LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 "$file"; done)
+} > "${OUTPUT%.csv}.environment.txt"
 "$APP/Contents/MacOS/WaddlyMemoryProbe" "$TEMP/source.png" "$TEMP/images" > "$OUTPUT"
 awk -F, 'NR > 1 { if ($3 > peak) peak = $3; final = $2 } END { printf "Peak physical footprint %.2f MiB, final physical footprint %.2f MiB\n", peak/1048576, final/1048576 }' "$OUTPUT"
 printf 'Measurements: %s\n' "$OUTPUT"
