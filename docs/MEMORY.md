@@ -178,7 +178,23 @@ explain all purgeable/RSS growth or justify a product fix.
 
 This earlier evidence uses an optimized whole-process source probe, not the signed packaged app, a historical
 comparison, or full #98/#95/#124 acceptance. The typical-input budget and other lifecycle states
-still need their own measurements.
+still need further acceptance evidence.
+
+### Longer signed follow-up and typical fixture
+
+[Three ten-cycle runs with raw CSVs, receipts, source/signing provenance and a reproducible analyzer](measurements/character-lifecycle-20261020/longer/README.md)
+now extend the corrected probe. A compatible historical/current typical-fixture pair and a current
+large-fixture run completed all 30 fresh acquisitions and session-release checks. This is one
+sequential pair, not a three-run median or the original pre-store/pre-SwiftUI comparison; production
+Waddly was left running and ambient activity was not controlled.
+
+The current typical run's 300 closed samples stayed below 100 MB (maximum 96.26 MB), but its staged
+whole-process kernel peak was **107.04 MB**, so the typical lifecycle peak goal is not established.
+The large run's RSS rose again in cycles 8–9 after looking nearly steady in cycles 2–7, reaching
+304.75 MiB at completion, even though final physical footprint fell to 68.19 MB. Footprint oscillated
+within holds; the low final value must not be called a plateau or a memory fix. Attribution, the
+required remaining UI states and representative packaged-app budget/regression acceptance remain
+open in #98. No product cache, residency limit, or gate was changed.
 
 ## Share dialog profile (2026-10-13)
 

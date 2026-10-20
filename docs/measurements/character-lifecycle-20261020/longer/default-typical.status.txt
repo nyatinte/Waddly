@@ -1,0 +1,2 @@
+exit_code=0
+expected_exit_code=0

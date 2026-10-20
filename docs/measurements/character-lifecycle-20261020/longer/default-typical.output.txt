@@ -1,0 +1,144 @@
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareExporter.swift:216:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+214 |     static func makeVideoPixelBuffer(
+215 |         frame: CGImage,
+216 |         adaptor: AVAssetWriterInputPixelBufferAdaptor
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+217 |     ) -> CVPixelBuffer? {
+218 |         guard let pool = adaptor.pixelBufferPool else { return nil }
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:30:15: warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 28 |     /// Requests the next batch of frames. Tests inject a stalled or instrumented queue.
+ 29 |     var scheduleMediaData: MediaDataScheduler = { input, queue, block in
+ 30 |         input.requestMediaDataWhenReady(on: queue, using: block)
+    |               `- warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 31 |     }
+ 32 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:42:22: warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 40 |     /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+ 41 |     var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+ 42 |         guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    |                      `- warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 43 |     }
+ 44 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:82:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 80 |     let writer: AVAssetWriter
+ 81 |     let input: AVAssetWriterInput
+ 82 |     let adaptor: AVAssetWriterInputPixelBufferAdaptor
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 83 |     let shots: [ScheduledShot]
+ 84 |     private let progress = OSAllocatedUnfairLock(initialState: Progress())
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:89:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 87 |         writer: AVAssetWriter,
+ 88 |         input: AVAssetWriterInput,
+ 89 |         adaptor: AVAssetWriterInputPixelBufferAdaptor,
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 90 |         shots: [ScheduledShot]
+ 91 |     ) {
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareExporter.swift:216:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+214 |     static func makeVideoPixelBuffer(
+215 |         frame: CGImage,
+216 |         adaptor: AVAssetWriterInputPixelBufferAdaptor
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+217 |     ) -> CVPixelBuffer? {
+218 |         guard let pool = adaptor.pixelBufferPool else { return nil }
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:30:15: warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 28 |     /// Requests the next batch of frames. Tests inject a stalled or instrumented queue.
+ 29 |     var scheduleMediaData: MediaDataScheduler = { input, queue, block in
+ 30 |         input.requestMediaDataWhenReady(on: queue, using: block)
+    |               `- warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 31 |     }
+ 32 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:42:22: warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 40 |     /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+ 41 |     var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+ 42 |         guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    |                      `- warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 43 |     }
+ 44 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareExporter.swift:73:15: warning: 'expectsMediaDataInRealTime' was deprecated in macOS 27.0: Use the input receiver's appendImmediately(...) method instead [#DeprecatedDeclaration]
+ 71 |             AVVideoHeightKey: movieSize
+ 72 |         ])
+ 73 |         input.expectsMediaDataInRealTime = false
+    |               `- warning: 'expectsMediaDataInRealTime' was deprecated in macOS 27.0: Use the input receiver's appendImmediately(...) method instead [#DeprecatedDeclaration]
+ 74 |         let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+ 75 |             assetWriterInput: input,
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareExporter.swift:74:23: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 72 |         ])
+ 73 |         input.expectsMediaDataInRealTime = false
+ 74 |         let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+    |                       `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 75 |             assetWriterInput: input,
+ 76 |             sourcePixelBufferAttributes: [
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareExporter.swift:84:16: warning: 'add' was deprecated in macOS 27.0: Use the appropriate AVAssetWriter.inputReceiver(for:...) overload for your input and optional adaptor instead [#DeprecatedDeclaration]
+ 82 |         )
+ 83 |         guard writer.canAdd(input) else { throw PetShareExportError.writerUnavailable }
+ 84 |         writer.add(input)
+    |                `- warning: 'add' was deprecated in macOS 27.0: Use the appropriate AVAssetWriter.inputReceiver(for:...) overload for your input and optional adaptor instead [#DeprecatedDeclaration]
+ 85 |         do {
+ 86 |             try hooks.startWriting(writer)
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:30:15: warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 28 |     /// Requests the next batch of frames. Tests inject a stalled or instrumented queue.
+ 29 |     var scheduleMediaData: MediaDataScheduler = { input, queue, block in
+ 30 |         input.requestMediaDataWhenReady(on: queue, using: block)
+    |               `- warning: 'requestMediaDataWhenReady(on:using:)' was deprecated in macOS 27.0: Use the input receiver's async append(...) method on its own task instead [#DeprecatedDeclaration]
+ 31 |     }
+ 32 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:42:22: warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 40 |     /// writing a partial movie, to cover a setup failure that lands before the export queue exists.
+ 41 |     var startWriting: @Sendable (AVAssetWriter) throws -> Void = { writer in
+ 42 |         guard writer.startWriting() else { throw writer.error ?? PetShareExportError.writerUnavailable }
+    |                      `- warning: 'startWriting()' was deprecated in macOS 27.0: Use start() instead [#DeprecatedDeclaration]
+ 43 |     }
+ 44 | 
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:82:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 80 |     let writer: AVAssetWriter
+ 81 |     let input: AVAssetWriterInput
+ 82 |     let adaptor: AVAssetWriterInputPixelBufferAdaptor
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 83 |     let shots: [ScheduledShot]
+ 84 |     private let progress = OSAllocatedUnfairLock(initialState: Progress())
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:89:18: warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 87 |         writer: AVAssetWriter,
+ 88 |         input: AVAssetWriterInput,
+ 89 |         adaptor: AVAssetWriterInputPixelBufferAdaptor,
+    |                  `- warning: 'AVAssetWriterInputPixelBufferAdaptor' was deprecated in macOS 27.0: Use AVAssetWriter.inputPixelBufferReceiver(for:pixelBufferAttributes:) instead [#DeprecatedDeclaration]
+ 90 |         shots: [ScheduledShot]
+ 91 |     ) {
+
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyCore/PetShareMovieWriter.swift:172:27: warning: 'isReadyForMoreMediaData' was deprecated in macOS 27.0: Use the input receiver's async append(...) method instead [#DeprecatedDeclaration]
+170 |             return
+171 |         }
+172 |         while state.input.isReadyForMoreMediaData, !cancellation.isCancelled {
+    |                           `- warning: 'isReadyForMoreMediaData' was deprecated in macOS 27.0: Use the input receiver's async append(...) method instead [#DeprecatedDeclaration]
+173 |             let frameIndex = state.frameIndex
+174 |             guard frameIndex < movieFrameCount else { break }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/Sources/WaddlyApp/PetShareDialogComponents.swift:239:27: warning: 'AVPlayerItemDidPlayToEndTime' was deprecated in macOS 27.0: Use AVPlayerItem.didPlayToEndTimeNotification instead. [#DeprecatedDeclaration]
+237 |             posterView.isHidden = true
+238 |             endObserver = NotificationCenter.default.addObserver(
+239 |                 forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main
+    |                           `- warning: 'AVPlayerItemDidPlayToEndTime' was deprecated in macOS 27.0: Use AVPlayerItem.didPlayToEndTimeNotification instead. [#DeprecatedDeclaration]
+240 |             ) { [weak self] _ in
+241 |                 Task { @MainActor in self?.resetPlayback() }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/WaddlyMemoryProbe.app: replacing existing signature
+swift-driver version: 1.168.6 sandbox_extension_issue_file_to_process failed for /var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/tmp.WoZWI7lvAW/WaddlyMemoryProbe.app: 1 (Operation not permitted)
+Peak physical footprint 46.11 MiB, final physical footprint 35.49 MiB
+Measurements: /Users/nyatinte/orca/workspaces/nyatinte-animation/loach/dist/memory/image-app-182fcd3-20261020T135421Z.csv

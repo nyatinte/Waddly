@@ -1,0 +1,235 @@
+{
+  "current-large": {
+    "all_closed_physical_footprint_bytes": {
+      "max": 130418056,
+      "mean": 97506090.45333333,
+      "min": 66962872
+    },
+    "closed_30s_endpoints": [
+      {
+        "physical_footprint_bytes": 127370536,
+        "rss_bytes": 206602240,
+        "state": "cycle-0-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 82740592,
+        "rss_bytes": 219299840,
+        "state": "cycle-1-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 130172296,
+        "rss_bytes": 228392960,
+        "state": "cycle-2-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 130139528,
+        "rss_bytes": 228409344,
+        "state": "cycle-3-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 130106736,
+        "rss_bytes": 228409344,
+        "state": "cycle-4-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 127354224,
+        "rss_bytes": 228474880,
+        "state": "cycle-5-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 127354224,
+        "rss_bytes": 228474880,
+        "state": "cycle-6-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 127403376,
+        "rss_bytes": 228589568,
+        "state": "cycle-7-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 111510968,
+        "rss_bytes": 270336000,
+        "state": "cycle-8-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 68306432,
+        "rss_bytes": 319553536,
+        "state": "cycle-9-closed-30s"
+      }
+    ],
+    "elapsed_seconds": 629.7787555833347,
+    "final_physical_footprint_bytes": 68191744,
+    "final_rss_bytes": 319553536,
+    "last_closed_hold_physical_footprint_bytes": {
+      "max": 122947072,
+      "mean": 90011409.06666666,
+      "min": 67929600
+    },
+    "last_closed_hold_rss_bytes": {
+      "max": 333922304,
+      "mean": 327266577.06666666,
+      "min": 319553536
+    },
+    "maximum_sample_gap_seconds": 1.4727802500128746,
+    "peak_physical_footprint_bytes": 183961040,
+    "peak_rss_bytes": 393035776,
+    "samples": 602
+  },
+  "current-typical": {
+    "all_closed_physical_footprint_bytes": {
+      "max": 96257296,
+      "mean": 63565961.12,
+      "min": 43664632
+    },
+    "closed_30s_endpoints": [
+      {
+        "physical_footprint_bytes": 90834192,
+        "rss_bytes": 125091840,
+        "state": "cycle-0-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 44909840,
+        "rss_bytes": 129335296,
+        "state": "cycle-1-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 44844280,
+        "rss_bytes": 129990656,
+        "state": "cycle-2-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 90342648,
+        "rss_bytes": 130613248,
+        "state": "cycle-3-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 90064120,
+        "rss_bytes": 130367488,
+        "state": "cycle-4-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 94192912,
+        "rss_bytes": 128745472,
+        "state": "cycle-5-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 93127952,
+        "rss_bytes": 130908160,
+        "state": "cycle-6-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 93275408,
+        "rss_bytes": 134266880,
+        "state": "cycle-7-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91211000,
+        "rss_bytes": 136183808,
+        "state": "cycle-8-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91063544,
+        "rss_bytes": 135479296,
+        "state": "cycle-9-closed-30s"
+      }
+    ],
+    "elapsed_seconds": 620.528476791631,
+    "final_physical_footprint_bytes": 91063544,
+    "final_rss_bytes": 135479296,
+    "last_closed_hold_physical_footprint_bytes": {
+      "max": 91292920,
+      "mean": 61843226.13333333,
+      "min": 44631288
+    },
+    "last_closed_hold_rss_bytes": {
+      "max": 135479296,
+      "mean": 135477111.46666667,
+      "min": 135446528
+    },
+    "maximum_sample_gap_seconds": 1.1982265000115149,
+    "peak_physical_footprint_bytes": 107037968,
+    "peak_rss_bytes": 143966208,
+    "samples": 602
+  },
+  "default-typical": {
+    "final_physical_footprint_bytes": 37209288,
+    "peak_physical_footprint_bytes": 48350408,
+    "samples": 23
+  },
+  "historical-typical": {
+    "all_closed_physical_footprint_bytes": {
+      "max": 97453352,
+      "mean": 62848565.97333334,
+      "min": 43418896
+    },
+    "closed_30s_endpoints": [
+      {
+        "physical_footprint_bytes": 44451064,
+        "rss_bytes": 125190144,
+        "state": "cycle-0-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91555064,
+        "rss_bytes": 128892928,
+        "state": "cycle-1-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 92882168,
+        "rss_bytes": 131645440,
+        "state": "cycle-2-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91882744,
+        "rss_bytes": 134578176,
+        "state": "cycle-3-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 93160720,
+        "rss_bytes": 137658368,
+        "state": "cycle-4-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 89818384,
+        "rss_bytes": 135741440,
+        "state": "cycle-5-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91653392,
+        "rss_bytes": 136773632,
+        "state": "cycle-6-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91325712,
+        "rss_bytes": 137150464,
+        "state": "cycle-7-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 44909840,
+        "rss_bytes": 137166848,
+        "state": "cycle-8-closed-30s"
+      },
+      {
+        "physical_footprint_bytes": 91292944,
+        "rss_bytes": 137117696,
+        "state": "cycle-9-closed-30s"
+      }
+    ],
+    "elapsed_seconds": 632.3529654166196,
+    "final_physical_footprint_bytes": 91292944,
+    "final_rss_bytes": 137117696,
+    "last_closed_hold_physical_footprint_bytes": {
+      "max": 91604240,
+      "mean": 61773345.06666667,
+      "min": 44893456
+    },
+    "last_closed_hold_rss_bytes": {
+      "max": 137183232,
+      "mean": 137148825.6,
+      "min": 137117696
+    },
+    "maximum_sample_gap_seconds": 1.2608233750215732,
+    "peak_physical_footprint_bytes": 105989416,
+    "peak_rss_bytes": 147554304,
+    "samples": 602
+  }
+}
