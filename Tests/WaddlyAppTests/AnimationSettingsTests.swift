@@ -105,6 +105,51 @@ import WaddlyCore
         #expect(app.petImages[.idle].count == committedIdleBefore)
     }
 
+    @Test(arguments: [false, true])
+    func advancedRemoveAndReorderOnlyReachTheStoreThroughParentApply(apply: Bool) async throws {
+        let fixture = try AppIntegrationFixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        try await app.persistPetImages(fixture.exampleImages())
+        let original = app.petImages
+        let originalManifest = try fixture.manifest()
+        app.showChangeCharacter()
+        let controller = try #require(app.characterImportWindowController)
+
+        controller.frameEditorModel.remove(at: 0, from: .idle)
+        controller.frameEditorModel.move(from: 0, to: 1, in: .typing)
+        // The single required Enter frame must survive even a direct editor callback.
+        controller.frameEditorModel.remove(at: 0, from: .enter)
+        let edited = try #require(controller.model.stagedFrames)
+        #expect(edited[.idle].count == 1)
+        #expect(edited[.idle][0] === original[.idle][1])
+        #expect(edited[.typing][0] === original[.typing][1])
+        #expect(edited[.typing][1] === original[.typing][0])
+        #expect(edited[.enter].count == 1)
+        #expect(controller.model.isDirty)
+        #expect(CharacterImportModel.sameFrames(app.petImages, original))
+        #expect(try fixture.manifest() == originalManifest)
+
+        if apply {
+            await controller.applyAndClose().value
+        } else {
+            controller.model.discard()
+            controller.close()
+        }
+        #expect(app.characterImportWindowController == nil)
+        let expected = apply ? edited : original
+        #expect(CharacterImportModel.sameFrames(app.petImages, expected))
+        let manifest = try #require(try fixture.manifest())
+        let disk = try PetImageStorage(directory: fixture.directory).load(manifest).0
+        for category in PetImageCategory.allCases {
+            #expect(disk[category].count == expected[category].count)
+        }
+        app.showChangeCharacter()
+        let reopened = try #require(app.characterImportWindowController)
+        #expect(try CharacterImportModel.sameFrames(#require(reopened.model.stagedFrames), expected))
+        #expect(!reopened.model.isDirty)
+    }
+
     /// Apply through the real store: the pet is written to disk, and reopening loads the committed
     /// pet with no stale draft.
     @Test func applyingThroughTheStoreWritesThePetAndReopenShowsIt() async throws {
