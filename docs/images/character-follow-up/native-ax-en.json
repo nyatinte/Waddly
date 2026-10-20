@@ -1,0 +1,184 @@
+[
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Idle — Remove image 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "Add — Idle",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Idle — Remove image 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the first image.",
+    "label": "Idle — Move image left 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image right",
+    "label": "Idle — Move image right 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image left",
+    "label": "Idle — Move image left 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the last image.",
+    "label": "Idle — Move image right 2",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Typing — Remove image 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "Add — Typing",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Typing — Remove image 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Typing — Remove image 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Typing — Remove image 4",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the first image.",
+    "label": "Typing — Move image left 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image right",
+    "label": "Typing — Move image right 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image left",
+    "label": "Typing — Move image left 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image right",
+    "label": "Typing — Move image right 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image left",
+    "label": "Typing — Move image left 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image right",
+    "label": "Typing — Move image right 3",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image left",
+    "label": "Typing — Move image left 4",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the last image.",
+    "label": "Typing — Move image right 4",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Sleep — Remove image 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "label": "Add — Sleep",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Remove image",
+    "label": "Sleep — Remove image 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the first image.",
+    "label": "Sleep — Move image left 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image right",
+    "label": "Sleep — Move image right 1",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "Move image left",
+    "label": "Sleep — Move image left 2",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the last image.",
+    "label": "Sleep — Move image right 2",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "Keep at least one image in each pose.",
+    "label": "Enter — Remove image 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "label": "Add — Enter",
+    "enabled": true
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the first image.",
+    "label": "Enter — Move image left 1",
+    "enabled": false
+  },
+  {
+    "role": "AXButton",
+    "help": "This is already the last image.",
+    "label": "Enter — Move image right 1",
+    "enabled": false
+  }
+]

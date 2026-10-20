@@ -1,0 +1,4 @@
+AXTitle Optional(キャラクターの変更)
+AXMinimized Optional(1)
+AXTitle Optional(キャラクターの変更)
+AXMinimized Optional(0)

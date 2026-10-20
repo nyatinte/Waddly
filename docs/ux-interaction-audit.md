@@ -6,7 +6,10 @@ intentionally **not** a design system and it adds no runtime behavior.
 
 ## Evidence status — read first
 
-**Latest live evidence:** [QA at merged main `85b96a8`](live-qa-85b96a8.md) records executed
+**Latest character-import evidence:** [advanced editing/lifecycle follow-up](character-import-follow-up.md)
+adds native remove/reorder, minimize/refocus, discard/reopen and custom-frame Apply/relaunch checks,
+plus JA/EN native accessibility attribute read-back. Finder/category drag and VoiceOver are still
+unverified. [QA at merged main `85b96a8`](live-qa-85b96a8.md) records the earlier
 Setup, Share and character-import checks, real window captures, and remaining blockers for #108,
 #111 and #124. This was live GUI automation, not human keyboard/VoiceOver acceptance. The refreshed
 Share contract below supersedes its old gaps; other source-audit sections retain their stated
@@ -142,13 +145,16 @@ longer a top-level destination):
 | Control | Action | Hover | Focus | Disabled | Working | Success | Error |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Add (per category) | picker → append PNGs to the draft | Y (bordered) | Y | — | — | thumbnail appears | unreadable file skipped |
-| Remove thumbnail (`×`) | delete a draft frame | **N: borderless icon, no hover/press affordance** | ~ | **~: allowed only when more than one image; position is the only reason** | — | — | — |
-| Move left / right (`‹` / `›`) | reorder within the category | N | ~ | ~: disabled at the ends, position-only reason | — | order updates | — |
+| Remove thumbnail (`×`) | delete a draft frame | **N: borderless icon, no hover/press background** | ~ | native help explains the last-required-frame guard; JA/EN `AXHelp` read-back verified | — | native deletion observed; parent Apply only | — |
+| Move left / right (`‹` / `›`) | reorder within the category | N: no hover background | ~ | native help explains first/last boundaries; JA/EN `AXHelp` read-back verified | — | native reorder observed; survives minimize/refocus | — |
 | Row drop target | add dropped PNGs to the draft | accent border while targeted (Y) | — | non-PNG drag rejected | — | thumbnails appended | unreadable file skipped |
 
 Nothing in the advanced editor commits: closing it returns to the parent preview with the draft
 intact, and the parent’s Cancel discards it. The former standalone **Animation Settings** window and
-its status-menu item are retired (#124).
+its status-menu item are retired (#124). At `ffa65a5`, frame/image action labels include pose and
+position, verified through native `AXAttributedDescription`; Orca's plain tree omission is not proof
+of a missing label. The [follow-up](character-import-follow-up.md) distinguishes this from spoken
+VoiceOver acceptance and from unverified visible hover tooltips.
 
 ### 2d. Share dialog
 
@@ -210,7 +216,7 @@ execution; an automated state test does not verify every interaction in its row.
 | Setup — Ready | Back, Show on desktop, Set up monitoring | Tab | checks read out | warning visible | celebrate hop suppressed | checks localized | non-ready never looks like success | auto; manual: spoken order |
 | Share | live synthetic hover/copy/play observed | native Post button; Tab traversal still unverified | roles set; not spoken | dark live captures only; light/contrast unverified | no added hover animation; live setting unverified | EN/JA dark live captures | inline outcomes + Retry in source; live failure walkthrough pending | auto: `PetShareDialogTests`, `PetShareFlowTests`; live: [bounded results](live-qa-85b96a8.md) |
 | Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`; manual: disabled reason |
-| Character import (Change Character) | Choose / Paste / drop, pose + 9-cells, edit frames | ⌘V observed live; Tab traversal still unverified | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
+| Character import (Change Character) | Choose/Paste observed earlier; advanced delete/reorder, minimize/refocus and discard/reopen observed; native drop still unverified | ⌘V observed live; Tab traversal still unverified | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
 
 ## 5. Walkthroughs (with retry)
 
