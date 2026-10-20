@@ -160,6 +160,7 @@ extension SetupWizardController {
 
     /// Routes the window-wide drop: the shared screen stages, the legacy path imports directly.
     func handleWindowDrop(_ urls: [URL]) {
+        guard !isMonitoringSettings else { return }
         if isComposingCharacter {
             Task { [weak self] in await self?.characterImportModel.stageFiles(at: urls) }
             return
@@ -331,6 +332,10 @@ extension SetupWizardController {
     }
 
     @objc func goNext() {
+        if isMonitoringSettings {
+            close()
+            return
+        }
         guard currentStep != .pet || hasImage else { return }
         guard currentStep != .monitoring || isMonitoringReady else { return }
         guard let next = Step(rawValue: currentStep.rawValue + 1) else {

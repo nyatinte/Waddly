@@ -8,7 +8,7 @@ struct SetupWizardScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if controller.currentStep != .completed {
+            if !controller.isMonitoringSettings, controller.currentStep != .completed {
                 HStack(spacing: 10) {
                     step(.setupStepPet, index: 0)
                     Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
@@ -313,7 +313,10 @@ private extension SetupWizardScreen {
     }
 
     private var nextButtonKey: LocalizationKey {
-        controller.currentStep == .completed ? .setupShowOnDesktop : .setupNext
+        if controller.isMonitoringSettings {
+            return .setupClose
+        }
+        return controller.currentStep == .completed ? .setupShowOnDesktop : .setupNext
     }
 
     private var completedPage: some View {
@@ -343,7 +346,7 @@ private extension SetupWizardScreen {
 
     private var footer: some View {
         HStack {
-            if controller.currentStep != .pet {
+            if !controller.isMonitoringSettings, controller.currentStep != .pet {
                 Button(action: controller.goBack) {
                     Text(verbatim: controller.localizedString(.setupBack))
                 }
@@ -352,7 +355,7 @@ private extension SetupWizardScreen {
                 .accessibilityIdentifier("goBack")
             }
             Spacer()
-            if controller.currentStep == .monitoring, !controller.isMonitoringReady {
+            if !controller.isMonitoringSettings, controller.currentStep == .monitoring, !controller.isMonitoringReady {
                 Button(action: controller.deferMonitoring) {
                     Text(verbatim: controller.localizedString(.setupLater))
                 }
@@ -367,11 +370,11 @@ private extension SetupWizardScreen {
             .accessibilityLabel(Text(verbatim: controller.localizedString(nextButtonKey)))
             .buttonStyle(.borderedProminent)
             .disabled(
-                (controller.currentStep == .pet && !controller.hasImage)
-                    || (controller.currentStep == .monitoring && !controller.isMonitoringReady)
+                !controller.isMonitoringSettings && ((controller.currentStep == .pet && !controller.hasImage)
+                    || (controller.currentStep == .monitoring && !controller.isMonitoringReady))
             )
-            .keyboardShortcut(.defaultAction)
-            .accessibilityIdentifier("goNext")
+            .keyboardShortcut(controller.isMonitoringSettings ? .cancelAction : .defaultAction)
+            .accessibilityIdentifier(controller.isMonitoringSettings ? "closeMonitoringSettings" : "goNext")
         }
         .frame(height: SetupMetrics.footerHeight)
     }

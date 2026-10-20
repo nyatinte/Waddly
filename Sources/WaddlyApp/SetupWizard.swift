@@ -27,6 +27,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     let localization: LocalizationController
+    /// Reuses the permission page after onboarding without reopening character setup or progress.
+    let isMonitoringSettings: Bool
     let promptResourcesURL: URL?
 
     var prompt: String {
@@ -96,6 +98,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,
+        isMonitoringSettings: Bool = false,
         savedStep: Int? = nil,
         pasteboard: NSPasteboard = .general,
         openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
@@ -105,6 +108,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         onClose: @escaping @MainActor () -> Void
     ) {
         self.localization = localization
+        self.isMonitoringSettings = isMonitoringSettings
         self.promptResourcesURL = promptResourcesURL
         self.onPreviewImage = onPreviewImage
         self.onConfirmImage = onConfirmImage
@@ -130,10 +134,12 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
             defer: false
         )
         super.init(window: window)
-        if let savedStep, let restored = Step(rawValue: savedStep) {
+        if isMonitoringSettings {
+            currentStep = .monitoring
+        } else if let savedStep, let restored = Step(rawValue: savedStep) {
             currentStep = restored
         }
-        window.title = localizedString(.setupWindowTitle)
+        window.title = localizedString(isMonitoringSettings ? .setupSetUpMonitoring : .setupWindowTitle)
         window.contentMinSize = SetupMetrics.contentSize
         window.isReleasedWhenClosed = false
         // AppKit state restoration can hand back a frame that was resized in an earlier session,

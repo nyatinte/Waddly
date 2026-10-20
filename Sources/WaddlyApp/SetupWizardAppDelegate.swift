@@ -48,6 +48,10 @@ extension AppDelegate {
         tapRunning && observedKeyEvent
     }
 
+    var setupMenuTitleKey: LocalizationKey {
+        isSetupComplete ? .menuInputMonitoring : .menuSetupWizard
+    }
+
     @objc func showSetupWizard() {
         if setupWizardController == nil {
             setupWizardController = makeSetupWizardController()
@@ -73,7 +77,8 @@ extension AppDelegate {
     }
 
     private func makeSetupWizardController() -> SetupWizardController {
-        SetupWizardController(
+        let monitoringSettings = isSetupComplete
+        return SetupWizardController(
             localization: localization,
             onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
             onConfirmImage: { [weak self] images, source in
@@ -87,8 +92,12 @@ extension AppDelegate {
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,
             presenter: presenter,
+            isMonitoringSettings: monitoringSettings,
             savedStep: settings.setupStep,
-            onStepChange: { [weak settings] step in settings?.setupStep = step },
+            onStepChange: { [weak settings] step in
+                guard !monitoringSettings else { return }
+                settings?.setupStep = step
+            },
             onShowOnDesktop: { [weak self] in self?.revealPetOnDesktop() },
             onClose: { [weak self] in self?.handleSetupWizardClose() }
         )
@@ -96,10 +105,12 @@ extension AppDelegate {
 
     /// Records the finished setup and restarts monitoring when the wizard closes.
     private func handleSetupWizardClose() {
-        if hasCompletePetImageSet {
-            settings.setupWizardSeen = true
-        } else {
-            settings.removeSetupWizardSeen()
+        if setupWizardController?.isMonitoringSettings != true {
+            if hasCompletePetImageSet {
+                settings.setupWizardSeen = true
+            } else {
+                settings.removeSetupWizardSeen()
+            }
         }
         setupWizardController = nil
         guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused else { return }

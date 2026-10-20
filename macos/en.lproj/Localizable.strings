@@ -37,6 +37,8 @@
 "menu.showInMenuBar" = "Menu Bar";
 "menu.changeCharacter" = "Change Character…";
 "menu.setupWizard" = "Setup Guide…";
+"menu.inputMonitoring" = "Set Up Input Monitoring…";
+"setup.close" = "Close";
 "menu.login" = "Launch at Login";
 "menu.quit" = "Quit Waddly";
 "menu.loginError" = "Could not change the login item setting.";

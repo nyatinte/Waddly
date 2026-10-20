@@ -36,6 +36,16 @@ inline retry, keeps the draft, and stays on the step. A window-wide drop outside
 successful read. In the Change Character window, Apply commits the staged draft and closes only on
 success; a failed save remains retryable.
 
+## After setup: Input Monitoring settings
+
+When image + seen + cleared step indicate finished setup, both menus offer **Set Up Input Monitoring…**.
+The existing permission page opens directly in settings mode, without the step indicator, Back,
+Later or completion page. **Close** is always available (Escape shortcut), including when permission
+is missing. Both image-drop registrations are removed, and the window-drop handler refuses imports.
+The existing permission/retry/restart/troubleshooting behavior and paused-tap rules are reused.
+Opening, navigating, or closing this mode does not write setup progress or the saved character.
+First-run and incomplete saved steps keep the normal Setup Guide and navigation unchanged.
+
 ## Automated verification (verified)
 
 Command: `mise run test` (serialized Swift Testing suites). The wizard suites are
@@ -77,6 +87,9 @@ render fixtures are listed in `docs/images/character-import/README.md`.
 | A relaunch mid-permission resumes at “restart required”, not a false ready state | `interruptedPermissionFlowResumesToRestartRequired` |
 | “Set up later” records the Ready step so a relaunch resumes with the warning still shown | `deferringSavesTheReadyStepSoARelaunchCanResume` |
 | Permission rules, polling, manual steps, and deferral | `PermissionServiceTests` |
+| Both existing menu copies update after completion; settings opens directly, refuses navigation/imports, closes without changing setup or saved bytes | `configuredMenusOpenMonitoringWithoutRewritingSetupOrImages` |
+| Fresh setup and every saved unfinished step retain the original entry and navigation | `firstRunStillStartsWithCharacterSetup`, `unfinishedSetupKeepsItsMenuAndSavedStep` |
+| Settings mode preserves all four permission/readiness states and injected recovery actions in JA/EN; closing does not save progress or commit images | `permissionPageKeepsAllReadinessAndRecoveryStates` |
 
 ## Manual QA matrix (unverified)
 

@@ -47,7 +47,7 @@ The linked live report adds separately identified ScreenCaptureKit window captur
 | Pet panel | drop a PNG | imports through the pet-image path (writes only after validation) | — |
 | Dock icon | click | setup complete → `bringPetToFront()`; otherwise `showSetupWizard()` | never opens the editor |
 | Menu bar item | click | opens the status menu; tooltip reads reaction state (paused / active / permission) | menus rebuild after a language change |
-| Status/pet menu | “Setup Guide…” | opens or resumes the guide | close keeps the saved step |
+| Status/pet menu | “Setup Guide…” (unfinished) / “Set Up Input Monitoring…” (finished) | resumes unfinished setup, or opens permission/status/recovery directly after completion | unfinished setup keeps its saved step; monitoring settings leaves setup state and saved images unchanged |
 | Status/pet menu | “Change Character…” | opens the shared character screen on the committed pet (disabled until setup is complete) | close clears content; reopen reloads the committed pet |
 | Setup Guide — Pet step | “Choose a PNG” / “Change image” | opens the shared character screen inside the step | Cancel discards the staged draft, confirming only when it has changes |
 | Status/pet menu | “Share Pet” (pet menu only) | opens the Share window | close cancels export and deletes temp assets (#115) |
@@ -62,11 +62,15 @@ Setup navigation contract:
   warning — it never impersonates success.
 - Closing keeps `setupStep`. With a complete pet it sets `setupWizardSeen = true`, so relaunch
   leaves the guide closed; without a pet it clears that flag and launch reopens setup. A saved,
-  incomplete step can resume on a Dock click; the menu can always reopen the guide. Finishing clears
+  incomplete step can resume on a Dock click or the Setup Guide menu entry. After completion, the
+  menu becomes Set Up Input Monitoring and opens only the permission page. Finishing clears
   the saved step. `isSetupComplete` requires image + seen + cleared step, so a finished guide cannot
   trap the user (`AppDelegate.opensSetupOnLaunch`).
 - The wizard is a fixed 820 × 520 pt non-restorable window (`SetupMetrics`), so a stale restored
   frame cannot reflow the layout.
+- After completion, monitoring settings hides onboarding progress/Back/Later and offers Close
+  regardless of readiness. It has no character-image drop targets or step persistence; character
+  replacement stays under Change Character. All four permission/readiness states reuse the existing page.
 - The permission guide follows the System Settings window until the user moves it
   (`PermissionService` + `PermissionGuidePlacement`).
 
@@ -88,7 +92,7 @@ are about *reason* and *outcome*, not plumbing.
 | Language ▸ System/日本語/English | switches the string catalog | — | radio state; menus rebuild on next open | — |
 | Show in ▸ Dock / Menu Bar | toggles presence | **N: greyed when it would hide both entry points, with no reason shown** | check state | — |
 | Change Character… | opens the shared character screen | **N: greyed until setup is complete, with no reason** | — | — |
-| Setup Guide… | opens or resumes the guide | — | — | — |
+| Setup Guide… / Set Up Input Monitoring… | resumes incomplete setup; after completion opens monitoring settings directly | — | — | — |
 | Launch at Login | register/unregister `SMAppService` | — | check reflects real status | **~: warning sheet opens only after the menu closes; no inline retry** |
 | Quit Waddly | terminates | — | — | — |
 
