@@ -48,6 +48,12 @@ jobs:
             exit 1
           fi
 
+      - name: Show test toolchain and platform
+        run: |
+          sw_vers
+          uname -m
+          swift --version
+
       - name: Run tests
         run: mise run test
 

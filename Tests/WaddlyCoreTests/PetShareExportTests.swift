@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
     let movieURL = FileManager.default.temporaryDirectory.appendingPathComponent("Waddly-\(UUID().uuidString).mp4")
     defer { try? FileManager.default.removeItem(at: movieURL) }
 
-    try PetShareExporter.writeMovie(from: images, to: movieURL)
+    try exportMovieWithDiagnostics(from: images, to: movieURL, timeout: .seconds(120))
     let asset = AVURLAsset(url: movieURL)
     let duration = try await asset.load(.duration)
     let videoTrack = try #require(try await asset.loadTracks(withMediaType: .video).first)
@@ -93,22 +93,6 @@ private func fixtureImages() throws -> PetImageSet {
     return try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: fixtureURL)))
 }
 
-private func exportMovie(
-    from images: PetImageSet,
-    to url: URL,
-    timeout: DispatchTimeInterval,
-    cancellation: PetShareExportCancellation = PetShareExportCancellation(),
-    hooks: MovieWriterHooks = MovieWriterHooks()
-) throws {
-    try PetShareExporter.writeMovie(
-        from: images,
-        to: url,
-        timeout: timeout,
-        cancellation: cancellation,
-        hooks: hooks
-    )
-}
-
 private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) -> Bool {
     let deadline = Date().addingTimeInterval(seconds)
     while Date() < deadline {
@@ -128,7 +112,7 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
 
     #expect(throws: PetShareExportError.timedOut) {
         // Model an encoder whose readiness callback arrives long after the deadline: cleanup cannot depend on one.
-        try PetShareExporter.writeMovie(
+        try exportMovieWithDiagnostics(
             from: images,
             to: movieURL,
             timeout: .milliseconds(50),
@@ -163,7 +147,7 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
     let failSafe = DispatchTime.now()
 
     #expect(throws: PetShareExportError.timedOut) {
-        try exportMovie(
+        try exportMovieWithDiagnostics(
             from: images,
             to: movieURL,
             timeout: .milliseconds(100),
@@ -275,7 +259,7 @@ private func waitUntil(_ condition: () -> Bool, within seconds: TimeInterval) ->
 
     #expect(throws: PetShareExportError.cancelled) {
         // Model an encoder that never completes finishWriting while every frame is already written.
-        try PetShareExporter.writeMovie(
+        try exportMovieWithDiagnostics(
             from: images,
             to: movieURL,
             timeout: .seconds(30),
