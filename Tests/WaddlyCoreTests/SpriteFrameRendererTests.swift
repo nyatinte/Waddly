@@ -1,188 +1,42 @@
 import AppKit
-import ImageIO
 import Testing
-import UniformTypeIdentifiers
 import WaddlyCore
 
-// MARK: - Renderer
-
-@Test func rendererRendersEachNominalCellColor() throws {
-    let sheet = try #require(spriteTestSolidSheet())
-    let editing = spriteTestSheetEditing()
-    for slot in SpriteFrameSlot.allCases {
-        let rendered = try #require(
-            SpriteFrameRenderer.render(source: sheet, adjustment: editing.adjustment(for: slot))
-        )
-        #expect(rendered.width == 20)
-        #expect(rendered.height == 20)
-        let expected = spriteTestCellColors[slot.rawValue]
-        #expect(spriteTestPixel(of: rendered, column: 0, row: 0) == expected)
-        #expect(spriteTestPixel(of: rendered, column: 19, row: 0) == expected)
-        #expect(spriteTestPixel(of: rendered, column: 0, row: 19) == expected)
-        #expect(spriteTestPixel(of: rendered, column: 19, row: 19) == expected)
-    }
-}
-
-@Test func rendererIsUprightInTopLeftCoordinates() throws {
-    let sheet = try #require(spriteTestOrientedSheet())
-    let editing = spriteTestSheetEditing()
-    for slot in SpriteFrameSlot.allCases {
-        let rendered = try #require(
-            SpriteFrameRenderer.render(source: sheet, adjustment: editing.adjustment(for: slot))
-        )
-        let expected = spriteTestCellColors[slot.rawValue]
-        #expect(spriteTestPixel(of: rendered, column: 10, row: 0) == expected)
-        #expect(spriteTestPixel(of: rendered, column: 10, row: 9) == expected)
-        #expect(spriteTestPixel(of: rendered, column: 10, row: 10) == expected.inverted)
-        #expect(spriteTestPixel(of: rendered, column: 10, row: 19) == expected.inverted)
-    }
-}
-
-@Test func rendererOffsetPadsTransparentAndClips() throws {
-    let sheet = try #require(spriteTestSolidSheet())
-    let color = spriteTestCellColors[SpriteFrameSlot.enter.rawValue]
-    let crop = SquareCrop(x: 0, y: 40, size: 20)
-    let shiftedRight = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: crop, offsetX: 5, offsetY: 0)
-        )
-    )
-    #expect(spriteTestPixel(of: shiftedRight, column: 0, row: 10) == .clear)
-    #expect(spriteTestPixel(of: shiftedRight, column: 4, row: 10) == .clear)
-    #expect(spriteTestPixel(of: shiftedRight, column: 5, row: 10) == color)
-    #expect(spriteTestPixel(of: shiftedRight, column: 19, row: 10) == color)
-
-    let shiftedUp = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: crop, offsetX: 0, offsetY: -5)
-        )
-    )
-    #expect(spriteTestPixel(of: shiftedUp, column: 10, row: 0) == color)
-    #expect(spriteTestPixel(of: shiftedUp, column: 10, row: 14) == color)
-    #expect(spriteTestPixel(of: shiftedUp, column: 10, row: 15) == .clear)
-
-    let shiftedDown = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: crop, offsetX: 0, offsetY: 5)
-        )
-    )
-    #expect(spriteTestPixel(of: shiftedDown, column: 10, row: 0) == .clear)
-    #expect(spriteTestPixel(of: shiftedDown, column: 10, row: 4) == .clear)
-    #expect(spriteTestPixel(of: shiftedDown, column: 10, row: 5) == color)
-    #expect(spriteTestPixel(of: shiftedDown, column: 10, row: 19) == color)
-}
-
-@Test func rendererCropSpanningNeighborsIncludesBothCells() throws {
-    let sheet = try #require(spriteTestSolidSheet())
-    let crop = SquareCrop(x: 30, y: 20, size: 20)
-    let rendered = try #require(
-        SpriteFrameRenderer.render(source: sheet, adjustment: FrameAdjustment(crop: crop, offsetX: 0, offsetY: 0))
-    )
-    #expect(spriteTestPixel(of: rendered, column: 0, row: 10) == spriteTestCellColors[4])
-    #expect(spriteTestPixel(of: rendered, column: 9, row: 10) == spriteTestCellColors[4])
-    #expect(spriteTestPixel(of: rendered, column: 10, row: 10) == spriteTestCellColors[5])
-    #expect(spriteTestPixel(of: rendered, column: 19, row: 10) == spriteTestCellColors[5])
-    let geometry = spriteTestSheetEditing().geometry(for: .typing2)
-    #expect(geometry.extendsOutsideCell(crop))
-}
-
-@Test func rendererKeepsAlphaAndOutputIsSquare() throws {
-    let sheet = try #require(spriteTestImage(width: 60, height: 60) { column, row in
-        guard row >= 40, column >= 40 else { return .clear }
-        return SpriteTestPixel(red: 64, green: 32, blue: 16, alpha: 128)
-    })
-    let transparent = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0)
-        )
-    )
-    #expect(transparent.width == 20)
-    #expect(transparent.height == 20)
-    #expect(spriteTestPixel(of: transparent, column: 10, row: 10) == .clear)
-    let translucent = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: SquareCrop(x: 40, y: 40, size: 20), offsetX: 0, offsetY: 0)
-        )
-    )
-    let expected = SpriteTestPixel(red: 64, green: 32, blue: 16, alpha: 128)
-    #expect(spriteTestPixel(of: translucent, column: 10, row: 10) == expected)
-    let odd = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: SquareCrop(x: 41, y: 41, size: 13), offsetX: 0, offsetY: 0)
-        )
-    )
-    #expect(odd.width == 13)
-    #expect(odd.height == 13)
-}
-
-@Test func rendererCappedOutputScalesDownWithNearestNeighbor() throws {
-    let sheet = try #require(spriteTestSolidSheet())
-    let crop = SquareCrop(x: 40, y: 20, size: 20)
-    let adjustment = FrameAdjustment(crop: crop, offsetX: 0, offsetY: 0)
-    let cyan = spriteTestCellColors[5]
-    let capped = try #require(
-        SpriteFrameRenderer.render(source: sheet, adjustment: adjustment, cappedOutputSide: 10)
-    )
-    #expect(capped.width == 10)
-    #expect(capped.height == 10)
-    #expect(spriteTestPixel(of: capped, column: 0, row: 0) == cyan)
-    #expect(spriteTestPixel(of: capped, column: 9, row: 9) == cyan)
-
-    let natural = try #require(
-        SpriteFrameRenderer.render(source: sheet, adjustment: adjustment, cappedOutputSide: 40)
-    )
-    #expect(natural.width == 20)
-    #expect(natural.height == 20)
-    let image = try #require(
-        SpriteFrameRenderer.renderNSImage(source: sheet, adjustment: adjustment, cappedOutputSide: 10)
-    )
-    #expect(image.size == NSSize(width: 10, height: 10))
-
-    let spanning = FrameAdjustment(crop: SquareCrop(x: 30, y: 20, size: 20), offsetX: 0, offsetY: 0)
-    let scaled = try #require(
-        SpriteFrameRenderer.render(source: sheet, adjustment: spanning, cappedOutputSide: 10)
-    )
-    #expect(spriteTestPixel(of: scaled, column: 0, row: 5) == spriteTestCellColors[4])
-    #expect(spriteTestPixel(of: scaled, column: 9, row: 5) == spriteTestCellColors[5])
-}
-
-@Test func rendererThumbnailScalesNearestNeighbor() throws {
-    let sheet = try #require(spriteTestOrientedSheet())
-    let rendered = try #require(
-        SpriteFrameRenderer.render(
-            source: sheet,
-            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 40, size: 20), offsetX: 0, offsetY: 0)
-        )
-    )
-    let thumbnail = try #require(SpriteFrameRenderer.thumbnail(source: rendered, side: 10))
-    #expect(thumbnail.size == NSSize(width: 10, height: 10))
-    let raster = try #require(PetFrameSourceDecoder.frameImage(from: thumbnail))
-    #expect(raster.width == 10)
-    #expect(raster.height == 10)
-    #expect(spriteTestPixel(of: raster, column: 5, row: 0) == spriteTestCellColors[6])
-    #expect(spriteTestPixel(of: raster, column: 5, row: 9) == spriteTestCellColors[6].inverted)
-    #expect(SpriteFrameRenderer.thumbnail(source: rendered, side: 0) == nil)
-}
-
-@Test func frameSourceDecoderDecodesTheSheetPNGAtFullSize() throws {
-    let image = try #require(spriteTestSolidSheet())
-    let data = try #require(spriteTestPNGData(for: image))
-    let decoded = try #require(PetFrameSourceDecoder.sheetImage(from: data))
-    #expect(decoded.width == 60)
-    #expect(decoded.height == 60)
-    #expect(spriteTestPixel(of: decoded, column: 5, row: 5) == spriteTestCellColors[0])
-    #expect(spriteTestPixel(of: decoded, column: 55, row: 55) == spriteTestCellColors[8])
-    #expect(PetFrameSourceDecoder.sheetImage(from: Data()) == nil)
-    #expect(PetFrameSourceDecoder.sheetImage(from: Data("not a PNG".utf8)) == nil)
-}
-
 // MARK: - Fixed-canvas renderer
+
+@Test func canvasRendererRendersEachNominalCellColor() throws {
+    let sheet = try #require(spriteTestSolidSheet())
+    let editing = spriteTestSheetEditing()
+    for slot in SpriteFrameSlot.allCases {
+        let rendered = try #require(SpriteFrameRenderer.renderCanvas(
+            source: sheet,
+            adjustment: editing.adjustment(for: slot),
+            canvasSide: 60
+        ))
+        #expect(rendered.width == 60)
+        #expect(rendered.height == 60)
+        #expect(spriteTestPixel(of: rendered, column: 30, row: 30) == spriteTestCellColors[slot.rawValue])
+    }
+}
+
+@Test func canvasRendererIsUprightInTopLeftCoordinates() throws {
+    let sheet = try #require(spriteTestOrientedSheet())
+    let editing = spriteTestSheetEditing()
+    for slot in SpriteFrameSlot.allCases {
+        let rendered = try #require(SpriteFrameRenderer.renderCanvas(
+            source: sheet,
+            adjustment: editing.adjustment(for: slot),
+            canvasSide: 60
+        ))
+        let expected = spriteTestCellColors[slot.rawValue]
+        // The crop's top half is the cell color and its bottom half is inverted; a flipped render
+        // would swap those rows.
+        #expect(spriteTestPixel(of: rendered, column: 30, row: 20) == expected)
+        #expect(spriteTestPixel(of: rendered, column: 30, row: 29) == expected)
+        #expect(spriteTestPixel(of: rendered, column: 30, row: 30) == expected.inverted)
+        #expect(spriteTestPixel(of: rendered, column: 30, row: 39) == expected.inverted)
+    }
+}
 
 @Test func canvasRendererAlwaysOutputsCanvasSideSquare() throws {
     let sheet = try #require(spriteTestSolidSheet())
@@ -312,7 +166,7 @@ import WaddlyCore
     #expect(spriteTestPixel(of: right, column: 35, row: 35) == spriteTestCellColors[5])
 }
 
-@Test func canvasRendererCappedOutputScalesTheCanvas() throws {
+@Test func canvasRendererCappedOutputScalesAndKeepsChannels() throws {
     let sheet = try #require(spriteTestOrientedSheet())
     let adjustment = FrameAdjustment(crop: SquareCrop(x: 20, y: 20, size: 20), offsetX: 0, offsetY: 0)
     let capped = try #require(SpriteFrameRenderer.renderCanvas(
@@ -325,6 +179,15 @@ import WaddlyCore
     #expect(spriteTestPixel(of: capped, column: 10, row: 10) == spriteTestCellColors[4])
     #expect(spriteTestPixel(of: capped, column: 19, row: 19) == spriteTestCellColors[4].inverted)
     #expect(spriteTestPixel(of: capped, column: 20, row: 20) == .clear)
+
+    let solid = try #require(spriteTestSolidSheet())
+    let spanning = FrameAdjustment(crop: SquareCrop(x: 30, y: 20, size: 20), offsetX: 0, offsetY: 0)
+    let scaledSpan = try #require(SpriteFrameRenderer.renderCanvas(
+        source: solid, adjustment: spanning, canvasSide: 60, cappedOutputSide: 30
+    ))
+    #expect(spriteTestPixel(of: scaledSpan, column: 10, row: 15) == spriteTestCellColors[4])
+    #expect(spriteTestPixel(of: scaledSpan, column: 19, row: 15) == spriteTestCellColors[5])
+
     let natural = try #require(SpriteFrameRenderer.renderCanvas(
         source: sheet, adjustment: adjustment, canvasSide: 60, cappedOutputSide: 90
     ))
@@ -341,4 +204,38 @@ import WaddlyCore
     #expect(SpriteFrameRenderer.renderCanvasNSImage(
         source: sheet, adjustment: adjustment, canvasSide: -1
     ) == nil)
+}
+
+@Test func canvasRendererPreservesAlphaAndChannels() throws {
+    let translucent = SpriteTestPixel(red: 64, green: 32, blue: 16, alpha: 128)
+    let sheet = try #require(spriteTestImage(width: 60, height: 60) { column, row in
+        guard column >= 40, row >= 40 else { return .clear }
+        return translucent
+    })
+    let rendered = try #require(SpriteFrameRenderer.renderCanvas(
+        source: sheet,
+        adjustment: FrameAdjustment(crop: SquareCrop(x: 40, y: 40, size: 20), offsetX: 0, offsetY: 0),
+        canvasSide: 60
+    ))
+    #expect(spriteTestPixel(of: rendered, column: 20, row: 20) == translucent)
+    #expect(spriteTestPixel(of: rendered, column: 30, row: 30) == translucent)
+    #expect(spriteTestPixel(of: rendered, column: 19, row: 30) == .clear)
+    let empty = try #require(SpriteFrameRenderer.renderCanvas(
+        source: sheet,
+        adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+        canvasSide: 60
+    ))
+    #expect(spriteTestPixel(of: empty, column: 30, row: 30) == .clear)
+}
+
+@Test func frameSourceDecoderDecodesTheSheetPNGAtFullSize() throws {
+    let image = try #require(spriteTestSolidSheet())
+    let data = try #require(spriteTestPNGData(for: image))
+    let decoded = try #require(PetFrameSourceDecoder.sheetImage(from: data))
+    #expect(decoded.width == 60)
+    #expect(decoded.height == 60)
+    #expect(spriteTestPixel(of: decoded, column: 5, row: 5) == spriteTestCellColors[0])
+    #expect(spriteTestPixel(of: decoded, column: 55, row: 55) == spriteTestCellColors[8])
+    #expect(PetFrameSourceDecoder.sheetImage(from: Data()) == nil)
+    #expect(PetFrameSourceDecoder.sheetImage(from: Data("not a PNG".utf8)) == nil)
 }

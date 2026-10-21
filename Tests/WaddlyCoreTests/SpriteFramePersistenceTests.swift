@@ -187,6 +187,51 @@ private func spriteSidecarExists(_ name: String, in directory: URL) -> Bool {
     #expect(storage.readFrameEditingSource(manifest: manifest) != nil)
 }
 
+@Test func storageRejectsSheetThatDoesNotMatchTheStoredCellSize() throws {
+    let directory = spriteTestDirectory()
+    defer { removeSpriteTestDirectory(directory) }
+    let storage = PetImageStorage(directory: directory)
+    let manifest = ["idle": [spriteFrameName()]]
+    let sheetPNGData = try #require(spriteTestSheetData())
+    let mismatched = SpriteFrameEditing.identity(
+        mode: .sheet,
+        sourceSides: Array(repeating: 21, count: SpriteFrameSlot.allCases.count),
+        cellSize: 21
+    )
+
+    // A 60 x 60 sheet cannot describe 21 px cells (a 63 x 63 working sheet).
+    try storage.writeFrameEditingSource(
+        PetImageEditingSource(editing: mismatched, sheetPNGData: sheetPNGData),
+        manifest: manifest
+    )
+    #expect(storage.readFrameEditingSource(manifest: manifest) == nil)
+    // Ignoring the pair never deletes it: only a deliberate save or reset removes the sidecars.
+    #expect(spriteSidecarExists("source-sheet.png", in: directory))
+    #expect(spriteSidecarExists("frame-edits.json", in: directory))
+
+    try storage.writeFrameEditingSource(
+        PetImageEditingSource(editing: spriteTestSheetEditing(), sheetPNGData: sheetPNGData),
+        manifest: manifest
+    )
+    #expect(storage.readFrameEditingSource(manifest: manifest) != nil)
+}
+
+@Test func storageRejectsANonSquareSheetPNG() throws {
+    let directory = spriteTestDirectory()
+    defer { removeSpriteTestDirectory(directory) }
+    let storage = PetImageStorage(directory: directory)
+    let manifest = ["idle": [spriteFrameName()]]
+    let image = try #require(spriteTestImage(width: 60, height: 40) { _, _ in .clear })
+    let sheetPNGData = try #require(spriteTestPNGData(for: image))
+
+    try storage.writeFrameEditingSource(
+        PetImageEditingSource(editing: spriteTestSheetEditing(), sheetPNGData: sheetPNGData),
+        manifest: manifest
+    )
+
+    #expect(storage.readFrameEditingSource(manifest: manifest) == nil)
+}
+
 // MARK: - PetSheetCandidate
 
 @Test func sheetCandidateCarriesTheSheetPNGAndIdentityEditing() throws {
@@ -302,6 +347,31 @@ private func spriteSidecarExists(_ name: String, in directory: URL) -> Bool {
 
         let restored = spriteStore(directory: directory)
         try await restored.restore()
+        #expect(restored.hasCompleteImageSet)
+        #expect(restored.images.editingSource == nil)
+    }
+
+    @Test func restoreIgnoresASheetThatDoesNotMatchTheStoredCellSize() async throws {
+        let directory = spriteTestDirectory()
+        defer { removeSpriteTestDirectory(directory) }
+        let candidate = try spriteSheetCandidate()
+        var images = candidate.images
+        images.editingSource = PetImageEditingSource(
+            editing: SpriteFrameEditing.identity(
+                mode: .sheet,
+                sourceSides: Array(repeating: 21, count: SpriteFrameSlot.allCases.count),
+                cellSize: 21
+            ),
+            sheetPNGData: candidate.sheetPNGData
+        )
+        let store = spriteStore(directory: directory)
+        try await store.persist(images)
+        #expect(spriteSidecarExists("frame-edits.json", in: directory))
+
+        let restored = spriteStore(directory: directory)
+        try await restored.restore()
+
+        // The mismatched sidecar is ignored, but the committed frames still restore.
         #expect(restored.hasCompleteImageSet)
         #expect(restored.images.editingSource == nil)
     }

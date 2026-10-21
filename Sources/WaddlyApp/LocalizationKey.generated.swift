@@ -6,6 +6,7 @@ enum LocalizationKey: String, CaseIterable {
     case a11yMenuBar = "a11y.menuBar"
     case a11ySpritePreview = "a11y.spritePreview"
     case characterAdjustFrames = "character.adjustFrames"
+    case characterAdjustFramesUnavailable = "character.adjustFramesUnavailable"
     case characterApply = "character.apply"
     case characterCancel = "character.cancel"
     case characterChangeTitle = "character.changeTitle"

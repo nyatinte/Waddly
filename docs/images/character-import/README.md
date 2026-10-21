@@ -65,7 +65,7 @@ Setup Pet step host (`setup-*`), 820 × 520 pt content:
 | Empty | `setup-empty` | step progress row above the shared empty screen |
 | Valid staged | `setup-valid` | staged preview with the shared screen's Cancel + Continue |
 
-Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the run completed with four tests in one suite passing after 28.777 seconds.
+Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the snapshot suite now runs six capture tests in one suite.
 
 ## Frame-editor renders (`frame-editor-*`), 1240 × 800 pt or 1040 × 700 pt content
 

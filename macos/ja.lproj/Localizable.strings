@@ -208,6 +208,7 @@
 "character.discardConfirm" = "破棄";
 
 
+"character.adjustFramesUnavailable" = "この保存済みペットは以前のバージョンの独自フレーム構成です。フレームを調整するには元の3 × 3 PNGを再読み込みしてください。";
 "character.adjustFrames" = "フレームを調整…";
 
 "frameEditor.windowTitle" = "キャラクターのフレームを調整";
@@ -248,7 +249,7 @@
 "frameEditor.previewHint" = "「調整前」は保存されているフレーム、「調整後」はこのクロップと位置の結果です。出力キャンバスは同じ大きさのままなので、変わるのは表示される枠だけです。";
 "frameEditor.cropNeighborWarning" = "範囲が隣のセルにはみ出しています。不要なピクセルが入っていないか確認してください。";
 "frameEditor.edited" = "編集済み";
-"frameEditor.legacyNotice" = "このペットは元の3 × 3シートなしで保存されているため、各フレームを1枚ずつ編集します。セル境界を調整するには元のPNGを再読み込みしてください。";
+"frameEditor.legacyNotice" = "このペットは元の3 × 3シートなしで保存されているため、保存済みフレームを1枚ずつ編集します。「完了」を選ぶとそのフレームにクロップと位置が反映されます。シート全体を調整するには元のPNGを再読み込みしてください。";
 "frameEditor.inspectorTitle" = "フレームの調整";
 "frameEditor.thisFrameOnly" = "このフレームのみ";
 "frameEditor.toolCrop" = "クロップ";

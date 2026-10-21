@@ -44,8 +44,6 @@ final class CharacterImportModel: ObservableObject {
     /// The system's drag-eligibility report for the drop zone, so one highlight can show without
     /// moving the layout.
     @Published private(set) var isDropTargeted = false
-    /// Bumped whenever the staged draft changes.
-    @Published private(set) var draftVersion = 0
 
     private let currentImages: () -> PetImageSet
     private let commit: (PetImageSet) async -> CharacterCommitOutcome
@@ -67,6 +65,16 @@ final class CharacterImportModel: ObservableObject {
 
     var hasStagedCandidate: Bool {
         stagedFrames?.isComplete == true
+    }
+
+    /// Custom frame counts from older releases cannot be mapped onto the nine fixed slots. The
+    /// shared screen explains the re-import path instead of opening an editor that would fail.
+    var canAdjustFrames: Bool {
+        guard let stagedFrames, stagedFrames.isComplete else { return false }
+        if stagedFrames.editingSource != nil {
+            return true
+        }
+        return PetImageEditingSource.individualEditing(for: stagedFrames) != nil
     }
 
     var canApply: Bool {
@@ -95,7 +103,6 @@ final class CharacterImportModel: ObservableObject {
         isApplying = false
         isEditingFrames = false
         isDropTargeted = false
-        draftVersion += 1
     }
 
     // MARK: - Acquisition
@@ -166,7 +173,6 @@ final class CharacterImportModel: ObservableObject {
             sourceDimension = candidate.sourceDimension
             cellSize = candidate.cellSize
             failure = nil
-            draftVersion += 1
         case .empty:
             // Nothing overwrites the staged draft: the reason is reported and the last candidate stays.
             clipboardHasImage = false
@@ -228,7 +234,6 @@ final class CharacterImportModel: ObservableObject {
         failure = nil
         commitFailed = false
         commitRejected = false
-        draftVersion += 1
     }
 
     // MARK: - Pure helpers

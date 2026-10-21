@@ -18,6 +18,13 @@ enum FrameEditorTool: String, CaseIterable, Identifiable {
 /// The model never writes to disk. It renders previews from the staged source sheet and only hands
 /// nine adjusted frames back to `CharacterImportModel` when the user chooses Done, so closing the
 /// editor without Done leaves the parent draft untouched.
+/// The exact centre of the crop at the start of a run of size changes.
+struct CropSizeAnchor {
+    let slot: SpriteFrameSlot
+    let centerX: Double
+    let centerY: Double
+}
+
 @MainActor
 final class CharacterFrameEditorModel: ObservableObject {
     static let zoomLevels = [100, 200, 300, 400]
@@ -41,6 +48,9 @@ final class CharacterFrameEditorModel: ObservableObject {
     @Published var adjustedThumbnails: [SpriteFrameSlot: NSImage] = [:]
 
     var baseThumbnails: [SpriteFrameSlot: NSImage] = [:]
+    /// Keeps the exact (possibly half-pixel) crop center stable across a slider drag or repeated
+    /// stepper clicks; a crop origin or another tool resets it.
+    var cropSizeAnchor: CropSizeAnchor?
     private var sheetPNGData: Data?
     /// Only used to report the entry point's source details and to stage the reviewed draft.
     private(set) weak var importModel: CharacterImportModel?
@@ -66,6 +76,7 @@ final class CharacterFrameEditorModel: ObservableObject {
             sheetPNGData = frames.editingSource?.sheetPNGData
             isLoading = false
             baseThumbnails = renderBaseThumbnails()
+            refreshRestoredAdjustedThumbnails()
         } else {
             prepareSynchronously(frames: frames, sheet: sheet)
         }
@@ -98,6 +109,7 @@ final class CharacterFrameEditorModel: ObservableObject {
         self.sheet = sheet
         sheetPNGData = data
         baseThumbnails = renderBaseThumbnails()
+        refreshRestoredAdjustedThumbnails()
         isLoading = false
     }
 
@@ -111,6 +123,7 @@ final class CharacterFrameEditorModel: ObservableObject {
         sheet = nil
         sheetPNGData = nil
         baseThumbnails = renderBaseThumbnails()
+        refreshRestoredAdjustedThumbnails()
         isLoading = false
     }
 
@@ -162,6 +175,7 @@ final class CharacterFrameEditorModel: ObservableObject {
 
     func select(_ slot: SpriteFrameSlot) {
         guard selectedSlot != slot else { return }
+        cropSizeAnchor = nil
         selectedSlot = slot
     }
 
@@ -213,8 +227,10 @@ final class CharacterFrameEditorModel: ObservableObject {
         geometry?.minimumSide ?? 1
     }
 
+    /// The largest useful crop is the fixed output canvas. Growing beyond it cannot reveal more of
+    /// the exported frame and only pushes handles out of the viewport.
     var maximumCropSide: Int {
-        geometry?.sourceSide ?? 1
+        outputSide
     }
 
     var cropSizeRange: ClosedRange<Int> {

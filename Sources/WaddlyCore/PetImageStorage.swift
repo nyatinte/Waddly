@@ -1,4 +1,5 @@
 import AppKit
+import ImageIO
 
 /// File work runs on a worker task. Image values are treated as immutable snapshots.
 ///
@@ -221,13 +222,18 @@ public enum PetImageCleanupError: Error, Equatable {
 /// from the frames themselves at restore time.
 public extension PetImageStorage {
     /// Reads the persisted sheet and edits, or `nil` when they do not describe `manifest`.
+    ///
+    /// The sheet's pixel dimensions are read from the PNG header and must match the stored cell size;
+    /// a sheet that does not describe those edits is ignored rather than applied.
     func readFrameEditingSource(manifest: [String: [String]]) -> PetImageEditingSource? {
         guard let data = sidecarData(Self.frameEditsFilename),
               let stored = decodeFrameEdits(data),
               stored.frameFiles == manifest,
               stored.editing.mode == .sheet,
+              stored.editing.cellSize > 0,
               let sheetPNGData = sidecarData(Self.sourceSheetFilename),
-              Self.hasPNGSignature(sheetPNGData)
+              Self.hasPNGSignature(sheetPNGData),
+              Self.sheetPixelSide(sheetPNGData) == stored.editing.cellSize * 3
         else { return nil }
         return PetImageEditingSource(
             editing: stored.editing.normalized,
@@ -290,6 +296,23 @@ public extension PetImageStorage {
 
     private static func hasPNGSignature(_ data: Data) -> Bool {
         data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+    }
+
+    /// The side of a square PNG read from its header, or `nil` when it is not a readable square.
+    ///
+    /// Only metadata is read (`kCGImageSourceShouldCache: false`); the sheet pixels are never decoded
+    /// here, so restoring a large sheet stays cheap.
+    private static func sheetPixelSide(_ data: Data) -> Int? {
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ),
+            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+            let width = properties[kCGImagePropertyPixelWidth] as? Int,
+            let height = properties[kCGImagePropertyPixelHeight] as? Int,
+            width > 0, width == height
+        else { return nil }
+        return width
     }
 }
 

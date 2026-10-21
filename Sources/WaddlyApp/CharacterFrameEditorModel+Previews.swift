@@ -68,6 +68,15 @@ extension CharacterFrameEditorModel {
 
     // MARK: - Thumbnails
 
+    /// Pending edits restored from a saved sheet or the current draft must show in the navigator,
+    /// not only in the inspector badges and After preview.
+    func refreshRestoredAdjustedThumbnails() {
+        guard let editing else { return }
+        for slot in SpriteFrameSlot.allCases where editing.isEdited(slot) {
+            refreshAdjustedThumbnail(for: slot)
+        }
+    }
+
     func renderBaseThumbnails() -> [SpriteFrameSlot: NSImage] {
         guard let editing else { return [:] }
         var result: [SpriteFrameSlot: NSImage] = [:]

@@ -99,8 +99,12 @@ extension FrameCanvasNSView {
             width: configuration.sourceSide,
             height: configuration.sourceSide
         )
+        let offset = CGPoint(
+            x: CGFloat(configuration.adjustment.offsetX) * layout.scale,
+            y: CGFloat(configuration.adjustment.offsetY) * layout.scale
+        )
         NSImage(cgImage: source, size: NSSize(width: source.width, height: source.height))
-            .draw(in: viewRect(for: sourceRect, layout: layout))
+            .draw(in: viewRect(for: sourceRect, layout: layout).offsetBy(dx: offset.x, dy: offset.y))
 
         let cropRect = cropViewRect(layout: layout)
         drawDimming(outside: cropRect, in: context)

@@ -208,6 +208,7 @@
 "character.discardConfirm" = "Discard";
 
 
+"character.adjustFramesUnavailable" = "This saved pet uses a custom frame layout from an older version. Re-import the original 3 × 3 PNG to adjust frames.";
 "character.adjustFrames" = "Adjust frames…";
 
 "frameEditor.windowTitle" = "Adjust character frames";
@@ -248,7 +249,7 @@
 "frameEditor.previewHint" = "Before is the frame as saved; After reflects this crop and alignment. The output canvas keeps the same size, so only the visible frame changes.";
 "frameEditor.cropNeighborWarning" = "The crop extends into a neighbouring cell. Check for stray pixels.";
 "frameEditor.edited" = "Edited";
-"frameEditor.legacyNotice" = "This pet was saved without its original 3 × 3 sheet, so each frame is edited on its own. Re-import the original PNG to fix cell boundaries.";
+"frameEditor.legacyNotice" = "This pet was saved without its original 3 × 3 sheet, so each saved frame is edited on its own. Choosing Done applies the crop and alignment to that saved frame; re-import the original PNG to adjust the whole sheet.";
 "frameEditor.inspectorTitle" = "Frame adjustments";
 "frameEditor.thisFrameOnly" = "This frame only";
 "frameEditor.toolCrop" = "Crop";

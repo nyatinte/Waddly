@@ -198,7 +198,15 @@ private extension CharacterImportView {
                 Button(localization.string(for: .characterAdjustFrames)) {
                     model.isEditingFrames = true
                 }
+                .disabled(!model.canAdjustFrames)
                 .accessibilityIdentifier("characterAdjustFrames")
+                if !model.canAdjustFrames {
+                    Text(localization.string(for: .characterAdjustFramesUnavailable))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("characterAdjustFramesUnavailable")
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
