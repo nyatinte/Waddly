@@ -31,7 +31,8 @@ struct ImageAppProbe {
         try await Task.sleep(for: .seconds(2))
         print(
             "state,physical_footprint_bytes,peak_physical_footprint_bytes," +
-                "rss_bytes,peak_rss_bytes,system_uptime_seconds"
+                "rss_bytes,peak_rss_bytes,system_uptime_seconds,reusable_bytes," +
+                "compressed_bytes,internal_bytes,external_bytes"
         )
         snapshot("launch")
         delegate.setupWizardController?.close()
@@ -119,6 +120,8 @@ struct ImageAppProbe {
     private static func snapshot(_ label: String) {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout.size(ofValue: info) / MemoryLayout<integer_t>.size)
+        // TASK_VM_INFO does not query the volatile fields, and public XNU hardcodes device to zero.
+        // Only emit the additional ledger-backed counters; those placeholders are not measurements.
         let result = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
                 task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
@@ -127,7 +130,8 @@ struct ImageAppProbe {
         guard result == KERN_SUCCESS else { exit(1) }
         print(
             "\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)," +
-                "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)"
+                "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)," +
+                "\(info.reusable),\(info.compressed),\(info.internal),\(info.external)"
         )
         fflush(stdout)
     }
