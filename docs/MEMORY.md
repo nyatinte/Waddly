@@ -137,7 +137,8 @@ staged and closed states for 30 seconds each and sampling `task_info` every nomi
 Set `WADDLY_PROFILE_CHARACTER_CYCLES=10` for a longer series (positive integers only).
 Each CSV also records monotonic system uptime, so sample gaps can be measured rather than inferred
 from nominal state labels. New runs append ledger-backed `task_vm_info` reusable, compressed,
-internal and external byte counters from the existing self-task query, not remote inspection.
+internal, external and volatile-ledger byte counters from the existing self-task query, not remote
+inspection. The volatile ledger balance is distinct from the unqueried volatile map fields.
 Sidecars record `task_info_flavor=TASK_VM_INFO`. This flavor does not query volatile resident/virtual
 fields, and public XNU hardcodes device fields to zero, so those placeholders are not emitted as
 measurements. These counters do not define an adjusted RSS, an asserted portable partition, or a
@@ -210,6 +211,23 @@ placeholders: those raw artifacts are preserved but marked unavailable, not evid
 volatile memory. Neither process reproduces the original late timing or establishes an owner,
 a fix, a universal accounting formula, or a harmless plateau. These raw counters must not become an
 invented adjusted-RSS budget.
+
+### Queried volatile ledger and native positive control (2026-10-21)
+
+A [standalone API control and ten-cycle follow-up](measurements/character-lifecycle-20261020/volatile-ledger/README.md)
+now distinguish unavailable volatile **map** placeholders from the already-queried
+`ledger_purgeable_volatile` balance. A 16 MiB owned-allocation positive control demonstrates the
+basic flavor's real ledger value and unqueried map zeros; a wrong-flavor negative control fails.
+The app collector appends only the ledger value, retains one `TASK_VM_INFO` call per sample, and
+rejects truncated replies. No query-flavor change or map scan is added to the app workload.
+
+The large-sheet run completed all 602 samples, ten fresh lifecycles and release guards. Closed
+cycle 0→7 RSS rose from 198.75 to 356.42 MiB while the volatile ledger rose from 44.66 to 221.61
+MiB, then both fell at cycle 8. The changes are not equal; they do not establish an accounting
+partition or allocation owner. Kernel peak/final footprint was **186.93/115.00 decimal MB**.
+This is a different process, not a matched historical pair, plateau or typical-budget acceptance.
+Volatile map measurements in Waddly, allocation stacks/owners and the remaining #98 acceptance
+still need evidence; earlier raw placeholders remain unavailable and unchanged.
 
 ## Share dialog profile (2026-10-13)
 
