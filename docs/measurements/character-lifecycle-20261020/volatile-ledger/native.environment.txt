@@ -1,0 +1,19 @@
+recorded_at_utc=2026-10-21T12:44:56Z
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+arm64
+swift-driver version: 1.168.6 Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+6047b95192c001388389c07eace29ab74cb52744
+Executable=/Users/nyatinte/orca/workspaces/nyatinte-animation/loach/dist/diagnostics/98-purgeable-contract/final/probe
+Identifier=probe
+Format=Mach-O thin (arm64)
+CodeDirectory v=20400 size=574 flags=0x20002(adhoc,linker-signed) hashes=15+0 location=embedded
+Signature=adhoc
+Info.plist=not bound
+TeamIdentifier=not set
+Sealed Resources=none
+Internal requirements=none
+e2b239a2b33fc3358132790d97aa321661a49a2f00cac3f1b40d61be95ea3f51  Tools/probe_task_vm_purgeable.swift
+6e0b35ff95660582e30d82ba9bbf57df62ec677698bc07c676eb4f52a3cc975f  dist/diagnostics/98-purgeable-contract/final/negative.swift
