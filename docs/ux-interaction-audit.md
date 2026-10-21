@@ -6,6 +6,12 @@ intentionally **not** a design system and it adds no runtime behavior.
 
 ## Evidence status — read first
 
+**Disabled-menu follow-up:** [native menu reasons and paired renders](images/disabled-menu-help/README.md)
+records JA/EN light/dark native popup content, not OS screenshots. Validation now installs localized
+help for unavailable character, share and presence commands; macOS 14.4+ also shows a standard
+subtitle. The rows below are updated only for that contract. Older-OS tooltip visibility and physical
+keyboard/spoken VoiceOver acceptance remain unverified under #111.
+
 **Latest character-import evidence:** [advanced editing/lifecycle follow-up](character-import-follow-up.md)
 adds native remove/reorder, minimize/refocus, discard/reopen and custom-frame Apply/relaunch checks,
 plus JA/EN native accessibility attribute read-back. Finder/category drag and VoiceOver are still
@@ -90,8 +96,8 @@ are about *reason* and *outcome*, not plumbing.
 | Typing motion ▸ Off/Weak/Strong | applies amplitude | — | radio state syncs | — |
 | Breathing animation | toggles idle breathing | — | check state | — |
 | Language ▸ System/日本語/English | switches the string catalog | — | radio state; menus rebuild on next open | — |
-| Show in ▸ Dock / Menu Bar | toggles presence | **N: greyed when it would hide both entry points, with no reason shown** | check state | — |
-| Change Character… | opens the shared character screen | **N: greyed until setup is complete, with no reason** | — | — |
+| Show in ▸ Dock / Menu Bar | toggles presence | native subtitle on 14.4+; help tag on 14.0+ (older-OS hover unverified) | check state | — |
+| Change Character… | opens the shared character screen | native subtitle on 14.4+; help tag on 14.0+ (older-OS hover unverified) | — | — |
 | Setup Guide… / Set Up Input Monitoring… | resumes incomplete setup; after completion opens monitoring settings directly | — | — | — |
 | Launch at Login | register/unregister `SMAppService` | — | check reflects real status | **~: warning sheet opens only after the menu closes; no inline retry** |
 | Quit Waddly | terminates | — | — | — |
@@ -219,7 +225,7 @@ execution; an automated state test does not verify every interaction in its row.
 | Setup — permission | Enable, manual steps, Settings hand-off | Tab through the guide | status updates announced | off vs granted distinguishable | polling unaffected | instructions | granted-not-receiving → restart / retry | auto: `PermissionServiceTests`; manual: real TCC |
 | Setup — Ready | Back, Show on desktop, Set up monitoring | Tab | checks read out | warning visible | celebrate hop suppressed | checks localized | non-ready never looks like success | auto; manual: spoken order |
 | Share | live synthetic hover/copy/play observed | native Post button; Tab traversal still unverified | roles set; not spoken | dark live captures only; light/contrast unverified | no added hover animation; live setting unverified | EN/JA dark live captures | inline outcomes + Retry in source; live failure walkthrough pending | auto: `PetShareDialogTests`, `PetShareFlowTests`; live: [bounded results](live-qa-85b96a8.md) |
-| Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`; manual: disabled reason |
+| Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`, `MenuDisabledHelpTests`; manual: older-OS help, keyboard/VoiceOver |
 | Character import (Change Character) | Choose/Paste observed earlier; advanced delete/reorder, minimize/refocus and discard/reopen observed; native drop still unverified | ⌘V observed live; Tab traversal still unverified | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
 
 ## 5. Walkthroughs (with retry)
@@ -242,7 +248,7 @@ button retries. These failure paths still need a live walkthrough.
 
 **Preferences menus.** 1) Click the menu bar item, or right-click the pet. 2) Change size → the pet
 resizes immediately; motion / breathing / language apply immediately and radio/check state stays in
-sync. 3) Show in → turning off the last visible entry point is greyed (reason not shown). 4) Launch
+sync. 3) Show in → turning off the last visible entry point is greyed, with native help and a subtitle on macOS 14.4+. 4) Launch
 at Login → check reflects `SMAppService` status; failure shows a warning sheet after the menu closes.
 5) *Retry:* reopen the menu and toggle again.
 
@@ -266,7 +272,7 @@ reopen → the committed pet is loaded again.
 | P2 | Setup: `.plain` option cards have no explicit hover/focus styling; native focus is unverified | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
 | P2 | Advanced editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
 | P2 | Character import: the Paste control is subdued but not disabled when the clipboard is empty, and its tooltip is the only visual difference | a user may click a control that cannot succeed | #124 |
-| P2 | Menus: “Change Character…” and the presence guard are disabled with no reason | the user cannot tell why a feature is unavailable | #94 |
+| P2 | Menus: reasons implemented; 14.0–14.3 hover visibility and physical keyboard/VoiceOver remain unverified | native popup renders and validation do not establish those acceptance cases | #111 |
 | P3 | Login-item failure is a post-menu sheet with no inline retry | recoverable but easy to miss | #94 |
 | P3 | Share hover checked only with synthetic pointer input in dark appearance | light/contrast and physical-device acceptance remain outstanding | #108 |
 
