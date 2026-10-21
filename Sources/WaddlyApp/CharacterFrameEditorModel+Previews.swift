@@ -3,6 +3,26 @@ import WaddlyCore
 
 /// Navigation, accessibility labels, source lookup, and thumbnail caches for the frame editor.
 extension CharacterFrameEditorModel {
+    var isSheetMode: Bool {
+        editing?.mode == .sheet
+    }
+
+    var selectedCategory: PetImageCategory {
+        selectedSlot.category
+    }
+
+    var selectedCategoryTitle: String {
+        selectedCategory.title(using: localization)
+    }
+
+    var selectedFrameTitle: String {
+        let prefix = String(
+            format: localization.string(for: .frameEditorFrameTitleFormat),
+            selectedSlot.sheetNumber
+        )
+        return "\(prefix) · \(selectedCategoryTitle)"
+    }
+
     func selectPreviousFrame() {
         let all = SpriteFrameSlot.allCases
         guard let index = all.firstIndex(of: selectedSlot), index > 0 else { return }

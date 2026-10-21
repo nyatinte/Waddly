@@ -36,6 +36,13 @@ struct FrameEditorCanvas: NSViewRepresentable {
         view.onAdjustmentChange = onAdjustmentChange
         view.apply(configuration)
     }
+
+    /// The canvas holds the decoded sheet and the model callback. SwiftUI tears the representable
+    /// down when the editor sheet goes away; drop those references immediately instead of waiting
+    /// for the hosting view's deallocation.
+    static func dismantleNSView(_ view: FrameCanvasNSView, coordinator: ()) {
+        view.releaseResources()
+    }
 }
 
 final class FrameCanvasNSView: NSView {
@@ -70,5 +77,13 @@ final class FrameCanvasNSView: NSView {
         self.configuration = configuration
         updateAccessibility(configuration)
         needsDisplay = true
+    }
+
+    /// Drops the decoded source and callbacks while the editor surface is not alive.
+    func releaseResources() {
+        configuration = nil
+        onAdjustmentChange = nil
+        drag = nil
+        setAccessibilityElement(false)
     }
 }

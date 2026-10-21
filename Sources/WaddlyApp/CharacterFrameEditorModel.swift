@@ -44,6 +44,7 @@ final class CharacterFrameEditorModel: ObservableObject {
     @Published var showsCrosshair = true
     @Published private(set) var isComposing = false
     @Published private(set) var composeFailed = false
+    @Published private(set) var isReleased = false
     /// Adjusted navigator thumbnails for frames that differ from the saved baseline.
     @Published var adjustedThumbnails: [SpriteFrameSlot: NSImage] = [:]
 
@@ -87,7 +88,7 @@ final class CharacterFrameEditorModel: ObservableObject {
     /// Decodes the retained 3 × 3 sheet once, when the editor opens, and releases it when the editor
     /// closes. Legacy pets without a retained sheet keep working in per-frame mode.
     func prepare() async {
-        guard isLoading else { return }
+        guard isLoading, !isReleased else { return }
         let frames = sourceFrames
         if let source = frames.editingSource, let data = source.sheetPNGData {
             if let decoded = await Self.decodeSheet(data) {
@@ -135,27 +136,25 @@ final class CharacterFrameEditorModel: ObservableObject {
         completeIndividualPreparation(frames: frames)
     }
 
+    /// Drops every heavy resource as soon as the editor surface goes away.
+    ///
+    /// SwiftUI may keep a dismissed sheet's state object alive until its next transaction, so the
+    /// model cannot rely on `deinit` alone: the decoded sheet (up to 37.7 MB), the frame references
+    /// and both thumbnail caches are released deterministically here.
+    func releaseResources() {
+        guard !isReleased else { return }
+        isReleased = true
+        isLoading = false
+        sheet = nil
+        sheetPNGData = nil
+        baseThumbnails.removeAll()
+        adjustedThumbnails.removeAll()
+        sourceFrames = PetImageSet()
+        editing = nil
+        cropSizeAnchor = nil
+    }
+
     // MARK: - Selection
-
-    var isSheetMode: Bool {
-        editing?.mode == .sheet
-    }
-
-    var selectedCategory: PetImageCategory {
-        selectedSlot.category
-    }
-
-    var selectedCategoryTitle: String {
-        selectedCategory.title(using: localization)
-    }
-
-    var selectedFrameTitle: String {
-        let prefix = String(
-            format: localization.string(for: .frameEditorFrameTitleFormat),
-            selectedSlot.sheetNumber
-        )
-        return "\(prefix) · \(selectedCategoryTitle)"
-    }
 
     var selectedFramePosition: String {
         String(

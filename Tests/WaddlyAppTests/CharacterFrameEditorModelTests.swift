@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Testing
 @testable import WaddlyApp
 import WaddlyCore
@@ -51,6 +52,94 @@ import WaddlyCore
         await reopened.prepare()
         #expect(reopened.editing?.isEdited(.idle1) == true)
         #expect(reopened.adjustedThumbnails[.idle1] != nil)
+    }
+
+    /// Closing the editor must release the decoded sheet (the largest allocation) and the
+    /// thumbnail caches with the model; nothing else should keep them alive.
+    @Test func editorModelReleasesTheDecodedSheetAndThumbnails() throws {
+        let localization = try makeLocalization()
+        let candidate = try SetupWizardFixture.sheetCandidate()
+        var sheet: CGImage? = try #require(PetFrameSourceDecoder.sheetImage(from: candidate.sheetPNGData))
+        weak var weakModel: CharacterFrameEditorModel?
+        weak var weakSheet: CGImage?
+
+        autoreleasepool {
+            let model = CharacterFrameEditorModel(
+                frames: candidate.images,
+                localization: localization,
+                sheet: sheet
+            )
+            weakModel = model
+            weakSheet = model.sheet
+        }
+        sheet = nil
+
+        #expect(weakModel == nil)
+        #expect(weakSheet == nil)
+    }
+
+    /// The editor releases the decoded sheet and thumbnail caches deterministically when its
+    /// surface disappears, without waiting for the observable object itself to deallocate.
+    @Test func closingTheEditorReleasesHeavyResources() throws {
+        let localization = try makeLocalization()
+        let candidate = try SetupWizardFixture.sheetCandidate()
+        var sheet: CGImage? = try #require(PetFrameSourceDecoder.sheetImage(from: candidate.sheetPNGData))
+        let model = CharacterFrameEditorModel(
+            frames: candidate.images,
+            localization: localization,
+            sheet: sheet
+        )
+        weak var weakSheet: CGImage? = model.sheet
+        #expect(model.sheet != nil)
+        #expect(!model.baseThumbnails.isEmpty)
+
+        model.releaseResources()
+
+        #expect(model.sheet == nil)
+        #expect(model.baseThumbnails.isEmpty)
+        #expect(model.adjustedThumbnails.isEmpty)
+        #expect(!model.sourceFrames.isComplete)
+        sheet = nil
+        #expect(weakSheet == nil)
+        #expect(model.isReleased)
+    }
+
+    /// A released model must not decode the sheet again through a late `.task`.
+    @Test func releasedModelIgnoresALatePrepare() async throws {
+        let editor = try makePreparedFrameEditorModel()
+        editor.releaseResources()
+        await editor.prepare()
+        #expect(editor.sheet == nil)
+        #expect(editor.isReleased)
+    }
+
+    /// The canvas view keeps a strong reference to the decoded sheet while visible; dismantling it
+    /// must drop that reference even if the view object itself is cached for a moment.
+    @Test func canvasReleaseDropsTheDecodedSheet() throws {
+        let candidate = try SetupWizardFixture.sheetCandidate()
+        var sheet: CGImage? = try #require(PetFrameSourceDecoder.sheetImage(from: candidate.sheetPNGData))
+        weak var weakSheet: CGImage? = sheet
+        let canvas = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 700, height: 500))
+        canvas.apply(FrameCanvasConfiguration(
+            source: sheet,
+            sourceSide: candidate.cellSize * 3,
+            nominalCell: SquareCrop(x: 0, y: 0, size: candidate.cellSize),
+            adjustment: FrameAdjustment(
+                crop: SquareCrop(x: 0, y: 0, size: candidate.cellSize),
+                offsetX: 0,
+                offsetY: 0
+            ),
+            tool: .crop,
+            zoomPercent: 100,
+            showsGrid: true,
+            showsCrosshair: true,
+            showsWarning: false
+        ))
+        #expect(canvas.configuration != nil)
+        canvas.releaseResources()
+        #expect(canvas.configuration == nil)
+        sheet = nil
+        #expect(weakSheet == nil)
     }
 
     /// Older releases allowed custom frame counts. They must not fall into an editor that can only

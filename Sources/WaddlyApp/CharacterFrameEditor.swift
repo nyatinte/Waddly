@@ -68,6 +68,7 @@ struct CharacterFrameEditor: View {
         FrameEditorContent(model: model, localization: localization, onDone: done)
             .frame(width: contentSize.width, height: contentSize.height)
             .task { await model.prepare() }
+            .onDisappear { model.releaseResources() }
     }
 
     private func done() {
