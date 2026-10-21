@@ -53,6 +53,7 @@ OUTPUT="$ROOT/dist/memory/image-app-$LABEL-$(date -u +%Y%m%dT%H%M%SZ).csv"
   printf 'provided_fixture=%s\n' "${WADDLY_PROFILE_IMAGE_FIXTURE:+1}"
   printf 'target_stack_logging=%s\n' "${WADDLY_PROFILE_STACK_LOGGING:-0}"
   printf 'task_info_flavor=TASK_VM_INFO\n'
+  printf 'task_info_volatile_metric=ledger_purgeable_volatile\n'
   codesign --display --verbose=2 "$APP" 2>&1
   shasum -a 256 "$ROOT/Tools/profile_image_app.swift" "$ROOT/macos/profile-image-app.sh" "$TEMP/source.png"
   (cd "$TEMP" && find Sources -type f -name '*.swift' | LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 "$file"; done)
