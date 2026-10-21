@@ -1,0 +1,57 @@
+{
+  "id": "8a524b96-7d70-497d-9e62-977d6e8b5bd9",
+  "ok": true,
+  "result": {
+    "screenshot": {
+      "format": "png",
+      "width": 1400,
+      "height": 884,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/8a524b96-7d70-497d-9e62-977d6e8b5bd9-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T15:04:20.383Z"
+    },
+    "snapshot": {
+      "app": {
+        "pid": 41753,
+        "name": "Waddly (qa111b.development)",
+        "bundleId": "dev.nyatinte.waddly.qa111b.fixture"
+      },
+      "id": "2145E4FD-6880-4C79-B4AE-DCF6D919E569",
+      "focusedElementId": 0,
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      },
+      "window": {
+        "title": "ペットをシェア",
+        "x": 505,
+        "width": 700,
+        "id": 60806,
+        "height": 442,
+        "isMinimized": false,
+        "screenIndex": 0,
+        "platform": {
+          "layer": 0
+        },
+        "isOffscreen": false,
+        "y": 192
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.fixture (pid 41753)\nWindow: \"ペットをシェア\", App: Waddly (qa111b.development).\n\n0 標準ウインドウ ペットをシェア\n\t1 ビジー状態インジケータ, Value: 1\n\t2 テキスト, Value: 共有素材を作成中…\n\t3 テキスト, Value: 投稿する\n\t4 ボタン (disabled) Xでポストする\n\t5 テキスト\n\t6 閉じるボタン\n\t7 拡大/縮小ボタン (disabled)\n\t8 しまうボタン (disabled)\n\t9 テキスト, Value: ペットをシェア\n\nThe focused UI element is 0 標準ウインドウ ペットをシェア.",
+      "coordinateSpace": "window",
+      "elementCount": 10
+    },
+    "screenshotStatus": {
+      "state": "captured",
+      "metadata": {
+        "engine": "screenCaptureKit",
+        "windowId": 60806
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

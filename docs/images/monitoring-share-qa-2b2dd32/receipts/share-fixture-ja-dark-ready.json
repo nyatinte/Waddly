@@ -1,0 +1,57 @@
+{
+  "id": "52f00828-0a85-4c77-80e9-718515f03ab8",
+  "ok": true,
+  "result": {
+    "screenshot": {
+      "format": "png",
+      "width": 1400,
+      "height": 884,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/52f00828-0a85-4c77-80e9-718515f03ab8-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T15:06:50.114Z"
+    },
+    "screenshotStatus": {
+      "metadata": {
+        "engine": "screenCaptureKit",
+        "windowId": 60806
+      },
+      "state": "captured"
+    },
+    "snapshot": {
+      "app": {
+        "bundleId": "dev.nyatinte.waddly.qa111b.fixture",
+        "pid": 41753,
+        "name": "Waddly (qa111b.development)"
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.fixture (pid 41753)\nWindow: \"ペットをシェア\", App: Waddly (qa111b.development).\n\n0 標準ウインドウ ペットをシェア\n\t1 テキスト, Value: 5秒の動画\n\t2 ボタン 動画をコピー, Description: 5秒の動画をクリップボードにコピーします\n\t3 イメージ\n\t4 ボタン 書き出した動画を再生\n\t5 テキスト, Value: MP4 · 5秒 · 384 × 384\n\t6 テキスト\n\t7 テキスト, Value: 3×3スプライトシート\n\t8 ボタン 画像をコピー, Description: 3×3スプライトシートの画像をクリップボードにコピーします\n\t9 イメージ\n\t10 テキスト, Value: PNG · 3 × 3 · 9コマ\n\t11 テキスト\n\t12 テキスト, Value: 投稿する\n\t13 ボタン Xでポストする\n\t14 テキスト\n\t15 閉じるボタン\n\t16 拡大/縮小ボタン (disabled)\n\t17 しまうボタン (disabled)\n\t18 テキスト, Value: ペットをシェア\n\nThe focused UI element is 0 標準ウインドウ ペットをシェア.",
+      "coordinateSpace": "window",
+      "id": "6F8A52EC-477C-4662-BC09-8ED23DE77E8C",
+      "focusedElementId": 0,
+      "elementCount": 19,
+      "window": {
+        "screenIndex": 0,
+        "platform": {
+          "layer": 0
+        },
+        "isMinimized": false,
+        "x": 505,
+        "title": "ペットをシェア",
+        "id": 60806,
+        "width": 700,
+        "y": 192,
+        "height": 442,
+        "isOffscreen": false
+      },
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

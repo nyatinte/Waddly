@@ -1,0 +1,36 @@
+AX AXWindows 0 Optional(<__NSArrayM 0x77c10ac360>(
+<AXUIElement 0x77c5b3ee80> {pid=59513}
+)
+)
+AX AXFocusedWindow -25212 nil
+AX AXMainWindow -25212 nil
+WS ["kCGWindowAlpha": 1, "kCGWindowName": , "kCGWindowNumber": 60505, "kCGWindowOwnerName": Waddly (qa111b.development), "kCGWindowLayer": 3, "kCGWindowMemoryUsage": 2432, "kCGWindowStoreType": 1, "kCGWindowBounds": {
+    Height = 240;
+    Width = 240;
+    X = 1452;
+    Y = 849;
+}, "kCGWindowOwnerPID": 59513, "kCGWindowSharingState": 1, "kCGWindowIsOnscreen": 1]
+WS ["kCGWindowBounds": {
+    Height = 34;
+    Width = 1710;
+    X = 0;
+    Y = 0;
+}, "kCGWindowNumber": 60503, "kCGWindowStoreType": 1, "kCGWindowAlpha": 1, "kCGWindowLayer": 0, "kCGWindowOwnerPID": 59513, "kCGWindowMemoryUsage": 2432, "kCGWindowName": , "kCGWindowSharingState": 1, "kCGWindowOwnerName": Waddly (qa111b.development)]
+WS ["kCGWindowName": , "kCGWindowLayer": 0, "kCGWindowBounds": {
+    Height = 34;
+    Width = 1710;
+    X = 0;
+    Y = 0;
+}, "kCGWindowAlpha": 1, "kCGWindowOwnerPID": 59513, "kCGWindowNumber": 60502, "kCGWindowMemoryUsage": 2432, "kCGWindowSharingState": 1, "kCGWindowStoreType": 1, "kCGWindowOwnerName": Waddly (qa111b.development)]
+WS ["kCGWindowOwnerName": Waddly (qa111b.development), "kCGWindowName": , "kCGWindowOwnerPID": 59513, "kCGWindowNumber": 60504, "kCGWindowMemoryUsage": 2432, "kCGWindowBounds": {
+    Height = 34;
+    Width = 1710;
+    X = 0;
+    Y = 0;
+}, "kCGWindowLayer": 0, "kCGWindowSharingState": 1, "kCGWindowAlpha": 1, "kCGWindowStoreType": 1]
+WS ["kCGWindowName": , "kCGWindowLayer": 0, "kCGWindowAlpha": 1, "kCGWindowOwnerName": Waddly (qa111b.development), "kCGWindowOwnerPID": 59513, "kCGWindowSharingState": 1, "kCGWindowMemoryUsage": 2432, "kCGWindowStoreType": 1, "kCGWindowBounds": {
+    Height = 34;
+    Width = 1710;
+    X = 0;
+    Y = 0;
+}, "kCGWindowNumber": 60501]

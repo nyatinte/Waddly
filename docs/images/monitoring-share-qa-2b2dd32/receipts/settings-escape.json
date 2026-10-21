@@ -1,0 +1,69 @@
+{
+  "id": "93d7bc74-e69f-427e-be9b-6bc6e31f525b",
+  "ok": true,
+  "result": {
+    "snapshot": {
+      "app": {
+        "name": "Waddly (qa111b.development)",
+        "bundleId": "dev.nyatinte.waddly.qa111b.development",
+        "pid": 59513
+      },
+      "id": "30625823-549C-43DB-A1BC-FD54CED0CEC7",
+      "focusedElementId": null,
+      "truncation": {
+        "maxNodes": 1200,
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false
+      },
+      "window": {
+        "title": "Set up Input Monitoring",
+        "x": 451,
+        "width": 808,
+        "id": 60528,
+        "height": 540,
+        "isMinimized": false,
+        "screenIndex": 0,
+        "platform": {
+          "layer": 0
+        },
+        "isOffscreen": false,
+        "y": 170
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.development (pid 59513)\nWindow: \"Set up Input Monitoring\", App: Waddly (qa111b.development).\n\n0 system dialog\n\t1 image\n\nNo UI element is currently focused.",
+      "coordinateSpace": "window",
+      "elementCount": 2
+    },
+    "screenshot": {
+      "height": 1080,
+      "format": "png",
+      "width": 1616,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/93d7bc74-e69f-427e-be9b-6bc6e31f525b-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T14:54:37.962Z"
+    },
+    "action": {
+      "path": "synthetic",
+      "targetWindowId": 60528,
+      "fallbackReason": null,
+      "actionName": "pressKey",
+      "verification": {
+        "expected": null,
+        "reason": "synthetic_input",
+        "actualPreview": null,
+        "state": "unverified"
+      }
+    },
+    "screenshotStatus": {
+      "state": "captured",
+      "metadata": {
+        "engine": "screenCaptureKit",
+        "windowId": 60528
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

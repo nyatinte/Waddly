@@ -6,6 +6,14 @@ intentionally **not** a design system and it adds no runtime behavior.
 
 ## Evidence status — read first
 
+**Monitoring / Share follow-up at `2b2dd32`:** [bounded native QA](live-qa-2b2dd32-monitoring-share.md)
+adds actual isolated-app monitoring Close / synthetic Escape observations and controlled live Share
+working → failure → Retry → real-export success in EN/light and JA/dark. Ten ScreenCaptureKit captures
+retain the distinction between actual-app and injected-effect fixtures, including one helper packaging
+crash and an unsuccessful TMPDIR fault attempt. Japanese recovery-message truncation is confirmed in
+[#154](https://github.com/nyatinte/Waddly/issues/154). Physical keyboard, spoken VoiceOver, native drops,
+real clipboard/browser failures and contrast/Reduce Motion acceptance remain open. #151 is excluded.
+
 **Disabled-menu follow-up:** [native menu reasons and paired renders](images/disabled-menu-help/README.md)
 records JA/EN light/dark native popup content, not OS screenshots. Validation now installs localized
 help for unavailable character, share and presence commands; macOS 14.4+ also shows a standard
@@ -181,8 +189,10 @@ Source-refreshed at `85b96a8`; live observations are restricted to the linked re
 | Window close during export | cancels generation | — | — | — | partial temp removed | — |
 
 `PetShareDialogTests` and `PetShareFlowTests` cover state/effect contracts. The live session observed
-hover, copy outcomes and playback, but did not pass Tab traversal, held-press, disabled/Retry states,
-VoiceOver, physical pointer input, or light/contrast/Reduce Motion. Do not close #108 on that basis.
+hover, copy outcomes and playback. The later [bounded QA](live-qa-2b2dd32-monitoring-share.md) adds
+live injected-effect working/disabled/failure/Retry transitions in EN/light and JA/dark, not actual OS
+clipboard/browser faults. Japanese visual recovery text truncation is tracked in #154. Tab traversal,
+held press, spoken VoiceOver, physical pointer, contrast and Reduce Motion remain unverified.
 
 ### 2e. Sheets and alerts
 
@@ -223,8 +233,9 @@ execution; an automated state test does not verify every interaction in its row.
 | Setup — Pet | cards, picker, window drop, shared staged screen | Tab to cards + Next | grouping and labels | preview backdrop follows appearance (#118) | step cross-fade off | fixed 820 × 520 window; shared screen fits | unreadable PNG → inline, keeps set; failed save → inline retry | auto: `SetupWizardTests`, `SetupWizardCharacterImportTests`; manual: focus ring |
 | Setup — ChatGPT guide | copy+open, Change method, Choose PNG | Tab order | hint on cards | text contrast | — | copy strings | copy/open failure inline (#118) | auto; manual: real browser |
 | Setup — permission | Enable, manual steps, Settings hand-off | Tab through the guide | status updates announced | off vs granted distinguishable | polling unaffected | instructions | granted-not-receiving → restart / retry | auto: `PermissionServiceTests`; manual: real TCC |
+| Monitoring settings (completed setup) | native menu entry and Close observed; Finder drop unverified | synthetic Escape followed by window disappearance; physical keys/focus pending | attributed Close/status read-back; not spoken | EN/dark native capture | live setting unverified | EN executed; other locale/state combinations not established here | no saved image/setup changes; live TCC recovery pending | auto: `InputMonitoringSettingsTests`; live: [bounded results](live-qa-2b2dd32-monitoring-share.md) |
 | Setup — Ready | Back, Show on desktop, Set up monitoring | Tab | checks read out | warning visible | celebrate hop suppressed | checks localized | non-ready never looks like success | auto; manual: spoken order |
-| Share | live synthetic hover/copy/play observed | native Post button; Tab traversal still unverified | roles set; not spoken | dark live captures only; light/contrast unverified | no added hover animation; live setting unverified | EN/JA dark live captures | inline outcomes + Retry in source; live failure walkthrough pending | auto: `PetShareDialogTests`, `PetShareFlowTests`; live: [bounded results](live-qa-85b96a8.md) |
+| Share | prior synthetic hover/copy/play plus live fixture AX Retry/error actions | native Post button; physical shortcuts and traversal unverified | full error text in AX; not spoken | EN/light and JA/dark native fixture captures; contrast unverified | no added hover animation; live setting unverified | both executed combinations; JA errors visually truncate (#154) | injected generation failure → Retry → real export observed; actual OS faults pending | auto: `PetShareDialogTests`, `PetShareFlowTests`; live: [earlier](live-qa-85b96a8.md), [bounded follow-up](live-qa-2b2dd32-monitoring-share.md) |
 | Preferences menus | all items | arrow / Return native | menu item names | native menu | — | language switch rebuilds | login error sheet | auto: `AppPresenceMenuTests`, `MenuDisabledHelpTests`; manual: older-OS help, keyboard/VoiceOver |
 | Character import (Change Character) | Choose/Paste observed earlier; advanced delete/reorder, minimize/refocus and discard/reopen observed; native drop still unverified | ⌘V observed live; Tab traversal still unverified | labels set; not spoken | light/dark pane, semantic colors; committed renders exist | no animation | EN/JA strings + renders | inline per-reason error + retry; save failure keeps the draft | auto: `CharacterImportModelTests`, `SetupWizardCharacterImportTests`; manual: VoiceOver/keyboard |
 
@@ -244,7 +255,9 @@ assets…” → two cards (5-second video, 3×3 sheet). 3) Play/pause the movie
 → an inline outcome appears next to each asset, with stable button labels. 4) The single native
 “Post on X” button → composer opens with the draft and `#ShareMyWaddly` (not exercised live in this
 session). 5) *Retry:* generation failure offers Retry; clipboard failure is inline and the same copy
-button retries. These failure paths still need a live walkthrough.
+button retries. The [bounded native fixture walkthrough](live-qa-2b2dd32-monitoring-share.md) observed
+injected generation failure → Retry → real export, and injected copy/browser failure views. Actual
+system faults and physical/spoken acceptance remain pending; JA recovery text truncation is #154.
 
 **Preferences menus.** 1) Click the menu bar item, or right-click the pet. 2) Change size → the pet
 resizes immediately; motion / breathing / language apply immediately and radio/check state stays in
@@ -268,7 +281,8 @@ reopen → the committed pet is loaded again.
 | Priority | Gap | Impact on the task | Tracked by |
 | --- | --- | --- | --- |
 | P1 | Share: keyboard focus/traversal not established by the live session | native Post and hover implementation exist, but keyboard acceptance remains unverified | #108, #111 |
-| P2 | Share: live generation/copy failure and Retry walkthrough still pending | inline outcomes and retry exist in source; failure recovery not yet demonstrated live | #109, #111 |
+| P2 | Share: Japanese recovery instructions visually truncate at the default footprint | a copy/browser error hides the end of its recovery instructions; full AX text does not solve visual readability | #154 |
+| P2 | Share: real clipboard/browser failure and recovery still pending | controlled live fixtures establish UI transitions, not actual OS faults or paste compatibility | #109, #111 |
 | P2 | Setup: `.plain` option cards have no explicit hover/focus styling; native focus is unverified | “bring a pet” is the first task; discoverability + keyboard | #94, #110 |
 | P2 | Advanced editor: `×` / `‹` / `›` have no hover/press affordance and are 20–26 pt | precise editing is error-prone | #95, #94 |
 | P2 | Character import: the Paste control is subdued but not disabled when the clipboard is empty, and its tooltip is the only visual difference | a user may click a control that cannot succeed | #124 |
@@ -276,7 +290,8 @@ reopen → the committed pet is loaded again.
 | P3 | Login-item failure is a post-menu sheet with no inline retry | recoverable but easy to miss | #94 |
 | P3 | Share hover checked only with synthetic pointer input in dark appearance | light/contrast and physical-device acceptance remain outstanding | #108 |
 
-No duplicate issues are created; every gap points at an existing tracker.
+The new confirmed Share truncation finding is scoped to #154; residual acceptance remains in #111.
+Do not create another tracker for already-owned keyboard/VoiceOver or system-failure acceptance.
 
 ## 7. Historical screenshot evidence (committed renders)
 
@@ -309,8 +324,9 @@ commit URLs survive branch deletion; update the source-audit rows separately whe
 
 ## 8. Remaining refresh and acceptance work
 
-- §2d/§4/§6 Share contracts are refreshed at `85b96a8`; complete the remaining live checks in the
-  [session report](live-qa-85b96a8.md), especially keyboard traversal and accessibility.
+- §2d/§4/§6 retain the Share contract refreshed at `85b96a8` plus [bounded QA at `2b2dd32`](live-qa-2b2dd32-monitoring-share.md).
+  Fix #154 and complete physical keyboard, spoken accessibility and actual system-failure checks;
+  controlled effects and screen captures do not establish those acceptance cases.
 - §2b Setup: refresh the historical source inventory against merged #110, including the sample path
   and functional monitoring readiness. The session report verifies only selected live states.
 - §4 matrix: complete full Setup, preferences and advanced-editor walkthroughs; partial passes do not

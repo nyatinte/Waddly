@@ -1,0 +1,57 @@
+{
+  "id": "07a8c179-d262-429e-a523-cdcc6680a909",
+  "ok": true,
+  "result": {
+    "screenshot": {
+      "format": "png",
+      "width": 1640,
+      "height": 1096,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/07a8c179-d262-429e-a523-cdcc6680a909-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T14:56:41.853Z"
+    },
+    "screenshotStatus": {
+      "state": "captured",
+      "metadata": {
+        "windowId": 60549,
+        "engine": "screenCaptureKit"
+      }
+    },
+    "snapshot": {
+      "app": {
+        "name": "Waddly (qa111b.development)",
+        "bundleId": "dev.nyatinte.waddly.qa111b.development",
+        "pid": 59513
+      },
+      "elementCount": 20,
+      "id": "B463F63F-DC95-4A5E-8F9B-56F8D705CDF1",
+      "focusedElementId": 0,
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      },
+      "coordinateSpace": "window",
+      "window": {
+        "id": 60549,
+        "isOffscreen": false,
+        "width": 820,
+        "title": "Set up Input Monitoring",
+        "platform": {
+          "layer": 0
+        },
+        "isMinimized": false,
+        "screenIndex": 0,
+        "y": 166,
+        "x": 445,
+        "height": 548
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.development (pid 59513)\nWindow: \"Set up Input Monitoring\", App: Waddly (qa111b.development).\n\n0 standard window Set up Input Monitoring\n\t1 text Set up keyboard reactions\n\t2 text Waddly needs macOS Input Monitoring permission for your pet to react to typing.\n\t3 container, Text: Your typing is never saved or sent Waddly only checks that a key was pressed and whether it was Enter.\n\t4 text Input Monitoring: not allowed\n\t5 button\n\t6 radio group\n\t\t7 radio button Animation, Value: 1\n\t\t8 radio button 9 cells, Value: 0\n\t9 image\n\t10 button Idle\n\t11 button Typing\n\t12 button Enter\n\t13 button Sleep\n\t14 text Keyboard reactions: off\n\t15 button\n\t16 close button\n\t17 zoom button (disabled)\n\t18 minimize button (disabled)\n\t19 text Set up Input Monitoring\n\nThe focused UI element is 0 standard window Set up Input Monitoring."
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}
