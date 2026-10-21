@@ -28,19 +28,6 @@ enum CharacterSheetLoader {
         return await Task.detached(priority: .userInitiated) { inspect(data) }.value
     }
 
-    /// Decode individual PNGs for the advanced per-frame editor, skipping any that is not usable.
-    static func optimizedImages(from urls: [URL]) async -> [NSImage] {
-        await Task.detached(priority: .userInitiated) {
-            urls.compactMap { url in
-                autoreleasepool {
-                    PetSpriteSheetImporter.readPNG(from: url)
-                        .flatMap(PetSpriteSheetImporter.optimizedImage)?
-                        .image
-                }
-            }
-        }.value
-    }
-
     private static func inspect(_ data: Data) -> CharacterSheetLoadOutcome {
         switch PetSpriteSheetImporter.inspect(data) {
         case let .success(candidate): .valid(candidate)

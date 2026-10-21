@@ -7,7 +7,6 @@ extension SetupWizardScreen {
     var characterImport: some View {
         CharacterImportView(
             model: controller.characterImportModel,
-            editor: controller.frameEditorModel,
             localization: controller.localization,
             titleKey: .characterSetupTitle,
             primaryKey: .setupNext,

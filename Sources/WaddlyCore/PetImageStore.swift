@@ -120,11 +120,13 @@ public final class PetImageStore {
                 try autoreleasepool { () -> RestoredPetImages in
                     let manifest = try committedOrMigratedManifest(storage, legacy: legacy)
                     let loaded = try storage.load(manifest)
+                    var images = loaded.0
+                    images.editingSource = storage.readFrameEditingSource(manifest: manifest)
                     return RestoredPetImages(
                         manifest: manifest,
-                        images: loaded.0,
+                        images: images,
                         files: loaded.1,
-                        thumbnails: PetSpriteSheetImporter.thumbnails(for: loaded.0)
+                        thumbnails: PetSpriteSheetImporter.thumbnails(for: images)
                     )
                 }
             }.value
@@ -194,6 +196,7 @@ public final class PetImageStore {
             await discardStagedFiles(storage, staged: newFiles, committed: oldFiles)
             throw error
         }
+        await writeEditingSidecar(updated.editingSource, storage: storage, manifest: newFiles)
         writeLegacyFiles(newFiles)
         files = newFiles
         importedImages = updated
@@ -225,6 +228,24 @@ public final class PetImageStore {
     private func reconcile(_ storage: PetImageStorage) async {
         await Task.detached(priority: .utility) {
             _ = try? storage.reconcileFiles()
+        }.value
+    }
+
+    /// Persist the editor sidecars for an already-committed frame save.
+    ///
+    /// Best effort by design: the manifest commit is durable and the images are displayed, so a
+    /// sidecar problem only means the editor reopens from the frames instead of the saved sheet.
+    private func writeEditingSidecar(
+        _ source: PetImageEditingSource?,
+        storage: PetImageStorage,
+        manifest: ManifestFiles
+    ) async {
+        await Task.detached(priority: .userInitiated) {
+            do {
+                try storage.writeFrameEditingSource(source, manifest: manifest)
+            } catch {
+                return
+            }
         }.value
     }
 

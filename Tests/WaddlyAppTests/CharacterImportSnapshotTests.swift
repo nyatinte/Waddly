@@ -38,6 +38,27 @@ import WaddlyCore
         }
     }
 
+    @Test func capturesFrameEditorSurfaces() throws {
+        guard CaptureHarness.isEnabled else { return }
+        try CaptureHarness.prepare()
+        for language in [AppLanguage.english, .japanese] {
+            for dark in [false, true] {
+                try captureFrameEditor(language: language, dark: dark)
+            }
+        }
+    }
+
+    @Test func capturesFrameEditorLegacyAndCompactSurfaces() throws {
+        guard CaptureHarness.isEnabled else { return }
+        try CaptureHarness.prepare()
+        for language in [AppLanguage.english, .japanese] {
+            for dark in [false, true] {
+                try captureFrameEditorLegacy(language: language, dark: dark)
+                try captureFrameEditorCompact(language: language, dark: dark)
+            }
+        }
+    }
+
     @Test func capturesSetupPetStepSurfaces() async throws {
         guard CaptureHarness.isEnabled else { return }
         try CaptureHarness.prepare()
@@ -114,13 +135,7 @@ private extension CharacterImportSnapshotTests {
         try CaptureHarness.write(content, dark: dark, named: "change-empty-\(tag)")
         try await captureDropAndClipboardStates(model: model, content: content, dark: dark, tag: tag)
         try await captureValidAndInvalidStates(model: model, content: content, dark: dark, tag: tag)
-        try captureEditing(
-            model: model,
-            controller: controller,
-            language: language,
-            dark: dark,
-            tag: tag
-        )
+        _ = controller
     }
 
     /// The drag-eligible highlight, the ready Paste affordance, and the clipboard-empty explanation.
@@ -164,29 +179,88 @@ private extension CharacterImportSnapshotTests {
         try CaptureHarness.write(content, dark: dark, named: "change-invalid-\(tag)")
     }
 
-    /// The advanced per-frame editor over the same staged draft.
-    func captureEditing(
-        model: CharacterImportModel,
-        controller: CharacterImportWindowController,
-        language: AppLanguage,
+    /// The sprite-frame crop and alignment editor over the same staged sheet.
+    func captureFrameEditor(language: AppLanguage, dark: Bool) throws {
+        let tag = CaptureHarness.suffix(language, dark)
+        let data = try Data(contentsOf: CaptureHarness.sheetURL())
+        let candidate = try #require(try? PetSpriteSheetImporter.inspect(data).get())
+        let sheet = try #require(PetFrameSourceDecoder.sheetImage(from: candidate.sheetPNGData))
+        let localization = try CaptureHarness.localized(language)
+        let editor = CharacterFrameEditorModel(
+            frames: candidate.images,
+            localization: localization,
+            sheet: sheet
+        )
+
+        try writeEditor(editor, localization: localization, dark: dark, named: "frame-editor-default-\(tag)")
+
+        editor.select(.typing2)
+        editor.setCropSize(candidate.cellSize - 24)
+        editor.setOffsetX(6)
+        try writeEditor(editor, localization: localization, dark: dark, named: "frame-editor-crop-\(tag)")
+
+        editor.tool = .align
+        editor.select(.typing1)
+        editor.setCropSize(candidate.cellSize + 48)
+        editor.setOffsetY(-8)
+        try writeEditor(editor, localization: localization, dark: dark, named: "frame-editor-align-\(tag)")
+    }
+
+    /// A saved pet without its original sheet falls back to honest per-frame editing.
+    func captureFrameEditorLegacy(language: AppLanguage, dark: Bool) throws {
+        let tag = CaptureHarness.suffix(language, dark)
+        let frames = try SetupWizardFixture.sheetImages()
+        let localization = try CaptureHarness.localized(language)
+        let editor = CharacterFrameEditorModel(frames: frames, localization: localization)
+        editor.select(.idle2)
+        editor.setOffsetX(5)
+        editor.setOffsetY(-4)
+        try writeEditor(
+            editor,
+            localization: localization,
+            dark: dark,
+            named: "frame-editor-legacy-\(tag)"
+        )
+    }
+
+    /// The adaptive layout on a narrower display keeps the canvas usable and the inspector scrollable.
+    func captureFrameEditorCompact(language: AppLanguage, dark: Bool) throws {
+        let tag = CaptureHarness.suffix(language, dark)
+        let data = try Data(contentsOf: CaptureHarness.sheetURL())
+        let candidate = try #require(try? PetSpriteSheetImporter.inspect(data).get())
+        let sheet = try #require(PetFrameSourceDecoder.sheetImage(from: candidate.sheetPNGData))
+        let localization = try CaptureHarness.localized(language)
+        let editor = CharacterFrameEditorModel(
+            frames: candidate.images,
+            localization: localization,
+            sheet: sheet
+        )
+        editor.select(.typing3)
+        editor.setCropSize(candidate.cellSize - 32)
+        try writeEditor(
+            editor,
+            localization: localization,
+            dark: dark,
+            named: "frame-editor-compact-\(tag)",
+            size: FrameEditorMetrics.minimumSize
+        )
+    }
+
+    func writeEditor(
+        _ editor: CharacterFrameEditorModel,
+        localization: LocalizationController,
         dark: Bool,
-        tag: String
+        named name: String,
+        size: NSSize = FrameEditorMetrics.preferredSize
     ) throws {
-        controller.frameEditorModel.setThumbnails(
-            CharacterFrameEditor.thumbnails(from: model.stagedFrames)
+        let host = NSHostingView(rootView: CharacterFrameEditor(
+            model: editor,
+            localization: localization,
+            size: size
         )
-        let host = try NSHostingView(rootView: CharacterFrameEditor(
-            importModel: model,
-            editor: controller.frameEditorModel,
-            localization: CaptureHarness.localized(language)
-        ))
-        host.frame = NSRect(
-            x: 0,
-            y: 0,
-            width: AnimationSettingsMetrics.contentMinSize.width + 80,
-            height: AnimationSettingsMetrics.contentMinSize.height + 64
-        )
-        try CaptureHarness.write(host, dark: dark, named: "change-editing-\(tag)")
+        .environment(\.colorScheme, dark ? .dark : .light))
+        host.frame = NSRect(origin: .zero, size: size)
+        try CaptureHarness.write(host, dark: dark, named: name)
     }
 
     /// The same shared screen inside the Setup Pet step, with the progress row above it.

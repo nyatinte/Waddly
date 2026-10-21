@@ -10,7 +10,6 @@ import WaddlyCore
 @MainActor
 final class CharacterImportWindowController: NSWindowController, NSWindowDelegate {
     let model: CharacterImportModel
-    let frameEditorModel: AnimationSettingsModel
     /// The window is not resizable: the shared screen is pinned to this content size so the SwiftUI
     /// layout and the window agree, exactly like the fixed-size setup wizard.
     static let contentSize = NSSize(width: 880, height: 580)
@@ -27,7 +26,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         onClose: @escaping @MainActor () -> Void
     ) {
         self.model = model
-        frameEditorModel = CharacterFrameEditor.makeModel(importModel: model, localization: localization)
         self.localization = localization
         self.presenter = presenter
         self.onClose = onClose
@@ -67,7 +65,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     func refreshLocalization() {
         window?.title = localization.string(for: .characterWindowTitle)
-        frameEditorModel.refreshLocalization()
         model.refreshLocalization()
     }
 
@@ -95,7 +92,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         }
         let host = NSHostingView(rootView: CharacterImportView(
             model: model,
-            editor: frameEditorModel,
             localization: localization,
             titleKey: .characterChangeTitle,
             primaryKey: .characterApply,

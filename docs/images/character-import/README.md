@@ -9,7 +9,10 @@ AppKit preview pane.
 The original 40 renders retain their source attribution to `023474df4252aa4a03b3a3e25119ba9714e4ddad`
 (`test(import): cover drop routing, stale acquisitions, and the store commit`). Those existing PNGs
 remain byte-identical; this capture adds eight states from behavior source
-`bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`, without relabeling the original assets.
+`bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`, without relabeling the original assets. The frame-editor
+render set was captured after issue #151 replaced the per-frame add/remove/reorder editor with the
+3×3 crop and alignment editor; the four old `change-editing-*` renders were removed rather than left
+to describe a surface that no longer ships.
 
 ## How they were produced
 
@@ -31,8 +34,11 @@ Two harness notes, stated so the evidence is not over-read:
   250 ms so the preview player's first frame publishes off screen. The live app reaches the same
   state through the representable's normal update pass; the render only pins the frame that would be
   showing.
-- The advanced-editor renders show `CharacterFrameEditor` (the reused `AnimationSettingsView`
-  over the staged draft) as an off-screen `NSHostingView`, not the sheet chrome.
+- The frame-editor renders show the real `CharacterFrameEditor` as an off-screen `NSHostingView`
+  at its 1240 × 800 pt preferred size (or 1040 × 700 pt for the compact surface), with the example
+  sheet prepared through `CharacterImportModel`/`CharacterFrameEditorModel`. They are not the
+  attached-sheet chrome the live window uses. The captures pin `colorScheme` to the appearance
+  because AppKit appearance alone does not reach the SwiftUI environment in an off-screen host.
 - The harness discards the staged draft before closing the Change Character window, because the
   shipped window now asks before discarding a dirty close; no dialog is part of any render.
 
@@ -49,8 +55,7 @@ Change Character host (`change-*`), 880 × 580 pt content:
 | Valid staged | `change-valid` | animated per-pose preview, source name/dimensions/cell size, positive status |
 | Valid, nine cells | `change-valid-nine-cells` | the same staged sheet in the pane's 9-cell mode |
 | Invalid import | `change-invalid` | inline “could not be read as a PNG.” with the staged candidate still present |
-| Advanced editor | `change-editing` | Idle/Typing/Sleep/Enter rows with Add, remove, and move controls over the staged draft |
-| Saved character | `change-saved-character` | The saved pet is immediately previewed and the advanced edit entry is available without source metadata; the test fixture exercises a nonstandard per-category frame count |
+| Saved character | `change-saved-character` | The saved pet is immediately previewed and **Adjust frames…** is available; the test fixture exercises a nonstandard per-category frame count |
 | Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft retained |
 
 Setup Pet step host (`setup-*`), 820 × 520 pt content:
@@ -61,6 +66,19 @@ Setup Pet step host (`setup-*`), 820 × 520 pt content:
 | Valid staged | `setup-valid` | staged preview with the shared screen's Cancel + Continue |
 
 Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the run completed with four tests in one suite passing after 28.777 seconds.
+
+## Frame-editor renders (`frame-editor-*`), 1240 × 800 pt or 1040 × 700 pt content
+
+| State | File stem | Shows |
+| --- | --- | --- |
+| Default crop | `frame-editor-default` | Frame 01 selected, square crop with eight handles, 3×3 guides and marked center crosshair, source-sheet context dimmed outside the crop, Before = After |
+| Crop edit | `frame-editor-crop` | Frame 04 with a smaller crop and a content offset; the output canvas stays 256 × 256 px while the crop only narrows the visible frame, and the edited markers are visible |
+| Align edit, neighbour warning | `frame-editor-align` | Align tool selected, D-pad and signed X/Y fields, crop extended past the cell with the dashed warning border and inline warning |
+| Legacy saved frames | `frame-editor-legacy` | A pet without its original sheet: per-frame fallback, no sheet source line, and the re-import explanation in the sidebar |
+| Compact layout | `frame-editor-compact` | 1040 × 700 pt window: the navigator collapses to a numbered frame rail while the canvas and inspector stay usable |
+
+Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (20 files). The compact and
+legacy states are produced by `capturesFrameEditorLegacyAndCompactSurfaces`.
 
 ## Not claimed here
 

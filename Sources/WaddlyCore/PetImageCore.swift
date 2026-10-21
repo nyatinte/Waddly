@@ -11,9 +11,15 @@ public enum PetImageCategory: String, CaseIterable, Sendable {
 
 public struct PetImageSet: Sendable {
     private var images: [PetImageCategory: [NSImage]]
+    /// The sheet and per-slot edits these frames were produced from, or `nil` for legacy sets.
+    public var editingSource: PetImageEditingSource?
 
-    public init(_ images: [PetImageCategory: [NSImage]] = [:]) {
+    public init(
+        _ images: [PetImageCategory: [NSImage]] = [:],
+        editingSource: PetImageEditingSource? = nil
+    ) {
         self.images = images
+        self.editingSource = editingSource
     }
 
     public subscript(_ category: PetImageCategory) -> [NSImage] {
@@ -64,6 +70,13 @@ public struct PetSheetCandidate: Sendable {
     public let sourceDimension: Int
     /// One cell's pixel side after the sheet is bounded to the importer's maximum.
     public let cellSize: Int
+    /// PNG bytes of the working sheet the frame editor crops from.
+    ///
+    /// This is the original input buffer when the sheet was not downsampled, so a staged draft does
+    /// not duplicate a large import.
+    public let sheetPNGData: Data
+    /// Sheet-mode identity editing for every slot, carrying the PNG for staged drafts.
+    public var editingSource: PetImageEditingSource
 }
 
 /// Why a sheet could not be imported. Each case maps to one concrete inline message.
@@ -203,7 +216,7 @@ public enum PetSpriteSheetImporter {
         guard geometry.side > 0, geometry.isSquare else { return .failure(.notSquare) }
         guard geometry.isDivisibleByThree else { return .failure(.gridNotDivisible) }
         guard geometry.isWithinDimensionLimit else { return .failure(.dimensionTooLarge) }
-        return cells(from: source, sourceDimension: geometry.side)
+        return cells(from: source, sourceDimension: geometry.side, originalData: data)
     }
 
     /// The source pixel dimensions, read before any decode so an invalid grid is never resized.
@@ -222,7 +235,8 @@ public enum PetSpriteSheetImporter {
 
     private static func cells(
         from source: CGImageSource,
-        sourceDimension: Int
+        sourceDimension: Int,
+        originalData: Data
     ) -> Result<PetSheetCandidate, PetSheetValidationFailure> {
         guard let image = image(from: source, maxDimension: maximumImageDimension * 3) else {
             return .failure(.unreadable)
@@ -232,16 +246,36 @@ public enum PetSpriteSheetImporter {
         guard let nineCells = nineCells(from: image, cellSize: cellSize) else {
             return .failure(.frameExtractionFailed)
         }
+        guard let sheetPNGData = workingSheetPNGData(
+            image: image,
+            originalData: originalData,
+            sourceDimension: sourceDimension
+        ) else {
+            return .failure(.frameExtractionFailed)
+        }
+        let editingSource = PetImageEditingSource(
+            editing: SpriteFrameEditing.identity(
+                mode: .sheet,
+                sourceSides: Array(repeating: cellSize, count: SpriteFrameSlot.allCases.count),
+                cellSize: cellSize
+            ),
+            sheetPNGData: sheetPNGData
+        )
         return .success(
             PetSheetCandidate(
-                images: PetImageSet([
-                    .idle: [nineCells[0], nineCells[1]],
-                    .typing: [nineCells[2], nineCells[3], nineCells[4], nineCells[5]],
-                    .sleep: [nineCells[7], nineCells[8]],
-                    .enter: [nineCells[6]]
-                ]),
+                images: PetImageSet(
+                    [
+                        .idle: [nineCells[0], nineCells[1]],
+                        .typing: [nineCells[2], nineCells[3], nineCells[4], nineCells[5]],
+                        .sleep: [nineCells[7], nineCells[8]],
+                        .enter: [nineCells[6]]
+                    ],
+                    editingSource: editingSource
+                ),
                 sourceDimension: sourceDimension,
-                cellSize: cellSize
+                cellSize: cellSize,
+                sheetPNGData: sheetPNGData,
+                editingSource: editingSource
             )
         )
     }
@@ -341,5 +375,23 @@ public enum PetSpriteSheetImporter {
             withIntermediateDirectories: true
         )
         try data.write(to: url, options: .atomic)
+    }
+}
+
+/// Sheet encoding helpers kept out of the importer body to keep each type focused.
+private extension PetSpriteSheetImporter {
+    /// The untouched input buffer when the decoded sheet is full size, or a PNG of the working sheet.
+    ///
+    /// Sharing the original `Data` keeps a large staged import from doubling its memory footprint.
+    private static func workingSheetPNGData(
+        image: CGImage,
+        originalData: Data,
+        sourceDimension: Int
+    ) -> Data? {
+        if image.width == sourceDimension, image.height == sourceDimension {
+            return originalData
+        }
+        guard let encoded = pngData(from: image), encoded.count <= maximumFileSize else { return nil }
+        return encoded
     }
 }

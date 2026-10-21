@@ -35,7 +35,6 @@ extension PetSheetValidationFailure {
 @MainActor
 struct CharacterImportView: View {
     @ObservedObject var model: CharacterImportModel
-    let editor: AnimationSettingsModel
     let localization: LocalizationController
     let titleKey: LocalizationKey
     let primaryKey: LocalizationKey
@@ -76,7 +75,7 @@ struct CharacterImportView: View {
             model.refreshClipboardAvailability(from: pasteboard)
         }
         .sheet(isPresented: $model.isEditingFrames) {
-            CharacterFrameEditor(importModel: model, editor: editor, localization: localization)
+            CharacterFrameEditor(importModel: model, localization: localization)
         }
     }
 }
@@ -196,10 +195,10 @@ private extension CharacterImportView {
                     .foregroundStyle(.tertiary)
             }
             if model.hasStagedCandidate {
-                Button(localization.string(for: .characterEditFrames)) {
+                Button(localization.string(for: .characterAdjustFrames)) {
                     model.isEditingFrames = true
                 }
-                .accessibilityIdentifier("characterEditFrames")
+                .accessibilityIdentifier("characterAdjustFrames")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

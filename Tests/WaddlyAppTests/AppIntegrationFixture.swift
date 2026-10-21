@@ -24,8 +24,15 @@ import WaddlyCore
         app.buildMenu()
     }
 
+    /// The nine frame images alone, without sheet-source editing metadata, so fixture saves stay a
+    /// plain nine-file frame set.
     func exampleImages() throws -> PetImageSet {
-        try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleURL)))
+        let images = try #require(PetSpriteSheetImporter.frames(from: Data(contentsOf: exampleURL)))
+        var plain = PetImageSet()
+        for category in PetImageCategory.allCases {
+            plain[category] = images[category]
+        }
+        return plain
     }
 
     func savedData() throws -> [String: Data] {
