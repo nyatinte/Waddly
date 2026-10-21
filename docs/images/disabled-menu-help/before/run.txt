@@ -1,0 +1,73 @@
+ITEM en-light-status-menu Pause reactions true nil
+ITEM en-light-status-menu  false nil
+ITEM en-light-status-menu Display size true nil
+ITEM en-light-status-menu Typing motion true nil
+ITEM en-light-status-menu Breathing animation true nil
+ITEM en-light-status-menu Language / 言語 true nil
+ITEM en-light-status-menu  false nil
+ITEM en-light-status-menu Show in true nil
+ITEM en-light-status-menu  false nil
+ITEM en-light-status-menu Change Character… false nil
+ITEM en-light-status-menu Setup Guide… true nil
+ITEM en-light-status-menu Launch at Login true nil
+ITEM en-light-status-menu  false nil
+ITEM en-light-status-menu Quit Waddly true nil
+CAPTURE en-light-status-menu.png (214.0, 294.0) 428 588
+ITEM en-light-presence Dock true nil
+ITEM en-light-presence Menu Bar false nil
+CAPTURE en-light-presence.png (104.0, 58.0) 208 116
+ITEM en-dark-status-menu Pause reactions true nil
+ITEM en-dark-status-menu  false nil
+ITEM en-dark-status-menu Display size true nil
+ITEM en-dark-status-menu Typing motion true nil
+ITEM en-dark-status-menu Breathing animation true nil
+ITEM en-dark-status-menu Language / 言語 true nil
+ITEM en-dark-status-menu  false nil
+ITEM en-dark-status-menu Show in true nil
+ITEM en-dark-status-menu  false nil
+ITEM en-dark-status-menu Change Character… false nil
+ITEM en-dark-status-menu Setup Guide… true nil
+ITEM en-dark-status-menu Launch at Login true nil
+ITEM en-dark-status-menu  false nil
+ITEM en-dark-status-menu Quit Waddly true nil
+CAPTURE en-dark-status-menu.png (214.0, 294.0) 428 588
+ITEM en-dark-presence Dock true nil
+ITEM en-dark-presence Menu Bar false nil
+CAPTURE en-dark-presence.png (104.0, 58.0) 208 116
+ITEM ja-light-status-menu 入力反応を一時停止 true nil
+ITEM ja-light-status-menu  false nil
+ITEM ja-light-status-menu 表示サイズ true nil
+ITEM ja-light-status-menu タイピング時の揺れ true nil
+ITEM ja-light-status-menu 呼吸アニメーション true nil
+ITEM ja-light-status-menu Language / 言語 true nil
+ITEM ja-light-status-menu  false nil
+ITEM ja-light-status-menu 表示先 true nil
+ITEM ja-light-status-menu  false nil
+ITEM ja-light-status-menu キャラクターを変更… false nil
+ITEM ja-light-status-menu セットアップガイド… true nil
+ITEM ja-light-status-menu ログイン時に起動 true nil
+ITEM ja-light-status-menu  false nil
+ITEM ja-light-status-menu Waddlyを終了 true nil
+CAPTURE ja-light-status-menu.png (212.0, 294.0) 424 588
+ITEM ja-light-presence Dockに表示 true nil
+ITEM ja-light-presence メニューバーに表示 false nil
+CAPTURE ja-light-presence.png (155.0, 58.0) 310 116
+ITEM ja-dark-status-menu 入力反応を一時停止 true nil
+ITEM ja-dark-status-menu  false nil
+ITEM ja-dark-status-menu 表示サイズ true nil
+ITEM ja-dark-status-menu タイピング時の揺れ true nil
+ITEM ja-dark-status-menu 呼吸アニメーション true nil
+ITEM ja-dark-status-menu Language / 言語 true nil
+ITEM ja-dark-status-menu  false nil
+ITEM ja-dark-status-menu 表示先 true nil
+ITEM ja-dark-status-menu  false nil
+ITEM ja-dark-status-menu キャラクターを変更… false nil
+ITEM ja-dark-status-menu セットアップガイド… true nil
+ITEM ja-dark-status-menu ログイン時に起動 true nil
+ITEM ja-dark-status-menu  false nil
+ITEM ja-dark-status-menu Waddlyを終了 true nil
+CAPTURE ja-dark-status-menu.png (212.0, 294.0) 424 588
+ITEM ja-dark-presence Dockに表示 true nil
+ITEM ja-dark-presence メニューバーに表示 false nil
+CAPTURE ja-dark-presence.png (155.0, 58.0) 310 116
+PROBE_COMPLETED 8

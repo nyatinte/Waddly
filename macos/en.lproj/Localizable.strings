@@ -38,6 +38,9 @@
 "menu.changeCharacter" = "Change Character…";
 "menu.setupWizard" = "Setup Guide…";
 "menu.inputMonitoring" = "Set Up Input Monitoring…";
+"menu.finishSetupHelp" = "Finish setup to change character.";
+"menu.keepEntryPointHelp" = "Keep Dock or Menu Bar enabled.";
+"menu.shareNeedsCharacter" = "Add a character before sharing.";
 "setup.close" = "Close";
 "menu.login" = "Launch at Login";
 "menu.quit" = "Quit Waddly";

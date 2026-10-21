@@ -24,7 +24,7 @@
       "Sources/WaddlyCore/PetShareExporter.swift:94",
       "Sources/WaddlyCore/PetShareMovieWriter.swift:147",
       "Tests/WaddlyAppTests/AppIntegrationFixture.swift:55",
-      "Tests/WaddlyAppTests/AppModelTests.swift:173",
+      "Tests/WaddlyAppTests/AppModelTests.swift:185",
       "Tests/WaddlyAppTests/ImageUpdateQueueTests.swift:53",
       "Tests/WaddlyAppTests/PetImageDirectoryBindingTests.swift:20",
       "Tests/WaddlyAppTests/PetImageDirectoryBindingTests.swift:21",

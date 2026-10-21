@@ -42,12 +42,16 @@ import WaddlyCore
     #expect(AppSettings.standard.appLanguage == standardLanguage)
 }
 
-@Test @MainActor func copiedMenusHaveIndependentItemsAndPreserveNestedCommandsAndState() {
+@Test @MainActor func copiedMenusHaveIndependentItemsAndPreserveNestedCommandsAndState() throws {
     let original = NSMenu(title: "Original")
     let submenu = NSMenu(title: "Options")
     let item = NSMenuItem(title: "English", action: nil, keyEquivalent: "")
     item.tag = AppLanguage.english.rawValue
     item.state = .on
+    item.toolTip = "A preserved native help string"
+    if #available(macOS 14.4, *) {
+        item.subtitle = "A preserved native subtitle"
+    }
     submenu.addItem(item)
     let parent = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
     parent.submenu = submenu
@@ -55,14 +59,22 @@ import WaddlyCore
     original.addItem(.separator())
 
     let copy = copyMenuTree(original)
-    let copiedItem = copy.items[0].submenu?.items[0]
+    let copiedItem = try #require(copy.items[0].submenu?.items[0])
 
     #expect(copy !== original)
     #expect(copy.items[0] !== original.items[0])
     #expect(copy.items[0].submenu !== original.items[0].submenu)
-    #expect(copiedItem?.title == item.title)
-    #expect(copiedItem?.tag == item.tag)
-    #expect(copiedItem?.state == item.state)
+    #expect(copiedItem.title == item.title)
+    #expect(copiedItem.tag == item.tag)
+    #expect(copiedItem.state == item.state)
+    #expect(copiedItem.toolTip == item.toolTip)
+    copiedItem.toolTip = "Changed only on the copy"
+    #expect(item.toolTip == "A preserved native help string")
+    if #available(macOS 14.4, *) {
+        #expect(copiedItem.subtitle == item.subtitle)
+        copiedItem.subtitle = "Changed only on the copy"
+        #expect(item.subtitle == "A preserved native subtitle")
+    }
     #expect(copy.items[1].isSeparatorItem)
 }
 

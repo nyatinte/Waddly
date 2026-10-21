@@ -24,6 +24,10 @@ func copyMenuTree(_ menu: NSMenu) -> NSMenu {
         itemCopy.tag = item.tag
         itemCopy.state = item.state
         itemCopy.isEnabled = item.isEnabled
+        itemCopy.toolTip = item.toolTip
+        if #available(macOS 14.4, *) {
+            itemCopy.subtitle = item.subtitle
+        }
         if let submenu = item.submenu {
             itemCopy.submenu = copyMenuTree(submenu)
         }
@@ -348,17 +352,31 @@ extension AppDelegate: NSMenuItemValidation {
             return true
         }
         if action == #selector(showPetShare) {
+            setDisabledHelp(hasCompletePetImageSet ? nil : .menuShareNeedsCharacter, for: menuItem)
             return hasCompletePetImageSet
         }
         if action == #selector(showChangeCharacter) {
+            setDisabledHelp(isSetupComplete ? nil : .menuFinishSetupHelp, for: menuItem)
             return isSetupComplete
         }
         if action == #selector(toggleDockVisibility) {
-            return canToggleDock(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
+            let enabled = canToggleDock(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
+            setDisabledHelp(enabled ? nil : .menuKeepEntryPointHelp, for: menuItem)
+            return enabled
         }
         if action == #selector(toggleMenuBarVisibility) {
-            return canToggleMenuBar(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
+            let enabled = canToggleMenuBar(showInDock: settings.showInDock, showInMenuBar: settings.showInMenuBar)
+            setDisabledHelp(enabled ? nil : .menuKeepEntryPointHelp, for: menuItem)
+            return enabled
         }
         return true
+    }
+
+    private func setDisabledHelp(_ key: LocalizationKey?, for item: NSMenuItem) {
+        let reason = key.map { localizedString($0) }
+        item.toolTip = reason
+        if #available(macOS 14.4, *) {
+            item.subtitle = reason
+        }
     }
 }
