@@ -97,3 +97,75 @@ extension SetupWizardScreen {
         .accessibilityHint(Text(verbatim: controller.localizedString(detail)))
     }
 }
+
+@MainActor
+extension SetupWizardScreen {
+    /// A standalone setup action with the shared 36 pt height, so the step body and the pinned
+    /// footer read as one control system.
+    func actionButton(
+        _ title: String,
+        identifier: String,
+        action: @escaping @MainActor () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(verbatim: title)
+                .actionLabel()
+        }
+        .controlSize(.large)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: title))
+        .accessibilityIdentifier(identifier)
+    }
+}
+
+@MainActor
+extension SetupWizardScreen {
+    /// The one footer position: navigation left, the primary action right, always above a divider.
+    var nextButtonKey: LocalizationKey {
+        if controller.isMonitoringSettings {
+            return .setupClose
+        }
+        return controller.currentStep == .completed ? .setupShowOnDesktop : .setupNext
+    }
+
+    var footer: some View {
+        HStack(spacing: LayoutMetrics.actionGap) {
+            if !controller.isMonitoringSettings, controller.currentStep != .pet {
+                Button(action: controller.goBack) {
+                    Text(verbatim: controller.localizedString(.setupBack))
+                        .actionLabel()
+                }
+                .controlSize(.large)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(Text(verbatim: controller.localizedString(.setupBack)))
+                .accessibilityIdentifier("goBack")
+            }
+            Spacer()
+            if !controller.isMonitoringSettings, controller.currentStep == .monitoring, !controller.isMonitoringReady {
+                Button(action: controller.deferMonitoring) {
+                    Text(verbatim: controller.localizedString(.setupLater))
+                        .actionLabel()
+                }
+                .controlSize(.large)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(Text(verbatim: controller.localizedString(.setupLater)))
+                .accessibilityIdentifier("deferMonitoring")
+            }
+            Button(action: controller.goNext) {
+                Text(verbatim: controller.localizedString(nextButtonKey))
+                    .actionLabel()
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: controller.localizedString(nextButtonKey)))
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(
+                !controller.isMonitoringSettings && ((controller.currentStep == .pet && !controller.hasImage)
+                    || (controller.currentStep == .monitoring && !controller.isMonitoringReady))
+            )
+            .keyboardShortcut(controller.isMonitoringSettings ? .cancelAction : .defaultAction)
+            .accessibilityIdentifier(controller.isMonitoringSettings ? "closeMonitoringSettings" : "goNext")
+        }
+        .frame(height: LayoutMetrics.actionHeight)
+    }
+}

@@ -11,9 +11,9 @@ import WaddlyCore
 final class CharacterImportWindowController: NSWindowController, NSWindowDelegate {
     let model: CharacterImportModel
     let frameEditorModel: AnimationSettingsModel
-    /// The window is not resizable: the shared screen is pinned to this content size so the SwiftUI
-    /// layout and the window agree, exactly like the fixed-size setup wizard.
-    static let contentSize = NSSize(width: 880, height: 580)
+    /// The screen's design size. Both body columns share one height, and only the footer owns the
+    /// primary action, so the layout stays coherent when the window is resized above this minimum.
+    static let contentSize = NSSize(width: 1040, height: 640)
     private let localization: LocalizationController
     private let presenter: WindowPresenter
     private let onClose: @MainActor () -> Void
@@ -33,7 +33,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         self.onClose = onClose
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.contentSize),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -107,18 +107,13 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             pickFile: { [weak self] in self?.pickFile() },
             pasteboard: .general
         ))
-        host.translatesAutoresizingMaskIntoConstraints = false
+        host.translatesAutoresizingMaskIntoConstraints = true
+        host.autoresizingMask = [.width, .height]
+        host.frame = root.bounds
         root.addSubview(host)
-        NSLayoutConstraint.activate([
-            host.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            host.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            host.topAnchor.constraint(equalTo: root.topAnchor),
-            host.bottomAnchor.constraint(equalTo: root.bottomAnchor),
-            // The window is not resizable; pin the hosting view to the design size so its content
-            // height cannot pull the window taller than the layout it was designed for.
-            host.widthAnchor.constraint(equalToConstant: Self.contentSize.width),
-            host.heightAnchor.constraint(equalToConstant: Self.contentSize.height)
-        ])
+        // The window owns the size; the hosting view follows its bounds. Referencing the host from
+        // Auto Layout instead lets its ideal (flexible) height resize the window away from the
+        // designed 1040 × 640 frame.
         window?.contentView = root
     }
 

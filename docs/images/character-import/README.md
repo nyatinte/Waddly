@@ -7,9 +7,12 @@ behavior. No live interaction occurred: every state was set through the model or
 AppKit preview pane.
 
 The original 40 renders retain their source attribution to `023474df4252aa4a03b3a3e25119ba9714e4ddad`
-(`test(import): cover drop routing, stale acquisitions, and the store commit`). Those existing PNGs
-remain byte-identical; this capture adds eight states from behavior source
-`bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`, without relabeling the original assets.
+(`test(import): cover drop routing, stale acquisitions, and the store commit`), and the eight states
+added later were captured from `bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`. **Every file in this
+directory now shows the setup-UI layout change in this branch**: the Change Character window is
+1040 × 640 pt (resizable above that minimum), import lives in one drop zone, a staged sheet collapses
+to a file card, and Cancel/Apply sit in a pinned footer above a divider. Earlier revisions therefore
+describe older pixels, not the current ones.
 
 ## How they were produced
 
@@ -25,12 +28,12 @@ remain byte-identical; this capture adds eight states from behavior source
 - English `AppLanguage.english`, Japanese `AppLanguage.japanese`; light `NSAppearance.aqua`, dark
   `NSAppearance.darkAqua`.
 
-Two harness notes, stated so the evidence is not over-read:
+Harness notes, stated so the evidence is not over-read:
 
-- The valid/per-pose renders push the staged frames into the embedded AppKit preview pane and sleep
-  250 ms so the preview player's first frame publishes off screen. The live app reaches the same
-  state through the representable's normal update pass; the render only pins the frame that would be
-  showing.
+- The valid/per-pose, saved-character, and declined-commit renders push the staged frames into the
+  embedded AppKit preview pane and sleep 250 ms so the preview player's first frame publishes off
+  screen. The live app reaches the same state through the representable's normal update pass; the
+  render only pins the frame that would be showing.
 - The advanced-editor renders show `CharacterFrameEditor` (the reused `AnimationSettingsView`
   over the staged draft) as an off-screen `NSHostingView`, not the sheet chrome.
 - The harness discards the staged draft before closing the Change Character window, because the
@@ -38,20 +41,20 @@ Two harness notes, stated so the evidence is not over-read:
 
 ## Surfaces
 
-Change Character host (`change-*`), 880 × 580 pt content:
+Change Character host (`change-*`), 1040 × 640 pt content:
 
 | State | File stem | Shows |
 | --- | --- | --- |
-| Empty drop zone | `change-empty` | dashed drop zone, Choose File / Paste, disabled Apply |
+| Empty drop zone | `change-empty` | one dashed zone with Choose File and Paste from Clipboard inside it, the “Import a PNG to start editing.” hint, and a disabled Apply in the pinned footer |
 | Drag eligible | `change-drag-hover` | accent-highlighted zone and “Drop to import” copy |
-| Clipboard ready | `change-clipboard-ready` | Paste at full emphasis; no error |
+| Clipboard ready | `change-clipboard-ready` | the in-zone Paste link at full emphasis; no error |
 | Clipboard empty | `change-clipboard-empty` | subdued Paste and the inline “No image on the clipboard.” after an attempted paste |
-| Valid staged | `change-valid` | animated per-pose preview, source name/dimensions/cell size, positive status |
+| Valid staged | `change-valid` | the zone collapsed to one file card (name, Ready to apply, dimensions/cell size, Replace, Edit frames, and the paste link that keeps ⌘V replacing) beside the animated preview |
 | Valid, nine cells | `change-valid-nine-cells` | the same staged sheet in the pane's 9-cell mode |
-| Invalid import | `change-invalid` | inline “could not be read as a PNG.” with the staged candidate still present |
+| Invalid import | `change-invalid` | inline “could not be read as a PNG.” below the retained file card |
 | Advanced editor | `change-editing` | Idle/Typing/Sleep/Enter rows with Add, remove, and move controls over the staged draft |
-| Saved character | `change-saved-character` | The saved pet is immediately previewed and the advanced edit entry is available without source metadata; the test fixture exercises a nonstandard per-category frame count |
-| Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft retained |
+| Saved character | `change-saved-character` | The saved pet is previewed and the card reads “Current character” with its frame count; Replace and Edit frames are available without source metadata, and the test fixture exercises a nonstandard per-category frame count |
+| Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft and card retained |
 
 Setup Pet step host (`setup-*`), 820 × 520 pt content:
 
