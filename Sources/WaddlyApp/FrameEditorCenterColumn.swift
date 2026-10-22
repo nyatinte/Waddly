@@ -138,11 +138,30 @@ private struct FrameEditorResultPreview: View {
     var body: some View {
         let localization = model.localization
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 8) {
                 Text(localization.string(for: .frameEditorResultPreview))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
-                Spacer()
+                if model.cropExtendsIntoNeighbor {
+                    Label(
+                        localization.string(for: .frameEditorCropNeighborWarning),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+                    .help(localization.string(for: .frameEditorCropNeighborWarning))
+                }
+                if model.isCurrentFrameEdited {
+                    Label(
+                        localization.string(for: .frameEditorEdited),
+                        systemImage: "pencil.circle.fill"
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                }
+                Spacer(minLength: 8)
                 Text(String(
                     format: localization.string(for: .frameEditorOutputSizeFormat),
                     model.outputSide,
@@ -151,39 +170,25 @@ private struct FrameEditorResultPreview: View {
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
             }
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .center, spacing: 14) {
+                Spacer(minLength: 0)
                 FrameEditorPreviewCard(
                     title: localization.string(for: .frameEditorBefore),
                     image: model.beforeImage(for: model.selectedSlot),
                     accessibilityLabel: localization.string(for: .frameEditorBeforeA11y)
                 )
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 FrameEditorPreviewCard(
                     title: localization.string(for: .frameEditorAfter),
                     image: model.afterImage(for: model.selectedSlot),
                     accessibilityLabel: localization.string(for: .frameEditorAfterA11y)
                 )
-                VStack(alignment: .leading, spacing: 7) {
-                    if model.cropExtendsIntoNeighbor {
-                        Label(
-                            localization.string(for: .frameEditorCropNeighborWarning),
-                            systemImage: "exclamationmark.triangle.fill"
-                        )
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if model.isCurrentFrameEdited {
-                        Label(
-                            localization.string(for: .frameEditorEdited),
-                            systemImage: "pencil.circle.fill"
-                        )
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -219,6 +224,7 @@ private struct FrameEditorPreviewCard: View {
                             .resizable()
                             .interpolation(.none)
                             .scaledToFit()
+                        FrameEditorPreviewCrosshair()
                     }
                     .frame(width: Self.cardSide, height: Self.cardSide)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -232,5 +238,34 @@ private struct FrameEditorPreviewCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+/// Center crosshair overlay for the Before/After cards, mirroring the canvas guides so the
+/// alignment anchor is visible while comparing.
+@MainActor
+private struct FrameEditorPreviewCrosshair: View {
+    var body: some View {
+        GeometryReader { proxy in
+            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+            Path { path in
+                path.move(to: CGPoint(x: center.x, y: 0))
+                path.addLine(to: CGPoint(x: center.x, y: proxy.size.height))
+                path.move(to: CGPoint(x: 0, y: center.y))
+                path.addLine(to: CGPoint(x: proxy.size.width, y: center.y))
+            }
+            .stroke(
+                Color.white.opacity(0.75),
+                style: StrokeStyle(lineWidth: 1, dash: [3, 3])
+            )
+            .shadow(color: .black.opacity(0.6), radius: 0.5)
+            Circle()
+                .fill(Color.white)
+                .frame(width: 7, height: 7)
+                .overlay(Circle().stroke(Color.accentColor, lineWidth: 1.2))
+                .position(center)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
