@@ -1,0 +1,33 @@
+#!/bin/bash
+# Replay recipe for the corrected live Share fixture; not executed as one script during capture.
+# Start with source 2b2dd32813f36620707657130874a83bb9265a96.
+set -euo pipefail
+ROOT=$(cd "${1:-.}" && pwd)
+ARCHIVE="$ROOT/docs/images/monitoring-share-qa-2b2dd32"
+OUT="$ROOT/dist/qa111b-replay"
+mkdir -p "$OUT/core"
+cd "$ROOT"
+WADDLY_DEVELOPMENT_SUFFIX=qa111b.replay WADDLY_DEVELOPMENT_DIR="$OUT" ./macos/build-development.sh
+swiftc -O -swift-version 6 -emit-library -emit-module -module-name WaddlyCore \
+  -Xlinker -install_name -Xlinker @rpath/libWaddlyCore.dylib \
+  Sources/WaddlyCore/*.swift -emit-module-path "$OUT/core/WaddlyCore.swiftmodule" \
+  -o "$OUT/core/libWaddlyCore.dylib"
+cp -R "$OUT/Waddly (qa111b.replay).app" "$OUT/Share QA111.app"
+/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier dev.nyatinte.waddly.qa111b.fixture.replay' "$OUT/Share QA111.app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Set :CFBundleName Share QA111' "$OUT/Share QA111.app/Contents/Info.plist"
+cp "$ARCHIVE/share-fixture.swift.txt" "$OUT/share-fixture.swift"
+files=()
+for file in Sources/WaddlyApp/*.swift; do
+  case "$file" in */AppMain.swift) ;; *) files+=("$file");; esac
+done
+swiftc -O -swift-version 6 -parse-as-library -I "$OUT/core" -L "$OUT/core" -lWaddlyCore \
+  -Xlinker -rpath -Xlinker "$OUT/core" "${files[@]}" "$OUT/share-fixture.swift" \
+  -o "$OUT/Share QA111.app/Contents/MacOS/Waddly"
+codesign --force --sign - "$OUT/core/libWaddlyCore.dylib"
+codesign --force --deep --sign - --identifier dev.nyatinte.waddly.qa111b.fixture.replay "$OUT/Share QA111.app"
+# The entry point uses these fixed, QA-only release sentinels even when the bundle is replayed elsewhere.
+mkdir -p "$ROOT/dist/qa111b"
+printf 'Launch: open -n "%s/Share QA111.app" --args "%s" en light\n' "$OUT" "$ROOT"
+printf 'Observe working; then: touch "%s/dist/qa111b/release-en-failure"\n' "$ROOT"
+printf 'Use Try Again; inspect ready state. Repeat with ja dark and release-ja-failure.\n'
+printf 'Remove only your own release sentinel before each run if you want to observe working.\n'

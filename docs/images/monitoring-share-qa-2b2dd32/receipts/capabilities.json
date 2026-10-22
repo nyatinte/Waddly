@@ -1,0 +1,50 @@
+{
+  "id": "4d98b9fb-250b-43b0-aa30-9fa4436fc627",
+  "ok": true,
+  "result": {
+    "platform": "darwin",
+    "providerVersion": "1.0.0",
+    "supports": {
+      "windows": {
+        "targetByIndex": true,
+        "targetById": true,
+        "list": true,
+        "focus": false,
+        "moveResize": false
+      },
+      "observation": {
+        "elementFrames": true,
+        "screenshot": true,
+        "ocr": false,
+        "annotatedScreenshot": false
+      },
+      "surfaces": {
+        "dialogs": false,
+        "menubar": false,
+        "menus": false,
+        "dock": false
+      },
+      "apps": {
+        "bundleIds": true,
+        "pids": true,
+        "list": true
+      },
+      "actions": {
+        "performAction": true,
+        "click": true,
+        "typeText": true,
+        "pressKey": true,
+        "drag": true,
+        "scroll": true,
+        "hotkey": true,
+        "setValue": true,
+        "pasteText": true
+      }
+    },
+    "protocolVersion": 1,
+    "provider": "orca-computer-use-macos"
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "16f3b5a3-40d4-4537-8a35-c413b2e7cf89",
+  "ok": true,
+  "result": {
+    "action": {
+      "actionName": "AXPress",
+      "path": "accessibility",
+      "verification": {
+        "reason": "window_changed",
+        "state": "unverified"
+      },
+      "fallbackReason": null,
+      "targetWindowId": 60580
+    },
+    "screenshot": null,
+    "screenshotStatus": {
+      "state": "skipped",
+      "reason": "no_screenshot_flag"
+    },
+    "snapshot": {
+      "app": {
+        "name": "Waddly (qa111b.development)",
+        "pid": 92728,
+        "bundleId": "dev.nyatinte.waddly.qa111b.development"
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.development (pid 92728)\nWindow: \"Share Pet\", App: Waddly (qa111b.development).\n\n0 system dialog\n\t1 image\n\nNo UI element is currently focused.",
+      "coordinateSpace": "window",
+      "id": "FF8B63CE-FC69-41E9-9AF5-7534629E6393",
+      "focusedElementId": null,
+      "elementCount": 2,
+      "window": {
+        "screenIndex": 0,
+        "platform": {
+          "layer": 0
+        },
+        "isMinimized": false,
+        "x": 505,
+        "title": "Share Pet",
+        "id": 60580,
+        "width": 700,
+        "y": 193,
+        "height": 438,
+        "isOffscreen": false
+      },
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

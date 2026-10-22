@@ -1,0 +1,17 @@
+{
+  "id": "15108bd2-fef4-4826-b02e-cdddf2a38364",
+  "ok": false,
+  "error": {
+    "code": "window_not_focused",
+    "message": "coordinate click aborted because target pid 92728 window 60559 is no longer the focused topmost recipient (current: no focused window); bring the target window forward, run get-app-state again, and retry",
+    "data": {
+      "nextSteps": [
+        "Retry once with `--restore-window`.",
+        "If `--restore-window` was already used, stop retrying restore; bring the app forward manually, check permissions, or prefer `set-value` for editable fields."
+      ]
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

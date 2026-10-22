@@ -1,0 +1,13 @@
+import AppKit
+import ApplicationServices
+let pid = pid_t(CommandLine.arguments[1])!
+let app = AXUIElementCreateApplication(pid)
+for key in [kAXWindowsAttribute, kAXFocusedWindowAttribute, kAXMainWindowAttribute] {
+    var value: CFTypeRef?
+    let result = AXUIElementCopyAttributeValue(app, key as CFString, &value)
+    print("AX", key, result.rawValue, value as Any)
+}
+let all = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+for window in all where (window[kCGWindowOwnerPID as String] as? Int) == Int(pid) {
+    print("WS", window)
+}

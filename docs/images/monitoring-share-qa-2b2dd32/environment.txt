@@ -1,0 +1,12 @@
+source_revision=2b2dd32813f36620707657130874a83bb9265a96
+archived_at_utc=2026-10-21T15:10:11.497072+00:00
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+
+Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+
+59a2b18e0b51042f9927dddf0661f58db35c75bad8d972db049380506066ca34  dist/qa111b/Share QA111.app/Contents/MacOS/Waddly
+da7855c8579dba458ba6797cfb2cd6b923601499672875a3d236c5310bb7ca23  dist/qa111b/fixture-core/libWaddlyCore.dylib
+32ed8d6e9a285fd6da61d4b93bcd532f072e05bf417096a69f7ee3fcbe793c8d  assets/examples/nyatinte-bot-3x3.png
