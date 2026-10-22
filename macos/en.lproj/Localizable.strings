@@ -246,7 +246,6 @@
 "frameEditor.after" = "After";
 "frameEditor.beforeA11y" = "Before adjustment";
 "frameEditor.afterA11y" = "After adjustment";
-"frameEditor.previewHint" = "Before is the frame as saved; After reflects this crop and alignment. The output canvas keeps the same size, so only the visible frame changes.";
 "frameEditor.cropNeighborWarning" = "The crop extends into a neighbouring cell. Check for stray pixels.";
 "frameEditor.edited" = "Edited";
 "frameEditor.legacyNotice" = "This pet was saved without its original 3 × 3 sheet, so each saved frame is edited on its own. Choosing Done applies the crop and alignment to that saved frame; re-import the original PNG to adjust the whole sheet.";

@@ -195,7 +195,7 @@ private struct FrameEditorResultPreview: View {
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
             }
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 16) {
                 FrameEditorPreviewCard(
                     title: localization.string(for: .frameEditorBefore),
                     image: model.beforeImage(for: model.selectedSlot),
@@ -224,10 +224,6 @@ private struct FrameEditorResultPreview: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     }
-                    Text(localization.string(for: .frameEditorPreviewHint))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -248,7 +244,7 @@ private struct FrameEditorResultPreview: View {
 
 @MainActor
 private struct FrameEditorPreviewCard: View {
-    static let cardSide: CGFloat = 126
+    static let cardSide: CGFloat = 168
 
     let title: String
     let image: NSImage?

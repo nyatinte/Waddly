@@ -86,7 +86,6 @@ enum LocalizationKey: String, CaseIterable {
     case frameEditorOriginY = "frameEditor.originY"
     case frameEditorOriginYA11y = "frameEditor.originYA11y"
     case frameEditorOutputSizeFormat = "frameEditor.outputSizeFormat"
-    case frameEditorPreviewHint = "frameEditor.previewHint"
     case frameEditorPreviousFrame = "frameEditor.previousFrame"
     case frameEditorResetAll = "frameEditor.resetAll"
     case frameEditorResetFrame = "frameEditor.resetFrame"

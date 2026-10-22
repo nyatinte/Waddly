@@ -246,7 +246,6 @@
 "frameEditor.after" = "調整後";
 "frameEditor.beforeA11y" = "調整前のフレーム";
 "frameEditor.afterA11y" = "調整後のフレーム";
-"frameEditor.previewHint" = "「調整前」は保存されているフレーム、「調整後」はこのクロップと位置の結果です。出力キャンバスは同じ大きさのままなので、変わるのは表示される枠だけです。";
 "frameEditor.cropNeighborWarning" = "範囲が隣のセルにはみ出しています。不要なピクセルが入っていないか確認してください。";
 "frameEditor.edited" = "編集済み";
 "frameEditor.legacyNotice" = "このペットは元の3 × 3シートなしで保存されているため、保存済みフレームを1枚ずつ編集します。「完了」を選ぶとそのフレームにクロップと位置が反映されます。シート全体を調整するには元のPNGを再読み込みしてください。";

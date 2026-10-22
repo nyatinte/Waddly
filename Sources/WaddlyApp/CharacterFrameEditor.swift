@@ -15,7 +15,7 @@ enum FrameEditorMetrics {
     static let compactRailWidth: CGFloat = 58
     static let outerPadding: CGFloat = 16
     /// Header, navigation, result preview, gaps and vertical padding around the editing canvas.
-    static let centerReservedHeight: CGFloat = 330
+    static let centerReservedHeight: CGFloat = 372
     static let minimumCanvasHeight: CGFloat = 240
 
     static func resolvedSize(for screen: NSScreen? = NSScreen.main) -> NSSize {
