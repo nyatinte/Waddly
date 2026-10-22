@@ -104,7 +104,7 @@ import WaddlyCore
         #expect(!model.isReading)
     }
 
-    @Test func releasingEachGateBeforeStartReturnsTheLatchedResult() async throws {
+    @Test func releasingEachGateBeforeStartReturnsTheLatchedResult() async {
         let sheetOutcome = CharacterSheetLoadOutcome.empty
         let sheetGate = SheetLoadGate(outcome: sheetOutcome)
         sheetGate.release()
@@ -113,92 +113,9 @@ import WaddlyCore
             return
         }
 
-        let images = try [#require(SetupWizardFixture.sheetImages()[.idle].first)]
-        let frameGate = FrameDecodeGate(images: images)
-        frameGate.release()
-        let decoded = await frameGate.decode()
-        #expect(decoded.count == images.count)
-        #expect(decoded.first === images.first)
-
         let commitGate = CharacterCommitOutcomeGate()
         commitGate.release(.rejected)
         #expect(await commitGate.commit() == .rejected)
-    }
-
-    @Test func staleEditorAddCannotAppendToReplacementDraft() async throws {
-        let sheetURL = try SetupWizardFixture.sheetURL()
-        let original = await CharacterSheetLoader.load(from: sheetURL)
-        let replacement = await CharacterSheetLoader.load(from: sheetURL)
-        let replacementURL = URL(fileURLWithPath: "/tmp/waddly-replacement.png")
-        let editorURL = URL(fileURLWithPath: "/tmp/waddly-editor-frame.png")
-        let addedFrames = try [#require(SetupWizardFixture.sheetImages()[.idle].first)]
-        let gate = FrameDecodeGate(images: addedFrames)
-        let model = CharacterImportModel(
-            currentImages: { PetImageSet() },
-            commit: { _ in .committed },
-            loadSheet: { url in url == replacementURL ? replacement : original },
-            decodeFrames: { _ in await gate.decode() }
-        )
-        await model.stageFiles(at: [sheetURL])
-        let add = Task { await model.addFrames([editorURL], to: .idle) }
-        #expect(await gate.waitUntilStarted())
-
-        await model.stageFiles(at: [replacementURL])
-        let replacementFrames = try #require(model.stagedFrames)
-        gate.release()
-        await add.value
-
-        #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), replacementFrames))
-        #expect(model.stagedFrames?[.idle].count == replacementFrames[.idle].count)
-    }
-
-    @Test func staleEditorAddCannotRestoreDiscardedDraft() async throws {
-        let sheetURL = try SetupWizardFixture.sheetURL()
-        let frames = try #require(SetupWizardFixture.sheetImages()[.idle].first)
-        let gate = FrameDecodeGate(images: [frames])
-        let model = CharacterImportModel(
-            currentImages: { PetImageSet() },
-            commit: { _ in .committed },
-            decodeFrames: { _ in await gate.decode() }
-        )
-        await model.stageFiles(at: [sheetURL])
-        let add = Task { await model.addFrames([sheetURL], to: .idle) }
-        #expect(await gate.waitUntilStarted())
-
-        model.discard()
-        gate.release()
-        await add.value
-
-        #expect(model.stagedFrames == nil)
-        #expect(!model.isDirty)
-    }
-
-    @Test func anInFlightEditorAddCannotMutateDraftDuringOrAfterApply() async throws {
-        let sheetURL = try SetupWizardFixture.sheetURL()
-        let frame = try #require(SetupWizardFixture.sheetImages()[.idle].first)
-        let decoder = FrameDecodeGate(images: [frame])
-        let commit = CharacterCommitOutcomeGate()
-        let model = CharacterImportModel(
-            currentImages: { PetImageSet() },
-            commit: { _ in await commit.commit() },
-            decodeFrames: { _ in await decoder.decode() }
-        )
-        await model.stageFiles(at: [sheetURL])
-        let original = try #require(model.stagedFrames)
-        let add = Task { await model.addFrames([sheetURL], to: .idle) }
-        #expect(await decoder.waitUntilStarted())
-        let apply = Task { await model.apply() }
-        #expect(await commit.waitUntilStarted())
-
-        model.removeFrame(at: 0, from: .idle)
-        model.moveFrame(from: 0, to: 1, in: .idle)
-        commit.release(.committed)
-        #expect(await apply.value)
-        decoder.release()
-        await add.value
-
-        #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), original))
-        #expect(!model.isDirty)
     }
 
     @Test func anEmptyClipboardGivesAnInformationalFailure() async {

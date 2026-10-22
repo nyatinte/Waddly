@@ -40,7 +40,6 @@ extension PetSheetValidationFailure {
 @MainActor
 struct CharacterImportView: View {
     @ObservedObject var model: CharacterImportModel
-    let editor: AnimationSettingsModel
     let localization: LocalizationController
     let titleKey: LocalizationKey
     let primaryKey: LocalizationKey
@@ -76,7 +75,7 @@ struct CharacterImportView: View {
             model.refreshClipboardAvailability(from: pasteboard)
         }
         .sheet(isPresented: $model.isEditingFrames) {
-            CharacterFrameEditor(importModel: model, editor: editor, localization: localization)
+            CharacterFrameEditor(importModel: model, localization: localization)
         }
     }
 }
@@ -226,6 +225,7 @@ private extension CharacterImportView {
                         }
                     }
                     .font(.caption)
+                    .foregroundStyle(.tertiary)
                     .lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -240,11 +240,19 @@ private extension CharacterImportView {
                 Button {
                     model.isEditingFrames = true
                 } label: {
-                    Text(localization.string(for: .characterEditFrames))
+                    Text(localization.string(for: .characterAdjustFrames))
                         .actionLabel()
                 }
                 .controlSize(.large)
-                .accessibilityIdentifier("characterEditFrames")
+                .disabled(!model.canAdjustFrames)
+                .accessibilityIdentifier("characterAdjustFrames")
+            }
+            if !model.canAdjustFrames {
+                Text(localization.string(for: .characterAdjustFramesUnavailable))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("characterAdjustFramesUnavailable")
             }
             // Replacing by clipboard has to survive the collapse, so the shortcut keeps working
             // after a sheet is staged and the empty zone is gone.
@@ -357,43 +365,5 @@ private extension CharacterImportView {
 
     func paste() {
         Task { await model.stageClipboard(from: pasteboard) }
-    }
-}
-
-/// Hosts the existing AppKit preview pane so the shared screen uses the app's one reaction preview.
-@MainActor
-private struct CharacterPreviewHost: NSViewRepresentable {
-    let localization: LocalizationController
-    let frames: PetImageSet?
-    let placeholder: String
-    let onDrop: ([URL]) -> Void
-    let isActive: () -> Bool
-    let onPaneCreated: (SetupPreviewPane) -> Void
-
-    func makeNSView(context: Context) -> SetupPreviewPane {
-        let pane = SetupPreviewPane(frame: .zero)
-        pane.configure(localization: localization, showsControls: true)
-        pane.shouldPreserveUnsupportedDropURLs = { true }
-        pane.onDrop = onDrop
-        onPaneCreated(pane)
-        return pane
-    }
-
-    func updateNSView(_ pane: SetupPreviewPane, context: Context) {
-        guard isActive() else {
-            pane.stopPlayback()
-            return
-        }
-        pane.onDrop = onDrop
-        if let frames, frames.isComplete {
-            pane.showPet(frames, caption: "", sleeping: false)
-        } else {
-            pane.showPlaceholder(symbol: "pawprint", message: placeholder, caption: "")
-        }
-    }
-
-    static func dismantleNSView(_ pane: SetupPreviewPane, coordinator: ()) {
-        pane.stopPlayback()
-        pane.onDrop = nil
     }
 }

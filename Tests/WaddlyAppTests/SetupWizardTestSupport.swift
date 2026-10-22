@@ -10,9 +10,22 @@ enum SetupWizardFixture {
         root().appendingPathComponent("assets/examples/nyatinte-bot-3x3.png")
     }
 
+    /// The nine frame images alone, without the sheet-source editing metadata. Tests that need the
+    /// staged source use `sheetCandidate()` or the real loader; this fixture keeps the plain frame
+    /// set that older coverage assumes.
     @MainActor
     static func sheetImages() throws -> PetImageSet {
-        try #require(try PetSpriteSheetImporter.frames(from: Data(contentsOf: sheetURL())))
+        let candidate = try sheetCandidate()
+        var images = PetImageSet()
+        for category in PetImageCategory.allCases {
+            images[category] = candidate.images[category]
+        }
+        return images
+    }
+
+    @MainActor
+    static func sheetCandidate() throws -> PetSheetCandidate {
+        try #require(try? PetSpriteSheetImporter.inspect(Data(contentsOf: sheetURL())).get())
     }
 
     @MainActor

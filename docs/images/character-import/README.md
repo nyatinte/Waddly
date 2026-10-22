@@ -14,6 +14,8 @@ directory now shows the setup-UI layout change in this branch**: the Change Char
 to a file card, and Cancel/Apply sit in a pinned footer above a divider. Earlier revisions therefore
 describe older pixels, not the current ones.
 
+The frame-editor render set was captured after issue #151 replaced the per-frame add/remove/reorder editor with the 3×3 crop and alignment editor; the old `change-editing-*` renders were removed rather than left to describe a surface that no longer ships.
+
 ## How they were produced
 
 - `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`
@@ -34,8 +36,13 @@ Harness notes, stated so the evidence is not over-read:
   embedded AppKit preview pane and sleep 250 ms so the preview player's first frame publishes off
   screen. The live app reaches the same state through the representable's normal update pass; the
   render only pins the frame that would be showing.
-- The advanced-editor renders show `CharacterFrameEditor` (the reused `AnimationSettingsView`
-  over the staged draft) as an off-screen `NSHostingView`, not the sheet chrome.
+- The frame-editor renders show the real `CharacterFrameEditor` as an off-screen `NSHostingView`
+  at its 1320 × 800 pt preferred size (or 1040 × 700 pt for the compact surface), with the example
+  sheet prepared through `CharacterImportModel`/`CharacterFrameEditorModel`. They are not the
+  attached-sheet chrome the live window uses. The captures pin `colorScheme` to the appearance
+  because AppKit appearance alone does not reach the SwiftUI environment in an off-screen host.
+
+
 - The harness discards the staged draft before closing the Change Character window, because the
   shipped window now asks before discarding a dirty close; no dialog is part of any render.
 
@@ -49,12 +56,13 @@ Change Character host (`change-*`), 1040 × 640 pt content:
 | Drag eligible | `change-drag-hover` | accent-highlighted zone and “Drop to import” copy |
 | Clipboard ready | `change-clipboard-ready` | the in-zone Paste link at full emphasis; no error |
 | Clipboard empty | `change-clipboard-empty` | subdued Paste and the inline “No image on the clipboard.” after an attempted paste |
-| Valid staged | `change-valid` | the zone collapsed to one file card (name, Ready to apply, dimensions/cell size, Replace, Edit frames, and the paste link that keeps ⌘V replacing) beside the animated preview |
+| Valid staged | `change-valid` | the zone collapsed to one file card (name, Ready to apply, dimensions/cell size, Replace, Adjust frames…, and the paste link that keeps ⌘V replacing) beside the animated preview |
 | Valid, nine cells | `change-valid-nine-cells` | the same staged sheet in the pane's 9-cell mode |
 | Invalid import | `change-invalid` | inline “could not be read as a PNG.” below the retained file card |
-| Advanced editor | `change-editing` | Idle/Typing/Sleep/Enter rows with Add, remove, and move controls over the staged draft |
-| Saved character | `change-saved-character` | The saved pet is previewed and the card reads “Current character” with its frame count; Replace and Edit frames are available without source metadata, and the test fixture exercises a nonstandard per-category frame count |
+| Saved character | `change-saved-character` | The saved pet is previewed and the card reads “Current character” with its frame count; Replace is available, and Adjust frames… is disabled with re-import guidance for the fixture’s nonstandard per-category frame count |
 | Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft and card retained |
+
+
 
 Setup Pet step host (`setup-*`), 820 × 520 pt content:
 
@@ -63,7 +71,20 @@ Setup Pet step host (`setup-*`), 820 × 520 pt content:
 | Empty | `setup-empty` | step progress row above the shared empty screen |
 | Valid staged | `setup-valid` | staged preview with the shared screen's Cancel + Continue |
 
-Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the run completed with four tests in one suite passing after 28.777 seconds.
+Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the snapshot suite now runs six capture tests in one suite.
+
+## Frame-editor renders (`frame-editor-*`), 1320 × 800 pt or 1040 × 700 pt content
+
+| State | File stem | Shows |
+| --- | --- | --- |
+| Default crop | `frame-editor-default` | Frame 01 selected, square crop with eight handles, 3×3 guides and marked center crosshair, source-sheet context dimmed outside the crop, Before = After |
+| Crop edit | `frame-editor-crop` | Frame 04 with a smaller crop and a content offset; the output canvas stays 256 × 256 px while the crop only narrows the visible frame, and the edited markers are visible |
+| Align edit, neighbour warning | `frame-editor-align` | Align tool selected, D-pad and signed X/Y fields, crop extended past the cell with the dashed warning border and inline warning |
+| Legacy saved frames | `frame-editor-legacy` | A pet without its original sheet: per-frame fallback, no sheet source line, and the re-import explanation in the sidebar |
+| Compact layout | `frame-editor-compact` | 1040 × 700 pt window: the navigator collapses to a numbered frame rail while the canvas and inspector stay usable |
+
+Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (20 files). The compact and
+legacy states are produced by `capturesFrameEditorLegacyAndCompactSurfaces`.
 
 ## Not claimed here
 

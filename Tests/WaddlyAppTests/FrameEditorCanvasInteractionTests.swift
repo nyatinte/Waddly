@@ -1,0 +1,135 @@
+import AppKit
+import Testing
+@testable import WaddlyApp
+import WaddlyCore
+
+@Suite(.serialized) @MainActor struct FrameEditorCanvasInteractionTests {
+    @Test func draggingTheBackgroundPansTheViewportWithoutChangingTheCrop() throws {
+        let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        var adjustments: [FrameAdjustment] = []
+        view.onAdjustmentChange = { adjustments.append($0) }
+        try view.apply(FrameCanvasConfiguration(
+            source: makeImage(),
+            sourceSide: 20,
+            canvasSide: 20,
+            nominalCell: SquareCrop(x: 0, y: 0, size: 20),
+            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+            tool: .crop,
+            zoomScale: 1,
+            showsGrid: false,
+            showsCrosshair: false,
+            showsWarning: false
+        ))
+        view.layoutSubtreeIfNeeded()
+
+        try view.mouseDown(with: mouseEvent(.leftMouseDown, at: NSPoint(x: 10, y: 10)))
+        try view.mouseDragged(with: mouseEvent(.leftMouseDragged, at: NSPoint(x: 70, y: 45)))
+        try view.mouseUp(with: mouseEvent(.leftMouseUp, at: NSPoint(x: 70, y: 45)))
+
+        #expect(view.panOffset.x == 60)
+        #expect(abs(view.panOffset.y) == 35)
+        #expect(adjustments.isEmpty)
+    }
+
+    private func makeImage() throws -> CGImage {
+        let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        let context = try #require(CGContext(
+            data: nil,
+            width: 20,
+            height: 20,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: space,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        try context.setFillColor(#require(CGColor(colorSpace: space, components: [1, 0, 0, 1])))
+        context.fill(CGRect(x: 0, y: 0, width: 20, height: 20))
+        return try #require(context.makeImage())
+    }
+
+    @Test func keyboardAndAccessibilityActionsZoomAndResetWithoutTouchingTheCrop() throws {
+        let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        var zooms: [CGFloat] = []
+        view.onZoomChange = { zooms.append($0) }
+        try view.apply(FrameCanvasConfiguration(
+            source: makeImage(),
+            sourceSide: 20,
+            canvasSide: 20,
+            nominalCell: SquareCrop(x: 0, y: 0, size: 20),
+            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+            tool: .crop,
+            zoomScale: 1,
+            showsGrid: false,
+            showsCrosshair: false,
+            showsWarning: false,
+            zoomInLabel: "Zoom in",
+            zoomOutLabel: "Zoom out",
+            resetViewLabel: "Reset view"
+        ))
+
+        #expect(try view.performKeyEquivalent(with: keyEvent("=", modifiers: .command)))
+        #expect(zooms.last == 1.25)
+        view.panOffset = CGPoint(x: 20, y: 20)
+        #expect(try view.performKeyEquivalent(with: keyEvent("0", modifiers: .command)))
+        #expect(zooms.last == 1)
+        #expect(view.panOffset == .zero)
+    }
+
+    @Test func keyboardPanAvoidsTheOptionArrowFrameNavigationShortcuts() throws {
+        let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        try view.apply(FrameCanvasConfiguration(
+            source: makeImage(),
+            sourceSide: 20,
+            canvasSide: 20,
+            nominalCell: SquareCrop(x: 0, y: 0, size: 20),
+            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+            tool: .crop,
+            zoomScale: 1,
+            showsGrid: false,
+            showsCrosshair: false,
+            showsWarning: false
+        ))
+
+        try view.keyDown(with: keyEvent("\u{F700}", modifiers: .option, keyCode: 126))
+        #expect(view.panOffset.y == -24)
+        try view.keyDown(with: keyEvent("\u{F703}", modifiers: [.option, .shift], keyCode: 124))
+        #expect(view.panOffset.x == 24)
+        // Plain Option-left is frame navigation, not pan.
+        let before = view.panOffset
+        try view.keyDown(with: keyEvent("\u{F702}", modifiers: .option, keyCode: 123))
+        #expect(view.panOffset == before)
+    }
+
+    private func keyEvent(
+        _ characters: String,
+        modifiers: NSEvent.ModifierFlags,
+        keyCode: UInt16 = 0
+    ) throws -> NSEvent {
+        try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: modifiers,
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: characters,
+            charactersIgnoringModifiers: characters,
+            isARepeat: false,
+            keyCode: keyCode
+        ))
+    }
+
+    private func mouseEvent(_ type: NSEvent.EventType, at point: NSPoint) throws -> NSEvent {
+        try #require(NSEvent.mouseEvent(
+            with: type,
+            location: point,
+            modifierFlags: [],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            eventNumber: 0,
+            clickCount: 1,
+            pressure: 1
+        ))
+    }
+}

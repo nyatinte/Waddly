@@ -78,45 +78,6 @@ final class CharacterCommitOutcomeGate {
 }
 
 @MainActor
-final class FrameDecodeGate {
-    private var didStart = false
-    private var continuation: CheckedContinuation<[NSImage], Never>?
-    private var releasedImages: [NSImage]?
-    private let images: [NSImage]
-
-    init(images: [NSImage]) {
-        self.images = images
-    }
-
-    func decode() async -> [NSImage] {
-        guard !didStart else {
-            Issue.record("frame decode gate started more than once")
-            return []
-        }
-        didStart = true
-        if let releasedImages {
-            return releasedImages
-        }
-        return await withCheckedContinuation { continuation = $0 }
-    }
-
-    func waitUntilStarted() async -> Bool {
-        await waitForBoundedStartupObservation { didStart }
-    }
-
-    func release() {
-        guard releasedImages == nil else {
-            Issue.record("frame decode gate released more than once")
-            return
-        }
-        releasedImages = images
-        guard let continuation else { return }
-        self.continuation = nil
-        continuation.resume(returning: images)
-    }
-}
-
-@MainActor
 private func waitForBoundedStartupObservation(_ isStarted: () -> Bool) async -> Bool {
     for _ in 0 ..< 500 where !isStarted() {
         await Task.yield()

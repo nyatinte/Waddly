@@ -44,13 +44,10 @@ final class CharacterImportModel: ObservableObject {
     /// The system's drag-eligibility report for the drop zone, so one highlight can show without
     /// moving the layout.
     @Published private(set) var isDropTargeted = false
-    /// Bumped on every draft mutation so the advanced editor rebuilds its thumbnails.
-    @Published private(set) var draftVersion = 0
 
     private let currentImages: () -> PetImageSet
     private let commit: (PetImageSet) async -> CharacterCommitOutcome
     private let loadSheet: (URL) async -> CharacterSheetLoadOutcome
-    private let decodeFrames: ([URL]) async -> [NSImage]
     private(set) var committedBaseline: PetImageSet
     /// Invalidates suspended acquisition/editor work when the draft's authority changes.
     private var generation = 0
@@ -58,18 +55,26 @@ final class CharacterImportModel: ObservableObject {
     init(
         currentImages: @escaping () -> PetImageSet,
         commit: @escaping (PetImageSet) async -> CharacterCommitOutcome,
-        loadSheet: @escaping (URL) async -> CharacterSheetLoadOutcome = { await CharacterSheetLoader.load(from: $0) },
-        decodeFrames: @escaping ([URL]) async -> [NSImage] = { await CharacterSheetLoader.optimizedImages(from: $0) }
+        loadSheet: @escaping (URL) async -> CharacterSheetLoadOutcome = { await CharacterSheetLoader.load(from: $0) }
     ) {
         self.currentImages = currentImages
         self.commit = commit
         self.loadSheet = loadSheet
-        self.decodeFrames = decodeFrames
         committedBaseline = currentImages()
     }
 
     var hasStagedCandidate: Bool {
         stagedFrames?.isComplete == true
+    }
+
+    /// Custom frame counts from older releases cannot be mapped onto the nine fixed slots. The
+    /// shared screen explains the re-import path instead of opening an editor that would fail.
+    var canAdjustFrames: Bool {
+        guard let stagedFrames, stagedFrames.isComplete else { return false }
+        if stagedFrames.editingSource != nil {
+            return true
+        }
+        return PetImageEditingSource.individualEditing(for: stagedFrames) != nil
     }
 
     var canApply: Bool {
@@ -98,7 +103,6 @@ final class CharacterImportModel: ObservableObject {
         isApplying = false
         isEditingFrames = false
         isDropTargeted = false
-        draftVersion += 1
     }
 
     // MARK: - Acquisition
@@ -169,7 +173,6 @@ final class CharacterImportModel: ObservableObject {
             sourceDimension = candidate.sourceDimension
             cellSize = candidate.cellSize
             failure = nil
-            draftVersion += 1
         case .empty:
             // Nothing overwrites the staged draft: the reason is reported and the last candidate stays.
             clipboardHasImage = false
@@ -219,45 +222,18 @@ final class CharacterImportModel: ObservableObject {
         reload()
     }
 
-    // MARK: - Advanced editing over the same draft
+    // MARK: - Frame editor draft
 
-    func addFrames(_ urls: [URL], to category: PetImageCategory) async {
-        guard !isApplying, let original = stagedFrames else { return }
-        let token = generation
-        let version = draftVersion
-        let decoded = await decodeFrames(urls)
-        guard !isApplying,
-              token == generation,
-              version == draftVersion,
-              let current = stagedFrames,
-              Self.sameFrames(current, original),
-              !decoded.isEmpty else { return }
-        var updated = original
-        updated[category].append(contentsOf: decoded)
-        stagedFrames = updated
-        draftVersion += 1
-    }
-
-    func removeFrame(at index: Int, from category: PetImageCategory) {
-        guard !isApplying, var updated = stagedFrames,
-              updated[category].indices.contains(index),
-              updated[category].count > 1 else { return }
-        updated[category].remove(at: index)
-        stagedFrames = updated
-        draftVersion += 1
-    }
-
-    func moveFrame(from source: Int, to destination: Int, in category: PetImageCategory) {
-        guard !isApplying, var updated = stagedFrames,
-              let moved = Self.moving(updated[category], from: source, to: destination) else { return }
-        updated[category] = moved
-        stagedFrames = updated
-        draftVersion += 1
-    }
-
-    /// The advanced editor is only meaningful once a candidate exists.
-    var namedStaged: Bool {
-        stagedFrames != nil
+    /// Replaces the staged draft with the nine frames the crop editor rendered.
+    ///
+    /// The retained sheet source and per-slot edit parameters ride along, so reopening the editor in
+    /// the same draft continues from the same state. Nothing is written until the parent Apply.
+    func stageFrameEdited(_ frames: PetImageSet) {
+        guard !isApplying, frames.isComplete else { return }
+        stagedFrames = frames
+        failure = nil
+        commitFailed = false
+        commitRejected = false
     }
 
     // MARK: - Pure helpers
@@ -268,13 +244,5 @@ final class CharacterImportModel: ObservableObject {
             let right = rhs[category]
             return left.count == right.count && zip(left, right).allSatisfy { $0 === $1 }
         }
-    }
-
-    static func moving<Element>(_ elements: [Element], from source: Int, to destination: Int) -> [Element]? {
-        guard elements.indices.contains(source), elements.indices.contains(destination) else { return nil }
-        var result = elements
-        let item = result.remove(at: source)
-        result.insert(item, at: destination)
-        return result
     }
 }

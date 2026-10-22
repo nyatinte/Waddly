@@ -10,7 +10,6 @@ import WaddlyCore
 @MainActor
 final class CharacterImportWindowController: NSWindowController, NSWindowDelegate {
     let model: CharacterImportModel
-    let frameEditorModel: AnimationSettingsModel
     /// The screen's design size. Both body columns share one height, and only the footer owns the
     /// primary action, so the layout stays coherent when the window is resized above this minimum.
     static let contentSize = NSSize(width: 1040, height: 640)
@@ -27,7 +26,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         onClose: @escaping @MainActor () -> Void
     ) {
         self.model = model
-        frameEditorModel = CharacterFrameEditor.makeModel(importModel: model, localization: localization)
         self.localization = localization
         self.presenter = presenter
         self.onClose = onClose
@@ -67,7 +65,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     func refreshLocalization() {
         window?.title = localization.string(for: .characterWindowTitle)
-        frameEditorModel.refreshLocalization()
         model.refreshLocalization()
     }
 
@@ -95,7 +92,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         }
         let host = NSHostingView(rootView: CharacterImportView(
             model: model,
-            editor: frameEditorModel,
             localization: localization,
             titleKey: .characterChangeTitle,
             primaryKey: .characterApply,

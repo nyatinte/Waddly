@@ -88,7 +88,7 @@ You can also create the sprite sheet by hand.
 - Both dimensions divisible by 3
 - Maximum file size: 20 MB; maximum side length: 4096 px
 
-An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. Fix those poses before importing: place them on equal transparent canvases with a consistent anchor, then assemble a 3×3 sheet or add individual frames per animation in the shared character screen.
+An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. After importing a 3×3 sheet, **Adjust frames…** opens a crop and alignment editor over the staged draft. It exposes exactly nine fixed cells (2 Idle, 4 Typing, 1 Enter, 2 Sleep); resizing the 1:1 crop only narrows the visible frame, while the Align tool moves the character itself. Pan and zoom the canvas with the trackpad or ⌘+/⌘−/⌘0, and check Before/After with the center crosshair.
 
 Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. The shared character screen accepts a chosen PNG, a window-wide PNG drop, or **Paste from Clipboard** (⌘V). Changes stay a draft until you press Continue or Apply.
 
@@ -98,7 +98,7 @@ After setup, use **Set Up Input Monitoring…** for permission, status, and reco
 
 If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**.
 
-Images are stored on your Mac as individual PNG frames. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
+Images are stored on your Mac as individual PNG frames, plus the optional original 3×3 sheet and its crop/alignment metadata when the frame editor was used. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
 
 ## Privacy
 
@@ -106,7 +106,7 @@ Keyboard events are used only to control animation. Waddly does not store, log, 
 
 ## Measured memory
 
-The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md).
+The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). The frame editor decodes the retained 3 × 3 sheet only while it is open and releases its image buffers when the sheet closes.
 
 ## Contributing
 

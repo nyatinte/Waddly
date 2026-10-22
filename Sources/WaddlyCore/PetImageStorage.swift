@@ -1,4 +1,5 @@
 import AppKit
+import ImageIO
 
 /// File work runs on a worker task. Image values are treated as immutable snapshots.
 ///
@@ -188,6 +189,9 @@ public struct PetImageStorage: Sendable {
     }
 
     private static let manifestFilename = "manifest.json"
+    /// Fixed sidecar names, deliberately not `<uuid>.png`, so `reconcileFiles()` never collects them.
+    private static let sourceSheetFilename = "source-sheet.png"
+    private static let frameEditsFilename = "frame-edits.json"
 }
 
 public enum PetImageStorageError: Error {
@@ -207,4 +211,113 @@ public enum PetImageManifestError: Error, Equatable {
 /// durable, so this is retryable independently of the save that produced it.
 public enum PetImageCleanupError: Error, Equatable {
     case failed
+}
+
+/// Persistence for the frame editor's source sheet and per-slot edits.
+///
+/// Both files live in the image directory under fixed names (`source-sheet.png` and
+/// `frame-edits.json`), which `reconcileFiles()` leaves alone. The JSON records the manifest it was
+/// written against, so a pair left over from an earlier frame set is ignored rather than applied to
+/// frames it does not describe. Only sheet mode is persisted: individual-frame editing is derived
+/// from the frames themselves at restore time.
+public extension PetImageStorage {
+    /// Reads the persisted sheet and edits, or `nil` when they do not describe `manifest`.
+    ///
+    /// The sheet's pixel dimensions are read from the PNG header and must match the stored cell size;
+    /// a sheet that does not describe those edits is ignored rather than applied.
+    func readFrameEditingSource(manifest: [String: [String]]) -> PetImageEditingSource? {
+        guard let data = sidecarData(Self.frameEditsFilename),
+              let stored = decodeFrameEdits(data),
+              stored.frameFiles == manifest,
+              stored.editing.mode == .sheet,
+              stored.editing.cellSize > 0,
+              let sheetPNGData = sidecarData(Self.sourceSheetFilename),
+              Self.hasPNGSignature(sheetPNGData),
+              Self.sheetPixelSide(sheetPNGData) == stored.editing.cellSize * 3
+        else { return nil }
+        return PetImageEditingSource(
+            editing: stored.editing.normalized,
+            sheetPNGData: sheetPNGData
+        )
+    }
+
+    /// Writes the sheet and edits, or removes both sidecars when there is nothing sheet-based to keep.
+    ///
+    /// The PNG is written before the JSON so the JSON always describes a sheet that exists. Callers
+    /// treat failures as best effort: a sidecar problem must never fail an already-committed save.
+    func writeFrameEditingSource(
+        _ source: PetImageEditingSource?,
+        manifest: [String: [String]]
+    ) throws {
+        guard let source, source.editing.mode == .sheet,
+              let sheetPNGData = source.sheetPNGData, !sheetPNGData.isEmpty
+        else {
+            try removeFrameEditingSidecars()
+            return
+        }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try sheetPNGData.write(to: sourceSheetURL, options: .atomic)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let payload = StoredFrameEdits(frameFiles: manifest, editing: source.editing.normalized)
+        try encoder.encode(payload).write(to: frameEditsURL, options: .atomic)
+    }
+
+    private var sourceSheetURL: URL {
+        directory.appendingPathComponent(Self.sourceSheetFilename)
+    }
+
+    private var frameEditsURL: URL {
+        directory.appendingPathComponent(Self.frameEditsFilename)
+    }
+
+    private func sidecarData(_ filename: String) -> Data? {
+        try? Data(contentsOf: directory.appendingPathComponent(filename))
+    }
+
+    private func decodeFrameEdits(_ data: Data) -> StoredFrameEdits? {
+        try? JSONDecoder().decode(StoredFrameEdits.self, from: data)
+    }
+
+    private func removeFrameEditingSidecars() throws {
+        for url in [sourceSheetURL, frameEditsURL] {
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                guard Self.isMissingFileError(error) else { throw error }
+            }
+        }
+    }
+
+    private static func isMissingFileError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileNoSuchFileError
+    }
+
+    private static func hasPNGSignature(_ data: Data) -> Bool {
+        data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+    }
+
+    /// The side of a square PNG read from its header, or `nil` when it is not a readable square.
+    ///
+    /// Only metadata is read (`kCGImageSourceShouldCache: false`); the sheet pixels are never decoded
+    /// here, so restoring a large sheet stays cheap.
+    private static func sheetPixelSide(_ data: Data) -> Int? {
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ),
+            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+            let width = properties[kCGImagePropertyPixelWidth] as? Int,
+            let height = properties[kCGImagePropertyPixelHeight] as? Int,
+            width > 0, width == height
+        else { return nil }
+        return width
+    }
+}
+
+/// The on-disk `frame-edits.json` shape: the frame manifest the edits belong to plus the editing.
+private struct StoredFrameEdits: Codable {
+    let frameFiles: [String: [String]]
+    let editing: SpriteFrameEditing
 }

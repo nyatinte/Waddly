@@ -174,13 +174,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         }
     )
 
-    /// The advanced editor's model, wired to the shared draft. Built once so the sheet reuses one
-    /// source of truth while it is open.
-    lazy var frameEditorModel = CharacterFrameEditor.makeModel(
-        importModel: characterImportModel,
-        localization: localization
-    )
-
     var isMonitoringGranted: Bool {
         permission.isGranted
     }

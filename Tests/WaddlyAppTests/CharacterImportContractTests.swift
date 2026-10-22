@@ -4,49 +4,38 @@ import Testing
 import WaddlyCore
 
 @Suite(.serialized) @MainActor struct CharacterImportContractTests {
-    @Test func savedCustomFramesArePreviewableAndEditableWithoutTheirSourceSheet() async throws {
-        var saved = try SetupWizardFixture.sheetImages()
-        saved[.idle].append(saved[.typing][0])
-        saved[.typing].removeFirst()
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("WaddlyTests-\(UUID().uuidString)", isDirectory: true)
-        defer {
-            do {
-                try FileManager.default.removeItem(at: directory)
-            } catch {
-                Issue.record(error)
-            }
-        }
-        let storage = PetImageStorage(directory: directory)
-        let manifest = try storage.stage(saved, replacing: PetImageSet(), files: [:])
-        try storage.commitManifest(manifest)
-        var stored = try storage.load(manifest).0
+    /// The crop editor's Done only replaces the staged draft. Parent Apply is still the single write,
+    /// and a legacy frame set without a sheet stays editable in the same draft.
+    @Test func frameEditsStageIntoDraftAndApplyCommitsThem() async throws {
+        var stored = try SetupWizardFixture.sheetImages()
         let persisted = stored
-        let added = try #require(SetupWizardFixture.sheetImages()[.enter].first)
         var commitCount = 0
         let model = CharacterImportModel(
             currentImages: { stored },
-            commit: { stored = $0; commitCount += 1; return .committed },
-            decodeFrames: { _ in [added] }
+            commit: { stored = $0; commitCount += 1; return .committed }
         )
 
         model.reload()
-
         #expect(model.stagedFrames != nil)
-        #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), persisted))
         #expect(!model.isDirty)
-        #expect(model.sourceName == nil)
-        #expect(model.sourceDimension == nil)
-        #expect(model.cellSize == nil)
 
-        await model.addFrames([URL(fileURLWithPath: "/tmp/saved-character-frame.png")], to: .enter)
-        model.removeFrame(at: 0, from: .idle)
-        model.moveFrame(from: 0, to: 1, in: .typing)
+        let staged = try #require(model.stagedFrames)
+        var edited = staged
+        edited[.idle][0] = try #require(edited[.typing].first)
+        model.stageFrameEdited(edited)
 
         #expect(model.isDirty)
-        #expect(model.stagedFrames?[.enter].contains(where: { $0 === added }) == true)
         #expect(commitCount == 0)
         #expect(CharacterImportModel.sameFrames(stored, persisted))
+
+        model.discard()
+        #expect(!model.isDirty)
+        #expect(CharacterImportModel.sameFrames(stored, persisted))
+
+        model.stageFrameEdited(edited)
+        #expect(await model.apply())
+        #expect(commitCount == 1)
+        #expect(CharacterImportModel.sameFrames(stored, edited))
     }
 
     @Test func repeatedCloseWaitsForTheOutstandingDiscardConfirmation() async throws {
