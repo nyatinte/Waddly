@@ -6,10 +6,10 @@ import WaddlyCore
 /// editor asks for a child-sized surface when the display allows it and falls back to a still-usable
 /// minimum on smaller screens.
 enum FrameEditorMetrics {
-    static let preferredSize = NSSize(width: 1240, height: 800)
+    static let preferredSize = NSSize(width: 1320, height: 800)
     static let minimumSize = NSSize(width: 1040, height: 700)
-    static let compactBreakpoint: CGFloat = 1120
-    static let sidebarWidth: CGFloat = 236
+    static let compactBreakpoint: CGFloat = 1160
+    static let sidebarWidth: CGFloat = 306
     static let inspectorWidth: CGFloat = 300
     static let compactInspectorWidth: CGFloat = 268
     static let compactRailWidth: CGFloat = 58

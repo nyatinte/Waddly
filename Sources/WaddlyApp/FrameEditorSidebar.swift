@@ -13,10 +13,10 @@ struct FrameEditorSidebar: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(localization.string(for: .frameEditorFrames))
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                 Text(localization.string(for: model.isSheetMode
                         ? .frameEditorFramesSubtitle
                         : .frameEditorFramesSubtitleIndividual))
@@ -34,12 +34,12 @@ struct FrameEditorSidebar: View {
             if let sourceName = model.sourceName, let dimensions = model.sourceDimensionsDescription {
                 VStack(alignment: .leading, spacing: 2) {
                     Label(sourceName, systemImage: "photo")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Text(dimensions)
-                        .font(.system(size: 9, design: .monospaced))
+                        .font(.system(size: 10, design: .monospaced))
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
@@ -55,8 +55,8 @@ struct FrameEditorSidebar: View {
 
     private var contactSheet: some View {
         LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3),
-            spacing: 6
+            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+            spacing: 8
         ) {
             ForEach(SpriteFrameSlot.allCases, id: \.self) { slot in
                 FrameThumbnailTile(
@@ -80,19 +80,19 @@ struct FrameEditorSidebar: View {
     }
 
     private var groups: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 12) {
             ForEach(Self.groupOrder, id: \.self) { category in
                 let slots = SpriteFrameSlot.slots(for: category)
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 5) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
                         Text(category.title(using: localization))
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                         Text("\(slots.count)")
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         ForEach(slots, id: \.self) { slot in
                             FrameThumbnailTile(
                                 slot: slot,
@@ -108,7 +108,7 @@ struct FrameEditorSidebar: View {
                             ) {
                                 model.select(slot)
                             }
-                            .frame(width: 34, height: 34)
+                            .frame(width: 44, height: 44)
                         }
                         Spacer(minLength: 0)
                     }
@@ -122,7 +122,7 @@ struct FrameEditorSidebar: View {
 
     private var legacyNotice: some View {
         Label(localization.string(for: .frameEditorLegacyNotice), systemImage: "info.circle")
-            .font(.system(size: 10))
+            .font(.system(size: 11))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
