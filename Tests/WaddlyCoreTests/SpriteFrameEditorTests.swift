@@ -283,6 +283,11 @@ private struct ResizeExpectation {
     incomplete[.enter] = []
     #expect(PetImageEditingSource.individualEditing(for: incomplete) == nil)
     #expect(PetImageEditingSource.editingSource(frames: incomplete) == nil)
+
+    var surplus = images
+    surplus[.idle].append(images[.typing][0])
+    #expect(PetImageEditingSource.individualEditing(for: surplus) == nil)
+    #expect(PetImageEditingSource.editingSource(frames: surplus) == nil)
 }
 
 func fixturePNGData() throws -> Data {

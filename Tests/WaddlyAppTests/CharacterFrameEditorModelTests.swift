@@ -156,7 +156,7 @@ import WaddlyCore
         let editor = try CharacterFrameEditorModel(
             importModel: importModel,
             localization: makeLocalization(),
-            sheetDecoder: { _ in await gate.wait() }
+            sheetDecoder: { _ in await gate.suspend() }
         )
         let task = Task { await editor.prepare() }
         #expect(await gate.waitUntilStarted())
@@ -177,8 +177,6 @@ import WaddlyCore
     @Test func unsupportedLegacyLayoutCannotStageATruncatedDraft() async throws {
         var frames = try SetupWizardFixture.sheetImages()
         frames[.idle].append(frames[.typing][0])
-        frames[.typing].removeFirst()
-        frames[.typing].removeFirst()
         let importModel = CharacterImportModel(
             currentImages: { frames },
             commit: { _ in .committed }
@@ -201,9 +199,8 @@ import WaddlyCore
     /// fail; the shared screen explains the re-import path instead.
     @Test func customLegacyFrameLayoutIsNotAdjustable() throws {
         var frames = try SetupWizardFixture.sheetImages()
+        // Surplus-only layout: 3 Idle / 4 Typing / 1 Enter / 2 Sleep.
         frames[.idle].append(frames[.typing][0])
-        frames[.typing].removeFirst()
-        frames[.typing].removeFirst()
         #expect(frames.isComplete)
 
         let model = CharacterImportModel(currentImages: { frames }, commit: { _ in .committed })
@@ -225,7 +222,7 @@ private final class SheetDecodeGate {
     private var continuation: CheckedContinuation<CGImage?, Never>?
     private var releasedImage: CGImage?
 
-    func wait() async -> CGImage? {
+    func suspend() async -> CGImage? {
         started = true
         if let releasedImage {
             return releasedImage

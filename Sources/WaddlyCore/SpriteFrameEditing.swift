@@ -181,6 +181,12 @@ public struct PetImageEditingSource: Sendable {
 
     /// Individual-frame editing for a legacy saved pet, or `nil` when a frame is missing or not square.
     public static func individualEditing(for images: PetImageSet) -> SpriteFrameEditing? {
+        // The editor can only represent exactly nine fixed slots. Reject surplus or missing
+        // frames instead of silently composing a truncated nine-frame draft over the saved pet.
+        for category in PetImageCategory.allCases {
+            let expected = SpriteFrameSlot.slots(for: category).count
+            guard images[category].count == expected else { return nil }
+        }
         var sides: [Int] = []
         for slot in SpriteFrameSlot.allCases {
             let frames = images[slot.category]
