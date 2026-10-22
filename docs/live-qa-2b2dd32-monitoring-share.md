@@ -68,10 +68,14 @@ TMPDIR value. No filesystem-failure/retry success is claimed from this attempt, 
 is retained as stock success, not mislabeled as a failure. No global temp directory was modified and
 no filesystem or OS privacy permissions were changed to force the test.
 
-Synthetic Escape and Command-W requests while stock Share was focused did not dismiss that window.
-The input requests are provider-unverified; this alone does not demonstrate physical delivery or a
-product keyboard defect. Physical shortcuts/focus traversal remain pending. Share was subsequently
-closed through its native close button; fixture close also ended its process and cleaned its suite.
+The provider **rejected both stock Share shortcut requests before establishing key delivery**:
+[Escape](images/monitoring-share-qa-2b2dd32/receipts/share-escape-action.json) and
+[Command-W](images/monitoring-share-qa-2b2dd32/receipts/share-command-w.json) each returned `ok: false`
+with `window_not_focused`. These were blocked at the automation focus precondition, not accepted
+synthetic input with an unverified effect. They establish neither a focused shortcut attempt nor a
+product keyboard defect. Focus acquisition and physical shortcut/traversal acceptance remain pending.
+Share was subsequently closed through its native close button; fixture close also ended its process
+and cleaned its suite.
 
 ## Finding / next boundary
 
