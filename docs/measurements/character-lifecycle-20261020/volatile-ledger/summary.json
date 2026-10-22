@@ -1,0 +1,196 @@
+{
+  "changed_application_source_paths_vs_previous_counters": [
+    "Sources/WaddlyApp/AppDelegateMenu.swift",
+    "Sources/WaddlyApp/LocalizationKey.generated.swift"
+  ],
+  "closed_30s_endpoints": [
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 79609856,
+      "internal_bytes": 126353408,
+      "ledger_purgeable_volatile_bytes": 46825472,
+      "peak_physical_footprint_bytes": 139298160,
+      "peak_rss_bytes": 209010688,
+      "physical_footprint_bytes": 129107288,
+      "reusable_bytes": 2441216,
+      "rss_bytes": 208404480,
+      "state": "cycle-0-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 136003584,
+      "ledger_purgeable_volatile_bytes": 55705600,
+      "peak_physical_footprint_bytes": 173737400,
+      "peak_rss_bytes": 294289408,
+      "physical_footprint_bytes": 130172320,
+      "reusable_bytes": 2670592,
+      "rss_bytes": 222199808,
+      "state": "cycle-1-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 153468928,
+      "ledger_purgeable_volatile_bytes": 74334208,
+      "peak_physical_footprint_bytes": 183977472,
+      "peak_rss_bytes": 315604992,
+      "physical_footprint_bytes": 84198840,
+      "reusable_bytes": 2752512,
+      "rss_bytes": 239747072,
+      "state": "cycle-2-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 153518080,
+      "ledger_purgeable_volatile_bytes": 72482816,
+      "peak_physical_footprint_bytes": 183977472,
+      "peak_rss_bytes": 315604992,
+      "physical_footprint_bytes": 130598304,
+      "reusable_bytes": 2768896,
+      "rss_bytes": 239812608,
+      "state": "cycle-3-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 147800064,
+      "ledger_purgeable_volatile_bytes": 71991296,
+      "peak_physical_footprint_bytes": 184206800,
+      "peak_rss_bytes": 315604992,
+      "physical_footprint_bytes": 130729400,
+      "reusable_bytes": 2850816,
+      "rss_bytes": 234176512,
+      "state": "cycle-4-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 185090048,
+      "ledger_purgeable_volatile_bytes": 128040960,
+      "peak_physical_footprint_bytes": 186926592,
+      "peak_rss_bytes": 347619328,
+      "physical_footprint_bytes": 113870312,
+      "reusable_bytes": 2899968,
+      "rss_bytes": 271515648,
+      "state": "cycle-5-closed-30s"
+    },
+    {
+      "compressed_bytes": 0,
+      "external_bytes": 83525632,
+      "internal_bytes": 236044288,
+      "ledger_purgeable_volatile_bytes": 178110464,
+      "peak_physical_footprint_bytes": 186926592,
+      "peak_rss_bytes": 394149888,
+      "physical_footprint_bytes": 114787864,
+      "reusable_bytes": 2949120,
+      "rss_bytes": 322519040,
+      "state": "cycle-6-closed-30s"
+    },
+    {
+      "compressed_bytes": 3194880,
+      "external_bytes": 83525632,
+      "internal_bytes": 287653888,
+      "ledger_purgeable_volatile_bytes": 232374272,
+      "peak_physical_footprint_bytes": 186926592,
+      "peak_rss_bytes": 444710912,
+      "physical_footprint_bytes": 115377760,
+      "reusable_bytes": 2555904,
+      "rss_bytes": 373735424,
+      "state": "cycle-7-closed-30s"
+    },
+    {
+      "compressed_bytes": 3194880,
+      "external_bytes": 83525632,
+      "internal_bytes": 254066688,
+      "ledger_purgeable_volatile_bytes": 197230592,
+      "peak_physical_footprint_bytes": 186926592,
+      "peak_rss_bytes": 462471168,
+      "physical_footprint_bytes": 116934240,
+      "reusable_bytes": 2850816,
+      "rss_bytes": 340443136,
+      "state": "cycle-8-closed-30s"
+    },
+    {
+      "compressed_bytes": 3194880,
+      "external_bytes": 83525632,
+      "internal_bytes": 253984768,
+      "ledger_purgeable_volatile_bytes": 199081984,
+      "peak_physical_footprint_bytes": 186926592,
+      "peak_rss_bytes": 462618624,
+      "physical_footprint_bytes": 115000904,
+      "reusable_bytes": 2998272,
+      "rss_bytes": 340508672,
+      "state": "cycle-9-closed-30s"
+    }
+  ],
+  "columns": 11,
+  "default_workload_contract_smoke": {
+    "columns": 11,
+    "samples": 23
+  },
+  "elapsed_seconds": 620.4997850416694,
+  "final_bytes": {
+    "compressed_bytes": 3194880,
+    "external_bytes": 83525632,
+    "internal_bytes": 253984768,
+    "ledger_purgeable_volatile_bytes": 199081984,
+    "peak_physical_footprint_bytes": 186926592,
+    "peak_rss_bytes": 462618624,
+    "physical_footprint_bytes": 115000904,
+    "reusable_bytes": 2998272,
+    "rss_bytes": 340508672
+  },
+  "maxima_bytes": {
+    "compressed_bytes": 3194880,
+    "external_bytes": 83525632,
+    "internal_bytes": 377192448,
+    "ledger_purgeable_volatile_bytes": 276594688,
+    "peak_physical_footprint_bytes": 186926592,
+    "peak_rss_bytes": 462618624,
+    "physical_footprint_bytes": 175408640,
+    "reusable_bytes": 3047424,
+    "rss_bytes": 462127104
+  },
+  "maximum_sample_gap_seconds": 1.387686958303675,
+  "native_query_positive_control": {
+    "basic_flavor_unavailable_map_fields": [
+      "purgeable_volatile_pmap_bytes",
+      "purgeable_volatile_resident_bytes",
+      "purgeable_volatile_virtual_bytes"
+    ],
+    "owned_bytes": 16777216,
+    "queried_ledger_field_for_both_flavors": "ledger_purgeable_volatile_bytes",
+    "volatile_rows": [
+      {
+        "flavor": "TASK_VM_INFO",
+        "ledger_purgeable_volatile_bytes": "16777216",
+        "physical_footprint_bytes": "1343920",
+        "purgeable_volatile_pmap_bytes": "0",
+        "purgeable_volatile_resident_bytes": "0",
+        "purgeable_volatile_virtual_bytes": "0",
+        "returned_integer_count": "93",
+        "rss_bytes": "18792448",
+        "stage": "volatile"
+      },
+      {
+        "flavor": "TASK_VM_INFO_PURGEABLE",
+        "ledger_purgeable_volatile_bytes": "16777216",
+        "physical_footprint_bytes": "1343920",
+        "purgeable_volatile_pmap_bytes": "16777216",
+        "purgeable_volatile_resident_bytes": "16777216",
+        "purgeable_volatile_virtual_bytes": "16777216",
+        "returned_integer_count": "93",
+        "rss_bytes": "18792448",
+        "stage": "volatile"
+      }
+    ]
+  },
+  "native_wrong_flavor_negative_control": {
+    "exit_status": 1,
+    "samples": 6
+  },
+  "samples": 602,
+  "task_info_flavor": "TASK_VM_INFO"
+}

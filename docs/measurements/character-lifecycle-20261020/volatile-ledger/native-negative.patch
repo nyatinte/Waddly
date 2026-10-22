@@ -1,0 +1,11 @@
+--- Tools/probe_task_vm_purgeable.swift	2026-10-21 21:29:58
++++ dist/diagnostics/98-purgeable-contract/final/negative.swift	2026-10-21 21:41:44
+@@ -38,7 +38,7 @@
+         var state = Int32(VM_PURGABLE_VOLATILE)
+         try check(mach_vm_purgable_control(mach_task_self_, address, VM_PURGABLE_SET_STATE, &state), "mark-volatile")
+         let basic = try snapshot("volatile", flavor: TASK_VM_INFO)
+-        let queried = try snapshot("volatile", flavor: TASK_VM_INFO_PURGEABLE)
++        let queried = try snapshot("volatile", flavor: TASK_VM_INFO)
+         try require(
+             volatileCounters(basic).allSatisfy { $0 == 0 }, "basic flavor unexpectedly populated volatile fields"
+         )

@@ -1,0 +1,67 @@
+{
+  "id": "fa929809-7a7b-44c8-8f2e-fc27874b7b94",
+  "ok": true,
+  "result": {
+    "action": {
+      "path": "accessibility",
+      "targetWindowId": 60806,
+      "actionName": "AXPress",
+      "fallbackReason": null,
+      "verification": {
+        "state": "unverified",
+        "reason": "accessibility_action_unasserted"
+      }
+    },
+    "screenshot": {
+      "format": "png",
+      "width": 1400,
+      "height": 884,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/fa929809-7a7b-44c8-8f2e-fc27874b7b94-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T15:07:15.729Z"
+    },
+    "snapshot": {
+      "window": {
+        "isOffscreen": false,
+        "title": "ペットをシェア",
+        "width": 700,
+        "screenIndex": 0,
+        "id": 60806,
+        "x": 505,
+        "height": 442,
+        "isMinimized": false,
+        "platform": {
+          "layer": 0
+        },
+        "y": 192
+      },
+      "app": {
+        "bundleId": "dev.nyatinte.waddly.qa111b.fixture",
+        "pid": 41753,
+        "name": "Waddly (qa111b.development)"
+      },
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      },
+      "elementCount": 19,
+      "id": "BB68C49B-46D2-4341-92EA-BAC88F78B2EE",
+      "treeText": "App=dev.nyatinte.waddly.qa111b.fixture (pid 41753)\nWindow: \"ペットをシェア\", App: Waddly (qa111b.development).\n\n0 標準ウインドウ ペットをシェア\n\t1 テキスト, Value: 5秒の動画\n\t2 ボタン 動画をコピー, Description: 5秒の動画をクリップボードにコピーします\n\t3 イメージ\n\t4 ボタン 書き出した動画を再生\n\t5 テキスト, Value: MP4 · 5秒 · 384 × 384\n\t6 テキスト, Value: コピーできませんでした。もう一度お試しください。\n\t7 テキスト, Value: 3×3スプライトシート\n\t8 ボタン 画像をコピー, Description: 3×3スプライトシートの画像をクリップボードにコピーします\n\t9 イメージ\n\t10 テキスト, Value: PNG · 3 × 3 · 9コマ\n\t11 テキスト, Value: コピーできませんでした。もう一度お試しください。\n\t12 テキスト, Value: 投稿する\n\t13 ボタン Xでポストする\n\t14 テキスト, Value: Xを開けませんでした。動画をコピーして自分で添付してください。\n\t15 閉じるボタン\n\t16 拡大/縮小ボタン (disabled)\n\t17 しまうボタン (disabled)\n\t18 テキスト, Value: ペットをシェア\n\nThe focused UI element is 0 標準ウインドウ ペットをシェア.",
+      "coordinateSpace": "window",
+      "focusedElementId": 0
+    },
+    "screenshotStatus": {
+      "state": "captured",
+      "metadata": {
+        "engine": "screenCaptureKit",
+        "windowId": 60806
+      }
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

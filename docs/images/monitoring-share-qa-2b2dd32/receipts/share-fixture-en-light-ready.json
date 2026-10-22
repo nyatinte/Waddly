@@ -1,0 +1,57 @@
+{
+  "id": "0e7ab885-5d39-4cd7-8afb-3c16ba2bf556",
+  "ok": true,
+  "result": {
+    "screenshot": {
+      "format": "png",
+      "width": 1400,
+      "height": 884,
+      "scale": 2,
+      "path": "/var/folders/vs/3pykyjj16qz9vv433tys3z680000gn/T/orca-computer-use/0e7ab885-5d39-4cd7-8afb-3c16ba2bf556-screenshot.png",
+      "dataOmitted": true,
+      "expiresAt": "2026-10-22T15:03:29.837Z"
+    },
+    "snapshot": {
+      "app": {
+        "pid": 33281,
+        "bundleId": "dev.nyatinte.waddly.qa111b.fixture",
+        "name": "Waddly (qa111b.development)"
+      },
+      "treeText": "App=dev.nyatinte.waddly.qa111b.fixture (pid 33281)\nWindow: \"Share Pet\", App: Waddly (qa111b.development).\n\n0 標準ウインドウ Share Pet\n\t1 テキスト, Value: 5-second video\n\t2 ボタン Copy video, Description: Copy the 5-second video to the clipboard\n\t3 イメージ\n\t4 ボタン Play the exported video\n\t5 テキスト, Value: MP4 · 5 s · 384 × 384\n\t6 テキスト\n\t7 テキスト, Value: 3×3 sprite sheet\n\t8 ボタン Copy image, Description: Copy the 3×3 sprite sheet image to the clipboard\n\t9 イメージ\n\t10 テキスト, Value: PNG · 3 × 3 · 9 frames\n\t11 テキスト\n\t12 テキスト, Value: Post\n\t13 ボタン Post on X\n\t14 テキスト\n\t15 閉じるボタン\n\t16 拡大/縮小ボタン (disabled)\n\t17 しまうボタン (disabled)\n\t18 テキスト, Value: Share Pet\n\nThe focused UI element is 0 標準ウインドウ Share Pet.",
+      "coordinateSpace": "window",
+      "id": "D4F9F804-03FB-4A57-A859-E9981F3B08E1",
+      "focusedElementId": 0,
+      "elementCount": 19,
+      "window": {
+        "screenIndex": 0,
+        "platform": {
+          "layer": 0
+        },
+        "isMinimized": false,
+        "x": 505,
+        "title": "Share Pet",
+        "id": 60779,
+        "width": 700,
+        "y": 192,
+        "height": 442,
+        "isOffscreen": false
+      },
+      "truncation": {
+        "maxDepth": 64,
+        "maxDepthReached": false,
+        "truncated": false,
+        "maxNodes": 1200
+      }
+    },
+    "screenshotStatus": {
+      "metadata": {
+        "windowId": 60779,
+        "engine": "screenCaptureKit"
+      },
+      "state": "captured"
+    }
+  },
+  "_meta": {
+    "runtimeId": "13a758db-c527-4c30-befc-2fea44b5bb1b"
+  }
+}

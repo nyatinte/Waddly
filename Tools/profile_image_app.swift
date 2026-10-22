@@ -32,7 +32,7 @@ struct ImageAppProbe {
         print(
             "state,physical_footprint_bytes,peak_physical_footprint_bytes," +
                 "rss_bytes,peak_rss_bytes,system_uptime_seconds,reusable_bytes," +
-                "compressed_bytes,internal_bytes,external_bytes"
+                "compressed_bytes,internal_bytes,external_bytes,ledger_purgeable_volatile_bytes"
         )
         snapshot("launch")
         delegate.setupWizardController?.close()
@@ -120,18 +120,22 @@ struct ImageAppProbe {
     private static func snapshot(_ label: String) {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout.size(ofValue: info) / MemoryLayout<integer_t>.size)
-        // TASK_VM_INFO does not query the volatile fields, and public XNU hardcodes device to zero.
-        // Only emit the additional ledger-backed counters; those placeholders are not measurements.
+        // TASK_VM_INFO does not query volatile map fields, and public XNU hardcodes device to zero.
+        // Its distinct ledger_purgeable_volatile balance is queried; do not confuse it with those fields.
         let result = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
                 task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
             }
         }
-        guard result == KERN_SUCCESS else { exit(1) }
+        guard let offset = MemoryLayout<task_vm_info_data_t>.offset(of: \.ledger_purgeable_volatile) else { exit(1) }
+        let requiredBytes = offset + MemoryLayout.size(ofValue: info.ledger_purgeable_volatile)
+        guard result == KERN_SUCCESS,
+              Int(count) * MemoryLayout<integer_t>.size >= requiredBytes else { exit(1) }
         print(
             "\(label),\(info.phys_footprint),\(info.ledger_phys_footprint_peak)," +
                 "\(info.resident_size),\(info.resident_size_peak),\(ProcessInfo.processInfo.systemUptime)," +
-                "\(info.reusable),\(info.compressed),\(info.internal),\(info.external)"
+                "\(info.reusable),\(info.compressed),\(info.internal),\(info.external)," +
+                "\(info.ledger_purgeable_volatile)"
         )
         fflush(stdout)
     }
