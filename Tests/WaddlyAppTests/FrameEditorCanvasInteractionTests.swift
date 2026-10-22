@@ -47,6 +47,49 @@ import WaddlyCore
         return try #require(context.makeImage())
     }
 
+    @Test func keyboardAndAccessibilityActionsZoomAndResetWithoutTouchingTheCrop() throws {
+        let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        var zooms: [CGFloat] = []
+        view.onZoomChange = { zooms.append($0) }
+        try view.apply(FrameCanvasConfiguration(
+            source: makeImage(),
+            sourceSide: 20,
+            canvasSide: 20,
+            nominalCell: SquareCrop(x: 0, y: 0, size: 20),
+            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+            tool: .crop,
+            zoomScale: 1,
+            showsGrid: false,
+            showsCrosshair: false,
+            showsWarning: false,
+            zoomInLabel: "Zoom in",
+            zoomOutLabel: "Zoom out",
+            resetViewLabel: "Reset view"
+        ))
+
+        #expect(try view.performKeyEquivalent(with: keyEvent("=", modifiers: .command)))
+        #expect(zooms.last == 1.25)
+        view.panOffset = CGPoint(x: 20, y: 20)
+        #expect(try view.performKeyEquivalent(with: keyEvent("0", modifiers: .command)))
+        #expect(zooms.last == 1)
+        #expect(view.panOffset == .zero)
+    }
+
+    private func keyEvent(_ characters: String, modifiers: NSEvent.ModifierFlags) throws -> NSEvent {
+        try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: modifiers,
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: characters,
+            charactersIgnoringModifiers: characters,
+            isARepeat: false,
+            keyCode: 0
+        ))
+    }
+
     private func mouseEvent(_ type: NSEvent.EventType, at point: NSPoint) throws -> NSEvent {
         try #require(NSEvent.mouseEvent(
             with: type,

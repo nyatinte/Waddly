@@ -20,6 +20,9 @@ struct FrameCanvasConfiguration {
     var accessibilityLabel: String = ""
     var accessibilityValue: String = ""
     var accessibilityHelp: String = ""
+    var zoomInLabel: String = ""
+    var zoomOutLabel: String = ""
+    var resetViewLabel: String = ""
 }
 
 /// A precision crop canvas with eight square-locked resize handles, dimmed surroundings, rule-of-

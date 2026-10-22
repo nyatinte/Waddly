@@ -52,7 +52,10 @@ struct FrameEditorCenterColumn: View {
             showsWarning: model.cropExtendsIntoNeighbor,
             accessibilityLabel: localization.string(for: .frameEditorCanvasA11y),
             accessibilityValue: canvasAccessibilityValue,
-            accessibilityHelp: localization.string(for: .frameEditorCanvasHelp)
+            accessibilityHelp: localization.string(for: .frameEditorCanvasHelp),
+            zoomInLabel: localization.string(for: .frameEditorZoomInAction),
+            zoomOutLabel: localization.string(for: .frameEditorZoomOutAction),
+            resetViewLabel: localization.string(for: .frameEditorResetViewAction)
         )
     }
 

@@ -149,6 +149,57 @@ extension FrameCanvasNSView {
         updateCursor(at: convert(event.locationInWindow, from: nil))
     }
 
+    // MARK: - Keyboard-accessible viewport controls
+
+    /// ⌘+ / ⌘− zoom and ⌘0 resets, independent of which canvas control has focus.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard event.type == .keyDown,
+              event.modifierFlags.contains(.command),
+              let characters = event.charactersIgnoringModifiers
+        else { return super.performKeyEquivalent(with: event) }
+        if characters == "+" || characters == "=" {
+            zoom(by: 1.25)
+        } else if characters == "-" || characters == "_" {
+            zoom(by: 1 / 1.25)
+        } else if characters == "0" {
+            resetViewport()
+        } else {
+            return super.performKeyEquivalent(with: event)
+        }
+        return true
+    }
+
+    /// Option-arrow pans the viewport for keyboard users; the crop itself stays unchanged.
+    override func keyDown(with event: NSEvent) {
+        guard event.modifierFlags.contains(.option), let configuration, configuration.source != nil else {
+            super.keyDown(with: event)
+            return
+        }
+        let step: CGFloat = 24
+        if event.keyCode == 123 {
+            panBy(deltaX: -step, deltaY: 0)
+        } else if event.keyCode == 124 {
+            panBy(deltaX: step, deltaY: 0)
+        } else if event.keyCode == 125 {
+            panBy(deltaX: 0, deltaY: step)
+        } else if event.keyCode == 126 {
+            panBy(deltaX: 0, deltaY: -step)
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+
+    private func zoom(by factor: CGFloat) {
+        guard let configuration, configuration.source != nil else { return }
+        onZoomChange?(configuration.zoomScale * factor)
+    }
+
+    private func panBy(deltaX: CGFloat, deltaY: CGFloat) {
+        panOffset.x += deltaX
+        panOffset.y += deltaY
+        needsDisplay = true
+    }
+
     // MARK: - Pan and zoom gestures
 
     /// Trackpad / wheel scrolling pans the viewport; Option-scroll zooms.
