@@ -39,6 +39,7 @@ struct FrameEditorCenterColumn: View {
         FrameCanvasConfiguration(
             source: model.currentSourceImage,
             sourceSide: model.geometry?.sourceSide ?? 1,
+            canvasSide: model.outputSide,
             nominalCell: model.geometry?.nominalCell,
             adjustment: model.currentAdjustment,
             tool: model.tool,

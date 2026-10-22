@@ -201,7 +201,8 @@ private extension CharacterImportSnapshotTests {
 
         editor.tool = .align
         editor.select(.typing1)
-        editor.setCropSize(candidate.cellSize + 48)
+        // Shift the crop window across the cell boundary to show the neighbouring-cell warning.
+        editor.setCropOriginX(512 - 20)
         editor.setOffsetY(-8)
         try writeEditor(editor, localization: localization, dark: dark, named: "frame-editor-align-\(tag)")
     }

@@ -142,6 +142,31 @@ import WaddlyCore
         #expect(weakSheet == nil)
     }
 
+    /// Even if a future host opened the editor for a custom frame layout, it must not compose or
+    /// stage a truncated nine-frame draft over the user's saved frames.
+    @Test func unsupportedLegacyLayoutCannotStageATruncatedDraft() async throws {
+        var frames = try SetupWizardFixture.sheetImages()
+        frames[.idle].append(frames[.typing][0])
+        frames[.typing].removeFirst()
+        frames[.typing].removeFirst()
+        let importModel = CharacterImportModel(
+            currentImages: { frames },
+            commit: { _ in .committed }
+        )
+        importModel.reload()
+        let before = try #require(importModel.stagedFrames)
+        let editor = try CharacterFrameEditorModel(
+            importModel: importModel,
+            localization: makeLocalization()
+        )
+        await editor.prepare()
+
+        #expect(editor.editing == nil)
+        #expect(editor.composeFailed)
+        #expect(await !editor.stageIntoDraft())
+        #expect(try CharacterImportModel.sameFrames(#require(importModel.stagedFrames), before))
+    }
+
     /// Older releases allowed custom frame counts. They must not fall into an editor that can only
     /// fail; the shared screen explains the re-import path instead.
     @Test func customLegacyFrameLayoutIsNotAdjustable() throws {

@@ -107,42 +107,45 @@ private struct ResizeExpectation {
     let expected: SquareCrop
 }
 
-@Test func resizeHandlesAnchorTheOppositeEdgeOrCorner() {
+@Test func resizeHandlesKeepTheCropCentred() {
     let geometry = spriteTestSheetGeometry()
     let crop = SquareCrop(x: 20, y: 20, size: 20)
     let cases = [
-        ResizeExpectation(handle: .topLeft, deltaX: -5, deltaY: -5, expected: SquareCrop(x: 15, y: 15, size: 25)),
-        ResizeExpectation(handle: .top, deltaX: 0, deltaY: -5, expected: SquareCrop(x: 20, y: 15, size: 25)),
-        ResizeExpectation(handle: .topRight, deltaX: 5, deltaY: -5, expected: SquareCrop(x: 20, y: 15, size: 25)),
-        ResizeExpectation(handle: .right, deltaX: 5, deltaY: 0, expected: SquareCrop(x: 20, y: 20, size: 25)),
-        ResizeExpectation(handle: .bottomRight, deltaX: 5, deltaY: 5, expected: SquareCrop(x: 20, y: 20, size: 25)),
-        ResizeExpectation(handle: .bottom, deltaX: 0, deltaY: 5, expected: SquareCrop(x: 20, y: 20, size: 25)),
-        ResizeExpectation(handle: .bottomLeft, deltaX: -5, deltaY: 5, expected: SquareCrop(x: 15, y: 20, size: 25)),
-        ResizeExpectation(handle: .left, deltaX: -5, deltaY: 0, expected: SquareCrop(x: 15, y: 20, size: 25))
+        ResizeExpectation(handle: .topLeft, deltaX: -5, deltaY: -5, expected: SquareCrop(x: 15, y: 15, size: 30)),
+        ResizeExpectation(handle: .top, deltaX: 0, deltaY: -3, expected: SquareCrop(x: 17, y: 17, size: 26)),
+        ResizeExpectation(handle: .topRight, deltaX: 2, deltaY: -5, expected: SquareCrop(x: 15, y: 15, size: 30)),
+        ResizeExpectation(handle: .right, deltaX: 4, deltaY: 0, expected: SquareCrop(x: 16, y: 16, size: 28)),
+        ResizeExpectation(handle: .bottomRight, deltaX: 5, deltaY: 5, expected: SquareCrop(x: 15, y: 15, size: 30)),
+        ResizeExpectation(handle: .bottom, deltaX: 0, deltaY: -4, expected: SquareCrop(x: 24, y: 24, size: 12)),
+        ResizeExpectation(handle: .bottomLeft, deltaX: -3, deltaY: 5, expected: SquareCrop(x: 15, y: 15, size: 30)),
+        ResizeExpectation(handle: .left, deltaX: -5, deltaY: 0, expected: SquareCrop(x: 15, y: 15, size: 30))
     ]
     #expect(cases.count == SpriteCropHandle.allCases.count)
     for expectation in cases {
-        #expect(geometry.resized(
+        let resized = geometry.resized(
             crop,
             handle: expectation.handle,
             deltaX: expectation.deltaX,
             deltaY: expectation.deltaY
-        ) == expectation.expected)
+        )
+        #expect(resized == expectation.expected)
+        #expect(2 * resized.x + resized.size == 2 * crop.x + crop.size)
+        #expect(2 * resized.y + resized.size == 2 * crop.y + crop.size)
     }
 }
 
 @Test func resizeCornerFollowsTheDominantAxis() {
     let geometry = spriteTestSheetGeometry()
     let crop = SquareCrop(x: 20, y: 20, size: 20)
-    #expect(geometry.resized(crop, handle: .bottomRight, deltaX: 2, deltaY: 7) == SquareCrop(x: 20, y: 20, size: 27))
-    #expect(geometry.resized(crop, handle: .topLeft, deltaX: 7, deltaY: 2) == SquareCrop(x: 27, y: 27, size: 13))
+    #expect(geometry.resized(crop, handle: .bottomRight, deltaX: 2, deltaY: 7) == SquareCrop(x: 13, y: 13, size: 34))
+    #expect(geometry.resized(crop, handle: .topLeft, deltaX: 7, deltaY: 2) == SquareCrop(x: 26, y: 26, size: 8))
 }
 
 @Test func resizeRespectsMinimumSideAndSourceBounds() {
     let geometry = spriteTestSheetGeometry()
     let crop = SquareCrop(x: 20, y: 20, size: 20)
     let shrunk = geometry.resized(crop, handle: .right, deltaX: -100, deltaY: 0)
-    #expect(shrunk == SquareCrop(x: 20, y: 20, size: geometry.minimumSide))
+    #expect(shrunk == SquareCrop(x: 26, y: 26, size: geometry.minimumSide))
     let expanded = geometry.resized(crop, handle: .left, deltaX: -100, deltaY: 0)
     #expect(expanded == SquareCrop(x: 0, y: 0, size: 60))
 }

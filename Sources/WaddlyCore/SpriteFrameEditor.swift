@@ -149,10 +149,13 @@ public struct FrameEditGeometry: Equatable, Sendable {
         return SquareCrop(x: originX, y: originY, size: side)
     }
 
-    /// Resizes `crop` from `handle`, keeping it square and anchoring the opposite edge or corner.
+    /// Resizes `crop` from `handle`, keeping it square and anchored at its centre.
     ///
-    /// Corner drags follow the dominant axis so a diagonal drag never double-applies both deltas.
-    /// The result is then clamped into the source bounds.
+    /// Dragging an edge or corner changes the size symmetrically around the crop centre, so the
+    /// source pixels surviving a resize stay at the same canvas coordinates (only the visible mask
+    /// narrows or widens). The dragged edge still follows the pointer because the size changes by
+    /// twice the drag delta. Corner drags follow the dominant axis so a diagonal drag never
+    /// double-applies both deltas. The result is then clamped into the source bounds.
     public func resized(
         _ crop: SquareCrop,
         handle: SpriteCropHandle,
@@ -160,21 +163,11 @@ public struct FrameEditGeometry: Equatable, Sendable {
         deltaY: Int
     ) -> SquareCrop {
         let growth = growth(handle: handle, deltaX: deltaX, deltaY: deltaY)
-        let newSize = max(crop.size + growth, effectiveMinimumSide)
-        var newX = crop.x
-        var newY = crop.y
-        switch handle {
-        case .topLeft, .left, .bottomLeft:
-            newX = crop.x + crop.size - newSize
-        case .topRight, .right, .bottomRight, .top, .bottom:
-            newX = crop.x
-        }
-        switch handle {
-        case .topLeft, .top, .topRight:
-            newY = crop.y + crop.size - newSize
-        case .bottomLeft, .bottom, .bottomRight, .left, .right:
-            newY = crop.y
-        }
+        let newSize = min(max(crop.size + growth * 2, effectiveMinimumSide), sourceSide)
+        let centerX = 2 * crop.x + crop.size
+        let centerY = 2 * crop.y + crop.size
+        let newX = (centerX - newSize + 1) / 2
+        let newY = (centerY - newSize + 1) / 2
         return clamp(SquareCrop(x: newX, y: newY, size: newSize))
     }
 

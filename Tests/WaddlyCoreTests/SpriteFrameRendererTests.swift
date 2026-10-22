@@ -239,3 +239,38 @@ import WaddlyCore
     #expect(PetFrameSourceDecoder.sheetImage(from: Data()) == nil)
     #expect(PetFrameSourceDecoder.sheetImage(from: Data("not a PNG".utf8)) == nil)
 }
+
+@Test func canvasHandleResizeKeepsSurvivingPixelsInPlace() throws {
+    let sheet = try #require(spriteTestSolidSheet())
+    let editing = spriteTestSheetEditing()
+    let slot = SpriteFrameSlot.typing1
+    let geometry = editing.geometry(for: slot)
+    let baseline = editing.adjustment(for: slot)
+    let color = spriteTestCellColors[slot.rawValue]
+    let before = try #require(SpriteFrameRenderer.renderCanvas(
+        source: sheet,
+        adjustment: baseline,
+        canvasSide: 60
+    ))
+    #expect(spriteTestPixel(of: before, column: 30, row: 30) == color)
+
+    for delta in [-5, 5] {
+        let resizedCrop = geometry.resized(
+            baseline.crop,
+            handle: .right,
+            deltaX: delta,
+            deltaY: 0
+        )
+        let resized = FrameAdjustment(crop: resizedCrop, offsetX: 0, offsetY: 0)
+        let after = try #require(SpriteFrameRenderer.renderCanvas(
+            source: sheet,
+            adjustment: resized,
+            canvasSide: 60
+        ))
+        // Centre-anchored handle resize only changes the mask: the surviving source pixels stay at
+        // the same output coordinates instead of sliding by half the size delta.
+        #expect(spriteTestPixel(of: after, column: 30, row: 30) == color)
+        #expect(after.width == 60)
+        #expect(after.height == 60)
+    }
+}

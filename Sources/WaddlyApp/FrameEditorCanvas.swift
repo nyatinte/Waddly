@@ -7,6 +7,7 @@ import WaddlyCore
 struct FrameCanvasConfiguration {
     var source: CGImage?
     var sourceSide: Int
+    var canvasSide: Int = 0
     var nominalCell: SquareCrop?
     var adjustment: FrameAdjustment
     var tool: FrameEditorTool

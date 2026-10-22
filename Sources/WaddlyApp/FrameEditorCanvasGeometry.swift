@@ -99,15 +99,25 @@ extension FrameCanvasNSView {
             width: configuration.sourceSide,
             height: configuration.sourceSide
         )
-        let offset = CGPoint(
-            x: CGFloat(configuration.adjustment.offsetX) * layout.scale,
-            y: CGFloat(configuration.adjustment.offsetY) * layout.scale
-        )
-        NSImage(cgImage: source, size: NSSize(width: source.width, height: source.height))
-            .draw(in: viewRect(for: sourceRect, layout: layout).offsetBy(dx: offset.x, dy: offset.y))
+        let sourceViewRect = viewRect(for: sourceRect, layout: layout)
 
+        // Dimmed sheet context. It stays at its source coordinates so the crop handles, guides and
+        // crosshair remain stable while the selected content moves inside them.
+        drawImage(source, in: sourceViewRect, context: context)
+        drawDimmingOverContext(in: context)
+
+        // Bright foreground: only the selected source window, translated by the alignment offset.
+        // This is exactly the foreground `SpriteFrameRenderer.renderCanvas` exports; neighbouring
+        // sheet pixels outside the crop never become visible inside it.
         let cropRect = cropViewRect(layout: layout)
-        drawDimming(outside: cropRect, in: context)
+        drawAlignedCrop(
+            source,
+            sourceViewRect: sourceViewRect,
+            cropRect: cropRect,
+            configuration: configuration,
+            context: context
+        )
+
         if configuration.showsGrid {
             drawGrid(in: cropRect, context: context)
         }
@@ -116,6 +126,46 @@ extension FrameCanvasNSView {
         }
         drawCropBorder(in: cropRect, context: context, warning: configuration.showsWarning)
         drawHandles(in: cropRect, context: context)
+    }
+
+    private func drawImage(_ image: CGImage, in rect: CGRect, context: NSGraphicsContext) {
+        context.imageInterpolation = .none
+        NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height)).draw(in: rect)
+    }
+
+    /// Draws the crop's own pixels shifted by the alignment offset, clipped to the source crop and
+    /// to the fixed output canvas, exactly like the exported frame's foreground.
+    private func drawAlignedCrop(
+        _ source: CGImage,
+        sourceViewRect: CGRect,
+        cropRect: CGRect,
+        configuration: FrameCanvasConfiguration,
+        context: NSGraphicsContext
+    ) {
+        let scale = configuration.sourceSide > 0
+            ? sourceViewRect.width / CGFloat(configuration.sourceSide)
+            : 1
+        let offset = CGPoint(
+            x: CGFloat(configuration.adjustment.offsetX) * scale,
+            y: CGFloat(configuration.adjustment.offsetY) * scale
+        )
+        let outputSide = configuration.canvasSide > 0
+            ? configuration.canvasSide
+            : (configuration.nominalCell?.size ?? configuration.sourceSide)
+        let outputRect = CGRect(
+            x: cropRect.midX - CGFloat(outputSide) * scale / 2,
+            y: cropRect.midY - CGFloat(outputSide) * scale / 2,
+            width: CGFloat(outputSide) * scale,
+            height: CGFloat(outputSide) * scale
+        )
+        context.cgContext.saveGState()
+        context.cgContext.translateBy(x: offset.x, y: offset.y)
+        // Clips are transformed by the current translation; the source crop keeps neighbour pixels
+        // out, and the output clip mirrors the exported canvas bounds.
+        context.cgContext.clip(to: cropRect)
+        context.cgContext.clip(to: outputRect.offsetBy(dx: -offset.x, dy: -offset.y))
+        drawImage(source, in: sourceViewRect, context: context)
+        context.cgContext.restoreGState()
     }
 
     private func drawBackground(in context: NSGraphicsContext) {
@@ -140,30 +190,9 @@ extension FrameCanvasNSView {
         }
     }
 
-    private func drawDimming(outside cropRect: CGRect, in context: NSGraphicsContext) {
-        let color = NSColor.black.withAlphaComponent(0.55)
-        color.setFill()
-        let pieces = [
-            CGRect(
-                x: bounds.minX, y: bounds.minY,
-                width: bounds.width, height: max(0, cropRect.minY - bounds.minY)
-            ),
-            CGRect(
-                x: bounds.minX, y: cropRect.maxY,
-                width: bounds.width, height: max(0, bounds.maxY - cropRect.maxY)
-            ),
-            CGRect(
-                x: bounds.minX, y: cropRect.minY,
-                width: max(0, cropRect.minX - bounds.minX), height: cropRect.height
-            ),
-            CGRect(
-                x: cropRect.maxX, y: cropRect.minY,
-                width: max(0, bounds.maxX - cropRect.maxX), height: cropRect.height
-            )
-        ]
-        for piece in pieces where piece.width > 0 && piece.height > 0 {
-            piece.fill()
-        }
+    private func drawDimmingOverContext(in context: NSGraphicsContext) {
+        NSColor.black.withAlphaComponent(0.55).setFill()
+        bounds.fill()
         context.shouldAntialias = true
     }
 
