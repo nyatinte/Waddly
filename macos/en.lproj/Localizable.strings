@@ -230,7 +230,7 @@
 "frameEditor.editedSuffix" = ", edited";
 "frameEditor.previousFrame" = "Previous";
 "frameEditor.nextFrame" = "Next";
-"frameEditor.canvasHelp" = "Drag edges to crop; drag inside in Align mode to reposition. Scroll or drag the background to pan, pinch or ⌥-scroll to zoom; double-click or ⌘0 resets. Keyboard: ⌘+ / ⌘− zoom, ⌥-arrows pan.";
+"frameEditor.canvasHelp" = "Drag edges to crop; drag inside in Align mode to reposition. Scroll or drag the background to pan, pinch or ⌥-scroll to zoom; double-click or ⌘0 resets. Keyboard: ⌘+ / ⌘− zoom, ⌥↑↓ and ⇧⌥←→ pan.";
 "frameEditor.canvasA11y" = "Frame crop canvas";
 "frameEditor.canvasValueFormat" = "Crop %1$d by %1$d pixels at %2$d, %3$d; content offset %4$d, %5$d";
 "frameEditor.zoomInAction" = "Zoom in";

@@ -230,7 +230,7 @@
 "frameEditor.editedSuffix" = "、編集済み";
 "frameEditor.previousFrame" = "前へ";
 "frameEditor.nextFrame" = "次へ";
-"frameEditor.canvasHelp" = "端をドラッグして範囲を変更し、位置合わせモードで内側をドラッグすると位置を調整できます。スクロールまたは背景ドラッグでパン、ピンチまたは⌥スクロールでズーム、ダブルクリックまたは⌘0で表示をリセット。キーボードは⌘+/⌘−でズーム、⌥+矢印でパン。";
+"frameEditor.canvasHelp" = "端をドラッグして範囲を変更し、位置合わせモードで内側をドラッグすると位置を調整できます。スクロールまたは背景ドラッグでパン、ピンチまたは⌥スクロールでズーム、ダブルクリックまたは⌘0で表示をリセット。キーボードは⌘+/⌘−でズーム、⌥↑↓と⇧⌥←→でパン。";
 "frameEditor.canvasA11y" = "フレームのクロップ領域";
 "frameEditor.canvasValueFormat" = "クロップ %1$d × %1$d px（%2$d, %3$d）、内容のオフセット %4$d, %5$d";
 "frameEditor.zoomInAction" = "拡大";

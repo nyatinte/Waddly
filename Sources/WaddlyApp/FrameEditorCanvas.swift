@@ -59,6 +59,8 @@ final class FrameCanvasNSView: NSView {
     var onZoomChange: ((CGFloat) -> Void)?
     /// Viewport translation in view points, driven by background drags and scrolling.
     var panOffset = CGPoint.zero
+    /// Exposed for interaction tests; also registered with AppKit in `updateAccessibility`.
+    var viewportCustomActions: [NSAccessibilityCustomAction] = []
     private var lastResetKey: Int?
 
     var configuration: FrameCanvasConfiguration?

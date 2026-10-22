@@ -169,21 +169,23 @@ extension FrameCanvasNSView {
         return true
     }
 
-    /// Option-arrow pans the viewport for keyboard users; the crop itself stays unchanged.
+    /// Option-up/down pans vertically and Shift-Option-left/right pans horizontally.
+    /// Plain Option-left/right stays reserved for frame navigation.
     override func keyDown(with event: NSEvent) {
         guard event.modifierFlags.contains(.option), let configuration, configuration.source != nil else {
             super.keyDown(with: event)
             return
         }
         let step: CGFloat = 24
-        if event.keyCode == 123 {
-            panBy(deltaX: -step, deltaY: 0)
-        } else if event.keyCode == 124 {
-            panBy(deltaX: step, deltaY: 0)
-        } else if event.keyCode == 125 {
+        let shiftsHorizontally = event.modifierFlags.contains(.shift)
+        if event.keyCode == 125 {
             panBy(deltaX: 0, deltaY: step)
         } else if event.keyCode == 126 {
             panBy(deltaX: 0, deltaY: -step)
+        } else if event.keyCode == 123, shiftsHorizontally {
+            panBy(deltaX: -step, deltaY: 0)
+        } else if event.keyCode == 124, shiftsHorizontally {
+            panBy(deltaX: step, deltaY: 0)
         } else {
             super.keyDown(with: event)
         }
@@ -237,5 +239,21 @@ extension FrameCanvasNSView {
         setAccessibilityLabel(configuration.accessibilityLabel)
         setAccessibilityValue(configuration.accessibilityValue)
         setAccessibilityHelp(configuration.accessibilityHelp)
+        let actions = [
+            NSAccessibilityCustomAction(name: configuration.zoomInLabel) { [weak self] in
+                self?.zoom(by: 1.25)
+                return true
+            },
+            NSAccessibilityCustomAction(name: configuration.zoomOutLabel) { [weak self] in
+                self?.zoom(by: 1 / 1.25)
+                return true
+            },
+            NSAccessibilityCustomAction(name: configuration.resetViewLabel) { [weak self] in
+                self?.resetViewport()
+                return true
+            }
+        ]
+        viewportCustomActions = actions
+        setAccessibilityCustomActions(actions)
     }
 }

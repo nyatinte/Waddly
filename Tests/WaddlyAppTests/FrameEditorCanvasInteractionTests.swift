@@ -75,7 +75,36 @@ import WaddlyCore
         #expect(view.panOffset == .zero)
     }
 
-    private func keyEvent(_ characters: String, modifiers: NSEvent.ModifierFlags) throws -> NSEvent {
+    @Test func keyboardPanAvoidsTheOptionArrowFrameNavigationShortcuts() throws {
+        let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        try view.apply(FrameCanvasConfiguration(
+            source: makeImage(),
+            sourceSide: 20,
+            canvasSide: 20,
+            nominalCell: SquareCrop(x: 0, y: 0, size: 20),
+            adjustment: FrameAdjustment(crop: SquareCrop(x: 0, y: 0, size: 20), offsetX: 0, offsetY: 0),
+            tool: .crop,
+            zoomScale: 1,
+            showsGrid: false,
+            showsCrosshair: false,
+            showsWarning: false
+        ))
+
+        try view.keyDown(with: keyEvent("\u{F700}", modifiers: .option, keyCode: 126))
+        #expect(view.panOffset.y == -24)
+        try view.keyDown(with: keyEvent("\u{F703}", modifiers: [.option, .shift], keyCode: 124))
+        #expect(view.panOffset.x == 24)
+        // Plain Option-left is frame navigation, not pan.
+        let before = view.panOffset
+        try view.keyDown(with: keyEvent("\u{F702}", modifiers: .option, keyCode: 123))
+        #expect(view.panOffset == before)
+    }
+
+    private func keyEvent(
+        _ characters: String,
+        modifiers: NSEvent.ModifierFlags,
+        keyCode: UInt16 = 0
+    ) throws -> NSEvent {
         try #require(NSEvent.keyEvent(
             with: .keyDown,
             location: .zero,
@@ -86,7 +115,7 @@ import WaddlyCore
             characters: characters,
             charactersIgnoringModifiers: characters,
             isARepeat: false,
-            keyCode: 0
+            keyCode: keyCode
         ))
     }
 
