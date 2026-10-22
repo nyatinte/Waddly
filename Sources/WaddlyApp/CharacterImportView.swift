@@ -32,6 +32,11 @@ extension PetSheetValidationFailure {
 
 /// The shared acquisition, inspection, and apply surface. Only the primary action's label and the
 /// surrounding navigation differ between the setup Pet step and Settings → Change Character.
+///
+/// The screen switches shape with the draft: before an import it spends the whole left column on
+/// acquiring a sheet, and afterwards that column collapses into one file card with the two actions
+/// that still make sense (replace, edit frames). Apply never moves out of the pinned footer, so the
+/// same position always means the same thing.
 @MainActor
 struct CharacterImportView: View {
     @ObservedObject var model: CharacterImportModel
@@ -48,25 +53,20 @@ struct CharacterImportView: View {
     let pasteboard: NSPasteboard
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(spacing: 0) {
             header
-            HStack(alignment: .top, spacing: 20) {
-                acquisition
-                CharacterPreviewHost(
-                    localization: localization,
-                    frames: model.stagedFrames,
-                    placeholder: localization.string(for: .characterEmptyPreview),
-                    onDrop: { urls in Task { await model.stageDroppedFiles(at: urls) } },
-                    isActive: isPreviewActive,
-                    onPaneCreated: onPreviewPaneCreated
-                )
-                .frame(width: 320, height: 300)
-            }
-            metadata
+                .padding(.horizontal, LayoutMetrics.contentInset)
+                .padding(.top, LayoutMetrics.contentInset)
+                .padding(.bottom, LayoutMetrics.sectionGap)
+            workingArea
+                .padding(.horizontal, LayoutMetrics.contentInset)
+                .padding(.bottom, LayoutMetrics.sectionGap)
+                .frame(maxHeight: .infinity)
+            Divider()
             footer
+                .padding(.horizontal, LayoutMetrics.contentInset)
+                .padding(.vertical, LayoutMetrics.footerInset)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { model.refreshClipboardAvailability(from: pasteboard) }
@@ -91,24 +91,38 @@ private extension CharacterImportView {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Import on the left, the one reaction preview on the right. Both columns share the same top
+    /// and bottom edge, so the shorter one can no longer leave a stray void above the footer.
+    var workingArea: some View {
+        HStack(alignment: .top, spacing: LayoutMetrics.columnGap) {
+            acquisition
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            CharacterPreviewHost(
+                localization: localization,
+                frames: model.stagedFrames,
+                placeholder: localization.string(for: .characterEmptyPreview),
+                onDrop: { urls in Task { await model.stageDroppedFiles(at: urls) } },
+                isActive: isPreviewActive,
+                onPaneCreated: onPreviewPaneCreated
+            )
+            .frame(width: LayoutMetrics.previewWidth)
+            .frame(maxHeight: .infinity)
+        }
     }
 
     var acquisition: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            dropZone
-            HStack(spacing: 10) {
-                Button(localization.string(for: .characterChooseFile), action: chooseFile)
-                    .accessibilityIdentifier("characterChooseFile")
-                Button(localization.string(for: .characterPaste), action: paste)
-                    .keyboardShortcut("v", modifiers: .command)
-                    .help(pasteHint)
-                    .foregroundStyle(model.clipboardHasImage ? Color.primary : Color.secondary)
-                    .opacity(model.clipboardHasImage ? 1 : 0.6)
-                    .accessibilityLabel("\(localization.string(for: .characterPaste)) — \(pasteHint)")
-                    .accessibilityIdentifier("characterPaste")
-                Text(localization.string(for: .characterPasteShortcut))
+        VStack(alignment: .leading, spacing: 12) {
+            if model.hasStagedCandidate {
+                stagedSheetCard
+            } else {
+                dropZone
+                Text(localization.string(for: .characterMetadataPlaceholder))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if model.isReading {
                 HStack(spacing: 8) {
@@ -131,19 +145,16 @@ private extension CharacterImportView {
                     .accessibilityIdentifier("characterCommitRejected")
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The tooltip/VoiceOver hint: what paste would do right now.
-    var pasteHint: String {
-        localization.string(for: model.clipboardHasImage ? .characterPasteHelp : .characterClipboardEmpty)
-    }
-
+    /// The empty state: everything that starts an import lives inside this one zone.
     var dropZone: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
+            Spacer(minLength: 0)
             Image(systemName: model.isDropTargeted ? "arrow.down.doc" : "photo.badge.plus")
-                .font(.system(size: 34, weight: .light))
+                .font(.system(size: 36, weight: .light))
                 .foregroundStyle(model.isDropTargeted ? Color.accentColor : Color.secondary)
+                .accessibilityHidden(true)
             Text(localization.string(
                 for: model.isDropTargeted ? .characterDropHighlight : .characterDropInstruction
             ))
@@ -152,8 +163,18 @@ private extension CharacterImportView {
             Text(localization.string(for: .characterDropHint))
                 .font(.caption)
                 .foregroundStyle(.tertiary)
+            Button(action: chooseFile) {
+                Text(localization.string(for: .characterChooseFile))
+                    .actionLabel()
+            }
+            .controlSize(.large)
+            .padding(.top, 6)
+            .accessibilityIdentifier("characterChooseFile")
+            pasteControl
+                .padding(.top, 2)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, minHeight: 150)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(model.isDropTargeted
@@ -173,66 +194,160 @@ private extension CharacterImportView {
         } isTargeted: { targeted in
             model.setDropTargeted(targeted)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(localization.string(
-            for: model.isDropTargeted ? .characterDropHighlight : .characterDropInstruction
-        ))
     }
 
-    var metadata: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let sourceDimension = model.sourceDimension, let cellSize = model.cellSize {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Label(localization.string(for: .characterValidStatus), systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text(sourceLabel(sourceDimension: sourceDimension, cellSize: cellSize))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Text(localization.string(for: .characterMetadataPlaceholder))
+    /// After an import the same area becomes one compact file card: the sheet's identity, its
+    /// measurements, and only the two operations that still apply. It stays a drop target, so
+    /// replacing by drag never needs the empty zone back.
+    var stagedSheetCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.green)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(sheetName)
+                        .font(.callout.weight(.medium))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(sheetName)
+                    HStack(spacing: 4) {
+                        if model.isDropTargeted {
+                            Text(localization.string(for: .characterDropHighlight))
+                                .foregroundStyle(Color.accentColor)
+                        } else {
+                            Text(localization.string(for: .characterValidStatus))
+                                .foregroundStyle(.green)
+                            Text(verbatim: "·").foregroundStyle(.tertiary)
+                            Text(sheetSummary)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-            }
-            if model.hasStagedCandidate {
-                Button(localization.string(for: .characterAdjustFrames)) {
-                    model.isEditingFrames = true
+                    .lineLimit(1)
                 }
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: LayoutMetrics.actionGap) {
+                Button(action: chooseFile) {
+                    Text(localization.string(for: .characterReplace))
+                        .actionLabel()
+                }
+                .controlSize(.large)
+                .accessibilityIdentifier("characterChooseFile")
+                Button {
+                    model.isEditingFrames = true
+                } label: {
+                    Text(localization.string(for: .characterAdjustFrames))
+                        .actionLabel()
+                }
+                .controlSize(.large)
                 .disabled(!model.canAdjustFrames)
                 .accessibilityIdentifier("characterAdjustFrames")
-                if !model.canAdjustFrames {
-                    Text(localization.string(for: .characterAdjustFramesUnavailable))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("characterAdjustFramesUnavailable")
-                }
             }
+            if !model.canAdjustFrames {
+                Text(localization.string(for: .characterAdjustFramesUnavailable))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("characterAdjustFramesUnavailable")
+            }
+            // Replacing by clipboard has to survive the collapse, so the shortcut keeps working
+            // after a sheet is staged and the empty zone is gone.
+            pasteControl
         }
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(model.isDropTargeted
+                    ? Color.accentColor.opacity(0.12)
+                    : Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(
+                    model.isDropTargeted ? Color.accentColor : Color(nsColor: .separatorColor),
+                    lineWidth: model.isDropTargeted ? 2 : 1
+                )
+        )
+        .dropDestination(for: URL.self) { urls, _ in
+            Task { await model.stageDroppedFiles(at: urls) }
+            return true
+        } isTargeted: { targeted in
+            model.setDropTargeted(targeted)
+        }
     }
 
-    func sourceLabel(sourceDimension: Int, cellSize: Int) -> String {
-        let name = model.sourceName ?? localization.string(for: .characterClipboardSource)
-        return String(
-            format: localization.string(for: .characterDimensionsFormat),
-            name,
-            sourceDimension,
-            cellSize
-        )
+    /// The clipboard import is the second way into the same zone, not a third button elsewhere.
+    var pasteControl: some View {
+        HStack(spacing: 6) {
+            Button(localization.string(for: .characterPaste), action: paste)
+                .buttonStyle(.link)
+                .keyboardShortcut("v", modifiers: .command)
+                .help(pasteHint)
+                .foregroundStyle(model.clipboardHasImage ? Color.accentColor : Color.secondary)
+                .opacity(model.clipboardHasImage ? 1 : 0.6)
+                .accessibilityLabel("\(localization.string(for: .characterPaste)) — \(pasteHint)")
+                .accessibilityIdentifier("characterPaste")
+            Text(localization.string(for: .characterPasteShortcut))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    /// The tooltip/VoiceOver hint: what paste would do right now.
+    var pasteHint: String {
+        localization.string(for: model.clipboardHasImage ? .characterPasteHelp : .characterClipboardEmpty)
+    }
+
+    var sheetName: String {
+        if let name = model.sourceName {
+            return name
+        }
+        // A clipboard import has no filename but does have measurements; a saved pet has neither.
+        if model.sourceDimension != nil {
+            return localization.string(for: .characterClipboardSource)
+        }
+        return localization.string(for: .characterCurrentCharacter)
+    }
+
+    var sheetSummary: String {
+        if let sourceDimension = model.sourceDimension, let cellSize = model.cellSize {
+            return String(
+                format: localization.string(for: .characterCellMetricsFormat),
+                sourceDimension,
+                cellSize
+            )
+        }
+        let count = PetImageCategory.allCases.reduce(0) { total, category in
+            total + (model.stagedFrames?[category].count ?? 0)
+        }
+        return String(format: localization.string(for: .characterFrameCountFormat), count)
     }
 
     var footer: some View {
-        HStack {
-            Button(localization.string(for: .characterCancel), action: onCancel)
-                .disabled(model.isApplying)
-                .accessibilityIdentifier("characterCancel")
-            Spacer()
-            Button(localization.string(for: primaryKey), action: onPrimary)
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-                .disabled(!model.canApply)
-                .accessibilityIdentifier("characterPrimary")
+        HStack(spacing: LayoutMetrics.actionGap) {
+            Button(action: onCancel) {
+                Text(localization.string(for: .characterCancel))
+                    .actionLabel()
+            }
+            .controlSize(.large)
+            .keyboardShortcut(.cancelAction)
+            .disabled(model.isApplying)
+            .accessibilityIdentifier("characterCancel")
+            Spacer(minLength: 0)
+            Button(action: onPrimary) {
+                Text(localization.string(for: primaryKey))
+                    .actionLabel()
+            }
+            .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
+            .disabled(!model.canApply)
+            .accessibilityIdentifier("characterPrimary")
         }
     }
 
@@ -250,43 +365,5 @@ private extension CharacterImportView {
 
     func paste() {
         Task { await model.stageClipboard(from: pasteboard) }
-    }
-}
-
-/// Hosts the existing AppKit preview pane so the shared screen uses the app's one reaction preview.
-@MainActor
-private struct CharacterPreviewHost: NSViewRepresentable {
-    let localization: LocalizationController
-    let frames: PetImageSet?
-    let placeholder: String
-    let onDrop: ([URL]) -> Void
-    let isActive: () -> Bool
-    let onPaneCreated: (SetupPreviewPane) -> Void
-
-    func makeNSView(context: Context) -> SetupPreviewPane {
-        let pane = SetupPreviewPane(frame: .zero)
-        pane.configure(localization: localization, showsControls: true)
-        pane.shouldPreserveUnsupportedDropURLs = { true }
-        pane.onDrop = onDrop
-        onPaneCreated(pane)
-        return pane
-    }
-
-    func updateNSView(_ pane: SetupPreviewPane, context: Context) {
-        guard isActive() else {
-            pane.stopPlayback()
-            return
-        }
-        pane.onDrop = onDrop
-        if let frames, frames.isComplete {
-            pane.showPet(frames, caption: "", sleeping: false)
-        } else {
-            pane.showPlaceholder(symbol: "pawprint", message: placeholder, caption: "")
-        }
-    }
-
-    static func dismantleNSView(_ pane: SetupPreviewPane, coordinator: ()) {
-        pane.stopPlayback()
-        pane.onDrop = nil
     }
 }

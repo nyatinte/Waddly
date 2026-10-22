@@ -15,14 +15,14 @@ struct SetupWizardScreen: View {
                     step(.setupStepMonitoring, index: 1)
                     Spacer()
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, LayoutMetrics.contentInset)
                 .padding(.top, 22)
             }
 
             if controller.isComposingCharacter {
                 characterImport
             } else {
-                HStack(alignment: .top, spacing: 24) {
+                HStack(alignment: .top, spacing: LayoutMetrics.columnGap) {
                     VStack(alignment: .leading, spacing: 12) {
                         // Window-wide drops stay live on every step, so the failure has to be visible
                         // here too; `setStep` clears it when the user moves on.
@@ -31,19 +31,22 @@ struct SetupWizardScreen: View {
                         }
                         page
                     }
-                    .frame(width: 410, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(maxHeight: .infinity, alignment: .topLeading)
                     SetupPreviewHost(pane: controller.previewPane)
-                        .frame(width: 330)
+                        .frame(width: LayoutMetrics.previewWidth)
                         .frame(maxHeight: .infinity)
                 }
-                .padding(.horizontal, 28)
-                .padding(.top, 16)
-                .padding(.bottom, 18)
+                .padding(.horizontal, LayoutMetrics.contentInset)
+                .padding(.top, LayoutMetrics.sectionGap)
+                .padding(.bottom, LayoutMetrics.sectionGap)
+                .frame(maxHeight: .infinity)
 
+                // The footer belongs to the window, not to the scrollable content above it.
+                Divider()
                 footer
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 20)
+                    .padding(.horizontal, LayoutMetrics.contentInset)
+                    .padding(.vertical, LayoutMetrics.footerInset)
             }
         }
         .frame(width: SetupMetrics.contentSize.width, height: SetupMetrics.contentSize.height)
@@ -91,12 +94,10 @@ private extension SetupWizardScreen {
                     Int(image.size.width)
                 ))
             }
-            Button(action: controller.beginCharacterImport) {
-                Text(verbatim: controller.localizedString(.setupChangeImage))
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(verbatim: controller.localizedString(.setupChangeImage)))
-            .accessibilityIdentifier("changeImage")
+            actionButton(
+                controller.localizedString(.setupChangeImage),
+                identifier: "changeImage"
+            ) { controller.beginCharacterImport() }
         }
     }
 
@@ -106,9 +107,11 @@ private extension SetupWizardScreen {
             numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
             Button(action: controller.copyPromptAndOpenChatGPT) {
                 Label(controller.localizedString(.setupCopyAndOpen), systemImage: "doc.on.doc")
+                    .actionLabel()
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .accessibilityLabel(controller.localizedString(.setupCopyAndOpen))
             .accessibilityIdentifier("copyPromptAndOpenChatGPT")
             Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
@@ -117,9 +120,10 @@ private extension SetupWizardScreen {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             bodyText(.setupWhenReady)
-            Button(controller.localizedString(.setupChoosePNG), action: controller.beginCharacterImport)
-                .accessibilityLabel(controller.localizedString(.setupChoosePNG))
-                .accessibilityIdentifier("importFromPanel")
+            actionButton(
+                controller.localizedString(.setupChoosePNG),
+                identifier: "importFromPanel"
+            ) { controller.beginCharacterImport() }
             Button(controller.localizedString(.setupChangeMethod), action: controller.changeMethod)
                 .buttonStyle(.link)
                 .accessibilityLabel(controller.localizedString(.setupChangeMethod))
@@ -153,9 +157,10 @@ private extension SetupWizardScreen {
     /// appears while no pet is stored.
     @ViewBuilder private var sampleOption: some View {
         if controller.canTrySample {
-            Button(controller.localizedString(.setupTrySample)) { _ = controller.trySamplePet() }
-                .accessibilityLabel(controller.localizedString(.setupTrySample))
-                .accessibilityIdentifier("trySamplePet")
+            actionButton(
+                controller.localizedString(.setupTrySample),
+                identifier: "trySamplePet"
+            ) { _ = controller.trySamplePet() }
         }
     }
 
@@ -181,9 +186,10 @@ private extension SetupWizardScreen {
             bodyText(.setupMonitoringWaitingBody)
             status(.setupMonitoringStatusWaiting, positive: false)
             bodyText(.setupTryTyping)
-            Button(controller.localizedString(.setupNotWorking), action: controller.toggleTroubleshooting)
-                .accessibilityLabel(controller.localizedString(.setupNotWorking))
-                .accessibilityIdentifier("toggleTroubleshooting")
+            actionButton(
+                controller.localizedString(.setupNotWorking),
+                identifier: "toggleTroubleshooting"
+            ) { controller.toggleTroubleshooting() }
             if controller.isShowingTroubleshooting {
                 troubleshootingContent
             }
@@ -196,9 +202,10 @@ private extension SetupWizardScreen {
             bodyText(.setupMonitoringGrantedBody)
             status(.setupMonitoringStatusGranted, positive: true)
             bodyText(.setupTryTyping)
-            Button(controller.localizedString(.setupNotWorking), action: controller.toggleTroubleshooting)
-                .accessibilityLabel(controller.localizedString(.setupNotWorking))
-                .accessibilityIdentifier("toggleTroubleshooting")
+            actionButton(
+                controller.localizedString(.setupNotWorking),
+                identifier: "toggleTroubleshooting"
+            ) { controller.toggleTroubleshooting() }
             if controller.isShowingTroubleshooting {
                 troubleshootingContent
             }
@@ -209,17 +216,18 @@ private extension SetupWizardScreen {
         VStack(alignment: .leading, spacing: 12) {
             title(.setupTroubleshootingTitle)
             bodyText(.setupTroubleshootingBody)
-            Button(controller.localizedString(.setupRestartNow), action: controller.relaunchApp)
-                .accessibilityLabel(controller.localizedString(.setupRestartNow))
-                .accessibilityIdentifier("relaunchApp")
-            Button(controller.localizedString(.setupRevealInFinder), action: controller.revealInFinder)
-                .accessibilityLabel(controller.localizedString(.setupRevealInFinder))
-                .accessibilityIdentifier("revealInFinder")
-            Button(controller.localizedString(.setupOpenSystemSettings)) {
-                controller.openInputMonitoringSettings()
-            }
-            .accessibilityLabel(controller.localizedString(.setupOpenSystemSettings))
-            .accessibilityIdentifier("openInputMonitoringSettings")
+            actionButton(
+                controller.localizedString(.setupRestartNow),
+                identifier: "relaunchApp"
+            ) { controller.relaunchApp() }
+            actionButton(
+                controller.localizedString(.setupRevealInFinder),
+                identifier: "revealInFinder"
+            ) { controller.revealInFinder() }
+            actionButton(
+                controller.localizedString(.setupOpenSystemSettings),
+                identifier: "openInputMonitoringSettings"
+            ) { controller.openInputMonitoringSettings() }
         }
     }
 
@@ -228,16 +236,19 @@ private extension SetupWizardScreen {
             title(.setupRestartRequiredTitle)
             bodyText(.setupRestartRequiredBody)
             status(.setupMonitoringStatusGranted, positive: true)
-            Button(controller.localizedString(.setupRestartNow), action: controller.relaunchApp)
+            actionButton(
+                controller.localizedString(.setupRestartNow),
+                identifier: "relaunchApp"
+            ) { controller.relaunchApp() }
                 .buttonStyle(.borderedProminent)
-                .accessibilityLabel(controller.localizedString(.setupRestartNow))
-                .accessibilityIdentifier("relaunchApp")
-            Button(controller.localizedString(.setupRetryWithoutRestart), action: controller.retryMonitoring)
-                .accessibilityLabel(controller.localizedString(.setupRetryWithoutRestart))
-                .accessibilityIdentifier("retryMonitoring")
-            Button(controller.localizedString(.setupRevealInFinder), action: controller.revealInFinder)
-                .accessibilityLabel(controller.localizedString(.setupRevealInFinder))
-                .accessibilityIdentifier("revealInFinder")
+            actionButton(
+                controller.localizedString(.setupRetryWithoutRestart),
+                identifier: "retryMonitoring"
+            ) { controller.retryMonitoring() }
+            actionButton(
+                controller.localizedString(.setupRevealInFinder),
+                identifier: "revealInFinder"
+            ) { controller.revealInFinder() }
         }
     }
 
@@ -266,38 +277,39 @@ private extension SetupWizardScreen {
         } else if controller.isShowingGuide {
             permissionGuideActions
         } else {
-            Button(action: controller.enableMonitoring) {
-                Text(verbatim: controller.localizedString(.setupEnableMonitoring))
-            }
-            .buttonStyle(.borderedProminent)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(verbatim: controller.localizedString(.setupEnableMonitoring)))
-            .accessibilityIdentifier("enableMonitoring")
+            actionButton(
+                controller.localizedString(.setupEnableMonitoring),
+                identifier: "enableMonitoring"
+            ) { controller.enableMonitoring() }
+                .buttonStyle(.borderedProminent)
         }
     }
 
     private var manualPermissionSteps: some View {
         VStack(alignment: .leading, spacing: 12) {
             numbered([.setupManualStep1, .setupManualStep2, .setupManualStep3])
-            Button(controller.localizedString(.setupOpenSystemSettings)) {
-                controller.openInputMonitoringSettings()
-            }
-            .accessibilityLabel(controller.localizedString(.setupOpenSystemSettings))
-            .accessibilityIdentifier("openInputMonitoringSettings")
-            Button(controller.localizedString(.setupDragInstead), action: controller.toggleManualSteps)
-                .accessibilityLabel(controller.localizedString(.setupDragInstead))
+            actionButton(
+                controller.localizedString(.setupOpenSystemSettings),
+                identifier: "openInputMonitoringSettings"
+            ) { controller.openInputMonitoringSettings() }
+            actionButton(
+                controller.localizedString(.setupDragInstead),
+                identifier: "dragInstead"
+            ) { controller.toggleManualSteps() }
         }
     }
 
     private var permissionGuideActions: some View {
         VStack(alignment: .leading, spacing: 12) {
             caption(.setupMonitoringWatching)
-            Button(controller.localizedString(.setupReopenSettings)) {
-                controller.openInputMonitoringSettings()
-            }
-            .accessibilityLabel(controller.localizedString(.setupReopenSettings))
-            Button(controller.localizedString(.setupHelperAlternative), action: controller.toggleManualSteps)
-                .accessibilityLabel(controller.localizedString(.setupHelperAlternative))
+            actionButton(
+                controller.localizedString(.setupReopenSettings),
+                identifier: "reopenSettings"
+            ) { controller.openInputMonitoringSettings() }
+            actionButton(
+                controller.localizedString(.setupHelperAlternative),
+                identifier: "helperAlternative"
+            ) { controller.toggleManualSteps() }
         }
     }
 
@@ -310,13 +322,6 @@ private extension SetupWizardScreen {
 
     private var monitoringCheckKey: LocalizationKey {
         controller.monitoringCheckKey
-    }
-
-    private var nextButtonKey: LocalizationKey {
-        if controller.isMonitoringSettings {
-            return .setupClose
-        }
-        return controller.currentStep == .completed ? .setupShowOnDesktop : .setupNext
     }
 
     private var completedPage: some View {
@@ -332,51 +337,14 @@ private extension SetupWizardScreen {
             .frame(maxWidth: .infinity, alignment: .leading)
             if !controller.isMonitoringReady {
                 caption(controller.monitoringIncompleteWarningKey).multilineTextAlignment(.center)
-                Button(
+                actionButton(
                     controller.localizedString(controller.monitoringIncompleteActionKey),
-                    action: controller.showMonitoringStep
-                )
-                .accessibilityLabel(controller.localizedString(controller.monitoringIncompleteActionKey))
-                .accessibilityIdentifier("showMonitoringStep")
+                    identifier: "showMonitoringStep"
+                ) { controller.showMonitoringStep() }
             }
             caption(.setupCompleteHint).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var footer: some View {
-        HStack {
-            if !controller.isMonitoringSettings, controller.currentStep != .pet {
-                Button(action: controller.goBack) {
-                    Text(verbatim: controller.localizedString(.setupBack))
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(Text(verbatim: controller.localizedString(.setupBack)))
-                .accessibilityIdentifier("goBack")
-            }
-            Spacer()
-            if !controller.isMonitoringSettings, controller.currentStep == .monitoring, !controller.isMonitoringReady {
-                Button(action: controller.deferMonitoring) {
-                    Text(verbatim: controller.localizedString(.setupLater))
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(Text(verbatim: controller.localizedString(.setupLater)))
-                .accessibilityIdentifier("deferMonitoring")
-            }
-            Button(action: controller.goNext) {
-                Text(verbatim: controller.localizedString(nextButtonKey))
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(verbatim: controller.localizedString(nextButtonKey)))
-            .buttonStyle(.borderedProminent)
-            .disabled(
-                !controller.isMonitoringSettings && ((controller.currentStep == .pet && !controller.hasImage)
-                    || (controller.currentStep == .monitoring && !controller.isMonitoringReady))
-            )
-            .keyboardShortcut(controller.isMonitoringSettings ? .cancelAction : .defaultAction)
-            .accessibilityIdentifier(controller.isMonitoringSettings ? "closeMonitoringSettings" : "goNext")
-        }
-        .frame(height: SetupMetrics.footerHeight)
     }
 }
 

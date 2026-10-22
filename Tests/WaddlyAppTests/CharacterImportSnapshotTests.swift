@@ -85,7 +85,8 @@ private extension CharacterImportSnapshotTests {
         controller.focus()
         defer { controller.close() }
         #expect(await !model.apply())
-        await Task.yield()
+        try CaptureHarness.showStagedFrames(model, in: #require(controller.window?.contentView))
+        try await Task.sleep(for: .milliseconds(250))
         try CaptureHarness.write(
             #require(controller.window?.contentView),
             dark: dark,
@@ -108,7 +109,9 @@ private extension CharacterImportSnapshotTests {
         controller.focus()
         defer { controller.close() }
         #expect(model.stagedFrames?.isComplete == true)
-        await Task.yield()
+        try CaptureHarness.showStagedFrames(model, in: #require(controller.window?.contentView))
+        // The preview player publishes its first frame off the main run loop.
+        try await Task.sleep(for: .milliseconds(250))
         try CaptureHarness.write(
             #require(controller.window?.contentView),
             dark: dark,

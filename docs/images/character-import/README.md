@@ -7,12 +7,14 @@ behavior. No live interaction occurred: every state was set through the model or
 AppKit preview pane.
 
 The original 40 renders retain their source attribution to `023474df4252aa4a03b3a3e25119ba9714e4ddad`
-(`test(import): cover drop routing, stale acquisitions, and the store commit`). Those existing PNGs
-remain byte-identical; this capture adds eight states from behavior source
-`bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`, without relabeling the original assets. The frame-editor
-render set was captured after issue #151 replaced the per-frame add/remove/reorder editor with the
-3×3 crop and alignment editor; the four old `change-editing-*` renders were removed rather than left
-to describe a surface that no longer ships.
+(`test(import): cover drop routing, stale acquisitions, and the store commit`), and the eight states
+added later were captured from `bacc8eec1dc3d2464dccf20c9913b44fd3c7f40b`. **Every file in this
+directory now shows the setup-UI layout change in this branch**: the Change Character window is
+1040 × 640 pt (resizable above that minimum), import lives in one drop zone, a staged sheet collapses
+to a file card, and Cancel/Apply sit in a pinned footer above a divider. Earlier revisions therefore
+describe older pixels, not the current ones.
+
+The frame-editor render set was captured after issue #151 replaced the per-frame add/remove/reorder editor with the 3×3 crop and alignment editor; the old `change-editing-*` renders were removed rather than left to describe a surface that no longer ships.
 
 ## How they were produced
 
@@ -28,35 +30,39 @@ to describe a surface that no longer ships.
 - English `AppLanguage.english`, Japanese `AppLanguage.japanese`; light `NSAppearance.aqua`, dark
   `NSAppearance.darkAqua`.
 
-Two harness notes, stated so the evidence is not over-read:
+Harness notes, stated so the evidence is not over-read:
 
-- The valid/per-pose renders push the staged frames into the embedded AppKit preview pane and sleep
-  250 ms so the preview player's first frame publishes off screen. The live app reaches the same
-  state through the representable's normal update pass; the render only pins the frame that would be
-  showing.
+- The valid/per-pose, saved-character, and declined-commit renders push the staged frames into the
+  embedded AppKit preview pane and sleep 250 ms so the preview player's first frame publishes off
+  screen. The live app reaches the same state through the representable's normal update pass; the
+  render only pins the frame that would be showing.
 - The frame-editor renders show the real `CharacterFrameEditor` as an off-screen `NSHostingView`
-  at its 1240 × 800 pt preferred size (or 1040 × 700 pt for the compact surface), with the example
+  at its 1320 × 800 pt preferred size (or 1040 × 700 pt for the compact surface), with the example
   sheet prepared through `CharacterImportModel`/`CharacterFrameEditorModel`. They are not the
   attached-sheet chrome the live window uses. The captures pin `colorScheme` to the appearance
   because AppKit appearance alone does not reach the SwiftUI environment in an off-screen host.
+
+
 - The harness discards the staged draft before closing the Change Character window, because the
   shipped window now asks before discarding a dirty close; no dialog is part of any render.
 
 ## Surfaces
 
-Change Character host (`change-*`), 880 × 580 pt content:
+Change Character host (`change-*`), 1040 × 640 pt content:
 
 | State | File stem | Shows |
 | --- | --- | --- |
-| Empty drop zone | `change-empty` | dashed drop zone, Choose File / Paste, disabled Apply |
+| Empty drop zone | `change-empty` | one dashed zone with Choose File and Paste from Clipboard inside it, the “Import a PNG to start editing.” hint, and a disabled Apply in the pinned footer |
 | Drag eligible | `change-drag-hover` | accent-highlighted zone and “Drop to import” copy |
-| Clipboard ready | `change-clipboard-ready` | Paste at full emphasis; no error |
+| Clipboard ready | `change-clipboard-ready` | the in-zone Paste link at full emphasis; no error |
 | Clipboard empty | `change-clipboard-empty` | subdued Paste and the inline “No image on the clipboard.” after an attempted paste |
-| Valid staged | `change-valid` | animated per-pose preview, source name/dimensions/cell size, positive status |
+| Valid staged | `change-valid` | the zone collapsed to one file card (name, Ready to apply, dimensions/cell size, Replace, Adjust frames…, and the paste link that keeps ⌘V replacing) beside the animated preview |
 | Valid, nine cells | `change-valid-nine-cells` | the same staged sheet in the pane's 9-cell mode |
-| Invalid import | `change-invalid` | inline “could not be read as a PNG.” with the staged candidate still present |
-| Saved character | `change-saved-character` | The saved pet is immediately previewed and **Adjust frames…** is available; the test fixture exercises a nonstandard per-category frame count |
-| Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft retained |
+| Invalid import | `change-invalid` | inline “could not be read as a PNG.” below the retained file card |
+| Saved character | `change-saved-character` | The saved pet is previewed and the card reads “Current character” with its frame count; Replace is available, and Adjust frames… is disabled with re-import guidance for the fixture’s nonstandard per-category frame count |
+| Declined commit | `change-rejected-commit` | Localized inline feedback distinct from save failure; draft and card retained |
+
+
 
 Setup Pet step host (`setup-*`), 820 × 520 pt content:
 
@@ -67,7 +73,7 @@ Setup Pet step host (`setup-*`), 820 × 520 pt content:
 
 Each stem has `-en-light`, `-en-dark`, `-ja-light`, `-ja-dark` variants (10 original states + 2 added states = 48 files). The added eight files were captured with `WADDLY_CAPTURE_CHARACTER_IMPORT=1 ./macos/test.sh --no-parallel --filter CharacterImportSnapshotTests`; the snapshot suite now runs six capture tests in one suite.
 
-## Frame-editor renders (`frame-editor-*`), 1240 × 800 pt or 1040 × 700 pt content
+## Frame-editor renders (`frame-editor-*`), 1320 × 800 pt or 1040 × 700 pt content
 
 | State | File stem | Shows |
 | --- | --- | --- |

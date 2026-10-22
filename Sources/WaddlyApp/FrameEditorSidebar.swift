@@ -13,44 +13,71 @@ struct FrameEditorSidebar: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(localization.string(for: .frameEditorFrames))
-                    .font(.system(size: 15, weight: .semibold))
-                Text(localization.string(for: model.isSheetMode
-                        ? .frameEditorFramesSubtitle
-                        : .frameEditorFramesSubtitleIndividual))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            contactSheet
-            Divider()
-            groups
-            Spacer(minLength: 6)
-            if !model.isSheetMode {
-                legacyNotice
-            }
-            if let sourceName = model.sourceName, let dimensions = model.sourceDimensionsDescription {
-                VStack(alignment: .leading, spacing: 2) {
-                    Label(sourceName, systemImage: "photo")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    Text(dimensions)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(localization.string(for: .frameEditorFrames))
+                            .font(.system(size: 15, weight: .semibold))
+                        Text(localization.string(for: model.isSheetMode
+                                ? .frameEditorFramesSubtitle
+                                : .frameEditorFramesSubtitleIndividual))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    contactSheet
+                    Divider()
+                    groups
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(
-                    localization.string(for: .frameEditorSourceLabel)
-                        + ": " + sourceName + ", " + dimensions
-                )
+                .padding(.horizontal, FrameEditorMetrics.outerPadding)
+                .padding(.top, FrameEditorMetrics.outerPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            sidebarFooter
         }
-        .padding(FrameEditorMetrics.outerPadding)
+    }
+
+    @ViewBuilder
+    private var sidebarFooter: some View {
+        if hasSidebarFooter {
+            Divider()
+            VStack(alignment: .leading, spacing: 10) {
+                if !model.isSheetMode {
+                    legacyNotice
+                }
+                sourceInfo
+            }
+            .padding(.horizontal, FrameEditorMetrics.outerPadding)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var hasSidebarFooter: Bool {
+        !model.isSheetMode || model.sourceName != nil
+    }
+
+    @ViewBuilder
+    private var sourceInfo: some View {
+        if let sourceName = model.sourceName, let dimensions = model.sourceDimensionsDescription {
+            VStack(alignment: .leading, spacing: 2) {
+                Label(sourceName, systemImage: "photo")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text(dimensions)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                localization.string(for: .frameEditorSourceLabel)
+                    + ": " + sourceName + ", " + dimensions
+            )
+        }
     }
 
     private var contactSheet: some View {

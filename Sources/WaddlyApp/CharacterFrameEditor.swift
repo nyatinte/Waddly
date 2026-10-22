@@ -15,7 +15,7 @@ enum FrameEditorMetrics {
     static let compactRailWidth: CGFloat = 58
     static let outerPadding: CGFloat = 16
     /// Header, navigation, result preview, gaps and vertical padding around the editing canvas.
-    static let centerReservedHeight: CGFloat = 372
+    static let centerReservedHeight: CGFloat = 430
     static let minimumCanvasHeight: CGFloat = 240
 
     static func resolvedSize(for screen: NSScreen? = NSScreen.main) -> NSSize {
@@ -167,20 +167,22 @@ private struct FrameEditorContent: View {
             HStack(spacing: 0) {
                 if compact {
                     FrameEditorCompactRail(model: model)
-                        .frame(width: FrameEditorMetrics.compactRailWidth)
+                        .frame(width: FrameEditorMetrics.compactRailWidth, height: geometry.size.height)
                     Divider()
                 } else {
                     FrameEditorSidebar(model: model)
-                        .frame(width: FrameEditorMetrics.sidebarWidth)
+                        .frame(width: FrameEditorMetrics.sidebarWidth, height: geometry.size.height)
                     Divider()
                 }
                 FrameEditorCenterColumn(model: model, localization: localization)
+                    .frame(height: geometry.size.height)
                 Divider()
                 FrameEditorInspector(model: model)
                     .frame(width: compact
                         ? FrameEditorMetrics.compactInspectorWidth
-                        : FrameEditorMetrics.inspectorWidth)
+                        : FrameEditorMetrics.inspectorWidth, height: geometry.size.height)
             }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
