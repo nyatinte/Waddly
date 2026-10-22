@@ -84,13 +84,25 @@ extension FrameCanvasNSView {
         guard let drag, let configuration else { return }
         let point = convert(event.locationInWindow, from: nil)
         if case .pan = drag.target {
-            panOffset = CGPoint(
-                x: drag.startPanOffset.x + point.x - drag.startPoint.x,
-                y: drag.startPanOffset.y + point.y - drag.startPoint.y
-            )
-            needsDisplay = true
-            return
+            applyPanDrag(drag, point: point)
+        } else {
+            applyCropDrag(drag, configuration: configuration, point: point)
         }
+    }
+
+    private func applyPanDrag(_ drag: DragState, point: NSPoint) {
+        panOffset = CGPoint(
+            x: drag.startPanOffset.x + point.x - drag.startPoint.x,
+            y: drag.startPanOffset.y + point.y - drag.startPoint.y
+        )
+        needsDisplay = true
+    }
+
+    private func applyCropDrag(
+        _ drag: DragState,
+        configuration: FrameCanvasConfiguration,
+        point: NSPoint
+    ) {
         let deltaX = Int(((point.x - drag.startPoint.x) / drag.scale).rounded())
         let deltaY = Int(((point.y - drag.startPoint.y) / drag.scale).rounded())
         let geometry = FrameEditGeometry(
