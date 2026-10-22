@@ -9,14 +9,17 @@ import WaddlyCore
     /// After/export, not once over the dimmed context and again as the foreground.
     @Test func translucentContentIsCompositedOnceAtZeroAndNonzeroOffsets() throws {
         let source = try makeTranslucentSource()
-        let background = try canvasPixel(source: nil, offset: 0)
+        let background = try canvasPixel(source: nil, offsetX: 0, offsetY: 0)
         let expected = blend(red: 255, green: 0, blue: 0, alpha: 0.5, over: background)
 
-        for offset in [0, 5] {
-            let actual = try canvasPixel(source: source, offset: offset)
-            #expect(abs(actual.red - expected.red) <= 4, "red at offset \(offset): \(actual) vs \(expected)")
-            #expect(abs(actual.green - expected.green) <= 4, "green at offset \(offset)")
-            #expect(abs(actual.blue - expected.blue) <= 4, "blue at offset \(offset)")
+        for (offsetX, offsetY) in [(0, 0), (5, 0), (0, -5), (-7, 3), (5, 5)] {
+            let actual = try canvasPixel(source: source, offsetX: offsetX, offsetY: offsetY)
+            #expect(
+                abs(actual.red - expected.red) <= 4,
+                "offset \(offsetX)x\(offsetY): \(actual) vs \(expected)"
+            )
+            #expect(abs(actual.green - expected.green) <= 4, "green at offset \(offsetX)x\(offsetY)")
+            #expect(abs(actual.blue - expected.blue) <= 4, "blue at offset \(offsetX)x\(offsetY)")
         }
     }
 
@@ -38,7 +41,7 @@ import WaddlyCore
         return try #require(context.makeImage())
     }
 
-    private func canvasPixel(source: CGImage?, offset: Int) throws -> Pixel {
+    private func canvasPixel(source: CGImage?, offsetX: Int, offsetY: Int) throws -> Pixel {
         let view = FrameCanvasNSView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
         view.appearance = NSAppearance(named: .aqua)
         view.apply(FrameCanvasConfiguration(
@@ -48,8 +51,8 @@ import WaddlyCore
             nominalCell: SquareCrop(x: 0, y: 0, size: 20),
             adjustment: FrameAdjustment(
                 crop: SquareCrop(x: 0, y: 0, size: 20),
-                offsetX: offset,
-                offsetY: offset
+                offsetX: offsetX,
+                offsetY: offsetY
             ),
             tool: .crop,
             zoomPercent: 100,

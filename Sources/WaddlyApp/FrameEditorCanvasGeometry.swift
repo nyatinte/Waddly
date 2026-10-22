@@ -158,17 +158,19 @@ extension FrameCanvasNSView {
             width: CGFloat(outputSide) * scale,
             height: CGFloat(outputSide) * scale
         )
+        // Only the selected source window (shifted by the alignment offset) inside the fixed output
+        // canvas is the exported foreground.
+        let visibleRect = cropRect.offsetBy(dx: offset.x, dy: offset.y).intersection(outputRect)
+        guard !visibleRect.isNull, !visibleRect.isEmpty else { return }
+
         context.cgContext.saveGState()
-        context.cgContext.translateBy(x: offset.x, y: offset.y)
-        // Clips are transformed by the current translation; the source crop keeps neighbour pixels
-        // out, and the output clip mirrors the exported canvas bounds.
-        context.cgContext.clip(to: cropRect)
-        context.cgContext.clip(to: outputRect.offsetBy(dx: -offset.x, dy: -offset.y))
-        // Replace the dimmed context inside the output with the same checkerboard the foreground
-        // is composited onto in After/export, then draw the selected pixels exactly once.
+        context.cgContext.clip(to: visibleRect)
+        // Repaint the preview checkerboard in stationary view coordinates; only the source draw is
+        // translated. This keeps the preview background identical for every alignment offset.
         context.cgContext.setBlendMode(.copy)
         drawBackground(in: context)
         context.cgContext.setBlendMode(.normal)
+        context.cgContext.translateBy(x: offset.x, y: offset.y)
         drawImage(source, in: sourceViewRect, context: context)
         context.cgContext.restoreGState()
     }
