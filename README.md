@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. It does not appear above a fullscreen app.
-- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames) locally. You can copy the video or the image, and “Post on X” opens the composer with only `#ShareMyWaddly`, so you write the post and attach the file yourself. Waddly has no share save-to-file action. See [the share flow notes](docs/SHARE.md).
+- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames) locally. You can copy the video or the image, and “Post on X” opens the composer with only `#ShareMyWaddly`, so you write the post and attach the file yourself. Waddly has no share save-to-file action.
 
 ## Use your own pet
 
@@ -106,7 +106,7 @@ Keyboard events are used only to control animation. Waddly does not store, log, 
 
 ## Measured memory
 
-The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target. See the [repeatable profiling workflow, baselines, and regression tests](docs/MEMORY.md). The frame editor decodes the retained 3 × 3 sheet only while it is open and releases its image buffers when the sheet closes.
+The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target (a known exception in 1.0). See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite. The frame editor decodes the retained 3 × 3 sheet only while it is open and releases its image buffers when the sheet closes.
 
 ## Contributing
 
