@@ -353,18 +353,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         presenter.reveal(panel)
     }
 
-    /// Setup opens on launch only while it is genuinely unfinished: no registered pet, or the user
-    /// has never closed the wizard. A leftover `setupStep` from closing the guide early must not
-    /// reopen setup for a user who already has a complete pet.
+    /// Setup opens on launch until it is finished. `setupStep` is the resume signal, so a relaunch
+    /// that macOS asks for after an Input Monitoring grant comes back to the step it left, even
+    /// though terminating the app closes the window and marks the guide as seen.
     var shouldOpenSetupOnLaunch: Bool {
-        Self.opensSetupOnLaunch(
-            hasCompleteImageSet: hasCompletePetImageSet,
-            setupWizardSeen: settings.setupWizardSeen
-        )
-    }
-
-    static func opensSetupOnLaunch(hasCompleteImageSet: Bool, setupWizardSeen: Bool) -> Bool {
-        !(hasCompleteImageSet && setupWizardSeen)
+        !isSetupComplete
     }
 
     /// Setup counts as finished only when it ran to the end: the saved step is cleared there.

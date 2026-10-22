@@ -6,12 +6,19 @@ final class DraggableAppIconView: NSImageView, NSDraggingSource {
         super.init(frame: .zero)
         image = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
         imageScaling = .scaleProportionallyUpOrDown
-        setAccessibilityLabel(localization.string(for: .setupDragAppIcon))
-        toolTip = localization.string(for: .setupDragAppIcon)
+        translatesAutoresizingMaskIntoConstraints = false
+        updateLocalization(localization)
     }
 
     required init?(coder: NSCoder) {
         nil
+    }
+
+    /// The guide can stay open across a language change; refresh the spoken and hover text.
+    func updateLocalization(_ localization: LocalizationController) {
+        let label = localization.string(for: .setupDragAppIcon)
+        setAccessibilityLabel(label)
+        toolTip = label
     }
 
     override func mouseDragged(with event: NSEvent) {

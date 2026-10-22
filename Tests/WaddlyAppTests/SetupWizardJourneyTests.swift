@@ -112,7 +112,8 @@ import WaddlyCore
         #expect(wizard.hasImage)
 
         // Reopening the guide (Dock click or menu) lands on the completion page with the
-        // missing-permission warning still shown; a relaunch with a complete pet does not auto-open it.
+        // missing-permission warning still shown. A launch with this unfinished step reopens the
+        // guide by itself at the saved page.
         let resumed = try Fixture.makeWizard(
             state: state,
             savedStep: SetupWizardController.Step.completed.rawValue
@@ -122,6 +123,35 @@ import WaddlyCore
         #expect(!resumed.isMonitoringReady)
         resumed.showMonitoringStep()
         #expect(resumed.currentStep == .monitoring)
+    }
+
+    /// A granted permission that needs a restart is repaired from the completion page, where the
+    /// user lands after choosing "Set up later" — not by sending them back to "enable" it again.
+    @Test func restartRequiredOffersRestartFromTheCompletionPage() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        var relaunches = 0
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            savedStep: SetupWizardController.Step.monitoring.rawValue,
+            granted: true,
+            receiving: false,
+            relaunch: { relaunches += 1 }
+        )
+        defer { wizard.close() }
+
+        wizard.deferMonitoring()
+
+        #expect(wizard.currentStep == .completed)
+        #expect(wizard.monitoringReadiness == .tapUnavailable)
+        #expect(!wizard.isMonitoringReady)
+        #expect(wizard.monitoringRecovery == .restart)
+        #expect(wizard.monitoringCheckKey == .setupCheckMonitoringRestart)
+        #expect(wizard.monitoringIncompleteWarningKey == .setupCompleteWarningRestart)
+        #expect(wizard.monitoringIncompleteActionKey == .setupRestartNow)
+
+        wizard.relaunchApp()
+        #expect(relaunches == 1)
     }
 
     /// A live tap with zero delivered keys must stay unconfirmed: no success, no advance.
@@ -172,6 +202,7 @@ import WaddlyCore
         #expect(!wizard.isMonitoringReady)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoringWaiting)
         #expect(wizard.monitoringIncompleteActionKey == .setupConfirmTyping)
+        #expect(wizard.monitoringRecovery == .confirmTyping)
 
         // A delivered key confirms it from the completion page too.
         state.observedReaction = true

@@ -237,6 +237,12 @@ extension SetupWizardController {
     /// macOS only applies Input Monitoring to a fresh process, so offer the restart it asks for.
     @objc func relaunchApp() {
         permission.stop()
+        relaunch()
+    }
+
+    /// Opens a new instance, then quits this one. The saved step is the resume signal, so the new
+    /// process comes back to the same setup page instead of leaving the user half-configured.
+    static func performRelaunch() {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.createsNewApplicationInstance = true
         NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in }

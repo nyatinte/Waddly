@@ -49,6 +49,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     let pasteboard: NSPasteboard
     /// Opens the ChatGPT URL. Injectable so a test can prove the truthful failure state.
     let openBrowser: @MainActor (URL) -> Bool
+    /// Quits and reopens Waddly. Injectable so a test can prove the restart prompt without
+    /// terminating the test process.
+    let relaunch: @MainActor () -> Void
     /// Announces an inline failure. Injectable so tests prove the call without posting real speech.
     let announce: @MainActor (String) -> Void
     /// The only way this window reaches the screen. Tests pass one that draws nothing.
@@ -102,6 +105,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         savedStep: Int? = nil,
         pasteboard: NSPasteboard = .general,
         openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
+        relaunch: @escaping @MainActor () -> Void = SetupWizardController.performRelaunch,
         announce: @escaping @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
@@ -119,6 +123,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.permission = permission
         self.pasteboard = pasteboard
         self.openBrowser = openBrowser
+        self.relaunch = relaunch
         self.announce = announce
         self.presenter = presenter
         self.onStepChange = onStepChange
@@ -187,27 +192,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// True only when permission is granted and a real key has reached Waddly since the tap started.
     var isMonitoringReady: Bool {
         permission.isReady
-    }
-
-    /// The completion page states the monitoring outcome truthfully for each readiness state.
-    var monitoringCheckKey: LocalizationKey {
-        switch monitoringReadiness {
-        case .reactionObserved: .setupCheckMonitoring
-        case .awaitingReaction: .setupCheckMonitoringWaiting
-        case .tapUnavailable: .setupCheckMonitoringRestart
-        case .permissionMissing: .setupCheckMonitoringOff
-        }
-    }
-
-    /// The completion page's warning when the monitoring check is incomplete.
-    var monitoringIncompleteWarningKey: LocalizationKey {
-        monitoringReadiness == .awaitingReaction ? .setupCompleteWarningWaiting : .setupCompleteWarning
-    }
-
-    /// What the completion page offers next: confirm by typing when the tap is already live,
-    /// otherwise send the user back to set Input Monitoring up.
-    var monitoringIncompleteActionKey: LocalizationKey {
-        monitoringReadiness == .awaitingReaction ? .setupConfirmTyping : .setupSetUpMonitoring
     }
 
     /// The wizard itself is the drag guide, so it never hands off to a floating panel.
@@ -342,10 +326,6 @@ extension SetupWizardController {
     }
 
     private func updatePreview() {
-        if isShowingGuide {
-            previewPane.showDropGuide()
-            return
-        }
         let images = currentPetImages()
         if images.isComplete {
             previewPane.showPet(images, caption: previewCaption, sleeping: shouldSleepInPreview)

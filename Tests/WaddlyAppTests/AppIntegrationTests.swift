@@ -252,23 +252,6 @@ import WaddlyCore
         #expect(try !app.validateMenuItem(editorItem(of: app)))
     }
 
-    /// Setup opens on launch only while it is unfinished: a configured user with a leftover step
-    /// (for example, after closing the guide early) must not get setup back on the next launch.
-    @Test(arguments: LaunchCase.all)
-    func launchReopensSetupUntilItIsFinished(scenario: LaunchCase) async throws {
-        let fixture = try AppIntegrationFixture()
-        defer { fixture.close() }
-        let app = fixture.app
-        if scenario.hasImages {
-            try await app.persistPetImages(fixture.exampleImages())
-        }
-        app.settings.setupWizardSeen = scenario.seen
-        app.settings.setupStep = scenario.step
-
-        #expect(app.shouldOpenSetupOnLaunch == scenario.expectsSetupOnLaunch, "\(scenario.name)")
-        #expect(app.isSetupComplete == scenario.isComplete, "\(scenario.name)")
-    }
-
     @Test func dockReopenKeepsAnOpenSetupWizard() async throws {
         let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
@@ -282,57 +265,4 @@ import WaddlyCore
         #expect(wizard.window?.isVisible == true)
         #expect(app.characterImportWindowController == nil)
     }
-}
-
-/// The launch cases, named so a failure says which state broke.
-struct LaunchCase: Sendable {
-    let name: String
-    let hasImages: Bool
-    let seen: Bool
-    let step: Int?
-    let expectsSetupOnLaunch: Bool
-    let isComplete: Bool
-
-    static let all: [LaunchCase] = [
-        LaunchCase(
-            name: "nothing yet",
-            hasImages: false,
-            seen: false,
-            step: nil,
-            expectsSetupOnLaunch: true,
-            isComplete: false
-        ),
-        LaunchCase(
-            name: "no images",
-            hasImages: false,
-            seen: true,
-            step: nil,
-            expectsSetupOnLaunch: true,
-            isComplete: false
-        ),
-        LaunchCase(
-            name: "images, never finished",
-            hasImages: true,
-            seen: false,
-            step: nil,
-            expectsSetupOnLaunch: true,
-            isComplete: false
-        ),
-        LaunchCase(
-            name: "images, closed the guide early",
-            hasImages: true,
-            seen: true,
-            step: SetupWizardController.Step.monitoring.rawValue,
-            expectsSetupOnLaunch: false,
-            isComplete: false
-        ),
-        LaunchCase(
-            name: "finished",
-            hasImages: true,
-            seen: true,
-            step: nil,
-            expectsSetupOnLaunch: false,
-            isComplete: true
-        )
-    ]
 }
