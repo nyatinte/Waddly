@@ -11,7 +11,9 @@ struct FrameCanvasConfiguration {
     var nominalCell: SquareCrop?
     var adjustment: FrameAdjustment
     var tool: FrameEditorTool
-    var zoomPercent: Int
+    var zoomScale: CGFloat = 1
+    /// Changes when the selected frame changes, so the viewport pan resets.
+    var resetKey: Int = 0
     var showsGrid: Bool
     var showsCrosshair: Bool
     var showsWarning: Bool
@@ -25,16 +27,19 @@ struct FrameCanvasConfiguration {
 struct FrameEditorCanvas: NSViewRepresentable {
     let configuration: FrameCanvasConfiguration
     let onAdjustmentChange: (FrameAdjustment) -> Void
+    let onZoomChange: (CGFloat) -> Void
 
     func makeNSView(context: Context) -> FrameCanvasNSView {
         let view = FrameCanvasNSView(frame: .zero)
         view.onAdjustmentChange = onAdjustmentChange
+        view.onZoomChange = onZoomChange
         view.apply(configuration)
         return view
     }
 
     func updateNSView(_ view: FrameCanvasNSView, context: Context) {
         view.onAdjustmentChange = onAdjustmentChange
+        view.onZoomChange = onZoomChange
         view.apply(configuration)
     }
 
@@ -48,6 +53,10 @@ struct FrameEditorCanvas: NSViewRepresentable {
 
 final class FrameCanvasNSView: NSView {
     var onAdjustmentChange: ((FrameAdjustment) -> Void)?
+    var onZoomChange: ((CGFloat) -> Void)?
+    /// Viewport translation in view points, driven by background drags and scrolling.
+    var panOffset = CGPoint.zero
+    private var lastResetKey: Int?
 
     var configuration: FrameCanvasConfiguration?
     var trackingAreaReference: NSTrackingArea?
@@ -57,6 +66,7 @@ final class FrameCanvasNSView: NSView {
         case handle(SpriteCropHandle)
         case moveCrop
         case alignContent
+        case pan
     }
 
     struct DragState {
@@ -64,6 +74,7 @@ final class FrameCanvasNSView: NSView {
         let startAdjustment: FrameAdjustment
         let startPoint: NSPoint
         let scale: CGFloat
+        let startPanOffset: CGPoint
     }
 
     override var isFlipped: Bool {
@@ -75,6 +86,10 @@ final class FrameCanvasNSView: NSView {
     }
 
     func apply(_ configuration: FrameCanvasConfiguration) {
+        if lastResetKey != configuration.resetKey {
+            lastResetKey = configuration.resetKey
+            panOffset = .zero
+        }
         self.configuration = configuration
         updateAccessibility(configuration)
         needsDisplay = true
@@ -84,7 +99,9 @@ final class FrameCanvasNSView: NSView {
     func releaseResources() {
         configuration = nil
         onAdjustmentChange = nil
+        onZoomChange = nil
         drag = nil
+        panOffset = .zero
         setAccessibilityElement(false)
     }
 }

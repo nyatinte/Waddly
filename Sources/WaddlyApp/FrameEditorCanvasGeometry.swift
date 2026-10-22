@@ -25,11 +25,10 @@ extension FrameCanvasNSView {
         let margin: CGFloat = 26
         let available = bounds.insetBy(dx: margin, dy: margin)
         let fit = min(available.width / max(context.width, 1), available.height / max(context.height, 1))
-        let zoom = CGFloat(configuration.zoomPercent) / 100
-        let scale = max(0.01, fit * zoom)
+        let scale = max(0.01, fit * max(0.01, configuration.zoomScale))
         let origin = CGPoint(
-            x: (bounds.width - context.width * scale) / 2 - context.minX * scale,
-            y: (bounds.height - context.height * scale) / 2 - context.minY * scale
+            x: (bounds.width - context.width * scale) / 2 - context.minX * scale + panOffset.x,
+            y: (bounds.height - context.height * scale) / 2 - context.minY * scale + panOffset.y
         )
         return CanvasLayout(contextRect: context, scale: scale, origin: origin)
     }

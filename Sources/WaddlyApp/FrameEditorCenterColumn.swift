@@ -17,9 +17,11 @@ struct FrameEditorCenterColumn: View {
             )
             VStack(alignment: .leading, spacing: 10) {
                 header
-                FrameEditorCanvas(configuration: canvasConfiguration) { adjustment in
-                    model.applyCanvasAdjustment(adjustment)
-                }
+                FrameEditorCanvas(
+                    configuration: canvasConfiguration,
+                    onAdjustmentChange: { adjustment in model.applyCanvasAdjustment(adjustment) },
+                    onZoomChange: { scale in model.setZoomScale(scale) }
+                )
                 .frame(maxWidth: .infinity)
                 .frame(height: canvasHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -43,7 +45,8 @@ struct FrameEditorCenterColumn: View {
             nominalCell: model.geometry?.nominalCell,
             adjustment: model.currentAdjustment,
             tool: model.tool,
-            zoomPercent: model.zoomPercent,
+            zoomScale: model.zoomScale,
+            resetKey: model.selectedSlot.rawValue,
             showsGrid: model.showsGrid,
             showsCrosshair: model.showsCrosshair,
             showsWarning: model.cropExtendsIntoNeighbor,
@@ -76,56 +79,6 @@ struct FrameEditorCenterColumn: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 8)
-            zoomControls
-        }
-    }
-
-    private var zoomControls: some View {
-        HStack(spacing: 4) {
-            Button {
-                model.zoomPercent = max(
-                    CharacterFrameEditorModel.zoomLevels.first ?? 100,
-                    model.zoomPercent - 100
-                )
-            } label: {
-                Image(systemName: "minus.magnifyingglass")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .disabled(model.zoomPercent <= (CharacterFrameEditorModel.zoomLevels.first ?? 100))
-            .help(localization.string(for: .frameEditorZoomOut))
-            .accessibilityLabel(localization.string(for: .frameEditorZoomOut))
-
-            Text(String(format: localization.string(for: .frameEditorZoomPercentFormat), model.zoomPercent))
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .frame(width: 44)
-                .accessibilityLabel(String(
-                    format: localization.string(for: .frameEditorZoomAccessibilityFormat),
-                    model.zoomPercent
-                ))
-
-            Button {
-                model.zoomPercent = min(
-                    CharacterFrameEditorModel.zoomLevels.last ?? 400,
-                    model.zoomPercent + 100
-                )
-            } label: {
-                Image(systemName: "plus.magnifyingglass")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .disabled(model.zoomPercent >= (CharacterFrameEditorModel.zoomLevels.last ?? 400))
-            .help(localization.string(for: .frameEditorZoomIn))
-            .accessibilityLabel(localization.string(for: .frameEditorZoomIn))
-
-            Text(localization.string(for: .frameEditorSquareAspect))
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color(nsColor: .controlBackgroundColor), in: Capsule())
-                .accessibilityLabel(localization.string(for: .frameEditorSquareLocked))
         }
     }
 

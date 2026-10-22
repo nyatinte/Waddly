@@ -230,14 +230,9 @@
 "frameEditor.editedSuffix" = "、編集済み";
 "frameEditor.previousFrame" = "前へ";
 "frameEditor.nextFrame" = "次へ";
-"frameEditor.canvasHelp" = "端をドラッグして範囲を変更し、位置合わせモードで内側をドラッグすると位置を調整できます。";
+"frameEditor.canvasHelp" = "端をドラッグして範囲を変更し、位置合わせモードで内側をドラッグすると位置を調整できます。スクロールまたは背景ドラッグでパン、ピンチまたは⌥スクロールでズーム。背景をダブルクリックで表示をリセットします。";
 "frameEditor.canvasA11y" = "フレームのクロップ領域";
 "frameEditor.canvasValueFormat" = "クロップ %1$d × %1$d px（%2$d, %3$d）、内容のオフセット %4$d, %5$d";
-"frameEditor.zoomOut" = "縮小";
-"frameEditor.zoomIn" = "拡大";
-"frameEditor.zoomPercentFormat" = "%d%%";
-"frameEditor.zoomAccessibilityFormat" = "ズーム %d パーセント";
-"frameEditor.squareAspect" = "1 : 1";
 "frameEditor.fixedCanvasHelp" = "出力キャンバスは %1$d × %1$d px のままです。クロップは表示される枠を狭めるだけで、キャラクターの位置や大きさは変わりません。";
 "frameEditor.squareLocked" = "正方形 1 : 1（固定）";
 "frameEditor.resultPreview" = "結果プレビュー";

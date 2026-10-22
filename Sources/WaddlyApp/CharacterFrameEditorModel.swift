@@ -27,7 +27,6 @@ struct CropSizeAnchor {
 
 @MainActor
 final class CharacterFrameEditorModel: ObservableObject {
-    static let zoomLevels = [100, 200, 300, 400]
     static let thumbnailSide = 120
     static let previewSide = 288
 
@@ -39,7 +38,7 @@ final class CharacterFrameEditorModel: ObservableObject {
     @Published private(set) var sourceFrames: PetImageSet
     @Published var selectedSlot: SpriteFrameSlot = .idle1
     @Published var tool: FrameEditorTool = .crop
-    @Published var zoomPercent = 100
+    @Published private(set) var zoomScale: CGFloat = 1
     @Published var showsGrid = true
     @Published var showsCrosshair = true
     @Published private(set) var isComposing = false
@@ -167,6 +166,11 @@ final class CharacterFrameEditorModel: ObservableObject {
         sourceFrames = PetImageSet()
         editing = nil
         cropSizeAnchor = nil
+    }
+
+    /// Continuous canvas zoom driven by trackpad pinch / Option-scroll; 1 means fit.
+    func setZoomScale(_ scale: CGFloat) {
+        zoomScale = min(max(scale, 0.5), 8)
     }
 
     // MARK: - Selection

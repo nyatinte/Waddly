@@ -130,7 +130,7 @@ import WaddlyCore
                 offsetY: 0
             ),
             tool: .crop,
-            zoomPercent: 100,
+            zoomScale: 1,
             showsGrid: true,
             showsCrosshair: true,
             showsWarning: false

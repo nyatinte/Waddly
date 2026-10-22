@@ -55,7 +55,7 @@ import WaddlyCore
                 offsetY: offsetY
             ),
             tool: .crop,
-            zoomPercent: 100,
+            zoomScale: 1,
             showsGrid: false,
             showsCrosshair: false,
             showsWarning: false

@@ -230,14 +230,9 @@
 "frameEditor.editedSuffix" = ", edited";
 "frameEditor.previousFrame" = "Previous";
 "frameEditor.nextFrame" = "Next";
-"frameEditor.canvasHelp" = "Drag the edges to crop; drag inside in Align mode to reposition.";
+"frameEditor.canvasHelp" = "Drag edges to crop; drag inside in Align mode to reposition. Scroll or drag the background to pan, pinch or ⌥-scroll to zoom; double-click the background to reset.";
 "frameEditor.canvasA11y" = "Frame crop canvas";
 "frameEditor.canvasValueFormat" = "Crop %1$d by %1$d pixels at %2$d, %3$d; content offset %4$d, %5$d";
-"frameEditor.zoomOut" = "Zoom out";
-"frameEditor.zoomIn" = "Zoom in";
-"frameEditor.zoomPercentFormat" = "%d%%";
-"frameEditor.zoomAccessibilityFormat" = "Zoom %d percent";
-"frameEditor.squareAspect" = "1 : 1";
 "frameEditor.fixedCanvasHelp" = "The output canvas stays %1$d × %1$d px. The crop only narrows the visible frame, so the character never moves or scales.";
 "frameEditor.squareLocked" = "Square 1 : 1 — locked by design.";
 "frameEditor.resultPreview" = "Result preview";
