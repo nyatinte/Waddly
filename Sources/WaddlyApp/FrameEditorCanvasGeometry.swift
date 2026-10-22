@@ -164,6 +164,11 @@ extension FrameCanvasNSView {
         // out, and the output clip mirrors the exported canvas bounds.
         context.cgContext.clip(to: cropRect)
         context.cgContext.clip(to: outputRect.offsetBy(dx: -offset.x, dy: -offset.y))
+        // Replace the dimmed context inside the output with the same checkerboard the foreground
+        // is composited onto in After/export, then draw the selected pixels exactly once.
+        context.cgContext.setBlendMode(.copy)
+        drawBackground(in: context)
+        context.cgContext.setBlendMode(.normal)
         drawImage(source, in: sourceViewRect, context: context)
         context.cgContext.restoreGState()
     }

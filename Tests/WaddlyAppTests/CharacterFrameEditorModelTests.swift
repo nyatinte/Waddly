@@ -142,6 +142,36 @@ import WaddlyCore
         #expect(weakSheet == nil)
     }
 
+    /// Releasing the editor while the sheet decode is suspended must not repopulate its heavy
+    /// resources when the decode resumes.
+    @Test func releaseDuringPreparationWinsTheRace() async throws {
+        let importModel = CharacterImportModel(
+            currentImages: { PetImageSet() },
+            commit: { _ in .committed }
+        )
+        try await importModel.stageFiles(at: [SetupWizardFixture.sheetURL()])
+        let source = try #require(importModel.stagedFrames?.editingSource?.sheetPNGData)
+        let sheet = try #require(PetFrameSourceDecoder.sheetImage(from: source))
+        let gate = SheetDecodeGate()
+        let editor = try CharacterFrameEditorModel(
+            importModel: importModel,
+            localization: makeLocalization(),
+            sheetDecoder: { _ in await gate.wait() }
+        )
+        let task = Task { await editor.prepare() }
+        #expect(await gate.waitUntilStarted())
+        editor.releaseResources()
+        gate.resume(sheet)
+        await task.value
+
+        #expect(editor.isReleased)
+        #expect(editor.sheet == nil)
+        #expect(editor.editing == nil)
+        #expect(editor.baseThumbnails.isEmpty)
+        #expect(editor.adjustedThumbnails.isEmpty)
+        #expect(!editor.sourceFrames.isComplete)
+    }
+
     /// Even if a future host opened the editor for a custom frame layout, it must not compose or
     /// stage a truncated nine-frame draft over the user's saved frames.
     @Test func unsupportedLegacyLayoutCannotStageATruncatedDraft() async throws {
@@ -185,5 +215,38 @@ import WaddlyCore
         let standard = CharacterImportModel(currentImages: { plain }, commit: { _ in .committed })
         standard.reload()
         #expect(standard.canAdjustFrames)
+    }
+}
+
+/// Suspends the injected sheet decode so a test can release the editor while it is in flight.
+@MainActor
+private final class SheetDecodeGate {
+    private var started = false
+    private var continuation: CheckedContinuation<CGImage?, Never>?
+    private var releasedImage: CGImage?
+
+    func wait() async -> CGImage? {
+        started = true
+        if let releasedImage {
+            return releasedImage
+        }
+        return await withCheckedContinuation { continuation = $0 }
+    }
+
+    func waitUntilStarted() async -> Bool {
+        for _ in 0 ..< 500 {
+            if started {
+                return true
+            }
+            await Task.yield()
+        }
+        return started
+    }
+
+    func resume(_ image: CGImage?) {
+        releasedImage = image
+        guard let continuation else { return }
+        self.continuation = nil
+        continuation.resume(returning: image)
     }
 }

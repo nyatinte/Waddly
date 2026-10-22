@@ -53,12 +53,20 @@ final class CharacterFrameEditorModel: ObservableObject {
     /// stepper clicks; a crop origin or another tool resets it.
     var cropSizeAnchor: CropSizeAnchor?
     private var sheetPNGData: Data?
+    /// Decodes the retained sheet. Injectable so tests can suspend a decode and release the editor
+    /// while it is in flight.
+    private let sheetDecoder: @Sendable (Data) async -> CGImage?
     /// Only used to report the entry point's source details and to stage the reviewed draft.
     private(set) weak var importModel: CharacterImportModel?
 
-    init(importModel: CharacterImportModel, localization: LocalizationController) {
+    init(
+        importModel: CharacterImportModel,
+        localization: LocalizationController,
+        sheetDecoder: (@Sendable (Data) async -> CGImage?)? = nil
+    ) {
         self.importModel = importModel
         self.localization = localization
+        self.sheetDecoder = sheetDecoder ?? { data in await Self.decodeSheet(data) }
         sourceFrames = importModel.stagedFrames ?? PetImageSet()
     }
 
@@ -70,6 +78,7 @@ final class CharacterFrameEditorModel: ObservableObject {
         editing: SpriteFrameEditing? = nil
     ) {
         self.localization = localization
+        sheetDecoder = { data in await Self.decodeSheet(data) }
         sourceFrames = frames
         if let editing {
             self.editing = editing
@@ -91,11 +100,15 @@ final class CharacterFrameEditorModel: ObservableObject {
         guard isLoading, !isReleased else { return }
         let frames = sourceFrames
         if let source = frames.editingSource, let data = source.sheetPNGData {
-            if let decoded = await Self.decodeSheet(data) {
+            if let decoded = await sheetDecoder(data) {
+                // The sheet can be dismissed while the decode is suspended; do not resurrect the
+                // resources that releaseResources() already dropped.
+                guard !isReleased, !Task.isCancelled else { return }
                 completePreparation(editing: source.editing, sheet: decoded, data: data)
                 return
             }
         }
+        guard !isReleased, !Task.isCancelled else { return }
         completeIndividualPreparation(frames: frames)
     }
 
@@ -106,6 +119,7 @@ final class CharacterFrameEditorModel: ObservableObject {
     }
 
     private func completePreparation(editing: SpriteFrameEditing, sheet: CGImage, data: Data) {
+        guard !isReleased else { return }
         self.editing = editing.normalized
         self.sheet = sheet
         sheetPNGData = data
@@ -115,6 +129,7 @@ final class CharacterFrameEditorModel: ObservableObject {
     }
 
     private func completeIndividualPreparation(frames: PetImageSet) {
+        guard !isReleased else { return }
         guard let editing = PetImageEditingSource.individualEditing(for: frames) else {
             composeFailed = true
             isLoading = false
