@@ -9,28 +9,21 @@ func shareLayerColor(_ color: NSColor, appearance: NSAppearance) -> CGColor {
     return result
 }
 
-/// Renders the X logo at the requested size as a template image, so a button tints it for light and dark.
-@MainActor
+/// The official X glyph, used unmodified as a template so the brand fill can tint it black or white.
+/// The square viewBox centers the glyph without stretching it.
 enum ShareXLogo {
-    static func image(size: CGFloat) -> NSImage {
-        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
-            NSColor.black.setFill()
-            NSBezierPath(ovalIn: rect.insetBy(dx: 0.5, dy: 0.5)).fill()
-            let label = NSAttributedString(
-                string: "𝕏",
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: size * 0.47, weight: .bold),
-                    .foregroundColor: NSColor.black
-                ]
-            )
-            NSGraphicsContext.current?.cgContext.setBlendMode(.destinationOut)
-            let labelSize = label.size()
-            label.draw(at: NSPoint(
-                x: rect.midX - labelSize.width / 2,
-                y: rect.midY - labelSize.height / 2
-            ))
-            return true
-        }
+    private static let glyph = """
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="-13.185 0 1226.37 1226.37">
+      <path d="M306.615 79.694H144.011L892.476 1150.3h162.604ZM0 0h357.328l309.814 450.883
+               L1055.03 0h105.86L714.15 519.295 1200 1226.37H842.672L515.493 750.215
+               L105.866 1226.37H0l468.485-544.568Z"/>
+    </svg>
+    """
+
+    static func image(size: CGFloat) -> NSImage? {
+        guard let data = glyph.data(using: .utf8), let image = NSImage(data: data) else { return nil }
+        image.size = NSSize(width: size, height: size)
         image.isTemplate = true
         return image
     }
@@ -60,30 +53,36 @@ final class ShareActionButton: NSButton {
         return button
     }
 
-    /// The primary action: the accent fill the setup and character footers use for their main action.
+    /// The X brand action: black with a white logo and label in the light appearance, inverted in
+    /// the dark appearance. The accent color is deliberately not used here; X's brand palette is
+    /// black and white.
     static func primaryAction(title: String) -> ShareActionButton {
         let button = ShareActionButton(
             title: title,
-            base: .controlAccentColor,
-            hover: accentBlend(withFraction: 0.12, of: .white),
-            pressed: accentBlend(withFraction: 0.18, of: .black)
+            base: brandColor(light: .black, dark: .white),
+            hover: brandColor(
+                light: NSColor(calibratedWhite: 0.12, alpha: 1),
+                dark: NSColor(calibratedWhite: 0.88, alpha: 1)
+            ),
+            pressed: brandColor(
+                light: NSColor(calibratedWhite: 0.22, alpha: 1),
+                dark: NSColor(calibratedWhite: 0.78, alpha: 1)
+            )
         )
         button.applyActionMetrics()
-        button.contentTintColor = .white
+        // The X action is a brand pill rather than a rounded system action.
+        button.layer?.cornerRadius = LayoutMetrics.actionHeight / 2
+        button.contentTintColor = brandTextColor
         button.setPrimaryTitle(title)
         return button
     }
 
-    /// `blended(withFraction:of:)` converts the receiver to RGB when it is called, so blending the
-    /// accent in the initializer would freeze the appearance that was current when Share opened.
-    /// The dynamic provider resolves the blend for the appearance the button is drawn in.
-    private static func accentBlend(withFraction fraction: CGFloat, of other: NSColor) -> NSColor {
+    private static let brandTextColor = brandColor(light: .white, dark: .black)
+
+    /// A black/white brand color that resolves when the button is drawn in its current appearance.
+    private static func brandColor(light: NSColor, dark: NSColor) -> NSColor {
         NSColor(name: nil) { appearance in
-            var result = NSColor.controlAccentColor
-            appearance.performAsCurrentDrawingAppearance {
-                result = NSColor.controlAccentColor.blended(withFraction: fraction, of: other) ?? .controlAccentColor
-            }
-            return result
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
         }
     }
 
@@ -96,12 +95,13 @@ final class ShareActionButton: NSButton {
         invalidateIntrinsicContentSize()
     }
 
-    /// The primary fill needs white text; a plain borderless button would otherwise keep the label color.
+    /// The brand fill needs the inverse of its black/white base; a plain borderless button would
+    /// otherwise keep the label color.
     func setPrimaryTitle(_ title: String) {
         self.title = title
         attributedTitle = NSAttributedString(string: title, attributes: [
             .font: font ?? NSFont.systemFont(ofSize: 13),
-            .foregroundColor: NSColor.white
+            .foregroundColor: Self.brandTextColor
         ])
         invalidateIntrinsicContentSize()
     }

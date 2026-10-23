@@ -147,7 +147,8 @@ import WaddlyCore
         $0.identifier?.rawValue == "share.postButton"
     } as? NSButton)
     #expect(postButton.frame.height == LayoutMetrics.actionHeight)
-    #expect(postButton.frame.maxX == postRow.bounds.maxX)
+    #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
+    #expect(postButton.image?.isTemplate == true)
     #expect(postButton.action != nil)
     #expect(postButton.accessibilityLabel() == postLabel)
     #expect(descendants(of: contentView).contains { ($0 as? NSBox)?.boxType == .separator })

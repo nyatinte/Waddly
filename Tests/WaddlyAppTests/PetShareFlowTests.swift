@@ -219,6 +219,36 @@ private func writeStub(_ url: URL) throws {
     #expect(lightPressed != darkPressed)
 }
 
+@Test @MainActor func sharePostButtonUsesTheXBrandFill() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-brand.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let view = PetShareDialogView(
+        localization: LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
+    )
+    let post = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
+        .first { $0.identifier?.rawValue == "share.postButton" })
+    post.isEnabled = true
+
+    post.appearance = NSAppearance(named: .aqua)
+    post.viewDidChangeEffectiveAppearance()
+    let light = try #require(brightness(of: post.layer?.backgroundColor))
+
+    post.appearance = NSAppearance(named: .darkAqua)
+    post.viewDidChangeEffectiveAppearance()
+    let dark = try #require(brightness(of: post.layer?.backgroundColor))
+
+    #expect(light < 0.2)
+    #expect(dark > 0.8)
+}
+
+@MainActor private func brightness(of color: CGColor?) -> CGFloat? {
+    guard let color, let resolved = NSColor(cgColor: color)?.usingColorSpace(.deviceRGB) else { return nil }
+    return (resolved.redComponent + resolved.greenComponent + resolved.blueComponent) / 3
+}
+
 @Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("WaddlyTests.share-paste.\(UUID().uuidString)", isDirectory: true)

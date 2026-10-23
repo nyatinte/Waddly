@@ -179,7 +179,8 @@ final class PetShareDialogView: NSView {
         loadingLabel.textColor = .secondaryLabelColor
         postStatusLabel.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postStatus")
         postStatusLabel.font = .systemFont(ofSize: 11)
-        postStatusLabel.lineBreakMode = .byTruncatingTail
+        postStatusLabel.maximumNumberOfLines = 2
+        postStatusLabel.lineBreakMode = .byWordWrapping
         postStatusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         failure.orientation = .vertical
         failure.alignment = .centerX
@@ -252,7 +253,7 @@ final class PetShareDialogView: NSView {
             xRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -LayoutMetrics.contentInset),
             xRow.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -LayoutMetrics.footerInset),
             xRow.heightAnchor.constraint(equalToConstant: LayoutMetrics.actionHeight),
-            postButton.trailingAnchor.constraint(equalTo: xRow.trailingAnchor),
+            postButton.centerXAnchor.constraint(equalTo: xRow.centerXAnchor),
             postButton.centerYAnchor.constraint(equalTo: xRow.centerYAnchor),
             postStatusLabel.leadingAnchor.constraint(equalTo: xRow.leadingAnchor),
             postStatusLabel.trailingAnchor.constraint(
