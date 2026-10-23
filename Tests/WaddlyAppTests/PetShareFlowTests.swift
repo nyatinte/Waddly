@@ -194,6 +194,31 @@ private func writeStub(_ url: URL) throws {
     button.isEnabled = true
 }
 
+@Test @MainActor func shareActionFillsFollowTheEffectiveAppearance() throws {
+    let dynamic = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .white : .black
+    }
+    let button = ShareActionButton(title: "Probe", base: dynamic, hover: dynamic, pressed: dynamic)
+    button.isEnabled = true
+
+    button.appearance = NSAppearance(named: .aqua)
+    button.setHovered(true)
+    let lightHover = try #require(button.layer?.backgroundColor)
+    button.highlight(true)
+    let lightPressed = try #require(button.layer?.backgroundColor)
+
+    button.highlight(false)
+    button.setHovered(false)
+    button.appearance = NSAppearance(named: .darkAqua)
+    button.setHovered(true)
+    let darkHover = try #require(button.layer?.backgroundColor)
+    button.highlight(true)
+    let darkPressed = try #require(button.layer?.backgroundColor)
+
+    #expect(lightHover != darkHover)
+    #expect(lightPressed != darkPressed)
+}
+
 @Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("WaddlyTests.share-paste.\(UUID().uuidString)", isDirectory: true)

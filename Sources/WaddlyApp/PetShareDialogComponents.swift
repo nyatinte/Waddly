@@ -65,13 +65,26 @@ final class ShareActionButton: NSButton {
         let button = ShareActionButton(
             title: title,
             base: .controlAccentColor,
-            hover: .controlAccentColor.blended(withFraction: 0.12, of: .white) ?? .controlAccentColor,
-            pressed: .controlAccentColor.blended(withFraction: 0.18, of: .black) ?? .controlAccentColor
+            hover: accentBlend(withFraction: 0.12, of: .white),
+            pressed: accentBlend(withFraction: 0.18, of: .black)
         )
         button.applyActionMetrics()
         button.contentTintColor = .white
         button.setPrimaryTitle(title)
         return button
+    }
+
+    /// `blended(withFraction:of:)` converts the receiver to RGB when it is called, so blending the
+    /// accent in the initializer would freeze the appearance that was current when Share opened.
+    /// The dynamic provider resolves the blend for the appearance the button is drawn in.
+    private static func accentBlend(withFraction fraction: CGFloat, of other: NSColor) -> NSColor {
+        NSColor(name: nil) { appearance in
+            var result = NSColor.controlAccentColor
+            appearance.performAsCurrentDrawingAppearance {
+                result = NSColor.controlAccentColor.blended(withFraction: fraction, of: other) ?? .controlAccentColor
+            }
+            return result
+        }
     }
 
     /// The shared action metrics: 13 pt type and a 36 pt height with 12 pt side padding, matching
