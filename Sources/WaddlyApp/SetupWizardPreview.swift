@@ -38,11 +38,6 @@ final class SetupPreviewPane: PetImageDropView {
     var localization: LocalizationController?
     var showsControls = false
     var isSleeping = false
-    /// While the drag guide is up, the stage is replaced by the "drag it here" illustration.
-    var isShowingGuide = false
-    let guideStack = NSStackView()
-    var isGuideBuilt = false
-    var guideLanguage: String?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -87,39 +82,10 @@ final class SetupPreviewPane: PetImageDropView {
         backgroundControl.isHidden = !showsControls
         categoryRow.isHidden = !showsControls
         rebuildControls()
-        guideStack.isHidden = !isShowingGuide
-    }
-
-    /// Turns the stage into the drag guide: a mock of the settings list plus the draggable icon.
-    func showDropGuide() {
-        // Built on demand: before the first ask the guide must not exist, even hidden.
-        if !isGuideBuilt || guideLanguage != localization?.activeLocalization {
-            buildGuideIfNeeded()
-        }
-        isShowingGuide = true
-        isSleeping = false
-        player.stop()
-        petView.isHidden = true
-        gridView.isHidden = true
-        placeholderStack.isHidden = true
-        stageLabel.isHidden = true
-        categoryRow.isHidden = true
-        backgroundControl.isHidden = true
-        modeControl.isHidden = true
-        guideStack.isHidden = false
-        captionLabel.stringValue = ""
-    }
-
-    private func endDropGuide() {
-        guard isShowingGuide else { return }
-        isShowingGuide = false
-        guideStack.isHidden = true
-        modeControl.isHidden = !showsControls
     }
 
     /// `sleeping` drives the permission step: the pet stays asleep until reactions are live.
     func showPet(_ images: PetImageSet, caption: String, sleeping: Bool = false) {
-        endDropGuide()
         let framesChanged = !showsSameFrames(as: images, andCaption: caption)
         if framesChanged {
             self.images = images
@@ -150,7 +116,6 @@ final class SetupPreviewPane: PetImageDropView {
     }
 
     func showDemo(_ images: PetImageSet, caption: String) {
-        endDropGuide()
         self.images = images
         player.setImages(images)
         isSleeping = false
@@ -165,7 +130,6 @@ final class SetupPreviewPane: PetImageDropView {
     }
 
     func showPlaceholder(symbol: String, message: String, caption: String) {
-        endDropGuide()
         images = PetImageSet()
         player.stop()
         petView.image = nil
@@ -198,13 +162,7 @@ final class SetupPreviewPane: PetImageDropView {
         configureControls()
         gridView.isHidden = true
         addSubview(modeControl)
-        guideStack.orientation = .vertical
-        guideStack.alignment = .centerX
-        guideStack.spacing = 12
-        guideStack.translatesAutoresizingMaskIntoConstraints = false
-        guideStack.isHidden = true
         addSubview(placeholderStack)
-        addSubview(guideStack)
         addSubview(backgroundControl)
         addSubview(stageLabel)
         addSubview(petView)
@@ -268,11 +226,6 @@ final class SetupPreviewPane: PetImageDropView {
             placeholderStack.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -10),
             placeholderStack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 20),
             placeholderStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -20),
-
-            guideStack.centerXAnchor.constraint(equalTo: centerXAnchor),
-            guideStack.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -4),
-            guideStack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 16),
-            guideStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -16),
 
             petView.centerXAnchor.constraint(equalTo: centerXAnchor),
             petView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -10),

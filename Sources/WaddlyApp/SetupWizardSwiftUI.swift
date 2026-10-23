@@ -255,9 +255,7 @@ private extension SetupWizardScreen {
     private var missingPermissionContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             title(.setupMonitoringTitle)
-            bodyText(controller.isShowingGuide && !controller.isShowingManualSteps
-                ? .setupDropGuideBody
-                : .setupMonitoringBody)
+            bodyText(.setupMonitoringBody)
             GroupBox {
                 VStack(alignment: .leading, spacing: 6) {
                     Label(controller.localizedString(.setupPrivacyTitle), systemImage: "lock.shield")
@@ -301,6 +299,21 @@ private extension SetupWizardScreen {
 
     private var permissionGuideActions: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // The drag source lives in the page column, not over the preview: the pet stays visible,
+            // and the only thing being dragged is the icon the instruction names.
+            HStack(spacing: 12) {
+                AppIconDragSource(localization: controller.localization)
+                    .frame(width: 40, height: 40)
+                Text(controller.localizedString(.setupDropGuideBody))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor)))
             caption(.setupMonitoringWatching)
             actionButton(
                 controller.localizedString(.setupReopenSettings),
@@ -337,10 +350,19 @@ private extension SetupWizardScreen {
             .frame(maxWidth: .infinity, alignment: .leading)
             if !controller.isMonitoringReady {
                 caption(controller.monitoringIncompleteWarningKey).multilineTextAlignment(.center)
-                actionButton(
-                    controller.localizedString(controller.monitoringIncompleteActionKey),
-                    identifier: "showMonitoringStep"
-                ) { controller.showMonitoringStep() }
+                if controller.monitoringRecovery == .restart {
+                    // The grant is already there; only a fresh process can use it.
+                    actionButton(
+                        controller.localizedString(.setupRestartNow),
+                        identifier: "relaunchApp"
+                    ) { controller.relaunchApp() }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    actionButton(
+                        controller.localizedString(controller.monitoringIncompleteActionKey),
+                        identifier: "showMonitoringStep"
+                    ) { controller.showMonitoringStep() }
+                }
             }
             caption(.setupCompleteHint).multilineTextAlignment(.center)
         }
@@ -357,4 +379,19 @@ private struct SetupPreviewHost: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: SetupPreviewPane, context: Context) {}
+}
+
+/// The draggable Waddly icon, in the page column. Reuses the AppKit drag source so the pasteboard
+/// item keeps the file-URL flavours System Settings accepts.
+@MainActor
+private struct AppIconDragSource: NSViewRepresentable {
+    let localization: LocalizationController
+
+    func makeNSView(context: Context) -> DraggableAppIconView {
+        DraggableAppIconView(localization: localization)
+    }
+
+    func updateNSView(_ nsView: DraggableAppIconView, context: Context) {
+        nsView.updateLocalization(localization)
+    }
 }

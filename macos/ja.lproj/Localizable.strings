@@ -137,6 +137,7 @@
 "setup.checkMonitoring" = "入力監視を設定しました";
 "setup.checkMonitoringOff" = "入力監視：未設定";
 "setup.completeWarning" = "入力監視を有効にするまで、キー入力には反応しません。";
+"setup.completeWarningRestart" = "入力監視の許可を反映するには、Waddlyの再起動が必要です。";
 "setup.completeWarningWaiting" = "セットアップガイドでキーを押し、ペットが反応することを確認してください。";
 "setup.confirmTyping" = "キー入力を確認";
 "setup.showOnDesktop" = "デスクトップに表示";
@@ -164,9 +165,7 @@
 "setup.troubleshootingBody" = "Waddlyを再起動してから、もう一度キーを押してみてください。";
 "setup.imageDetails" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px";
 "setup.monitoringWatching" = "システム設定で許可すると、この画面が自動で更新されます。";
-"setup.dropGuideBody" = "右の案内のとおり、アイコンをシステム設定の一覧へドラッグしてください。";
-"setup.dropGuideListTitle" = "入力監視";
-"setup.dropGuideCaption" = "アイコンを一覧へドラッグ";
+"setup.dropGuideBody" = "このアイコンをシステム設定の「入力監視」の一覧へドラッグするか、＋ボタンでWaddlyを追加してください。";
 "setup.reopenSettings" = "システム設定をもう一度開く";
 "setup.dragInstead" = "ドラッグで追加する";
 

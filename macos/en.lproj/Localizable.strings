@@ -137,6 +137,7 @@
 "setup.checkMonitoring" = "Input Monitoring set up";
 "setup.checkMonitoringOff" = "Input Monitoring: not set";
 "setup.completeWarning" = "Your pet will not react to typing until Input Monitoring is enabled.";
+"setup.completeWarningRestart" = "Restart Waddly to apply the Input Monitoring permission.";
 "setup.completeWarningWaiting" = "Press a key in the Setup Guide to confirm your pet reacts.";
 "setup.confirmTyping" = "Confirm typing";
 "setup.showOnDesktop" = "Show on desktop";
@@ -164,9 +165,7 @@
 "setup.troubleshootingBody" = "Restart Waddly, then try typing again.";
 "setup.imageDetails" = "%1$d × %1$d px · cell %2$d × %2$d px";
 "setup.monitoringWatching" = "Waddly updates this page as soon as System Settings allows it.";
-"setup.dropGuideBody" = "Drag the icon on the right into the list in System Settings.";
-"setup.dropGuideListTitle" = "Input Monitoring";
-"setup.dropGuideCaption" = "Drag the icon into the list";
+"setup.dropGuideBody" = "Drag this icon into the Input Monitoring list in System Settings, or add Waddly with the + button.";
 "setup.reopenSettings" = "Open System Settings again";
 "setup.dragInstead" = "Add it by dragging";
 

@@ -67,7 +67,6 @@ typealias Fixture = SetupWizardFixture
         wizard.goNext()
         wizard.enableMonitoring()
         #expect(wizard.isShowingGuide)
-        #expect(wizard.previewPane.isShowingGuide)
         wizard.toggleManualSteps()
         #expect(wizard.isShowingManualSteps)
         #expect(wizard.isShowingGuide)

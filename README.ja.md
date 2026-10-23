@@ -59,7 +59,7 @@ brew install --cask waddly
 
 ![Waddlyを入力監視の一覧へドラッグする様子](assets/examples/input-monitoring-guide.gif)
 
-macOSが許可を反映するのはアプリの再起動後です。
+macOSが許可を反映するのはアプリの再起動後です。「Waddlyを再起動」を押すと、再起動後も同じステップからセットアップが再開します。
 
 ## 自分のペットを使う
 
