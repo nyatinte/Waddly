@@ -166,7 +166,7 @@ private struct ShareSnapshotFixture {
 @MainActor private func render(_ controller: NSWindowController, appearance: NSAppearance.Name) throws -> Data {
     let window = try #require(controller.window)
     window.appearance = NSAppearance(named: appearance)
-    window.setContentSize(NSSize(width: 700, height: 410))
+    window.setContentSize(NSSize(width: 700, height: 380))
     // Deliberately visible and opaque, parked far off screen so the capture cannot cover the desktop.
     window.setFrameOrigin(NSPoint(x: -4000, y: -4000))
     window.makeKeyAndOrderFront(nil)

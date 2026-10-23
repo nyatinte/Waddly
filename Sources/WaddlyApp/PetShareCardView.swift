@@ -24,12 +24,7 @@ final class PetShareCardView: NSView {
         titleLabel = NSTextField(labelWithString: title)
         detailLabel = NSTextField(labelWithString: detail)
         statusLabel = NSTextField(labelWithString: "")
-        copyButton = ShareActionButton(
-            title: copyTitle,
-            base: .quaternaryLabelColor,
-            hover: .selectedContentBackgroundColor.withAlphaComponent(0.22),
-            pressed: .selectedContentBackgroundColor.withAlphaComponent(0.45)
-        )
+        copyButton = ShareActionButton.secondaryAction(title: copyTitle)
         super.init(frame: .zero)
         statusLabel.identifier = NSUserInterfaceItemIdentifier(rawValue: statusIdentifier)
         copyButton.identifier = NSUserInterfaceItemIdentifier(rawValue: copyButtonIdentifier)
@@ -42,15 +37,13 @@ final class PetShareCardView: NSView {
         wantsLayer = true
         layer?.cornerRadius = 11
         layer?.borderWidth = 1
-        titleLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
         titleLabel.lineBreakMode = .byTruncatingTail
-        detailLabel.font = .systemFont(ofSize: 10)
+        detailLabel.font = .systemFont(ofSize: 11)
         detailLabel.textColor = .secondaryLabelColor
-        statusLabel.font = .systemFont(ofSize: 10)
+        statusLabel.font = .systemFont(ofSize: 11)
         statusLabel.lineBreakMode = .byTruncatingTail
         statusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        copyButton.font = .systemFont(ofSize: 11)
-        copyButton.contentTintColor = .labelColor
         copyButton.setAccessibilityHelp(copyHelp)
         surface.wantsLayer = true
         surface.layer?.cornerRadius = 7
@@ -64,14 +57,14 @@ final class PetShareCardView: NSView {
 
     private func installConstraints(preview: NSView) {
         NSLayoutConstraint.activate([
+            copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            copyButton.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 9),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: copyButton.leadingAnchor, constant: -5),
-            copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -9),
-            copyButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: copyButton.centerYAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: copyButton.leadingAnchor, constant: -8),
             surface.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 9),
             surface.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -9),
-            surface.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            surface.topAnchor.constraint(equalTo: copyButton.bottomAnchor, constant: 8),
             surface.heightAnchor.constraint(equalToConstant: 195),
             preview.leadingAnchor.constraint(equalTo: surface.leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: surface.trailingAnchor),
@@ -102,6 +95,7 @@ final class PetShareCardView: NSView {
 
     func setCopyTitle(_ text: String) {
         copyButton.title = text
+        copyButton.invalidateIntrinsicContentSize()
     }
 
     func setDetail(_ text: String) {

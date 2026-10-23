@@ -146,7 +146,9 @@ private func writeStub(_ url: URL) throws {
     #expect(await waitFor { fixture.controller.status == .ready })
 
     let post = try #require(fixture.button("share.postButton") as? ShareActionButton)
+    fixture.view.layoutSubtreeIfNeeded()
     #expect(post.isEnabled)
+    #expect(post.frame.height == LayoutMetrics.actionHeight)
     #expect(post.target != nil)
     #expect(post.action != nil)
     #expect(post.focusRingType != .none)
@@ -155,8 +157,10 @@ private func writeStub(_ url: URL) throws {
     try assertHoverStates(post)
 
     fixture.view.showFailure()
+    fixture.view.layoutSubtreeIfNeeded()
     let retry = try #require(fixture.button("share.retry") as? ShareActionButton)
     #expect(retry.isEnabled)
+    #expect(retry.frame.height == LayoutMetrics.actionHeight)
     #expect(retry.target != nil)
     #expect(retry.action != nil)
     #expect(retry.focusRingType != .none)
@@ -258,6 +262,7 @@ private func writeStub(_ url: URL) throws {
     view.layoutSubtreeIfNeeded()
     let resting = copy.layer?.backgroundColor
     let frame = copy.frame
+    #expect(copy.frame.height == LayoutMetrics.actionHeight)
 
     copy.setHovered(true)
     #expect(copy.isHovered)

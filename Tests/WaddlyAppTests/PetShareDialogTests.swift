@@ -21,16 +21,10 @@ import WaddlyCore
     #expect(window.appearance == nil)
     let contentView = try #require(window.contentView)
     try assertShareDialogUsesDarkAppearance(window: window, contentView: contentView)
-    let postRow = try #require(descendants(of: contentView).first {
-        $0.identifier?.rawValue == "share.postRow"
-    })
-    #expect(postRow.frame.height == 52)
-    let postButton = try #require(descendants(of: postRow).first {
-        $0.identifier?.rawValue == "share.postButton"
-    } as? NSButton)
-    #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
-    #expect(postButton.action != nil)
-    #expect(postButton.accessibilityLabel() == app.localizedString(.shareXCreate))
+    let postButton = try assertShareActionsUseTheDesignSystem(
+        in: contentView,
+        postLabel: app.localizedString(.shareXCreate)
+    )
 
     for _ in 0 ..< 400 {
         let views = descendants(of: contentView)
@@ -138,6 +132,32 @@ import WaddlyCore
     view.refreshLocalization()
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyVideo" }?.title == "Copy video")
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyImage" }?.title == "Copy image")
+}
+
+@MainActor private func assertShareActionsUseTheDesignSystem(
+    in contentView: NSView,
+    postLabel: String
+) throws -> NSButton {
+    contentView.layoutSubtreeIfNeeded()
+    let postRow = try #require(descendants(of: contentView).first {
+        $0.identifier?.rawValue == "share.postRow"
+    })
+    #expect(postRow.frame.height == LayoutMetrics.actionHeight)
+    let postButton = try #require(descendants(of: postRow).first {
+        $0.identifier?.rawValue == "share.postButton"
+    } as? NSButton)
+    #expect(postButton.frame.height == LayoutMetrics.actionHeight)
+    #expect(postButton.frame.maxX == postRow.bounds.maxX)
+    #expect(postButton.action != nil)
+    #expect(postButton.accessibilityLabel() == postLabel)
+    #expect(descendants(of: contentView).contains { ($0 as? NSBox)?.boxType == .separator })
+    for identifier in ["share.copyVideo", "share.copyImage"] {
+        let copy = try #require(descendants(of: contentView).first {
+            $0.identifier?.rawValue == identifier
+        } as? NSButton)
+        #expect(copy.frame.height == LayoutMetrics.actionHeight, "\(identifier)")
+    }
+    return postButton
 }
 
 @MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {

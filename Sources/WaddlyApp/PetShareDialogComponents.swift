@@ -48,6 +48,56 @@ final class ShareActionButton: NSButton {
     private(set) var isHovered = false
     private var isPressed = false
 
+    /// A secondary action on the shared 36 pt action height.
+    static func secondaryAction(title: String) -> ShareActionButton {
+        let button = ShareActionButton(
+            title: title,
+            base: .quaternaryLabelColor,
+            hover: .selectedContentBackgroundColor.withAlphaComponent(0.22),
+            pressed: .selectedContentBackgroundColor.withAlphaComponent(0.45)
+        )
+        button.applyActionMetrics()
+        return button
+    }
+
+    /// The primary action: the accent fill the setup and character footers use for their main action.
+    static func primaryAction(title: String) -> ShareActionButton {
+        let button = ShareActionButton(
+            title: title,
+            base: .controlAccentColor,
+            hover: .controlAccentColor.blended(withFraction: 0.12, of: .white) ?? .controlAccentColor,
+            pressed: .controlAccentColor.blended(withFraction: 0.18, of: .black) ?? .controlAccentColor
+        )
+        button.applyActionMetrics()
+        button.contentTintColor = .white
+        button.setPrimaryTitle(title)
+        return button
+    }
+
+    /// The shared action metrics: 13 pt type and a 36 pt height with 12 pt side padding, matching
+    /// `LayoutMetrics.actionHeight` and `actionLabel()` in the setup and character screens. The
+    /// movie play overlay keeps its own 40 × 40 frame and does not call this.
+    func applyActionMetrics() {
+        translatesAutoresizingMaskIntoConstraints = false
+        font = .systemFont(ofSize: 13)
+        invalidateIntrinsicContentSize()
+    }
+
+    /// The primary fill needs white text; a plain borderless button would otherwise keep the label color.
+    func setPrimaryTitle(_ title: String) {
+        self.title = title
+        attributedTitle = NSAttributedString(string: title, attributes: [
+            .font: font ?? NSFont.systemFont(ofSize: 13),
+            .foregroundColor: NSColor.white
+        ])
+        invalidateIntrinsicContentSize()
+    }
+
+    override var intrinsicContentSize: NSSize {
+        let size = super.intrinsicContentSize
+        return NSSize(width: size.width + 24, height: max(size.height, LayoutMetrics.actionHeight))
+    }
+
     init(title: String, base: NSColor, hover: NSColor, pressed: NSColor) {
         baseColor = base
         hoverColor = hover
