@@ -3,11 +3,11 @@ import Testing
 @testable import WaddlyApp
 import WaddlyCore
 
-/// Renders real AppKit/SwiftUI content off screen for the character-import documentation captures.
+/// Renders real AppKit/SwiftUI content off screen for the character-import captures.
 ///
 /// Opt-in only: with `WADDLY_CAPTURE_CHARACTER_IMPORT=1` the tests write PNGs into
-/// `docs/images/character-import`; otherwise they do nothing, so `mise run test` stays side-effect
-/// free. These are content-view renders (`cacheDisplay(in:to:)`), not OS screenshots.
+/// `build/captures/character-import`; otherwise they do nothing, so `mise run test` stays
+/// side-effect free. These are content-view renders (`cacheDisplay(in:to:)`), not OS screenshots.
 @MainActor
 enum CaptureHarness {
     static var isEnabled: Bool {
@@ -22,7 +22,7 @@ enum CaptureHarness {
     }
 
     static var outputDirectory: URL {
-        repositoryRoot.appendingPathComponent("docs/images/character-import", isDirectory: true)
+        repositoryRoot.appendingPathComponent("build/captures/character-import", isDirectory: true)
     }
 
     static func prepare() throws {

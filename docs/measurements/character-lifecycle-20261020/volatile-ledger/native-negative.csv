@@ -1,7 +1,0 @@
-stage,flavor,returned_integer_count,rss_bytes,physical_footprint_bytes,purgeable_volatile_pmap_bytes,purgeable_volatile_resident_bytes,purgeable_volatile_virtual_bytes,ledger_purgeable_volatile_bytes
-baseline,TASK_VM_INFO,93,1933312,1327512,0,0,0,0
-baseline,TASK_VM_INFO_PURGEABLE,93,2015232,1327512,0,0,0,0
-nonvolatile,TASK_VM_INFO,93,18792448,18121136,0,0,0,0
-nonvolatile,TASK_VM_INFO_PURGEABLE,93,18792448,18121136,0,0,0,0
-volatile,TASK_VM_INFO,93,18792448,1343920,0,0,0,16777216
-volatile,TASK_VM_INFO,93,18792448,1343920,0,0,0,16777216

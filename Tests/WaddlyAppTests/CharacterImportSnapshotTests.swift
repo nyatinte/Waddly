@@ -4,9 +4,8 @@ import Testing
 @testable import WaddlyApp
 import WaddlyCore
 
-/// Documentation captures for the shared character-import screen, both hosts. Opt-in via
-/// `WADDLY_CAPTURE_CHARACTER_IMPORT=1`; with the variable unset the suite does nothing. See
-/// `docs/images/character-import/README.md` for provenance and what these renders do not claim.
+/// Captures for the shared character-import screen, both hosts. Opt-in via
+/// `WADDLY_CAPTURE_CHARACTER_IMPORT=1`; with the variable unset the suite does nothing.
 @Suite(.serialized) @MainActor struct CharacterImportSnapshotTests {
     @Test func capturesChangeCharacterSurfaces() async throws {
         guard CaptureHarness.isEnabled else { return }

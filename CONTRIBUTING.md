@@ -100,11 +100,7 @@ mise run test
 
 The script adds the Swift Testing macro plugin path when Command Line Tools install it outside the compiler's default search path. It also fails closed: if a Swift Testing run starts but never reports completion, `./macos/test.sh` exits nonzero even when the test process itself exits 0, so an interrupted run cannot pass as green. `mise run test:guard` proves that guard against a fake `swift` without building the suites.
 
-The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames. [docs/setup-wizard-qa.md](docs/setup-wizard-qa.md) maps each Setup Guide state to the suite that verifies it and lists the manual checks that are still unverified.
-
-For cross-screen interaction checks, use [the UX audit and QA matrix](docs/ux-interaction-audit.md).
-Its [live GUI report](docs/live-qa-85b96a8.md) separates observed outcomes from unfinished keyboard,
-VoiceOver, appearance, and failure-recovery acceptance; screenshots alone are not an interaction pass.
+The tests cover animation phases, image validation and optimization, localization selection, Enter key detection, array reordering, importing and saving the example 3×3 sprite sheet, and pixel-hash snapshots for extracted sprite frames.
 
 AppKit suites run in a real process, so they build the app with `makeTestApp(...)`, which installs the `.invisible` `WindowPresenter`: windows still open, become visible, host sheets, and close as they do in the app, but nothing is drawn. That keeps `mise run test` from painting the pet or the setup wizard over whatever is on screen. Behavior that leaves the app instead—System Settings, Finder, a relaunch—goes through `NSWorkspace` and is not covered by the presenter.
 
@@ -118,7 +114,19 @@ Copy the printed `expectedSpriteSheetSnapshots` value into `Tests/WaddlyCoreTest
 
 ## Memory profiling
 
-See [docs/MEMORY.md](docs/MEMORY.md) for Release-process sampling across activity states, repeated-import checks, measured baselines, and diagnostic commands. `mise run memory:test` runs the separate serialized Release suite on Swift 6.2 / macOS 26+. Its dependencies are isolated from the macOS 14 production app.
+Keep the physical footprint under **100 MB in typical use**. The app is measured as a Release build, not a debug build, and physical footprint is the budget, not RSS or the allocator's live bytes.
+
+Profile the Release app with the same Mac, OS, images, and settings for any before/after comparison. Quit other Waddly instances, run `mise run build`, launch `build/Waddly.app`, and use one PID for the whole run:
+
+```sh
+./macos/profile-memory.sh PID launch-idle 30
+```
+
+Samples land in `dist/memory/TIMESTAMP-LABEL/` (`rss.csv`, `footprint.txt`, `summary.txt`, `environment.txt`). Measure the states that change image residency: idle after launch, typing, a large import, repeated imports, a return to idle, and a long idle/sleep run. Repeat three runs and compare both the transient peak and the final plateau. For diagnosis, keep the same PID and use `footprint -p PID -f bytes`, `vmmap -summary PID`, and `leaks PID`, or attach Instruments.
+
+Importing a very large sheet (for example 3072 × 3072 with nine frames) exceeds the 100 MB goal today. That is a known 1.0 exception, so revisit the residency policy before raising the image limits or claiming the goal for large images.
+
+`mise run memory:test` runs the separate serialized Release allocator regression suite in `Performance/` on Swift 6.2 and macOS 26+, with dependencies isolated from the macOS 14 production app. Treat a failing allocator budget or a suspected ownership leak as a prompt to profile the process before changing the image pipeline.
 
 ## Continuous integration
 

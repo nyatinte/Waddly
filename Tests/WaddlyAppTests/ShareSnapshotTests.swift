@@ -3,10 +3,9 @@ import Testing
 @testable import WaddlyApp
 import WaddlyCore
 
-/// Renders the share dialog to `docs/images/share`.
+/// Renders the share dialog to `build/captures/share`.
 ///
-/// The PNGs are committed design evidence for the share redesign, so this runs only on demand:
-/// `WADDLY_CAPTURE_SHARE=1 ./macos/test.sh --filter ShareSnapshotTests`.
+/// On demand only: `WADDLY_CAPTURE_SHARE=1 ./macos/test.sh --filter ShareSnapshotTests`.
 ///
 /// The window is deliberately visible (`WindowPresenter.live`, parked far off screen) because the rest
 /// of the suite renders windows transparent. Nothing here is an operating-system screenshot and nothing
@@ -15,7 +14,7 @@ import WaddlyCore
 @Test(.enabled(if: ProcessInfo.processInfo.environment["WADDLY_CAPTURE_SHARE"] != nil))
 @MainActor func captureShareDialogStates() throws {
     _ = NSApplication.shared
-    let output = SetupWizardFixture.root().appendingPathComponent("docs/images/share", isDirectory: true)
+    let output = SetupWizardFixture.root().appendingPathComponent("build/captures/share", isDirectory: true)
     try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 
     for (language, name) in [(AppLanguage.english, "en"), (.japanese, "ja")] {

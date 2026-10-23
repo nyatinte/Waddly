@@ -298,7 +298,7 @@ do {
     if actionable.isEmpty {
         print("Swift safety checks passed (\(files.count) files scanned).")
     } else {
-        fputs("Swift safety violations. See the allowlist policy in docs/swift-safety.md.\n", stderr)
+        fputs("Swift safety violations. Extend Tools/SwiftSafetyCheck/Allowlist.json for reviewed cases.\n", stderr)
         exit(1)
     }
 } catch {

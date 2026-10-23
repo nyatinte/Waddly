@@ -1,3 +1,0 @@
-exit_code=0
-expected_exit_code=0
-lifecycle-complete,91063544,107037968,135479296,143966208,514443.564477125
