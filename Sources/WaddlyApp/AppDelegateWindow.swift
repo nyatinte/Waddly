@@ -21,6 +21,8 @@ extension AppDelegate {
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = true
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        // The pet is always on screen and never switched to, so it does not belong in the Window menu.
+        panel.isExcludedFromWindowsMenu = true
         panel.delegate = self
 
         petView.image = petImages[.idle].first

@@ -123,6 +123,7 @@ extension AppDelegate {
         petView.contextMenuProvider = { [weak self] in
             self?.makePetContextMenu()
         }
+        installMainMenu()
         updateMenuStatus()
     }
 
@@ -167,10 +168,11 @@ extension AppDelegate {
         statusMenu.addItem(loginItem)
 
         statusMenu.addItem(.separator())
+        // ⌘Q belongs to the application menu's Quit item, so this one only offers the command.
         let quitItem = NSMenuItem(
             title: localizedString(.menuQuit),
             action: #selector(NSApplication.terminate(_:)),
-            keyEquivalent: "q"
+            keyEquivalent: ""
         )
         statusMenu.addItem(quitItem)
     }
