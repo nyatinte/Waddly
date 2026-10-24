@@ -9,8 +9,11 @@ colors:
   neutral: "#FFFFFF"
   accent: "#007AFF"
   positive: "#1F7A33"
+  positive-dark: "#4ADE80"
   critical: "#C62828"
+  critical-dark: "#FF7B72"
   warning: "#B25000"
+  warning-dark: "#FFB340"
   brand-x: "#000000"
   brand-x-on: "#FFFFFF"
   brand-x-disabled-light: "#EBEBEB"
@@ -143,6 +146,12 @@ components:
     textColor: "{colors.critical}"
   status-warning:
     textColor: "{colors.warning}"
+  status-positive-dark:
+    textColor: "{colors.positive-dark}"
+  status-critical-dark:
+    textColor: "{colors.critical-dark}"
+  status-warning-dark:
+    textColor: "{colors.warning-dark}"
 ---
 
 # Waddly Design System
@@ -179,16 +188,16 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 | Card surface | `controlBackgroundColor` | Cards, option cards, preview backdrops |
 | Separator | `separatorColor` | 1 px dividers, card borders, drop-zone outlines |
 | Accent | `accent` / `controlAccentColor` | Primary actions, links, focus, selection |
-| Positive | `positive` | Positive status text and icons; use the accessible variant for 11–13 pt text |
-| Critical | `critical` | Errors and destructive confirmation; use the accessible variant for 11–13 pt text |
-| Warning | `warning` | Recoverable warnings (for example the frame-editor compose failure) |
+| Positive | `positive` / `positive-dark` | Positive status text and icons; Light `#1F7A33`, Dark `#4ADE80` |
+| Critical | `critical` / `critical-dark` | Errors and destructive confirmation; Light `#C62828`, Dark `#FF7B72` |
+| Warning | `warning` / `warning-dark` | Recoverable warnings; Light `#B25000`, Dark `#FFB340` |
 | X brand | `brand-x` / `brand-x-on` | X share action only |
 | X disabled | `brand-x-disabled-*` | Disabled X share action, light and dark pairs |
 
 **Contrast rules**
 
 - Text up to 17 pt: **4.5:1 minimum**. 18 pt or bold: **3:1 minimum**. Check both Light and Dark, and again with Increase Contrast.
-- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` tokens; `Color.green` and `Color.red` are not text tokens.
+- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. `DesignTokens.Status` selects the pair for the current appearance. Setup and Character Import still use system green/red until migrated.
 - Tertiary text is below 4.5:1 on purpose. It is reserved for metadata the user does not need to read to complete a task.
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
@@ -450,12 +459,12 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 
 **Guaranteed by code and tests**
 
-- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and disabled contrast.
+- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and disabled fill brightness; the disabled content/fill contrast is measured in the renders.
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
-- Share's X glyph, clear space, and disabled contrast have regression tests.
+- Share's X glyph, clear space, and disabled fill brightness have regression tests; the disabled content/fill pairs are measured in the renders.
 
 **Not guaranteed yet**
 
@@ -463,7 +472,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | --- | --- | --- |
 | Frame Editor uses its own metrics, 9–14 pt type, mini/small controls, 3–10 pt radii | The densest surface is outside the system | Migrate to the shared tokens; see Migration |
 | No type/radius/color token layer in code | New views can add one-off values | Extend `LayoutMetrics` (or a `DesignTokens` file) with the scales; review new literals |
-| Positive/critical text uses system green/red | Small status text can fall below 4.5:1 | Use `positive`/`critical` accessible tokens |
+| Setup/Character status text still uses system green/red | Small status text can fall below 4.5:1 | Use `positive`/`critical` and the Dark pairs |
 | Auxiliary control rule not enforced | Mini controls can miss the 20 × 20 hit target | `.regular`/28 pt or padded hit area; no new mini/small |
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
