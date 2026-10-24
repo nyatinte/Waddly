@@ -200,3 +200,11 @@ private final class SharedValue<Value: Sendable>: Sendable {
         value.withLock { $0 = newValue }
     }
 }
+
+@Test @MainActor func brandTitleDrawingKeepsTheNativeVerticalCenter() {
+    let frame = NSRect(x: 10, y: 0, width: 120, height: LayoutMetrics.actionHeight)
+    let title = ShareActionButtonCell.centeredTitleRect(for: NSSize(width: 60, height: 16), in: frame)
+    #expect(abs(title.midY - frame.midY) <= 0.5)
+    #expect(abs(title.midX - frame.midX) <= 0.5)
+    #expect(title.height == 16)
+}

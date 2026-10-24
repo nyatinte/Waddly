@@ -19,8 +19,20 @@ final class ShareActionButtonCell: NSButtonCell {
             value: brandContentColor,
             range: NSRange(location: 0, length: colored.length)
         )
-        colored.draw(in: frame)
-        return frame
+        let titleRect = Self.centeredTitleRect(for: colored.size(), in: frame)
+        colored.draw(in: titleRect)
+        return titleRect
+    }
+
+    /// `NSButtonCell` vertically centers its title; drawing into the raw frame would sit at the top
+    /// of the 36 pt pill. Keep the same centering when the custom color forces a manual draw.
+    static func centeredTitleRect(for size: NSSize, in frame: NSRect) -> NSRect {
+        NSRect(
+            x: frame.midX - size.width / 2,
+            y: frame.midY - size.height / 2,
+            width: size.width,
+            height: size.height
+        )
     }
 
     override func drawImage(_ image: NSImage, withFrame frame: NSRect, in controlView: NSView) {
