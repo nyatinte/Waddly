@@ -202,7 +202,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
 
-**X brand exception.** The share action is X's brand, not Waddly's accent. Use the official X glyph as a template, black with white content in the Light appearance and white with black content in Dark. The disabled pairs are fixed and measured: Dark `#424242` fill / `#B6B6B6` content (≈5.0:1), Light `#EBEBEB` fill / `#656565` content (≈4.8:1). Do not use `controlAccentColor` for this button, and do not alter the glyph shape.
+**X brand exception.** The share action is X's brand, not Waddly's accent. Use the official X glyph as a template, black with white content in the Light appearance and white with black content in Dark. The disabled pairs are the contract values: Dark `#424242` fill / `#B6B6B6` content (≈5.0:1), Light `#EBEBEB` fill / `#656565` content (≈4.8:1). The current Share implementation uses calibrated whites that render close to these values; migrating it to the exact sRGB tokens and asserting the contrast is part of the Frame Editor follow-up. Do not use `controlAccentColor` for this button, and do not alter the glyph shape.
 
 **Checkerboard.** The transparency checkerboard is content, not chrome: `0.22` / `0.30` neutral tiles in Dark and `0.88` / `0.97` in Light. It appears only behind transparent pet previews.
 
@@ -464,7 +464,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
-- Share's X glyph, clear space, and disabled fill brightness have regression tests; the disabled content/fill pairs are measured in the renders.
+- Share's X glyph, clear space, and disabled fill brightness have regression tests; the disabled content/fill contrast is a pending migration, covered by the Frame Editor follow-up.
 
 **Not guaranteed yet**
 
@@ -518,7 +518,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 
 **Share**
 
-- Keep the brand exception and disabled pairs.
+- Keep the brand exception; migrate the calibrated disabled fills to the exact sRGB pairs and add the contrast assertion.
 - Fix #154 by wrapping the recovery text and reflowing the status area; do not widen the window or ellipsize instructions.
 
 **Global**
