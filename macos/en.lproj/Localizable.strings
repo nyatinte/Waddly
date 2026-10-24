@@ -277,3 +277,21 @@
 "frameEditor.guidesHelp" = "Guides are editor overlays only and are never exported.";
 "frameEditor.loading" = "Preparing the editor…";
 "frameEditor.composeFailed" = "The adjusted frames could not be prepared. Try again.";
+
+"mainMenu.about" = "About Waddly";
+"mainMenu.services" = "Services";
+"mainMenu.hide" = "Hide Waddly";
+"mainMenu.hideOthers" = "Hide Others";
+"mainMenu.showAll" = "Show All";
+"mainMenu.quit" = "Quit Waddly";
+"mainMenu.edit" = "Edit";
+"mainMenu.undo" = "Undo";
+"mainMenu.redo" = "Redo";
+"mainMenu.cut" = "Cut";
+"mainMenu.copy" = "Copy";
+"mainMenu.paste" = "Paste";
+"mainMenu.selectAll" = "Select All";
+"mainMenu.window" = "Window";
+"mainMenu.minimize" = "Minimize";
+"mainMenu.zoom" = "Zoom";
+"mainMenu.bringAllToFront" = "Bring All to Front";

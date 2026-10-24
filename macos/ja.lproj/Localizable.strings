@@ -277,3 +277,21 @@
 "frameEditor.guidesHelp" = "ガイドは編集画面でのみ表示され、書き出しには含まれません。";
 "frameEditor.loading" = "エディタを準備しています…";
 "frameEditor.composeFailed" = "調整後のフレームを作成できませんでした。もう一度お試しください。";
+
+"mainMenu.about" = "Waddlyについて";
+"mainMenu.services" = "サービス";
+"mainMenu.hide" = "Waddlyを隠す";
+"mainMenu.hideOthers" = "ほかを隠す";
+"mainMenu.showAll" = "すべてを表示";
+"mainMenu.quit" = "Waddlyを終了";
+"mainMenu.edit" = "編集";
+"mainMenu.undo" = "取り消す";
+"mainMenu.redo" = "やり直す";
+"mainMenu.cut" = "カット";
+"mainMenu.copy" = "コピー";
+"mainMenu.paste" = "ペースト";
+"mainMenu.selectAll" = "すべてを選択";
+"mainMenu.window" = "ウインドウ";
+"mainMenu.minimize" = "しまう";
+"mainMenu.zoom" = "拡大/縮小";
+"mainMenu.bringAllToFront" = "すべてを手前に移動";
