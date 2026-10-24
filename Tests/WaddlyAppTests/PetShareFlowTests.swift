@@ -242,6 +242,17 @@ private func writeStub(_ url: URL) throws {
 
     #expect(light < 0.2)
     #expect(dark > 0.8)
+
+    post.isEnabled = false
+    post.appearance = NSAppearance(named: .aqua)
+    post.viewDidChangeEffectiveAppearance()
+    let disabledLight = try #require(brightness(of: post.layer?.backgroundColor))
+    post.appearance = NSAppearance(named: .darkAqua)
+    post.viewDidChangeEffectiveAppearance()
+    let disabledDark = try #require(brightness(of: post.layer?.backgroundColor))
+
+    #expect(disabledLight > 0.85)
+    #expect(disabledDark < 0.35)
 }
 
 @MainActor private func brightness(of color: CGColor?) -> CGFloat? {
