@@ -10,20 +10,21 @@ func shareLayerColor(_ color: NSColor, appearance: NSAppearance) -> CGColor {
 }
 
 /// The official X glyph, used unmodified as a template so the brand fill can tint it black or white.
-/// The square viewBox centers the glyph without stretching it.
+/// The viewBox keeps 12 pt of clear space on the left for the pill's curved edge.
 enum ShareXLogo {
+    private static let viewBox = (x: -813.185, width: 2026.37, height: 1226.37)
     private static let glyph = """
     <svg xmlns="http://www.w3.org/2000/svg"
-         viewBox="-13.185 0 1226.37 1226.37">
+         viewBox="-813.185 0 2026.37 1226.37">
       <path d="M306.615 79.694H144.011L892.476 1150.3h162.604ZM0 0h357.328l309.814 450.883
                L1055.03 0h105.86L714.15 519.295 1200 1226.37H842.672L515.493 750.215
                L105.866 1226.37H0l468.485-544.568Z"/>
     </svg>
     """
 
-    static func image(size: CGFloat) -> NSImage? {
+    static func image(height: CGFloat) -> NSImage? {
         guard let data = glyph.data(using: .utf8), let image = NSImage(data: data) else { return nil }
-        image.size = NSSize(width: size, height: size)
+        image.size = NSSize(width: height * viewBox.width / viewBox.height, height: height)
         image.isTemplate = true
         return image
     }

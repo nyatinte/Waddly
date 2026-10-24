@@ -155,7 +155,7 @@ final class PetShareDialogView: NSView {
     private func configureAppearance() {
         xRow.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postRow")
         postButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postButton")
-        postButton.image = ShareXLogo.image(size: 18)
+        postButton.image = ShareXLogo.image(height: 18)
         postButton.imagePosition = .imageLeading
         postButton.isEnabled = false
         footerSeparator.boxType = .separator

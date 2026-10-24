@@ -149,6 +149,7 @@ import WaddlyCore
     #expect(postButton.frame.height == LayoutMetrics.actionHeight)
     #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
     #expect(postButton.image?.isTemplate == true)
+    #expect((postButton.image?.size.width ?? 0) > (postButton.image?.size.height ?? 0))
     #expect(postButton.action != nil)
     #expect(postButton.accessibilityLabel() == postLabel)
     #expect(descendants(of: contentView).contains { ($0 as? NSBox)?.boxType == .separator })
