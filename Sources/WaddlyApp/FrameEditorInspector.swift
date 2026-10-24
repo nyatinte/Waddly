@@ -13,12 +13,12 @@ struct FrameEditorInspector: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 11) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(localization.string(for: .frameEditorInspectorTitle))
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Typography.heading)
                 Text(localization.string(for: .frameEditorThisFrameOnly))
-                    .font(.caption2)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
             Picker("", selection: $model.tool) {
@@ -28,11 +28,12 @@ struct FrameEditorInspector: View {
                     .tag(FrameEditorTool.align)
             }
             .pickerStyle(.segmented)
+            .controlSize(.large)
             .labelsHidden()
             .accessibilityLabel(localization.string(for: .frameEditorInspectorTitle))
 
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 10) {
+                VStack(spacing: DesignTokens.Spacing.md) {
                     if model.tool == .crop {
                         cropSection
                     } else {
@@ -45,11 +46,11 @@ struct FrameEditorInspector: View {
 
             Divider()
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
                 Button(localization.string(for: .frameEditorResetFrame)) {
                     model.resetCurrentFrame()
                 }
-                .controlSize(.small)
+                .controlSize(.large)
                 .disabled(!model.isCurrentFrameEdited)
                 .accessibilityIdentifier("frameEditorResetFrame")
 
@@ -57,19 +58,19 @@ struct FrameEditorInspector: View {
 
                 if model.isCurrentFrameEdited {
                     Label(localization.string(for: .frameEditorEdited), systemImage: "pencil.circle.fill")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(DesignTokens.Typography.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(FrameEditorMetrics.outerPadding)
+        .padding(DesignTokens.Spacing.lg)
     }
 
     private var cropSection: some View {
         InspectorSection(title: localization.string(for: .frameEditorToolCrop)) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
                 Text(localization.string(for: .frameEditorSize))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Typography.caption.weight(.medium))
                 Spacer(minLength: 4)
                 IntegerField(
                     value: Binding(
@@ -81,7 +82,7 @@ struct FrameEditorInspector: View {
                     width: 58
                 )
                 Text("px")
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
             Slider(
@@ -91,14 +92,14 @@ struct FrameEditorInspector: View {
                 ),
                 in: Double(model.cropSizeRange.lowerBound) ... Double(model.cropSizeRange.upperBound)
             )
-            .controlSize(.small)
+            .controlSize(.large)
             .accessibilityLabel(localization.string(for: .frameEditorSize))
 
             Divider()
 
             Text(localization.string(for: .frameEditorCropOrigin))
-                .font(.system(size: 11, weight: .medium))
-            HStack(spacing: 8) {
+                .font(DesignTokens.Typography.caption.weight(.medium))
+            HStack(spacing: DesignTokens.Spacing.sm) {
                 IntegerField(
                     label: localization.string(for: .frameEditorOriginX),
                     value: Binding(
@@ -120,15 +121,15 @@ struct FrameEditorInspector: View {
             }
 
             Text(localization.string(for: .frameEditorSquareLocked))
-                .font(.system(size: 10))
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
             Text(String(
                 format: localization.string(for: .frameEditorFixedCanvasHelp),
                 model.outputSide,
                 model.outputSide
             ))
-            .font(.system(size: 9))
-            .foregroundStyle(.tertiary)
+            .font(DesignTokens.Typography.caption)
+            .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
 
             if model.cropExtendsIntoNeighbor {
@@ -136,8 +137,8 @@ struct FrameEditorInspector: View {
                     localization.string(for: .frameEditorCropNeighborWarning),
                     systemImage: "exclamationmark.triangle.fill"
                 )
-                .font(.system(size: 10))
-                .foregroundStyle(.orange)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Status.warning)
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -145,13 +146,13 @@ struct FrameEditorInspector: View {
 
     private var alignSection: some View {
         InspectorSection(title: localization.string(for: .frameEditorToolAlign)) {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                 NudgePad(
                     localization: localization,
                     onNudge: nudge,
                     onReset: model.resetPosition
                 )
-                VStack(spacing: 8) {
+                VStack(spacing: DesignTokens.Spacing.sm) {
                     IntegerField(
                         label: localization.string(for: .frameEditorAlignHorizontal),
                         value: Binding(
@@ -171,13 +172,13 @@ struct FrameEditorInspector: View {
                         accessibilityLabel: localization.string(for: .frameEditorVerticalPosition)
                     )
                     Text(localization.string(for: .frameEditorAlignNudgeHelp))
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Text(localization.string(for: .frameEditorAlignHelp))
-                .font(.system(size: 10))
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -187,13 +188,13 @@ struct FrameEditorInspector: View {
         InspectorSection(title: localization.string(for: .frameEditorGuides)) {
             Toggle(localization.string(for: .frameEditorGuideGrid), isOn: $model.showsGrid)
                 .toggleStyle(.switch)
-                .controlSize(.mini)
+                .controlSize(.large)
             Toggle(localization.string(for: .frameEditorGuideCrosshair), isOn: $model.showsCrosshair)
                 .toggleStyle(.switch)
-                .controlSize(.mini)
+                .controlSize(.large)
             Text(localization.string(for: .frameEditorGuidesHelp))
-                .font(.system(size: 9))
-                .foregroundStyle(.tertiary)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -211,17 +212,20 @@ private struct NudgePad: View {
     let onReset: () -> Void
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: DesignTokens.Spacing.xs) {
             nudgeButton("arrow.up", label: .frameEditorNudgeUp) { onNudge(0, -1) }
-            HStack(spacing: 3) {
+            HStack(spacing: DesignTokens.Spacing.xs) {
                 nudgeButton("arrow.left", label: .frameEditorNudgeLeft) { onNudge(-1, 0) }
                 Button(action: onReset) {
                     Image(systemName: "arrow.counterclockwise")
-                        .font(.system(size: 10, weight: .semibold))
-                        .frame(width: 26, height: 24)
+                        .font(DesignTokens.Typography.caption.weight(.semibold))
+                        .frame(
+                            width: DesignTokens.Control.auxiliaryHeight,
+                            height: DesignTokens.Control.auxiliaryHeight
+                        )
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .controlSize(.large)
                 .help(localization.string(for: .frameEditorResetPosition))
                 .accessibilityLabel(localization.string(for: .frameEditorResetPosition))
                 nudgeButton("arrow.right", label: .frameEditorNudgeRight) { onNudge(1, 0) }
@@ -237,11 +241,14 @@ private struct NudgePad: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 10, weight: .semibold))
-                .frame(width: 26, height: 24)
+                .font(DesignTokens.Typography.caption.weight(.semibold))
+                .frame(
+                    width: DesignTokens.Control.auxiliaryHeight,
+                    height: DesignTokens.Control.auxiliaryHeight
+                )
         }
         .buttonStyle(.bordered)
-        .controlSize(.mini)
+        .controlSize(.large)
         .help(localization.string(for: label))
         .accessibilityLabel(localization.string(for: label))
     }

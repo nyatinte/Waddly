@@ -76,7 +76,7 @@ extension FrameCanvasNSView {
 
     func handle(at point: NSPoint, layout: CanvasLayout) -> SpriteCropHandle? {
         let centers = handleCenters(cropRect: cropViewRect(layout: layout))
-        let hitRadius: CGFloat = 10
+        let hitRadius: CGFloat = DesignTokens.Control.hitTargetMin / 2
         return centers.first { center in
             hypot(center.1.x - point.x, center.1.y - point.y) <= hitRadius
         }?.0
@@ -176,8 +176,8 @@ extension FrameCanvasNSView {
 
     private func drawBackground(in context: NSGraphicsContext) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let base = dark ? NSColor(white: 0.13, alpha: 1) : NSColor(white: 0.90, alpha: 1)
-        let alternate = dark ? NSColor(white: 0.18, alpha: 1) : NSColor(white: 0.96, alpha: 1)
+        let base = dark ? NSColor(white: 0.22, alpha: 1) : NSColor(white: 0.88, alpha: 1)
+        let alternate = dark ? NSColor(white: 0.30, alpha: 1) : NSColor(white: 0.97, alpha: 1)
         base.setFill()
         bounds.fill()
         alternate.setFill()

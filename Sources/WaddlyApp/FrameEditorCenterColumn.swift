@@ -15,7 +15,7 @@ struct FrameEditorCenterColumn: View {
                 FrameEditorMetrics.minimumCanvasHeight,
                 geometry.size.height - FrameEditorMetrics.centerReservedHeight
             )
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
                 header
                 FrameEditorCanvas(
                     configuration: canvasConfiguration,
@@ -24,15 +24,15 @@ struct FrameEditorCenterColumn: View {
                 )
                 .frame(maxWidth: .infinity)
                 .frame(height: canvasHeight)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.card))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                         .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
                 )
                 navigationRow
                 FrameEditorResultPreview(model: model)
             }
-            .padding(FrameEditorMetrics.outerPadding)
+            .padding(DesignTokens.Spacing.lg)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
@@ -73,12 +73,12 @@ struct FrameEditorCenterColumn: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 Text(model.selectedFrameTitle)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(DesignTokens.Typography.heading)
                     .accessibilityIdentifier("frameEditorFrameTitle")
                 Text(localization.string(for: .frameEditorCanvasHelp))
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -86,7 +86,7 @@ struct FrameEditorCenterColumn: View {
     }
 
     private var navigationRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignTokens.Spacing.md) {
             Button {
                 model.selectPreviousFrame()
             } label: {
@@ -96,14 +96,14 @@ struct FrameEditorCenterColumn: View {
                 )
             }
             .buttonStyle(.bordered)
-            .controlSize(.small)
+            .controlSize(.large)
             .disabled(!model.canSelectPreviousFrame)
             .keyboardShortcut(.leftArrow, modifiers: [.option])
 
             Spacer()
 
             Text(model.selectedFramePosition)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(DesignTokens.Typography.mono)
                 .foregroundStyle(.secondary)
                 .accessibilityLabel(String(
                     format: localization.string(for: .frameEditorFramePositionA11yFormat),
@@ -122,7 +122,7 @@ struct FrameEditorCenterColumn: View {
                 )
             }
             .buttonStyle(.bordered)
-            .controlSize(.small)
+            .controlSize(.large)
             .disabled(!model.canSelectNextFrame)
             .keyboardShortcut(.rightArrow, modifiers: [.option])
         }
@@ -137,40 +137,40 @@ private struct FrameEditorResultPreview: View {
 
     var body: some View {
         let localization = model.localization
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
                 Text(localization.string(for: .frameEditorResultPreview))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DesignTokens.Typography.heading)
                     .foregroundStyle(.secondary)
-                if model.cropExtendsIntoNeighbor {
-                    Label(
-                        localization.string(for: .frameEditorCropNeighborWarning),
-                        systemImage: "exclamationmark.triangle.fill"
-                    )
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-                    .lineLimit(1)
-                    .help(localization.string(for: .frameEditorCropNeighborWarning))
-                }
                 if model.isCurrentFrameEdited {
                     Label(
                         localization.string(for: .frameEditorEdited),
                         systemImage: "pencil.circle.fill"
                     )
-                    .font(.caption2)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 }
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.sm)
                 Text(String(
                     format: localization.string(for: .frameEditorOutputSizeFormat),
                     model.outputSide,
                     model.outputSide
                 ))
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(DesignTokens.Typography.mono)
                 .foregroundStyle(.secondary)
             }
-            HStack(alignment: .center, spacing: 14) {
+            if model.cropExtendsIntoNeighbor {
+                Label(
+                    localization.string(for: .frameEditorCropNeighborWarning),
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Status.warning)
+                .fixedSize(horizontal: false, vertical: true)
+                .help(localization.string(for: .frameEditorCropNeighborWarning))
+            }
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
                 Spacer(minLength: 0)
                 FrameEditorPreviewCard(
                     title: localization.string(for: .frameEditorBefore),
@@ -190,14 +190,14 @@ private struct FrameEditorResultPreview: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.7))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .strokeBorder(Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
         )
     }
@@ -214,7 +214,7 @@ private struct FrameEditorPreviewCard: View {
     var body: some View {
         VStack(spacing: 5) {
             Text(title)
-                .font(.system(size: 10, weight: .medium))
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
             ZStack {
                 if let image {
@@ -227,9 +227,9 @@ private struct FrameEditorPreviewCard: View {
                         FrameEditorPreviewCrosshair()
                     }
                     .frame(width: Self.cardSide, height: Self.cardSide)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.control)
                             .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
                     )
                 }

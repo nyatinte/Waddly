@@ -13,7 +13,6 @@ enum FrameEditorMetrics {
     static let inspectorWidth: CGFloat = 300
     static let compactInspectorWidth: CGFloat = 268
     static let compactRailWidth: CGFloat = 58
-    static let outerPadding: CGFloat = 16
     /// Header, navigation, result preview, gaps and vertical padding around the editing canvas.
     static let centerReservedHeight: CGFloat = 430
     static let minimumCanvasHeight: CGFloat = 240
@@ -106,59 +105,67 @@ private struct FrameEditorContent: View {
     }
 
     private var titleBar: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: DesignTokens.Spacing.md) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
                 Text(localization.string(for: .frameEditorWindowTitle))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DesignTokens.Typography.title)
                 Text(localization.string(for: model.isSheetMode
                         ? .frameEditorSubtitle
                         : .frameEditorSubtitleIndividual))
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
-            Spacer(minLength: 12)
+            Spacer(minLength: DesignTokens.Spacing.md)
             if model.isComposing {
                 ProgressView().controlSize(.small)
             }
-            Button(localization.string(for: .frameEditorResetAll)) {
+            Button {
                 model.resetAll()
+            } label: {
+                Text(localization.string(for: .frameEditorResetAll))
+                    .actionLabel()
             }
+            .controlSize(.large)
             .disabled(!model.hasEdits || model.isComposing)
             .accessibilityIdentifier("frameEditorResetAll")
-            Button(localization.string(for: .frameEditorDone)) {
+            Button {
                 onDone()
+            } label: {
+                Text(localization.string(for: .frameEditorDone))
+                    .actionLabel()
             }
+            .controlSize(.large)
             .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
             .disabled(model.isComposing)
             .accessibilityIdentifier("frameEditorDone")
         }
-        .padding(.horizontal, FrameEditorMetrics.outerPadding)
-        .padding(.vertical, 11)
+        .padding(.horizontal, DesignTokens.Spacing.lg)
+        .padding(.vertical, DesignTokens.Spacing.sm)
     }
 
     private var loading: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: DesignTokens.Spacing.md) {
             ProgressView()
             Text(localization.string(for: .frameEditorLoading))
-                .font(.callout)
+                .font(DesignTokens.Typography.callout)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var failure: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: DesignTokens.Spacing.md) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 24))
-                .foregroundStyle(.orange)
+                .foregroundStyle(DesignTokens.Status.warning)
             Text(localization.string(for: .frameEditorComposeFailed))
-                .font(.callout)
+                .font(DesignTokens.Typography.callout)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(24)
+        .padding(DesignTokens.Spacing.xxl)
     }
 
     private var editorBody: some View {

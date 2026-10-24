@@ -202,7 +202,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
 
-**X brand exception.** The share action is X's brand, not Waddly's accent. Use the official X glyph as a template, black with white content in the Light appearance and white with black content in Dark. The disabled pairs are the contract values: Dark `#424242` fill / `#B6B6B6` content (≈5.0:1), Light `#EBEBEB` fill / `#656565` content (≈4.8:1). The current Share implementation uses calibrated white 0.90 fill / 0.30 content in Light and 0.20 / 0.72 in Dark, which render close to these values; migrating it to the exact sRGB tokens and asserting the contrast is part of the Frame Editor follow-up. Do not use `controlAccentColor` for this button, and do not alter the glyph shape.
+**X brand exception.** The share action is X's brand, not Waddly's accent. Use the official X glyph as a template, black with white content in the Light appearance and white with black content in Dark. The disabled pairs are the contract values: Dark `#424242` fill / `#B6B6B6` content (≈5.0:1), Light `#EBEBEB` fill / `#656565` content (≈4.8:1). The Share implementation uses these exact sRGB tokens and asserts the contrast in both appearances. Do not use `controlAccentColor` for this button, and do not alter the glyph shape.
 
 **Checkerboard.** The transparency checkerboard is content, not chrome: `0.22` / `0.30` neutral tiles in Dark and `0.88` / `0.97` in Light. It appears only behind transparent pet previews.
 
@@ -225,12 +225,12 @@ Waddly uses the system font (SF Pro) exclusively. No custom fonts, no downloaded
 
 **Rules**
 
-- **Nothing below 11 pt.** Apple's macOS minimum for custom type is 10 pt; Waddly's floor is 11. The Frame Editor's 9 pt and 10 pt labels migrate to 11 pt.
+- **Nothing below 11 pt.** Apple's macOS minimum for custom type is 10 pt; Waddly's floor is 11. The Frame Editor uses 11 pt for metadata; it has no 9/10 pt text.
 - Use secondary/tertiary color to create hierarchy before reducing the size.
 - Use the monospaced face only for numbers, dimensions, and canvas values; never for prose.
 - Support the system's larger-text setting: prefer semantic text styles, allow text to wrap, and test at a larger text size. Fixed-height controls must grow or reflow, not clip.
 - Localization: Japanese and English are first-class. Avoid truncating instructions; `docs` no longer exists, but the rule remains: recovery instructions are never ellipsized (see #154).
-- Do not use font weight below 400. Do not use more than two weights on one screen.
+- Do not use font weight below 400. Use regular (400), medium (500) for actions and monospaced values, and semibold (600) for headings; do not add a fourth weight.
 - The DESIGN.md linter reports `button-primary` (accent with a white label) at 4.02:1. That is the macOS system-accent/white pair, not a fixed brand color: the native control uses the user's accent and Increase Contrast. The linter warning is expected; do not "fix" it by inventing a darker accent. All Waddly-authored status text must use the `positive`/`critical` accessible pairs.
 
 ## Layout
@@ -277,7 +277,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 - Resizable windows define a minimum that keeps the footer and every column visible. Do not let a resizable window reflow into a broken compact state; switch to the explicit compact layout instead (Frame Editor below 1160 pt).
 - Every window centers on first show and remembers a user move only where the surface supports it (the pet panel and the permission guide).
 
-**Dense workspace variant.** The Frame Editor is denser than the setup-class windows, but it uses the same tokens: `lg` 16 for the title bar and panel padding (the workspace is edge-to-edge and does not add a 24 pt window margin), `section-gap` between groups, `action-height` for Done and Reset, `control-height` for zoom/stepper/segmented controls, and the type/radius scales. `FrameEditorMetrics` may keep geometry that is specific to the canvas (sidebar 306, inspector 300/268, compact rail 58, breakpoint 1160, canvas reserves), but it may not introduce new spacing, type, control, or radius values. The current `outerPadding 16` becomes `lg`; the 9/10 pt labels become 11 pt; 3/4/5 pt radii become `sm`; 10 pt card radii become `lg`.
+**Dense workspace variant.** The Frame Editor is denser than the setup-class windows, but it uses the same tokens: `lg` 16 for the title bar and panel padding (the workspace is edge-to-edge and does not add a 24 pt window margin), `section-gap` between groups, `action-height` for Done and Reset, `control-height` for zoom/stepper/segmented controls, and the type/radius scales. `FrameEditorMetrics` keeps only geometry that is specific to the canvas (sidebar 306, inspector 300/268, compact rail 58, breakpoint 1160, canvas reserves); it does not introduce spacing, type, control, or radius values. The title bar and panels use `lg`; metadata is 11 pt; controls use `sm`; cards use `lg`.
 
 ## Elevation & Depth
 
@@ -301,7 +301,7 @@ The shape language is **soft native**: 6 pt controls, 12 pt cards, 16 pt preview
 | `preview` | 16 | Setup preview stage |
 | `full` | 9999 | X brand pill; circular movie play button |
 
-- Do not introduce 3, 4, 5, 7, 10, 11, or 18 pt radii. The Frame Editor's 3/4/5 controls become 6; its 10 pt cards become 12; the Share card's 11 and inner 7 become 12 and 8.
+- Do not introduce 3, 4, 5, 7, 10, 11, or 18 pt radii. The Frame Editor uses 6 for controls and 12 for cards; the Share card uses 12 and its inner surface 8.
 - Brand X is the only pill-shaped action. The movie play overlay is the only circular control.
 - Native controls keep their system shape. Do not override a bezel's radius.
 
@@ -321,7 +321,7 @@ The shape language is **soft native**: 6 pt controls, 12 pt cards, 16 pt preview
 - Side padding is 12 pt; adjacent actions use `action-gap` 8. Apply the label padding via `actionLabel()` in Setup and Character Import, and via the same 36 pt intrinsic height in the Share button.
 - A footer action is right-aligned; a secondary is left-aligned. The share action is centered because it is alone.
 - Disabled actions keep their height and a readable label. Never rely on system disabled dimming for a brand button; the X button draws its own disabled content (see `PetShareActionButton.swift`).
-- `.mini` and `.small` clickable controls are not allowed in new UI. The Frame Editor's existing mini/small controls migrate to `control-height` 28 or to a 36 pt action where they are real actions.
+- `.mini` and `.small` clickable controls are not allowed in new UI. The Frame Editor uses `control-height` 28 for auxiliary controls and 36 pt for Done and Reset.
 
 ### Footer
 
@@ -401,7 +401,7 @@ A pinned footer is the default action area for setup-class windows:
 - Don't use `.mini`/`.small` for clickable controls.
 - Don't use 3/4/5/7/10/11/18 pt radii or 9/10 pt text.
 - Don't truncate recovery instructions.
-- Don't let the Frame Editor become an exception; migrate it to the same tokens.
+- Don't let the Frame Editor become an exception; keep it on the same tokens.
 - Don't add a raw spacing/type/radius number to a view; add or use a token.
 
 ## Platform & Appearance
@@ -438,7 +438,7 @@ Apple's macOS baselines and Waddly's stricter values:
 - VoiceOver reading order matches the visual order; decorative images and icons are hidden.
 - Test at larger text, Increase Contrast, Light/Dark, and both languages.
 
-**Known gaps (track in the audit below):** fixed window sizes and fixed fonts vs. larger text; live VoiceOver and physical keyboard acceptance; the Frame Editor's 9/10 pt text and mini/small controls; #154 Japanese recovery-text truncation.
+**Known gaps (track in the audit below):** fixed window sizes and fixed fonts vs. larger text; live VoiceOver and physical keyboard acceptance; #154 Japanese recovery-text truncation.
 
 ## Surfaces
 
@@ -446,34 +446,35 @@ Apple's macOS baselines and Waddly's stricter values:
 | --- | --- | --- | --- | --- | --- | --- |
 | Setup Guide (Pet / Keyboard reactions / Ready) | SwiftUI in AppKit window | 820 × 520 fixed | `LayoutMetrics` 24/16/20/8/36/12 | display 25, body 13, caption 11 | 36 pt | ✅ layout/actions; 🟡 type literals |
 | Character Import / Change Character | SwiftUI + AppKit preview | 1040 × 640 min | `LayoutMetrics` | title 15, body 13, caption 11 | 36 pt | ✅ |
-| Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | **migrating** to `LayoutMetrics`; keep geometry-only constants | **migrating** 9–14 → 11/13/15 | **migrating** mini/small → 28/36 | 🟡 must conform |
+| Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | `LayoutMetrics` + `DesignTokens`; geometry-only constants | 11/13/15 | 28 auxiliary, 36 actions | ✅ dense workspace variant |
 | Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions; 🟡 #154 recovery text |
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
 | Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
 | Permission guide | Setup shell beside System Settings | 820 × 520 | Setup tokens | Setup tokens | 36 pt | ✅; live QA pending |
 
-Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row names the conforming part and the gap); ⚪ intentional product exception. The Frame Editor is **not** an exception: its row is a migration, not a waiver.
+Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row names the conforming part and the gap); ⚪ intentional product exception. The Frame Editor is **not** an exception: it uses the dense workspace variant.
 
 ## Guarantees & Gaps
 
 **Guaranteed by code and tests**
 
-- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and disabled fill brightness; the disabled content/fill contrast is a pending migration.
+- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and the disabled content/fill contrast.
+- The Frame Editor uses `DesignTokens` for type, spacing, radius, auxiliary controls, and status colors; Done/Reset are 36 pt, auxiliary controls are 28 pt, metadata is 11 pt.
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
-- Share's X glyph, clear space, and disabled fill brightness have regression tests; the disabled content/fill contrast is a pending migration, covered by the Frame Editor follow-up.
+- Share's X glyph, clear space, and disabled contrast have regression tests.
 
 **Not guaranteed yet**
 
 | Gap | Impact | Target |
 | --- | --- | --- |
-| Frame Editor uses its own metrics, 9–14 pt type, mini/small controls, 3–10 pt radii | The densest surface is outside the system | Migrate to the shared tokens; see Migration |
-| No type/radius/color token layer in code | New views can add one-off values | Extend `LayoutMetrics` (or a `DesignTokens` file) with the scales; review new literals |
+| Frame Editor geometry could drift back into one-off values | The densest surface is the easiest place to add a raw number | Keep `FrameEditorMetrics` geometry-only; review new literals |
+| Setup/Character still use literal type sizes | Their values match the scale, but the dependency is implicit | Move them to `DesignTokens.Typography`; review new literals |
 | Setup/Character status text still uses system green/red | Small status text can fall below 4.5:1 | Use `positive`/`critical` and the Dark pairs |
-| Auxiliary control rule not enforced | Mini controls can miss the 20 × 20 hit target | `.regular`/28 pt or padded hit area; no new mini/small |
+| Auxiliary control rule is new | New views can still add mini/small | 28 pt or padded hit area; no new mini/small |
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
 | No `DESIGN.md` lint in CI | Token drift is possible | Optional `npx @google/design.md lint DESIGN.md`; do not add a Node dependency without a decision |
@@ -487,28 +488,22 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | Action height 36 | `LayoutMetrics.actionHeight` + `actionLabel()`; `ShareActionButton` intrinsic height |
 | Footer inset 12 | `LayoutMetrics.footerInset` |
 | Preview width 360 | `LayoutMetrics.previewWidth` |
-| Type scale | Target: a `DesignTokens` type layer; current Setup/Character/Share literals must match the table |
-| Radius scale | Target: a `DesignTokens` radius layer; controls 6, cards 12, preview 16, brand X `full` |
-| Status colors | Target: `positive`/`critical` tokens; current `Color.green`/`Color.red` text is a gap |
+| Type scale | `DesignTokens.Typography`; Setup/Character/Share literals must match the table until migrated |
+| Radius scale | `DesignTokens.Radius`; controls 6, cards 12, preview 16, brand X `full` |
+| Status colors | `DesignTokens.Status`; Setup/Character still use `Color.green`/`Color.red` text |
 
 **Enforcement**
 
 - Code review: a new raw spacing/type/radius/color value is a review finding; add or use a token.
 - `mise run check` before merge.
-- Snapshot tests (`CharacterImportSnapshotTests`, `ShareSnapshotTests`) for visual surfaces; add a Frame Editor snapshot after migration.
+- Snapshot tests (`CharacterImportSnapshotTests`, `ShareSnapshotTests`) for visual surfaces, including the Frame Editor at its preferred and minimum sizes.
 - Manual QA matrix for Light/Dark, EN/JA, larger text, Increase Contrast, Reduce Motion, VoiceOver, and real keyboard.
 
 ## Migration
 
-**Frame Editor (must conform; highest priority)**
+**Frame Editor (normalized in this stack)**
 
-1. **Metrics:** keep the editor edge-to-edge. Replace `FrameEditorMetrics.outerPadding` with `lg` 16 for the title bar and panel padding, and use `sectionGap` between groups; use `contentInset` 24 only if a new surface needs a real window margin. Keep canvas geometry (sidebar 306, inspector 300/268, rail 58, breakpoint 1160, reserved heights) as named geometry constants, not as new spacing tokens.
-2. **Type:** 9/10 → `caption` 11; 11 → `caption` 11; 13 → `body`/`heading` 13; 14 → `title` 15. No text below 11.
-3. **Controls:** `.mini`/`.small` → `.regular` or a 28 pt auxiliary control with a ≥20 × 20 hit area. Done and Reset become 36 pt actions in either a 36 pt title-bar action row or a pinned footer; pick one and remove the other pattern.
-4. **Radii:** 3/4/5 → `sm` 6; 8 → `md` 8; 10 → `lg` 12. Guides/checkerboard stay 1–2 px content.
-5. **Colors:** replace `.green`/`.red` text with `positive`/`critical`; keep system fills for icons if they pass contrast. Use `warning` for the compose failure.
-6. **Tests:** snapshot at 1040 × 700 and 1320 × 800, EN/JA, Light/Dark; keyboard/focus smoke; large-text layout.
-7. **Documentation:** update the Surfaces table to ✅ and remove the Frame Editor from the gap list.
+The editor uses the dense workspace variant: `FrameEditorMetrics` is geometry-only, spacing uses `DesignTokens.Spacing`, type uses `DesignTokens.Typography` (11/13/15), auxiliary controls are 28 pt, Done and Reset are 36 pt, and radii use 6/8/12. The title bar and panels use `lg`; the checkerboard uses the shared values. Keep it that way when editing the canvas.
 
 **Setup and Character Import**
 
@@ -518,12 +513,12 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 
 **Share**
 
-- Keep the brand exception; migrate the calibrated disabled fills to the exact sRGB pairs and add the contrast assertion.
+- Keep the brand exception and the exact disabled pairs; the contrast is asserted.
 - Fix #154 by wrapping the recovery text and reflowing the status area; do not widen the window or ellipsize instructions.
 
 **Global**
 
-- Consider extracting a small `DesignTokens` layer next to `LayoutMetrics` for type, radius, and semantic status colors, so SwiftUI and AppKit share the same values.
+- `DesignTokens` now owns the type, radius, auxiliary-control, and status scales; `LayoutMetrics` owns the window/layout values. Keep both as the only sources of numeric UI values.
 - Add a PR checklist item: "Design tokens used; Light/Dark, EN/JA, keyboard, and Reduce Motion checked."
 
 ## References

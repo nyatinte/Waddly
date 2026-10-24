@@ -29,24 +29,25 @@ struct IntegerField: View {
     }
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: DesignTokens.Spacing.xs) {
             if let label {
                 Text(label)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .frame(width: 46, alignment: .leading)
+                    .frame(width: 20, alignment: .leading)
             }
             TextField("", value: clamped, format: .number)
                 .textFieldStyle(.roundedBorder)
+                .controlSize(.large)
                 .multilineTextAlignment(.trailing)
-                .font(.system(size: 11, design: .monospaced))
+                .font(DesignTokens.Typography.mono)
                 .frame(width: width)
                 .labelsHidden()
                 .accessibilityLabel(fieldAccessibilityLabel)
             Stepper("", value: clamped, in: range)
                 .labelsHidden()
-                .controlSize(.mini)
+                .controlSize(.large)
                 .accessibilityLabel(fieldAccessibilityLabel)
         }
     }
@@ -66,20 +67,20 @@ struct InspectorSection<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             Text(title)
-                .font(.system(size: 10, weight: .semibold))
+                .font(DesignTokens.Typography.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             content
         }
-        .padding(10)
+        .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.surface)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.55))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.surface)
                 .strokeBorder(Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
         )
     }
@@ -93,8 +94,8 @@ struct CheckerboardBackground: View {
     var body: some View {
         Canvas { context, size in
             let dark = colorScheme == .dark
-            let base = dark ? Color(white: 0.17) : Color(white: 0.93)
-            let alternate = dark ? Color(white: 0.23) : Color(white: 0.98)
+            let base = dark ? Color(white: 0.22) : Color(white: 0.88)
+            let alternate = dark ? Color(white: 0.30) : Color(white: 0.97)
             context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(base))
             let columns = Int(ceil(size.width / square))
             let rows = Int(ceil(size.height / square))
