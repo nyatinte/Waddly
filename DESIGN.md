@@ -459,7 +459,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 
 **Guaranteed by code and tests**
 
-- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and disabled fill brightness; the disabled content/fill contrast is measured in the renders.
+- Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and disabled fill brightness; the disabled content/fill contrast is a pending migration.
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
