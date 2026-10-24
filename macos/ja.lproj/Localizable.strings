@@ -17,7 +17,6 @@
 "share.spriteDetail" = "PNG · 3 × 3 · 9コマ";
 "share.playPreview" = "書き出した動画を再生";
 "share.pausePreview" = "書き出した動画を一時停止";
-"share.post" = "投稿する";
 "share.xCreate" = "Xでポストする";
 "share.xHelp" = "#ShareMyWaddly のハッシュタグだけが入ったXの投稿画面を開きます。文章を入力し、コピーしたファイルを自分で添付してください。";
 "share.openXFailed" = "Xを開けませんでした。動画をコピーして自分で添付してください。";

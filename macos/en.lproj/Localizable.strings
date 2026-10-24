@@ -17,7 +17,6 @@
 "share.spriteDetail" = "PNG · 3 × 3 · 9 frames";
 "share.playPreview" = "Play the exported video";
 "share.pausePreview" = "Pause the exported video";
-"share.post" = "Post";
 "share.xCreate" = "Post on X";
 "share.xHelp" = "Opens the X composer with the #ShareMyWaddly hashtag. Add your own text and attach the copied file yourself.";
 "share.openXFailed" = "Couldn’t open X. Copy the video and attach it yourself.";

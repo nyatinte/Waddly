@@ -25,7 +25,7 @@ final class PetShareDialogView: NSView {
     private let failure = NSStackView()
     private let failureLabel: NSTextField
     private let retryButton: ShareActionButton
-    private let postTitle: NSTextField
+    private let footerSeparator = NSBox()
     private let xRow = NSView()
     private let postButton: ShareActionButton
     private let postStatusLabel: NSTextField
@@ -33,11 +33,10 @@ final class PetShareDialogView: NSView {
     init(localization: LocalizationController) {
         self.localization = localization
         loadingLabel = NSTextField(labelWithString: localization.string(for: .shareLoading))
-        postTitle = NSTextField(labelWithString: localization.string(for: .sharePost))
-        postButton = makeShareDialogActionButton(title: localization.string(for: .shareXCreate))
+        postButton = ShareActionButton.primaryAction(title: localization.string(for: .shareXCreate))
         postStatusLabel = NSTextField(labelWithString: "")
         failureLabel = NSTextField(wrappingLabelWithString: localization.string(for: .shareError))
-        retryButton = makeShareDialogActionButton(title: localization.string(for: .shareRetry))
+        retryButton = ShareActionButton.secondaryAction(title: localization.string(for: .shareRetry))
         videoCard = PetShareCardView(
             copyButtonIdentifier: "share.copyVideo",
             statusIdentifier: "share.videoStatus",
@@ -68,11 +67,6 @@ final class PetShareDialogView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        updateAppearance()
     }
 
     func showWorking() {
@@ -129,10 +123,10 @@ final class PetShareDialogView: NSView {
         videoCard.setCopyTitle(localization.string(for: .shareCopyVideo))
         imageCard.setCopyTitle(localization.string(for: .shareCopyImage))
         loadingLabel.stringValue = localization.string(for: .shareLoading)
-        postTitle.stringValue = localization.string(for: .sharePost)
-        postButton.title = localization.string(for: .shareXCreate)
+        postButton.setPrimaryTitle(localization.string(for: .shareXCreate))
         failureLabel.stringValue = localization.string(for: .shareError)
         retryButton.title = localization.string(for: .shareRetry)
+        retryButton.invalidateIntrinsicContentSize()
         refreshAccessibilityLabels()
     }
 
@@ -156,23 +150,15 @@ final class PetShareDialogView: NSView {
         onRetry?()
     }
 
-    /// Settles the surfaces the dialog owns. Called at init and on every appearance change, like the
-    /// cards do for themselves.
-    private func updateAppearance() {
-        xRow.layer?.backgroundColor = shareLayerColor(.controlBackgroundColor, appearance: effectiveAppearance)
-    }
-
+    /// Builds the dialog's static surfaces and identifiers once. The footer separator is an `NSBox`,
+    /// so it follows the system appearance without a manual color refresh.
     private func configureAppearance() {
-        postTitle.font = .systemFont(ofSize: 11, weight: .semibold)
-        postTitle.textColor = .secondaryLabelColor
         xRow.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postRow")
-        xRow.wantsLayer = true
-        xRow.layer?.cornerRadius = 10
         postButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postButton")
-        postButton.image = ShareXLogo.image(size: 18)
+        postButton.image = ShareXLogo.image(height: 18)
         postButton.imagePosition = .imageLeading
-        postButton.font = .systemFont(ofSize: 12)
         postButton.isEnabled = false
+        footerSeparator.boxType = .separator
         spriteImage.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.spritePreview")
         spriteImage.imageScaling = .scaleProportionallyUpOrDown
         spriteImage.imageAlignment = .alignCenter
@@ -192,8 +178,9 @@ final class PetShareDialogView: NSView {
         loading.addArrangedSubview(loadingLabel)
         loadingLabel.textColor = .secondaryLabelColor
         postStatusLabel.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.postStatus")
-        postStatusLabel.font = .systemFont(ofSize: 10)
-        postStatusLabel.lineBreakMode = .byTruncatingTail
+        postStatusLabel.font = .systemFont(ofSize: 11)
+        postStatusLabel.maximumNumberOfLines = 2
+        postStatusLabel.lineBreakMode = .byWordWrapping
         postStatusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         failure.orientation = .vertical
         failure.alignment = .centerX
@@ -205,7 +192,6 @@ final class PetShareDialogView: NSView {
         retryButton.identifier = NSUserInterfaceItemIdentifier(rawValue: "share.retry")
         failure.addArrangedSubview(failureLabel)
         failure.addArrangedSubview(retryButton)
-        updateAppearance()
     }
 
     private func refreshAccessibilityLabels() {
@@ -222,10 +208,10 @@ final class PetShareDialogView: NSView {
     }
 
     private func installSubviews() {
-        [cards, loading, failure, postTitle, xRow].forEach(addSubview)
+        [cards, loading, failure, footerSeparator, xRow].forEach(addSubview)
         xRow.addSubview(postButton)
         xRow.addSubview(postStatusLabel)
-        for item in [cards, loading, failure, postTitle, xRow, postButton, postStatusLabel] {
+        for item in [cards, loading, failure, footerSeparator, xRow, postButton, postStatusLabel] {
             item.translatesAutoresizingMaskIntoConstraints = false
         }
     }
@@ -244,10 +230,10 @@ final class PetShareDialogView: NSView {
 
     private func installConstraints() {
         NSLayoutConstraint.activate([
-            widthAnchor.constraint(equalToConstant: 700), heightAnchor.constraint(equalToConstant: 410),
-            cards.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 22),
-            cards.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -22),
-            cards.topAnchor.constraint(equalTo: topAnchor, constant: 22),
+            widthAnchor.constraint(equalToConstant: 700), heightAnchor.constraint(equalToConstant: 380),
+            cards.leadingAnchor.constraint(equalTo: leadingAnchor, constant: LayoutMetrics.contentInset),
+            cards.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -LayoutMetrics.contentInset),
+            cards.topAnchor.constraint(equalTo: topAnchor, constant: LayoutMetrics.contentInset),
             videoCard.widthAnchor.constraint(equalTo: imageCard.widthAnchor),
             cards.heightAnchor.constraint(equalToConstant: 275),
             loading.centerXAnchor.constraint(equalTo: cards.centerXAnchor),
@@ -255,16 +241,25 @@ final class PetShareDialogView: NSView {
             failure.centerXAnchor.constraint(equalTo: cards.centerXAnchor),
             failure.centerYAnchor.constraint(equalTo: cards.centerYAnchor),
             failure.widthAnchor.constraint(lessThanOrEqualTo: cards.widthAnchor, constant: -60),
-            postTitle.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 22),
-            postTitle.topAnchor.constraint(equalTo: cards.bottomAnchor, constant: 17),
-            xRow.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 22),
-            xRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -22),
-            xRow.topAnchor.constraint(equalTo: postTitle.bottomAnchor, constant: 7),
-            xRow.heightAnchor.constraint(equalToConstant: 52),
+            footerSeparator.leadingAnchor.constraint(equalTo: leadingAnchor),
+            footerSeparator.trailingAnchor.constraint(equalTo: trailingAnchor),
+            footerSeparator.heightAnchor.constraint(equalToConstant: 1),
+            footerSeparator.bottomAnchor.constraint(equalTo: xRow.topAnchor, constant: -LayoutMetrics.footerInset),
+            cards.bottomAnchor.constraint(
+                lessThanOrEqualTo: footerSeparator.topAnchor,
+                constant: -LayoutMetrics.sectionGap
+            ),
+            xRow.leadingAnchor.constraint(equalTo: leadingAnchor, constant: LayoutMetrics.contentInset),
+            xRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -LayoutMetrics.contentInset),
+            xRow.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -LayoutMetrics.footerInset),
+            xRow.heightAnchor.constraint(equalToConstant: LayoutMetrics.actionHeight),
             postButton.centerXAnchor.constraint(equalTo: xRow.centerXAnchor),
             postButton.centerYAnchor.constraint(equalTo: xRow.centerYAnchor),
-            postStatusLabel.leadingAnchor.constraint(greaterThanOrEqualTo: postButton.trailingAnchor, constant: 10),
-            postStatusLabel.trailingAnchor.constraint(equalTo: xRow.trailingAnchor, constant: -12),
+            postStatusLabel.leadingAnchor.constraint(equalTo: xRow.leadingAnchor),
+            postStatusLabel.trailingAnchor.constraint(
+                lessThanOrEqualTo: postButton.leadingAnchor,
+                constant: -LayoutMetrics.actionGap
+            ),
             postStatusLabel.centerYAnchor.constraint(equalTo: xRow.centerYAnchor)
         ])
     }
@@ -276,13 +271,4 @@ final class PetShareDialogView: NSView {
             .priority: NSAccessibilityPriorityLevel.medium.rawValue
         ])
     }
-}
-
-@MainActor private func makeShareDialogActionButton(title: String) -> ShareActionButton {
-    ShareActionButton(
-        title: title,
-        base: .quaternaryLabelColor,
-        hover: .selectedContentBackgroundColor.withAlphaComponent(0.22),
-        pressed: .selectedContentBackgroundColor.withAlphaComponent(0.45)
-    )
 }

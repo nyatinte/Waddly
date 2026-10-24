@@ -279,7 +279,6 @@ enum LocalizationKey: String, CaseIterable {
     case shareOpenXFailed = "share.openXFailed"
     case sharePausePreview = "share.pausePreview"
     case sharePlayPreview = "share.playPreview"
-    case sharePost = "share.post"
     case shareRetry = "share.retry"
     case shareSprite = "share.sprite"
     case shareSpriteDetail = "share.spriteDetail"

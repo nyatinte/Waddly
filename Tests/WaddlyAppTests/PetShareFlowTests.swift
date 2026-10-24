@@ -146,7 +146,9 @@ private func writeStub(_ url: URL) throws {
     #expect(await waitFor { fixture.controller.status == .ready })
 
     let post = try #require(fixture.button("share.postButton") as? ShareActionButton)
+    fixture.view.layoutSubtreeIfNeeded()
     #expect(post.isEnabled)
+    #expect(post.frame.height == LayoutMetrics.actionHeight)
     #expect(post.target != nil)
     #expect(post.action != nil)
     #expect(post.focusRingType != .none)
@@ -155,8 +157,10 @@ private func writeStub(_ url: URL) throws {
     try assertHoverStates(post)
 
     fixture.view.showFailure()
+    fixture.view.layoutSubtreeIfNeeded()
     let retry = try #require(fixture.button("share.retry") as? ShareActionButton)
     #expect(retry.isEnabled)
+    #expect(retry.frame.height == LayoutMetrics.actionHeight)
     #expect(retry.target != nil)
     #expect(retry.action != nil)
     #expect(retry.focusRingType != .none)
@@ -188,6 +192,72 @@ private func writeStub(_ url: URL) throws {
     #expect(!button.isHovered)
     #expect(button.layer?.backgroundColor != resting)
     button.isEnabled = true
+}
+
+@Test @MainActor func shareActionFillsFollowTheEffectiveAppearance() throws {
+    let dynamic = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .white : .black
+    }
+    let button = ShareActionButton(title: "Probe", base: dynamic, hover: dynamic, pressed: dynamic)
+    button.isEnabled = true
+
+    button.appearance = NSAppearance(named: .aqua)
+    button.setHovered(true)
+    let lightHover = try #require(button.layer?.backgroundColor)
+    button.highlight(true)
+    let lightPressed = try #require(button.layer?.backgroundColor)
+
+    button.highlight(false)
+    button.setHovered(false)
+    button.appearance = NSAppearance(named: .darkAqua)
+    button.setHovered(true)
+    let darkHover = try #require(button.layer?.backgroundColor)
+    button.highlight(true)
+    let darkPressed = try #require(button.layer?.backgroundColor)
+
+    #expect(lightHover != darkHover)
+    #expect(lightPressed != darkPressed)
+}
+
+@Test @MainActor func sharePostButtonUsesTheXBrandFill() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-brand.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let view = PetShareDialogView(
+        localization: LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
+    )
+    let post = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
+        .first { $0.identifier?.rawValue == "share.postButton" })
+    post.isEnabled = true
+
+    post.appearance = NSAppearance(named: .aqua)
+    post.viewDidChangeEffectiveAppearance()
+    let light = try #require(brightness(of: post.layer?.backgroundColor))
+
+    post.appearance = NSAppearance(named: .darkAqua)
+    post.viewDidChangeEffectiveAppearance()
+    let dark = try #require(brightness(of: post.layer?.backgroundColor))
+
+    #expect(light < 0.2)
+    #expect(dark > 0.8)
+
+    post.isEnabled = false
+    post.appearance = NSAppearance(named: .aqua)
+    post.viewDidChangeEffectiveAppearance()
+    let disabledLight = try #require(brightness(of: post.layer?.backgroundColor))
+    post.appearance = NSAppearance(named: .darkAqua)
+    post.viewDidChangeEffectiveAppearance()
+    let disabledDark = try #require(brightness(of: post.layer?.backgroundColor))
+
+    #expect(disabledLight > 0.85)
+    #expect(disabledDark < 0.35)
+}
+
+@MainActor private func brightness(of color: CGColor?) -> CGFloat? {
+    guard let color, let resolved = NSColor(cgColor: color)?.usingColorSpace(.deviceRGB) else { return nil }
+    return (resolved.redComponent + resolved.greenComponent + resolved.blueComponent) / 3
 }
 
 @Test @MainActor func copyingVideoPublishesAFileThatOutlivesTemporaryExportAssets() async throws {
@@ -258,6 +328,7 @@ private func writeStub(_ url: URL) throws {
     view.layoutSubtreeIfNeeded()
     let resting = copy.layer?.backgroundColor
     let frame = copy.frame
+    #expect(copy.frame.height == LayoutMetrics.actionHeight)
 
     copy.setHovered(true)
     #expect(copy.isHovered)

@@ -21,16 +21,10 @@ import WaddlyCore
     #expect(window.appearance == nil)
     let contentView = try #require(window.contentView)
     try assertShareDialogUsesDarkAppearance(window: window, contentView: contentView)
-    let postRow = try #require(descendants(of: contentView).first {
-        $0.identifier?.rawValue == "share.postRow"
-    })
-    #expect(postRow.frame.height == 52)
-    let postButton = try #require(descendants(of: postRow).first {
-        $0.identifier?.rawValue == "share.postButton"
-    } as? NSButton)
-    #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
-    #expect(postButton.action != nil)
-    #expect(postButton.accessibilityLabel() == app.localizedString(.shareXCreate))
+    let postButton = try assertShareActionsUseTheDesignSystem(
+        in: contentView,
+        postLabel: app.localizedString(.shareXCreate)
+    )
 
     for _ in 0 ..< 400 {
         let views = descendants(of: contentView)
@@ -140,6 +134,34 @@ import WaddlyCore
     #expect(copyButtons.first { $0.identifier?.rawValue == "share.copyImage" }?.title == "Copy image")
 }
 
+@MainActor private func assertShareActionsUseTheDesignSystem(
+    in contentView: NSView,
+    postLabel: String
+) throws -> NSButton {
+    contentView.layoutSubtreeIfNeeded()
+    let postRow = try #require(descendants(of: contentView).first {
+        $0.identifier?.rawValue == "share.postRow"
+    })
+    #expect(postRow.frame.height == LayoutMetrics.actionHeight)
+    let postButton = try #require(descendants(of: postRow).first {
+        $0.identifier?.rawValue == "share.postButton"
+    } as? NSButton)
+    #expect(postButton.frame.height == LayoutMetrics.actionHeight)
+    #expect(abs(postButton.frame.midX - postRow.bounds.midX) <= 1)
+    #expect(postButton.image?.isTemplate == true)
+    #expect((postButton.image?.size.width ?? 0) > (postButton.image?.size.height ?? 0))
+    #expect(postButton.action != nil)
+    #expect(postButton.accessibilityLabel() == postLabel)
+    #expect(descendants(of: contentView).contains { ($0 as? NSBox)?.boxType == .separator })
+    for identifier in ["share.copyVideo", "share.copyImage"] {
+        let copy = try #require(descendants(of: contentView).first {
+            $0.identifier?.rawValue == identifier
+        } as? NSButton)
+        #expect(copy.frame.height == LayoutMetrics.actionHeight, "\(identifier)")
+    }
+    return postButton
+}
+
 @MainActor private func assertShareDialogUsesDarkAppearance(window: NSWindow, contentView: NSView) throws {
     window.appearance = NSAppearance(named: .darkAqua)
     contentView.layoutSubtreeIfNeeded()
@@ -177,4 +199,12 @@ private final class SharedValue<Value: Sendable>: Sendable {
     func store(_ newValue: Value) {
         value.withLock { $0 = newValue }
     }
+}
+
+@Test @MainActor func brandTitleDrawingKeepsTheNativeVerticalCenter() {
+    let frame = NSRect(x: 10, y: 0, width: 120, height: LayoutMetrics.actionHeight)
+    let title = ShareActionButtonCell.centeredTitleRect(for: NSSize(width: 60, height: 16), in: frame)
+    #expect(abs(title.midY - frame.midY) <= 0.5)
+    #expect(abs(title.midX - frame.midX) <= 0.5)
+    #expect(title.height == 16)
 }
