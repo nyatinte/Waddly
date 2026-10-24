@@ -197,7 +197,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 **Contrast rules**
 
 - Text up to 17 pt: **4.5:1 minimum**. 18 pt or bold: **3:1 minimum**. Check both Light and Dark, and again with Increase Contrast.
-- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. `DesignTokens.Status` selects the pair for the current appearance. Setup and Character Import still use system green/red until migrated.
+- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status`, added with the Frame Editor; it selects the pair for the current appearance. Setup and Character Import still use system green/red until migrated.
 - Tertiary text is below 4.5:1 on purpose. It is reserved for metadata the user does not need to read to complete a task.
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
