@@ -247,6 +247,19 @@ private extension CharacterImportSnapshotTests {
             named: "frame-editor-compact-\(tag)",
             size: FrameEditorMetrics.minimumSize
         )
+
+        // The compact layout must also fit the full neighbour warning and the align controls.
+        editor.tool = .align
+        editor.select(.typing1)
+        editor.setCropOriginX(512 - 20)
+        editor.setOffsetY(-8)
+        try writeEditor(
+            editor,
+            localization: localization,
+            dark: dark,
+            named: "frame-editor-compact-align-\(tag)",
+            size: FrameEditorMetrics.minimumSize
+        )
     }
 
     func writeEditor(

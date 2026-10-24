@@ -347,3 +347,48 @@ private func writeStub(_ url: URL) throws {
     view.layoutSubtreeIfNeeded()
     #expect(copy.frame == frame)
 }
+
+@Test @MainActor func sharePostDisabledContrastPassesInBothAppearances() throws {
+    _ = NSApplication.shared
+    let suiteName = "WaddlyTests.share-contrast.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let resources = try #require(Bundle(url: SetupWizardFixture.root().appendingPathComponent("macos")))
+    let view = PetShareDialogView(
+        localization: LocalizationController(settings: AppSettings(defaults: defaults), resources: resources)
+    )
+    let post = try #require(SetupWizardFixture.descendants(of: view).compactMap { $0 as? ShareActionButton }
+        .first { $0.identifier?.rawValue == "share.postButton" })
+    let cell = try #require(post.cell as? ShareActionButtonCell)
+    post.isEnabled = false
+
+    for name in [NSAppearance.Name.aqua, .darkAqua] {
+        let appearance = try #require(NSAppearance(named: name))
+        post.appearance = appearance
+        post.viewDidChangeEffectiveAppearance()
+        var fill: NSColor?
+        var content: NSColor?
+        appearance.performAsCurrentDrawingAppearance {
+            fill = post.layer?.backgroundColor.flatMap(NSColor.init(cgColor:))?.usingColorSpace(.sRGB)
+            content = cell.brandContentColor?.usingColorSpace(.sRGB)
+        }
+        let ratio = try contrastRatio(#require(fill), #require(content))
+        #expect(ratio >= 4.5, "\(name.rawValue): \(ratio)")
+    }
+}
+
+private func contrastRatio(_ first: NSColor, _ second: NSColor) -> CGFloat {
+    let firstLuminance = relativeLuminance(first)
+    let secondLuminance = relativeLuminance(second)
+    return (max(firstLuminance, secondLuminance) + 0.05) / (min(firstLuminance, secondLuminance) + 0.05)
+}
+
+private func relativeLuminance(_ color: NSColor) -> CGFloat {
+    guard let resolved = color.usingColorSpace(.sRGB) else { return 0 }
+    func channel(_ value: CGFloat) -> CGFloat {
+        value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * channel(resolved.redComponent)
+        + 0.7152 * channel(resolved.greenComponent)
+        + 0.0722 * channel(resolved.blueComponent)
+}

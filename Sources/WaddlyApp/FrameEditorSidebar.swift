@@ -15,14 +15,14 @@ struct FrameEditorSidebar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                         Text(localization.string(for: .frameEditorFrames))
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(DesignTokens.Typography.title)
                         Text(localization.string(for: model.isSheetMode
                                 ? .frameEditorFramesSubtitle
                                 : .frameEditorFramesSubtitleIndividual))
-                            .font(.caption2)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -30,8 +30,8 @@ struct FrameEditorSidebar: View {
                     Divider()
                     groups
                 }
-                .padding(.horizontal, FrameEditorMetrics.outerPadding)
-                .padding(.top, FrameEditorMetrics.outerPadding)
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .padding(.top, DesignTokens.Spacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             sidebarFooter
@@ -42,14 +42,14 @@ struct FrameEditorSidebar: View {
     private var sidebarFooter: some View {
         if hasSidebarFooter {
             Divider()
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
                 if !model.isSheetMode {
                     legacyNotice
                 }
                 sourceInfo
             }
-            .padding(.horizontal, FrameEditorMetrics.outerPadding)
-            .padding(.vertical, 10)
+            .padding(.horizontal, DesignTokens.Spacing.lg)
+            .padding(.vertical, DesignTokens.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -61,14 +61,14 @@ struct FrameEditorSidebar: View {
     @ViewBuilder
     private var sourceInfo: some View {
         if let sourceName = model.sourceName, let dimensions = model.sourceDimensionsDescription {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
                 Label(sourceName, systemImage: "photo")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(DesignTokens.Typography.caption.weight(.medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text(dimensions)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DesignTokens.Typography.mono)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
             }
@@ -82,8 +82,8 @@ struct FrameEditorSidebar: View {
 
     private var contactSheet: some View {
         LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
-            spacing: 8
+            columns: Array(repeating: GridItem(.flexible(), spacing: DesignTokens.Spacing.sm), count: 3),
+            spacing: DesignTokens.Spacing.sm
         ) {
             ForEach(SpriteFrameSlot.allCases, id: \.self) { slot in
                 FrameThumbnailTile(
@@ -107,19 +107,19 @@ struct FrameEditorSidebar: View {
     }
 
     private var groups: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
             ForEach(Self.groupOrder, id: \.self) { category in
                 let slots = SpriteFrameSlot.slots(for: category)
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                    HStack(spacing: DesignTokens.Spacing.sm) {
                         Text(category.title(using: localization))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(DesignTokens.Typography.heading)
                         Text("\(slots.count)")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .font(DesignTokens.Typography.mono)
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
-                    HStack(spacing: 6) {
+                    HStack(spacing: DesignTokens.Spacing.sm) {
                         ForEach(slots, id: \.self) { slot in
                             FrameThumbnailTile(
                                 slot: slot,
@@ -149,7 +149,7 @@ struct FrameEditorSidebar: View {
 
     private var legacyNotice: some View {
         Label(localization.string(for: .frameEditorLegacyNotice), systemImage: "info.circle")
-            .font(.system(size: 11))
+            .font(DesignTokens.Typography.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -178,11 +178,11 @@ private struct FrameThumbnailTile: View {
                 }
                 if showNumber {
                     Text(String(format: "%02d", slot.sheetNumber))
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 3)
-                        .padding(.vertical, 1)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 3))
-                        .padding(3)
+                        .font(DesignTokens.Typography.mono)
+                        .padding(.horizontal, DesignTokens.Spacing.xs)
+                        .padding(.vertical, DesignTokens.Spacing.xxs)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.control))
+                        .padding(DesignTokens.Spacing.xs)
                 }
                 if isEdited {
                     Circle()
@@ -194,9 +194,9 @@ private struct FrameThumbnailTile: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control))
             .overlay(
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.control)
                     .strokeBorder(
                         isSelected ? Color.accentColor : Color(nsColor: .separatorColor),
                         lineWidth: isSelected ? 2 : 1
@@ -218,19 +218,19 @@ struct FrameEditorCompactRail: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 5) {
+            VStack(spacing: DesignTokens.Spacing.sm) {
                 ForEach(SpriteFrameSlot.allCases, id: \.self) { slot in
                     Button {
                         model.select(slot)
                     } label: {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 5)
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.control)
                                 .fill(model.isSelected(slot)
                                     ? Color.accentColor.opacity(0.18)
                                     : Color(nsColor: .controlBackgroundColor))
                             HStack(spacing: 2) {
                                 Text(String(format: "%02d", slot.sheetNumber))
-                                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                    .font(DesignTokens.Typography.mono)
                                 if model.isFrameEdited(slot) {
                                     Circle().fill(Color.accentColor).frame(width: 4, height: 4)
                                 }
@@ -238,7 +238,7 @@ struct FrameEditorCompactRail: View {
                         }
                         .frame(width: 38, height: 30)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 5)
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.control)
                                 .strokeBorder(
                                     model.isSelected(slot)
                                         ? Color.accentColor
@@ -256,7 +256,7 @@ struct FrameEditorCompactRail: View {
                     .accessibilityAddTraits(model.isSelected(slot) ? [.isSelected] : [])
                 }
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, DesignTokens.Spacing.md)
         }
         .frame(maxHeight: .infinity)
     }

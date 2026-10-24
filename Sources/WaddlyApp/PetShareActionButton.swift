@@ -107,13 +107,15 @@ final class ShareActionButton: NSButton {
         button.layer?.cornerRadius = LayoutMetrics.actionHeight / 2
         button.applyBrandContent(
             enabled: brandTextColor,
+            // These are the measured sRGB tokens from DESIGN.md; using calibrated whites made the
+            // implementation drift from the documented disabled pairs.
             disabled: brandColor(
-                light: NSColor(calibratedWhite: 0.30, alpha: 1),
-                dark: NSColor(calibratedWhite: 0.72, alpha: 1)
+                light: NSColor(srgbRed: 101 / 255, green: 101 / 255, blue: 101 / 255, alpha: 1),
+                dark: NSColor(srgbRed: 182 / 255, green: 182 / 255, blue: 182 / 255, alpha: 1)
             ),
             disabledFill: brandColor(
-                light: NSColor(calibratedWhite: 0.90, alpha: 1),
-                dark: NSColor(calibratedWhite: 0.20, alpha: 1)
+                light: NSColor(srgbRed: 235 / 255, green: 235 / 255, blue: 235 / 255, alpha: 1),
+                dark: NSColor(srgbRed: 66 / 255, green: 66 / 255, blue: 66 / 255, alpha: 1)
             )
         )
         button.setPrimaryTitle(title)
