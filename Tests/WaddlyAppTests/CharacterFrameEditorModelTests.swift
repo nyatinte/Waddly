@@ -92,6 +92,8 @@ import WaddlyCore
         weak var weakSheet: CGImage? = model.sheet
         #expect(model.sheet != nil)
         #expect(!model.baseThumbnails.isEmpty)
+        _ = try #require(model.beforeImage(for: .idle1))
+        _ = try #require(model.afterImage(for: .idle1))
 
         model.releaseResources()
 

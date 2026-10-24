@@ -48,6 +48,8 @@ final class CharacterFrameEditorModel: ObservableObject {
     @Published var adjustedThumbnails: [SpriteFrameSlot: NSImage] = [:]
 
     var baseThumbnails: [SpriteFrameSlot: NSImage] = [:]
+    private var beforePreview: FrameEditorPreviewImage?
+    private var afterPreview: FrameEditorPreviewImage?
     /// Keeps the exact (possibly half-pixel) crop center stable across a slider drag or repeated
     /// stepper clicks; a crop origin or another tool resets it.
     var cropSizeAnchor: CropSizeAnchor?
@@ -163,6 +165,8 @@ final class CharacterFrameEditorModel: ObservableObject {
         sheetPNGData = nil
         baseThumbnails.removeAll()
         adjustedThumbnails.removeAll()
+        beforePreview = nil
+        afterPreview = nil
         sourceFrames = PetImageSet()
         editing = nil
         cropSizeAnchor = nil
@@ -277,27 +281,17 @@ final class CharacterFrameEditorModel: ObservableObject {
     }
 
     func beforeImage(for slot: SpriteFrameSlot) -> NSImage? {
-        guard let editing, let source = sourceImage(for: slot) else { return nil }
+        guard let editing else { return nil }
         let baseline = FrameAdjustment.baseline(
             slot: slot,
             geometry: editing.geometry(for: slot)
         )
-        return SpriteFrameRenderer.renderCanvasNSImage(
-            source: source,
-            adjustment: baseline,
-            canvasSide: canvasSide(for: slot),
-            cappedOutputSide: Self.previewSide
-        )
+        return previewImage(for: slot, adjustment: baseline, cached: &beforePreview)
     }
 
     func afterImage(for slot: SpriteFrameSlot) -> NSImage? {
-        guard let editing, let source = sourceImage(for: slot) else { return nil }
-        return SpriteFrameRenderer.renderCanvasNSImage(
-            source: source,
-            adjustment: editing.adjustment(for: slot),
-            canvasSide: canvasSide(for: slot),
-            cappedOutputSide: Self.previewSide
-        )
+        guard let editing else { return nil }
+        return previewImage(for: slot, adjustment: editing.adjustment(for: slot), cached: &afterPreview)
     }
 
     // MARK: - Staging
@@ -349,5 +343,39 @@ final class CharacterFrameEditorModel: ObservableObject {
             )
         }
         return result
+    }
+}
+
+private struct FrameEditorPreviewParameters: Equatable {
+    let slot: SpriteFrameSlot
+    let adjustment: FrameAdjustment
+    let canvasSide: Int
+}
+
+/// One result per preview, not a per-frame cache. Retain the source to make identity checks safe.
+private struct FrameEditorPreviewImage {
+    let source: CGImage
+    let parameters: FrameEditorPreviewParameters
+    let image: NSImage
+}
+
+extension CharacterFrameEditorModel {
+    private func previewImage(
+        for slot: SpriteFrameSlot, adjustment: FrameAdjustment, cached: inout FrameEditorPreviewImage?
+    ) -> NSImage? {
+        guard let source = sourceImage(for: slot) else {
+            cached = nil
+            return nil
+        }
+        let side = canvasSide(for: slot)
+        let parameters = FrameEditorPreviewParameters(slot: slot, adjustment: adjustment, canvasSide: side)
+        if let cached, cached.source === source, cached.parameters == parameters {
+            return cached.image
+        }
+        let image = SpriteFrameRenderer.renderCanvasNSImage(
+            source: source, adjustment: adjustment, canvasSide: side, cappedOutputSide: Self.previewSide
+        )
+        cached = image.map { FrameEditorPreviewImage(source: source, parameters: parameters, image: $0) }
+        return image
     }
 }
