@@ -51,6 +51,7 @@ struct CharacterImportView: View {
     /// Opens the native picker. Returns `nil` when the user cancels.
     let pickFile: () -> URL?
     let pasteboard: NSPasteboard
+    var showsPrompt = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -143,6 +144,9 @@ private extension CharacterImportView {
             if model.commitRejected {
                 statusLine(.characterCommitRejected, symbol: "exclamationmark.triangle.fill", positive: false)
                     .accessibilityIdentifier("characterCommitRejected")
+            }
+            if showsPrompt {
+                CharacterPromptCard(localization: localization, pasteboard: pasteboard)
             }
         }
     }

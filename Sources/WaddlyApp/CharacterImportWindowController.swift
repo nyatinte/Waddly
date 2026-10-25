@@ -101,7 +101,8 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             isPreviewActive: { true },
             onPreviewHostDisappear: { [weak self] in self?.stopEmbeddedPreview() },
             pickFile: { [weak self] in self?.pickFile() },
-            pasteboard: .general
+            pasteboard: .general,
+            showsPrompt: true
         ))
         host.translatesAutoresizingMaskIntoConstraints = true
         host.autoresizingMask = [.width, .height]
