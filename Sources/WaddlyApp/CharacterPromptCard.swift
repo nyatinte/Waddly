@@ -7,6 +7,7 @@ import SwiftUI
 struct CharacterPromptCard: View {
     let localization: LocalizationController
     let pasteboard: NSPasteboard
+    let onClipboardChange: @MainActor () -> Void
     var resourcesURL: URL? = Bundle.main.resourceURL
     var openBrowser: @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) }
     var announce: @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement
@@ -61,12 +62,13 @@ struct CharacterPromptCard: View {
         .accessibilityIdentifier("characterCopyPromptAndOpenChatGPT")
     }
 
-    private func copy(openChatGPT: Bool) {
+    func copy(openChatGPT: Bool) {
         let result = SpriteSheetPrompt.copy(
             SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL),
             to: pasteboard,
             openBrowser: openChatGPT ? openBrowser : nil
         )
+        onClipboardChange()
         feedback = result
         announce(localization.string(for: result.messageKey))
     }

@@ -23,6 +23,8 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         model: CharacterImportModel,
         localization: LocalizationController,
         presenter: WindowPresenter,
+        pasteboard: NSPasteboard = .general,
+        promptResourcesURL: URL? = Bundle.main.resourceURL,
         onClose: @escaping @MainActor () -> Void
     ) {
         self.model = model
@@ -41,7 +43,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         window.center()
         super.init(window: window)
         window.delegate = self
-        buildContent()
+        buildContent(pasteboard: pasteboard, promptResourcesURL: promptResourcesURL)
     }
 
     required init?(coder: NSCoder) {
@@ -83,7 +85,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         onClose()
     }
 
-    private func buildContent() {
+    private func buildContent(pasteboard: NSPasteboard, promptResourcesURL: URL?) {
         let root = PetImageDropView()
         root.idleBorderWidth = 0
         root.shouldPreserveUnsupportedDropURLs = { true }
@@ -101,8 +103,9 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             isPreviewActive: { true },
             onPreviewHostDisappear: { [weak self] in self?.stopEmbeddedPreview() },
             pickFile: { [weak self] in self?.pickFile() },
-            pasteboard: .general,
-            showsPrompt: true
+            pasteboard: pasteboard,
+            showsPrompt: true,
+            promptResourcesURL: promptResourcesURL
         ))
         host.translatesAutoresizingMaskIntoConstraints = true
         host.autoresizingMask = [.width, .height]

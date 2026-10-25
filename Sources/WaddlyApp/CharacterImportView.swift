@@ -52,6 +52,16 @@ struct CharacterImportView: View {
     let pickFile: () -> URL?
     let pasteboard: NSPasteboard
     var showsPrompt = false
+    var promptResourcesURL: URL? = Bundle.main.resourceURL
+
+    var promptCard: CharacterPromptCard {
+        CharacterPromptCard(
+            localization: localization,
+            pasteboard: pasteboard,
+            onClipboardChange: { model.refreshClipboardAvailability(from: pasteboard) },
+            resourcesURL: promptResourcesURL
+        )
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -146,7 +156,7 @@ private extension CharacterImportView {
                     .accessibilityIdentifier("characterCommitRejected")
             }
             if showsPrompt {
-                CharacterPromptCard(localization: localization, pasteboard: pasteboard)
+                promptCard
             }
         }
     }

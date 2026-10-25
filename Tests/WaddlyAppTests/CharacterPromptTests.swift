@@ -65,8 +65,11 @@ import WaddlyCore
             return .committed
         })
         let localization = try CaptureHarness.localized(.english)
+        let pasteboard = try CaptureHarness.pasteboard(holdsSheet: true)
+        defer { pasteboard.releaseGlobally() }
         let controller = CharacterImportWindowController(
-            model: model, localization: localization, presenter: .invisible, onClose: {}
+            model: model, localization: localization, presenter: .invisible,
+            pasteboard: pasteboard, promptResourcesURL: SetupWizardFixture.root(), onClose: {}
         )
         controller.focus()
         defer {
@@ -78,14 +81,31 @@ import WaddlyCore
         #expect(host.rootView.showsPrompt)
         #expect(model.hasStagedCandidate)
         #expect(!model.isDirty)
+        model.refreshClipboardAvailability(from: pasteboard)
+        #expect(model.clipboardHasImage)
+        // Exercise the action used by the actual card, including its parent callback.
+        var card = host.rootView.promptCard
+        card.announce = { _ in }
+        card.copy(openChatGPT: false)
+        let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: SetupWizardFixture.root())
+        #expect(pasteboard.string(forType: .string) == prompt)
+        #expect(!model.clipboardHasImage)
+        #expect(!model.isDirty)
+        #expect(commitCount == 0)
 
         try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
         let draft = try #require(model.stagedFrames)
-        let pasteboard = namedPasteboard()
-        defer { pasteboard.releaseGlobally() }
-        let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: SetupWizardFixture.root())
-        #expect(SpriteSheetPrompt.copy(prompt, to: pasteboard) == .copied)
-        #expect(host.rootView.showsPrompt)
+        let frame = try #require(stored[.idle].first)
+        try pasteboard.setData(#require(PetSpriteSheetImporter.pngData(for: frame)), forType: .png)
+        model.refreshClipboardAvailability(from: pasteboard)
+        #expect(model.clipboardHasImage)
+        var announcements: [String] = []
+        card.announce = { announcements.append($0) }
+        card.openBrowser = { _ in false }
+        card.copy(openChatGPT: true)
+        #expect(!model.clipboardHasImage)
+        #expect(pasteboard.string(forType: .string) == prompt)
+        #expect(announcements == [localization.string(for: .setupOpenFailed)])
         #expect(model.isDirty)
         #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), draft))
         #expect(CharacterImportModel.sameFrames(model.committedBaseline, stored))
