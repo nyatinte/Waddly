@@ -101,9 +101,9 @@ struct PermissionGuidePlacementTests {
         #expect(converted == CGRect(x: 40, y: 1010, width: 1512, height: 900))
     }
 
-    /// When nothing fits cleanly, the guide covers as little of System Settings as possible so its
-    /// app list stays reachable.
-    @Test func coversTheLeastOfSettingsWhenNothingFits() {
+    /// When nothing fits cleanly, the guide covers the settings sidebar rather than the app list:
+    /// the list is the drop target the guide is asking the user to drag onto.
+    @Test func coversTheSidebarInsteadOfTheAppListWhenNothingFits() {
         let settings = CGRect(x: 200, y: 200, width: 1300, height: 600)
         let origin = PermissionGuidePlacement.origin(
             windowSize: panel,
@@ -111,8 +111,27 @@ struct PermissionGuidePlacementTests {
             visible: visible,
             ownWindows: []
         )
-        #expect(origin == NSPoint(x: 430, y: 12))
+        #expect(origin == NSPoint(x: 12, y: 516))
         #expect(PermissionGuidePlacement.fits(origin, size: panel, into: visible))
+        let list = PermissionGuidePlacement.listArea(in: settings)
+        #expect(!NSRect(origin: origin, size: panel).intersects(list))
+    }
+
+    /// The compact guide is narrow enough to park beside a settings window that fills the screen, so
+    /// the only System Settings column it can cover is the sidebar.
+    @Test func compactGuideKeepsTheAppListVisibleOnASmallDisplay() {
+        let visible = NSRect(x: 0, y: 0, width: 1205, height: 602)
+        let settings = CGRect(x: 290, y: 0, width: 915, height: 602)
+        let compact = SetupMetrics.compactGuideSize
+        let origin = PermissionGuidePlacement.origin(
+            windowSize: compact,
+            settings: settings,
+            visible: visible,
+            ownWindows: []
+        )
+        let list = PermissionGuidePlacement.listArea(in: settings)
+        #expect(!NSRect(origin: origin, size: compact).intersects(list))
+        #expect(PermissionGuidePlacement.fits(origin, size: compact, into: visible))
     }
 
     @Test func guideFollowingStopsOnAUserMoveAndResumesOnBegin() {

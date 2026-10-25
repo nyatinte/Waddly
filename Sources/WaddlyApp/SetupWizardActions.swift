@@ -255,23 +255,35 @@ extension SetupWizardController {
     func bindPermission() {
         permission.onUpdate = { [weak self] in
             guard let self else { return }
+            // Following has to be refreshed before the window is parked or centred.
             refreshGuideFollowing()
-            applyGuideWindowLevel()
             renderCurrentStep()
-            if !isShowingGuide {
-                window?.level = .normal
-                window?.center()
-            }
         }
         permission.onTick = { [weak self] in
             self?.parkBesideSystemSettings()
         }
     }
 
-    /// The guide parks next to System Settings. Waddly is not the active app there, and an inactive
-    /// app's window cannot sit above it, so guiding is the one time the window floats.
-    func applyGuideWindowLevel() {
+    /// The guide floats and follows System Settings on the one page it belongs to. Entering that page
+    /// shrinks the window to the compact guide and parks it; leaving it restores the designed window
+    /// and centres it again, so a later page is never left in the narrow frame.
+    func updateGuidePresentation() {
         window?.level = isShowingGuide ? .floating : .normal
+        let compact = isCompactGuide
+        // Only a real transition touches the frame: the polling tick owns keeping the parked window
+        // beside System Settings, and re-showing an open guide must not move it (#79).
+        guard compact != appliedCompactGuide else { return }
+        appliedCompactGuide = compact
+        window?.contentMinSize = contentSize
+        window?.setContentSize(contentSize)
+        if compact {
+            // The preview column is gone while guiding, so the player would animate an off-screen
+            // view for as long as the guide stays open.
+            previewPane.stopPlayback()
+            parkBesideSystemSettings()
+        } else {
+            window?.center()
+        }
     }
 
     /// Called by the service's ticks, and once when the guide opens.

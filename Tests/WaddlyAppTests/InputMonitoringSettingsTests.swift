@@ -131,4 +131,37 @@ import Testing
     private func setupItem(in menu: NSMenu) throws -> NSMenuItem {
         try #require(menu.items.first { $0.action == #selector(AppDelegate.showSetupWizard) })
     }
+
+    /// The guide is the narrow one: it parks beside System Settings so the app list stays visible,
+    /// and it goes back to the designed window as soon as the permission arrives.
+    @Test func guideUsesTheCompactWindowAndRestoresTheDesignedOne() throws {
+        let state = Fixture.State()
+        state.images = try Fixture.sheetImages()
+        let wizard = try Fixture.makeWizard(
+            state: state,
+            granted: false,
+            requestPermission: { false },
+            isMonitoringSettings: true
+        )
+        defer { wizard.close() }
+        let window = try #require(wizard.window)
+        #expect(!wizard.isCompactGuide)
+        #expect(window.contentView?.bounds.size == SetupMetrics.contentSize)
+
+        wizard.enableMonitoring()
+        #expect(wizard.isShowingGuide)
+        #expect(wizard.isCompactGuide)
+        #expect(window.contentView?.bounds.size == SetupMetrics.compactGuideSize)
+
+        // The manual fallback is the same guide presentation.
+        wizard.toggleManualSteps()
+        #expect(wizard.isCompactGuide)
+        #expect(window.contentView?.bounds.size == SetupMetrics.compactGuideSize)
+
+        state.granted = true
+        wizard.refreshPermissionStatus()
+        #expect(!wizard.isShowingGuide)
+        #expect(!wizard.isCompactGuide)
+        #expect(window.contentView?.bounds.size == SetupMetrics.contentSize)
+    }
 }

@@ -34,17 +34,31 @@ enum PermissionGuidePlacement {
             return fitsAndClear
         }
 
-        // Nothing fit cleanly. Clamp first, then prefer the placement that hides the least of System
-        // Settings so its app list stays reachable, while still avoiding Waddly's own windows.
+        // Nothing fit cleanly. Clamp first, then prefer the placement that hides the least of the
+        // app list — the drop target this guide is asking the user to drag onto — while still
+        // avoiding Waddly's own windows. Covering the settings sidebar costs the user nothing.
         let clampedCandidates = candidates.map { clamped($0, size: windowSize, into: visible) }
         let clearOfOwn = clampedCandidates.filter { !overlaps($0, size: windowSize, relevantOwn) }
         let pool = clearOfOwn.isEmpty ? clampedCandidates : clearOfOwn
+        let list = listArea(in: settings)
         let leastCovering = pool.min { first, second in
-            let firstCoverage = overlapArea(first, size: windowSize, with: settings)
-            let secondCoverage = overlapArea(second, size: windowSize, with: settings)
-            return firstCoverage < secondCoverage
+            let firstList = overlapArea(first, size: windowSize, with: list)
+            let secondList = overlapArea(second, size: windowSize, with: list)
+            if firstList != secondList {
+                return firstList < secondList
+            }
+            let firstSettings = overlapArea(first, size: windowSize, with: settings)
+            let secondSettings = overlapArea(second, size: windowSize, with: settings)
+            return firstSettings < secondSettings
         }
         return leastCovering ?? clamped(below, size: windowSize, into: visible)
+    }
+
+    /// The detail pane of System Settings, right of the sidebar, where the app list and its +/−
+    /// buttons live. Covering the sidebar is harmless; covering this area hides the drop target.
+    static func listArea(in settings: CGRect) -> CGRect {
+        let minX = settings.minX + sidebarWidth
+        return CGRect(x: minX, y: settings.minY, width: max(0, settings.maxX - minX), height: settings.height)
     }
 
     static func overlapArea(_ origin: NSPoint, size: NSSize, with rect: CGRect) -> CGFloat {
