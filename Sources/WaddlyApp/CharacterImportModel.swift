@@ -87,6 +87,19 @@ final class CharacterImportModel: ObservableObject {
         return !Self.sameFrames(stagedFrames, committedBaseline)
     }
 
+    /// True when the screen must not present the draft as the saved pet: the frames differ, or the
+    /// last commit attempt did not save them. A failed or rejected save stays retryable and is never
+    /// reported as applied.
+    var hasUnsavedChanges: Bool {
+        isDirty || commitFailed || commitRejected
+    }
+
+    /// The footer action policy. Setup's Continue must be able to commit an already valid, unchanged
+    /// pet and advance; Change Character's Apply only exists to save a difference.
+    func canPerformPrimaryAction(requiresChange: Bool) -> Bool {
+        canApply && (!requiresChange || hasUnsavedChanges)
+    }
+
     /// Rebase the draft on the pet that is committed now, so reopening shows the real pet.
     func reload() {
         guard !isApplying else { return }
