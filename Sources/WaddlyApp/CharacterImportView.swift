@@ -144,15 +144,15 @@ private extension CharacterImportView {
                 }
             }
             if let failure = model.failure {
-                statusLine(failure.messageKey, symbol: "exclamationmark.triangle.fill", positive: false)
+                statusLine(failure.messageKey, symbol: "exclamationmark.triangle.fill")
                     .accessibilityIdentifier("characterImportError")
             }
             if model.commitFailed {
-                statusLine(.characterCommitFailed, symbol: "exclamationmark.triangle.fill", positive: false)
+                statusLine(.characterCommitFailed, symbol: "exclamationmark.triangle.fill")
                     .accessibilityIdentifier("characterCommitError")
             }
             if model.commitRejected {
-                statusLine(.characterCommitRejected, symbol: "exclamationmark.triangle.fill", positive: false)
+                statusLine(.characterCommitRejected, symbol: "exclamationmark.triangle.fill")
                     .accessibilityIdentifier("characterCommitRejected")
             }
             if showsPrompt {
@@ -218,7 +218,7 @@ private extension CharacterImportView {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DesignTokens.Status.positive)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sheetName)
@@ -232,7 +232,7 @@ private extension CharacterImportView {
                                 .foregroundStyle(Color.accentColor)
                         } else {
                             Text(localization.string(for: .characterValidStatus))
-                                .foregroundStyle(.green)
+                                .foregroundStyle(DesignTokens.Status.positive)
                             Text(verbatim: "·").foregroundStyle(.tertiary)
                             Text(sheetSummary)
                                 .foregroundStyle(.secondary)
@@ -365,10 +365,12 @@ private extension CharacterImportView {
         }
     }
 
-    func statusLine(_ key: LocalizationKey, symbol: String, positive: Bool) -> some View {
+    /// Inline failures are critical-only, so this takes the appearance-aware status token rather than
+    /// a boolean over the system colors small text cannot rely on.
+    func statusLine(_ key: LocalizationKey, symbol: String) -> some View {
         Label(localization.string(for: key), systemImage: symbol)
             .font(.callout)
-            .foregroundStyle(positive ? Color.green : Color.red)
+            .foregroundStyle(DesignTokens.Status.critical)
             .fixedSize(horizontal: false, vertical: true)
     }
 
