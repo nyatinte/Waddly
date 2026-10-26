@@ -20,11 +20,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     /// Inline result of "copy the prompt and open ChatGPT". `nil` means the user has not tried yet.
-    enum PromptActionFeedback: Equatable {
-        case copied
-        case copyFailed
-        case openFailed
-    }
+    typealias PromptActionFeedback = SpriteSheetPrompt.Feedback
 
     let localization: LocalizationController
     /// Reuses the permission page after onboarding without reopening character setup or progress.

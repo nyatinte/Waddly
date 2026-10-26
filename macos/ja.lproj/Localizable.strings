@@ -174,6 +174,10 @@
 "character.setupTitle" = "キャラクターの設定";
 "character.changeTitle" = "キャラクターを変更";
 "character.subtitle" = "3×3のPNGスプライトシートを取り込んで、デスクトップペットをカスタマイズします。";
+"character.promptTitle" = "別のキャラクターを作る";
+"character.promptBody" = "生成用プロンプトをコピーして、ChatGPTなどの画像生成サービスで使えます。完成したPNGをここに取り込んでください。「適用」を押すまで現在のペットは変わりません。";
+"character.copyPrompt" = "プロンプトをコピー";
+"character.promptUnavailable" = "生成用プロンプトを読み込めませんでした。Waddlyを開き直して、もう一度お試しください。";
 "character.dropInstruction" = "ここにPNGをドラッグ＆ドロップ";
 "character.dropHighlight" = "ドロップして取り込む";
 "character.dropHint" = "3×3のスプライトシート";

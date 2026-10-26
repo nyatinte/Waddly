@@ -201,17 +201,7 @@ extension SetupWizardController {
     }
 
     @objc func copyPromptAndOpenChatGPT() {
-        pasteboard.clearContents()
-        guard pasteboard.setString(prompt, forType: .string) else {
-            reportPromptFeedback(.copyFailed)
-            return
-        }
-        guard let url = URL(string: "https://chatgpt.com/") else {
-            reportPromptFeedback(.copied)
-            return
-        }
-        // The copy already succeeded, so a browser failure is its own truthful message.
-        reportPromptFeedback(openBrowser(url) ? .copied : .openFailed)
+        reportPromptFeedback(SpriteSheetPrompt.copy(prompt, to: pasteboard, openBrowser: openBrowser))
     }
 
     /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.

@@ -18,17 +18,12 @@ extension SetupWizardController {
 
     /// The inline message for the copy/open action, or `nil` before the first attempt.
     var promptFeedbackKey: LocalizationKey? {
-        switch promptFeedback {
-        case .copied: .setupPromptCopied
-        case .copyFailed: .setupCopyFailed
-        case .openFailed: .setupOpenFailed
-        case nil: nil
-        }
+        promptFeedback?.messageKey
     }
 
     /// Copy and open failures share the warning styling; a successful copy stays secondary.
     var promptFeedbackIsError: Bool {
-        promptFeedback == .copyFailed || promptFeedback == .openFailed
+        promptFeedback?.isError == true
     }
 
     func refreshLocalization() {

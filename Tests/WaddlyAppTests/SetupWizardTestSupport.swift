@@ -69,6 +69,7 @@ enum SetupWizardFixture {
         let pasteboard = NSPasteboard(name: NSPasteboard.Name("WaddlyTests.wizard.\(UUID().uuidString)"))
         return SetupWizardController(
             localization: LocalizationController(settings: settings, resources: resources),
+            promptResourcesURL: root(),
             demoPetURL: demoURL,
             onPreviewImage: makePreviewImage(state: state, preview: preview),
             onConfirmImage: { images, source in
