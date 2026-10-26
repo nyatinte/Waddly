@@ -86,6 +86,13 @@ extension SetupWizardScreen {
                 controller.localizedString(.setupRetryWithoutRestart),
                 identifier: "retryMonitoring"
             ) { controller.retryMonitoring() }
+            // Restarting is the documented remedy, but a grant macOS recorded against an older build
+            // of the app cannot be applied by any restart. Re-opening System Settings is the only way
+            // out of that state: toggling the switch off and on records the current build.
+            actionButton(
+                controller.localizedString(.setupOpenSystemSettings),
+                identifier: "openInputMonitoringSettings"
+            ) { controller.openInputMonitoringSettings() }
             actionButton(
                 controller.localizedString(.setupRevealInFinder),
                 identifier: "revealInFinder"
