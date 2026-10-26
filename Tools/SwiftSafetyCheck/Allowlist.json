@@ -1,7 +1,7 @@
 {
   "rules": {
     "actor-assumption": [
-      "Sources/WaddlyApp/PermissionService.swift:183",
+      "Sources/WaddlyApp/PermissionService.swift:191",
       "Sources/WaddlyApp/Waddly.swift:160"
     ],
     "empty-catch": [
