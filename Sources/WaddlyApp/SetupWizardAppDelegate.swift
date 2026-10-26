@@ -114,12 +114,19 @@ extension AppDelegate {
             }
         }
         setupWizardController = nil
-        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused else { return }
+        guard shouldRunMonitoring else {
+            // The guide was the only reason the tap was running. With no pet left to animate it must
+            // not keep listening after the window closes.
+            monitor.stop()
+            updateMenuStatus()
+            return
+        }
+        guard monitor.permissionGranted, !isPaused else { return }
         startMonitoring()
     }
 
     private func startMonitoringIfPossible() {
-        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused, !monitor.isRunning else { return }
+        guard shouldRunMonitoring, monitor.permissionGranted, !isPaused, !monitor.isRunning else { return }
         startMonitoring()
     }
 }

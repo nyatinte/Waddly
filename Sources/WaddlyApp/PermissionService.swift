@@ -154,14 +154,14 @@ final class PermissionService {
     /// Re-read the permission state, finishing the guide if the grant arrived.
     func refresh() {
         guard isGranted, isGuiding else { return }
-        finishGuiding()
+        finishGrantedGuide()
     }
 
     /// One polling step. Internal so tests can drive it without waiting on a timer.
     func tick() {
         guard isGuiding else { return }
         guard !isGranted else {
-            finishGuiding()
+            finishGrantedGuide()
             return
         }
         onTick?()
@@ -175,6 +175,14 @@ final class PermissionService {
         stopPolling()
         phase = .idle
         onUpdate?()
+    }
+
+    /// The grant landed while the guide was watching. macOS only applies it to a *new* event tap, so
+    /// the tap is restarted before the guide repaints: otherwise the step reads granted-but-not-
+    /// receiving and tells the user to restart the app for a tap that was never started.
+    private func finishGrantedGuide() {
+        restartTap()
+        finishGuiding()
     }
 
     private func startPolling() {

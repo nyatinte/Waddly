@@ -132,6 +132,27 @@ import Testing
         try #require(menu.items.first { $0.action == #selector(AppDelegate.showSetupWizard) })
     }
 
+    /// The guide has to be able to prove the permission before a pet exists. The tap used to be gated
+    /// on a stored image set, so a guide without one could only report "restart required" — and no
+    /// restart could ever fix it, because the tap had never been started (the dead end reported in
+    /// the permission screen review).
+    @Test func guideRunsMonitoringBeforeAPetIsStored() throws {
+        let fixture = try AppIntegrationFixture()
+        defer { fixture.close() }
+        let app = fixture.app
+        #expect(!app.hasCompletePetImageSet)
+        #expect(!app.shouldRunMonitoring)
+
+        app.showSetupWizard()
+        #expect(app.setupWizardController != nil)
+        #expect(app.shouldRunMonitoring)
+
+        // Closing without a pet leaves nothing to animate, so the tap must not keep listening.
+        app.setupWizardController?.close()
+        #expect(app.setupWizardController == nil)
+        #expect(!app.shouldRunMonitoring)
+    }
+
     /// The guide is the narrow one: it parks beside System Settings so the app list stays visible,
     /// and it goes back to the designed window as soon as the permission arrives.
     @Test func guideUsesTheCompactWindowAndRestoresTheDesignedOne() throws {
