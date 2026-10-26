@@ -187,7 +187,8 @@
 "character.pasteHelp" = "コピーした画像またはPNGファイルを貼り付けます。";
 "character.emptyPreview" = "取り込んだペットのプレビューがここに表示されます。";
 "character.metadataPlaceholder" = "PNGを取り込むと編集できます。";
-"character.validStatus" = "適用できます";
+"character.status.currentInUse" = "現在使用中";
+"character.status.notSaved" = "変更はまだ保存されていません";
 "character.currentCharacter" = "現在のキャラクター";
 "character.replace" = "差し替え…";
 "character.cellMetricsFormat" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px";

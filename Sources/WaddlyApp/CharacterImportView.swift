@@ -51,6 +51,9 @@ struct CharacterImportView: View {
     /// Opens the native picker. Returns `nil` when the user cancels.
     let pickFile: () -> URL?
     let pasteboard: NSPasteboard
+    /// Setup's Continue commits an unchanged, valid pet so the step can advance; Change Character's
+    /// Apply is only offered when the draft would actually change the saved pet. Both hosts state it.
+    var primaryRequiresChange: Bool
     var showsPrompt = false
     var promptResourcesURL: URL? = Bundle.main.resourceURL
 
@@ -216,9 +219,9 @@ private extension CharacterImportView {
     var stagedSheetCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: draftStatus.symbol)
                     .font(.title3)
-                    .foregroundStyle(DesignTokens.Status.positive)
+                    .foregroundStyle(draftStatus.color)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sheetName)
@@ -231,8 +234,9 @@ private extension CharacterImportView {
                             Text(localization.string(for: .characterDropHighlight))
                                 .foregroundStyle(Color.accentColor)
                         } else {
-                            Text(localization.string(for: .characterValidStatus))
-                                .foregroundStyle(DesignTokens.Status.positive)
+                            Text(localization.string(for: draftStatus.messageKey))
+                                .foregroundStyle(draftStatus.color)
+                                .accessibilityIdentifier("characterDraftStatus")
                             Text(verbatim: "·").foregroundStyle(.tertiary)
                             Text(sheetSummary)
                                 .foregroundStyle(.secondary)
@@ -360,13 +364,11 @@ private extension CharacterImportView {
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
-            .disabled(!model.canApply)
+            .disabled(!isPrimaryActionEnabled)
             .accessibilityIdentifier("characterPrimary")
         }
     }
 
-    /// Inline failures are critical-only, so this takes the appearance-aware status token rather than
-    /// a boolean over the system colors small text cannot rely on.
     func statusLine(_ key: LocalizationKey, symbol: String) -> some View {
         Label(localization.string(for: key), systemImage: symbol)
             .font(.callout)

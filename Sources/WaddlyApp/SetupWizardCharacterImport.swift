@@ -16,7 +16,9 @@ extension SetupWizardScreen {
             isPreviewActive: { controller.isComposingCharacter },
             onPreviewHostDisappear: { [weak controller] in controller?.stopEmbeddedCharacterPreview() },
             pickFile: controller.chooseCharacterFile,
-            pasteboard: controller.pasteboard
+            pasteboard: controller.pasteboard,
+            // Setup's Continue advances the wizard, so an already valid pet may be committed as is.
+            primaryRequiresChange: false
         )
     }
 }

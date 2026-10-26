@@ -187,7 +187,8 @@
 "character.pasteHelp" = "Paste a copied image or PNG file.";
 "character.emptyPreview" = "The imported pet preview appears here.";
 "character.metadataPlaceholder" = "Import a PNG to start editing.";
-"character.validStatus" = "Ready to apply";
+"character.status.currentInUse" = "Currently in use";
+"character.status.notSaved" = "Changes not saved";
 "character.currentCharacter" = "Current character";
 "character.replace" = "Replace…";
 "character.cellMetricsFormat" = "%1$d × %1$d px · cell %2$d × %2$d px";

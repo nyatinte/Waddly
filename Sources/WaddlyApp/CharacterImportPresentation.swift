@@ -1,0 +1,45 @@
+import SwiftUI
+
+/// The card that replaces the drop zone once the screen has a complete frame set: either the pet
+/// saved right now, or a draft that would replace it. A draft never reads as the current pet, and a
+/// failed or rejected save stays pending instead of claiming success.
+enum CharacterDraftStatus: Equatable {
+    case currentInUse
+    case notSaved
+
+    var messageKey: LocalizationKey {
+        switch self {
+        case .currentInUse: .characterStatusCurrentInUse
+        case .notSaved: .characterStatusNotSaved
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .currentInUse: "checkmark.circle.fill"
+        case .notSaved: "circle"
+        }
+    }
+
+    /// Only the persisted pet is a positive status; a draft stays pending (secondary) until Apply.
+    var color: Color {
+        switch self {
+        case .currentInUse: DesignTokens.Status.positive
+        case .notSaved: .secondary
+        }
+    }
+}
+
+@MainActor
+extension CharacterImportView {
+    /// What the replaced drop zone's card states: the saved pet, or a draft that is not saved yet.
+    var draftStatus: CharacterDraftStatus {
+        model.hasUnsavedChanges ? .notSaved : .currentInUse
+    }
+
+    /// Whether the footer's one action can run in this host: setup's Continue may commit an unchanged,
+    /// already valid pet, while Change Character's Apply needs a difference to save.
+    var isPrimaryActionEnabled: Bool {
+        model.canPerformPrimaryAction(requiresChange: primaryRequiresChange)
+    }
+}

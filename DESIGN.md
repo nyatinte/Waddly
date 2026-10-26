@@ -197,7 +197,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 **Contrast rules**
 
 - Text up to 17 pt: **4.5:1 minimum**. 18 pt or bold: **3:1 minimum**. Check both Light and Dark, and again with Increase Contrast.
-- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status` selects the pair for the current appearance and is what the Frame Editor, the Setup Guide (status lines, completion result rows, inline errors, prompt feedback), and Character Import's inline failures use.
+- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. `DesignTokens.Status` selects the pair for the current appearance and is what the Frame Editor, the Setup Guide (status lines, completion result rows, inline errors, prompt feedback), and Character Import (card state and inline failures) use.
 - Tertiary text is below 4.5:1 on purpose. It is reserved for metadata the user does not need to read to complete a task.
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
@@ -345,6 +345,7 @@ A pinned footer is the default action area for setup-class windows:
 - Status = icon + text. Positive: check + `positive`; pending: circle + secondary; critical: triangle + `critical`.
 - A set of results (the Setup completion page) is one card, not loose lines: `controlBackgroundColor`, 1 px separator, radius 12, rows `sm` apart on a shared left edge. The card is the group; it does not replace the status color or the spoken label.
 - The label states the state in words ("Input Monitoring: allowed"), not just a color.
+- Character Import says which side a complete frame set is on: **Currently in use** with the positive check while it is the saved pet, and **Changes not saved** with the pending circle while it is a draft or its last save failed. Change Character's Apply is disabled until there is a difference; Setup's Continue still commits an unchanged, valid pet so the step can advance.
 - Recoverable failures stay **inline** in the current step: caption size, critical color, one native accessibility announcement, previous state preserved.
 - Use a native `NSAlert` only for destructive or blocking decisions (discard a draft, save failed, login item). Do not use a modal for a recoverable import/copy/browser failure.
 - Never truncate instructions. The Share recovery text (#154) is the known counterexample and must be fixed by wrapping/reflow, not by ellipsis.
@@ -466,6 +467,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
 - Setup's status lines use `DesignTokens.Status`, and the completion page's result rows are captured by `CaptureHarness` in both monitoring outcomes.
 - Character Import's status text — the staged card's `positive` label and its `critical` inline failures — and the setup prompt feedback all use `DesignTokens.Status`; no `.green`/`.red` status text remains, and `DesignTokensStatusTests` pins the documented Light/Dark pairs.
+- Character Import states the saved pet or an unsaved draft with `DesignTokens.Status`; Change Character disables Apply when there is nothing to save, while Setup's Continue still advances with an unchanged pet. `CharacterDraftStatusTests` covers both hosts.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
