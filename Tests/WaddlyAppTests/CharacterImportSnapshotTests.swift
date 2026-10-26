@@ -67,6 +67,20 @@ import WaddlyCore
             }
         }
     }
+
+    /// The finished step in both monitoring outcomes: the result card is the screen's only group, so
+    /// both the confirmed and the pending row are worth a capture.
+    @Test func capturesSetupCompletedSurfaces() throws {
+        guard CaptureHarness.isEnabled else { return }
+        try CaptureHarness.prepare()
+        for language in [AppLanguage.english, .japanese] {
+            for dark in [false, true] {
+                for ready in [true, false] {
+                    try captureSetupCompleted(language: language, dark: dark, ready: ready)
+                }
+            }
+        }
+    }
 }
 
 @MainActor
@@ -297,5 +311,27 @@ private extension CharacterImportSnapshotTests {
         CaptureHarness.showStagedFrames(wizard.characterImportModel, in: content)
         try await Task.sleep(for: .milliseconds(250))
         try CaptureHarness.write(content, dark: dark, named: "setup-valid-\(tag)")
+    }
+
+    /// The completion page, reached the way a user reaches it: with a stored pet, landed on the
+    /// final step. `ready` picks a confirmed reaction or the incomplete-recovery variant.
+    func captureSetupCompleted(language: AppLanguage, dark: Bool, ready: Bool) throws {
+        let state = SetupWizardFixture.State()
+        state.images = try SetupWizardFixture.sheetImages()
+        let wizard = try SetupWizardFixture.makeWizard(
+            language: language,
+            state: state,
+            demoURL: CaptureHarness.sheetURL(),
+            granted: ready,
+            receiving: ready,
+            observedReaction: ready
+        )
+        defer { wizard.close() }
+        wizard.setStep(.completed)
+        try CaptureHarness.write(
+            #require(wizard.window?.contentView),
+            dark: dark,
+            named: "setup-complete-\(ready ? "ready" : "pending")-\(CaptureHarness.suffix(language, dark))"
+        )
     }
 }

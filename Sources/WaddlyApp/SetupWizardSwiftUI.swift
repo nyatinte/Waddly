@@ -332,42 +332,6 @@ private extension SetupWizardScreen {
         }
         return controller.isShowingChatGPTGuide ? .setupChatGPTPromptTitle : .setupPetTitle
     }
-
-    private var monitoringCheckKey: LocalizationKey {
-        controller.monitoringCheckKey
-    }
-
-    private var completedPage: some View {
-        VStack(spacing: 12) {
-            title(.setupCompleteTitle).multilineTextAlignment(.center)
-            bodyText(.setupCompleteBody).multilineTextAlignment(.center)
-            Label(controller.localizedString(.setupCheckPet), systemImage: "checkmark.circle.fill")
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Label(
-                controller.localizedString(monitoringCheckKey),
-                systemImage: controller.isMonitoringReady ? "checkmark.circle.fill" : "circle"
-            )
-            .frame(maxWidth: .infinity, alignment: .leading)
-            if !controller.isMonitoringReady {
-                caption(controller.monitoringIncompleteWarningKey).multilineTextAlignment(.center)
-                if controller.monitoringRecovery == .restart {
-                    // The grant is already there; only a fresh process can use it.
-                    actionButton(
-                        controller.localizedString(.setupRestartNow),
-                        identifier: "relaunchApp"
-                    ) { controller.relaunchApp() }
-                        .buttonStyle(.borderedProminent)
-                } else {
-                    actionButton(
-                        controller.localizedString(controller.monitoringIncompleteActionKey),
-                        identifier: "showMonitoringStep"
-                    ) { controller.showMonitoringStep() }
-                }
-            }
-            caption(.setupCompleteHint).multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
 
 @MainActor

@@ -40,7 +40,8 @@ extension SetupWizardScreen {
 
     func status(_ key: LocalizationKey, positive: Bool) -> some View {
         Label(controller.localizedString(key), systemImage: positive ? "checkmark.circle.fill" : "circle")
-            .font(.callout.weight(.medium)).foregroundStyle(positive ? Color.green : Color.secondary)
+            .font(.callout.weight(.medium))
+            .foregroundStyle(positive ? DesignTokens.Status.positive : Color.secondary)
             // The label text already states the current value, so VoiceOver reads the transition
             // when it reaches the element. `.updatesFrequently` instead marks the status as a
             // moving target, which is not what a stable permission state is.
@@ -48,10 +49,21 @@ extension SetupWizardScreen {
             .accessibilityLabel(controller.localizedString(key))
     }
 
+    /// One outcome on the completion page. Same icon + words language as `status()`, so the finished
+    /// step and the step that produced it agree on what "done" looks like.
+    func resultRow(_ key: LocalizationKey, done: Bool) -> some View {
+        Label(controller.localizedString(key), systemImage: done ? "checkmark.circle.fill" : "circle")
+            .font(.callout.weight(.medium))
+            .foregroundStyle(done ? DesignTokens.Status.positive : Color.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(controller.localizedString(key))
+    }
+
     func errorMessage(_ key: LocalizationKey) -> some View {
         Label(controller.localizedString(key), systemImage: "exclamationmark.triangle.fill")
             .font(.caption)
-            .foregroundStyle(.red)
+            .foregroundStyle(DesignTokens.Status.critical)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(controller.localizedString(key))
