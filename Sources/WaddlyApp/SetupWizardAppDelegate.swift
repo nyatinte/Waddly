@@ -66,8 +66,9 @@ extension AppDelegate {
         presenter.activate()
         controller.moveWindowProgrammatically {
             controller.showWindow(nil)
-            // Re-assert the designed size; a restored frame must never win here.
-            window.setContentSize(SetupMetrics.contentSize)
+            // Re-assert the designed size; a restored frame must never win here. While the guide is
+            // on screen that size is the compact guide, not the two-column setup window.
+            window.setContentSize(controller.contentSize)
             // Only a freshly shown window is centered. Re-centering an already open guide would
             // fight its parked position and look like a user move to `GuideFollowing`.
             if !wasVisible {
@@ -113,12 +114,19 @@ extension AppDelegate {
             }
         }
         setupWizardController = nil
-        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused else { return }
+        guard shouldRunMonitoring else {
+            // The guide was the only reason the tap was running. With no pet left to animate it must
+            // not keep listening after the window closes.
+            monitor.stop()
+            updateMenuStatus()
+            return
+        }
+        guard monitor.permissionGranted, !isPaused else { return }
         startMonitoring()
     }
 
     private func startMonitoringIfPossible() {
-        guard hasCompletePetImageSet, monitor.permissionGranted, !isPaused, !monitor.isRunning else { return }
+        guard shouldRunMonitoring, monitor.permissionGranted, !isPaused, !monitor.isRunning else { return }
         startMonitoring()
     }
 }

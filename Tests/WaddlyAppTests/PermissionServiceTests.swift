@@ -102,7 +102,9 @@ import Testing
         #expect(service.phase == .guiding)
     }
 
-    @Test func theGrantArrivingEndsTheGuide() {
+    /// The grant ends the guide *and* starts a fresh tap: macOS only applies Input Monitoring to a
+    /// new tap, so repainting before restarting it would tell the user to restart the app instead.
+    @Test func theGrantArrivingEndsTheGuideAndRestartsTheTap() {
         let fake = Fake()
         let service = fake.makeService()
         var updates = 0
@@ -114,6 +116,7 @@ import Testing
 
         #expect(service.phase == .idle)
         #expect(!service.isGuiding)
+        #expect(fake.tapRestarts == 1)
         #expect(updates == 2)
     }
 
@@ -127,6 +130,7 @@ import Testing
         service.refresh()
 
         #expect(service.phase == .idle)
+        #expect(fake.tapRestarts == 1)
     }
 
     @Test func manualStepsToggleBackToTheDragGuide() {

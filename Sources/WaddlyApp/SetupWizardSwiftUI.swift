@@ -33,9 +33,13 @@ struct SetupWizardScreen: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(maxHeight: .infinity, alignment: .topLeading)
-                    SetupPreviewHost(pane: controller.previewPane)
-                        .frame(width: LayoutMetrics.previewWidth)
-                        .frame(maxHeight: .infinity)
+                    // The permission guide parks beside System Settings, so it drops the preview
+                    // column: the pet it would show is asleep, and the list must stay visible.
+                    if !controller.isCompactGuide {
+                        SetupPreviewHost(pane: controller.previewPane)
+                            .frame(width: LayoutMetrics.previewWidth)
+                            .frame(maxHeight: .infinity)
+                    }
                 }
                 .padding(.horizontal, LayoutMetrics.contentInset)
                 .padding(.top, LayoutMetrics.sectionGap)
@@ -49,7 +53,7 @@ struct SetupWizardScreen: View {
                     .padding(.vertical, LayoutMetrics.footerInset)
             }
         }
-        .frame(width: SetupMetrics.contentSize.width, height: SetupMetrics.contentSize.height)
+        .frame(width: controller.contentSize.width, height: controller.contentSize.height)
         .background(Color(nsColor: .windowBackgroundColor))
         .animation(MotionPreference.isReduced ? nil : .easeInOut(duration: 0.18), value: controller.currentStep)
     }
@@ -164,168 +168,6 @@ private extension SetupWizardScreen {
         }
     }
 
-    private var monitoringPage: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            switch controller.monitoringReadiness {
-            case .permissionMissing:
-                missingPermissionContent
-            case .tapUnavailable:
-                restartRequiredContent
-            case .awaitingReaction:
-                awaitingReactionContent
-            case .reactionObserved:
-                readyMonitoringContent
-            }
-        }
-    }
-
-    /// The tap is live but no key has reached the app yet: the pet is awake, reactions are unproven.
-    private var awaitingReactionContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            title(.setupMonitoringWaitingTitle)
-            bodyText(.setupMonitoringWaitingBody)
-            status(.setupMonitoringStatusWaiting, positive: false)
-            bodyText(.setupTryTyping)
-            actionButton(
-                controller.localizedString(.setupNotWorking),
-                identifier: "toggleTroubleshooting"
-            ) { controller.toggleTroubleshooting() }
-            if controller.isShowingTroubleshooting {
-                troubleshootingContent
-            }
-        }
-    }
-
-    private var readyMonitoringContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            title(.setupMonitoringGrantedTitle)
-            bodyText(.setupMonitoringGrantedBody)
-            status(.setupMonitoringStatusGranted, positive: true)
-            bodyText(.setupTryTyping)
-            actionButton(
-                controller.localizedString(.setupNotWorking),
-                identifier: "toggleTroubleshooting"
-            ) { controller.toggleTroubleshooting() }
-            if controller.isShowingTroubleshooting {
-                troubleshootingContent
-            }
-        }
-    }
-
-    private var troubleshootingContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            title(.setupTroubleshootingTitle)
-            bodyText(.setupTroubleshootingBody)
-            actionButton(
-                controller.localizedString(.setupRestartNow),
-                identifier: "relaunchApp"
-            ) { controller.relaunchApp() }
-            actionButton(
-                controller.localizedString(.setupRevealInFinder),
-                identifier: "revealInFinder"
-            ) { controller.revealInFinder() }
-            actionButton(
-                controller.localizedString(.setupOpenSystemSettings),
-                identifier: "openInputMonitoringSettings"
-            ) { controller.openInputMonitoringSettings() }
-        }
-    }
-
-    private var restartRequiredContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            title(.setupRestartRequiredTitle)
-            bodyText(.setupRestartRequiredBody)
-            status(.setupMonitoringStatusGranted, positive: true)
-            actionButton(
-                controller.localizedString(.setupRestartNow),
-                identifier: "relaunchApp"
-            ) { controller.relaunchApp() }
-                .buttonStyle(.borderedProminent)
-            actionButton(
-                controller.localizedString(.setupRetryWithoutRestart),
-                identifier: "retryMonitoring"
-            ) { controller.retryMonitoring() }
-            actionButton(
-                controller.localizedString(.setupRevealInFinder),
-                identifier: "revealInFinder"
-            ) { controller.revealInFinder() }
-        }
-    }
-
-    private var missingPermissionContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            title(.setupMonitoringTitle)
-            bodyText(.setupMonitoringBody)
-            GroupBox {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(controller.localizedString(.setupPrivacyTitle), systemImage: "lock.shield")
-                        .font(.headline)
-                    bodyText(.setupPrivacyNote)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            status(.setupMonitoringStatusOff, positive: false)
-            permissionActionContent
-        }
-    }
-
-    @ViewBuilder private var permissionActionContent: some View {
-        if controller.isShowingManualSteps {
-            manualPermissionSteps
-        } else if controller.isShowingGuide {
-            permissionGuideActions
-        } else {
-            actionButton(
-                controller.localizedString(.setupEnableMonitoring),
-                identifier: "enableMonitoring"
-            ) { controller.enableMonitoring() }
-                .buttonStyle(.borderedProminent)
-        }
-    }
-
-    private var manualPermissionSteps: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            numbered([.setupManualStep1, .setupManualStep2, .setupManualStep3])
-            actionButton(
-                controller.localizedString(.setupOpenSystemSettings),
-                identifier: "openInputMonitoringSettings"
-            ) { controller.openInputMonitoringSettings() }
-            actionButton(
-                controller.localizedString(.setupDragInstead),
-                identifier: "dragInstead"
-            ) { controller.toggleManualSteps() }
-        }
-    }
-
-    private var permissionGuideActions: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // The drag source lives in the page column, not over the preview: the pet stays visible,
-            // and the only thing being dragged is the icon the instruction names.
-            HStack(spacing: 12) {
-                AppIconDragSource(localization: controller.localization)
-                    .frame(width: 40, height: 40)
-                Text(controller.localizedString(.setupDropGuideBody))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor)))
-            caption(.setupMonitoringWatching)
-            actionButton(
-                controller.localizedString(.setupReopenSettings),
-                identifier: "reopenSettings"
-            ) { controller.openInputMonitoringSettings() }
-            actionButton(
-                controller.localizedString(.setupHelperAlternative),
-                identifier: "helperAlternative"
-            ) { controller.toggleManualSteps() }
-        }
-    }
-
     private var petTitleKey: LocalizationKey {
         if controller.hasImage || controller.didRegisterPet {
             return .setupRegisteredTitle
@@ -343,19 +185,4 @@ private struct SetupPreviewHost: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: SetupPreviewPane, context: Context) {}
-}
-
-/// The draggable Waddly icon, in the page column. Reuses the AppKit drag source so the pasteboard
-/// item keeps the file-URL flavours System Settings accepts.
-@MainActor
-private struct AppIconDragSource: NSViewRepresentable {
-    let localization: LocalizationController
-
-    func makeNSView(context: Context) -> DraggableAppIconView {
-        DraggableAppIconView(localization: localization)
-    }
-
-    func updateNSView(_ nsView: DraggableAppIconView, context: Context) {
-        nsView.updateLocalization(localization)
-    }
 }

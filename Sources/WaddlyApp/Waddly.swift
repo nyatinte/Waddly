@@ -199,6 +199,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         imageStore.hasCompleteImageSet
     }
 
+    /// Whether an event tap belongs in this process at all. There has to be something to animate, and
+    /// the setup guide counts: its Keyboard reactions step can only prove the permission with a live
+    /// tap, so gating the tap on a stored image set made a guide without one report "restart
+    /// required" forever — a restart cannot help when the tap was never started.
+    var shouldRunMonitoring: Bool {
+        hasCompletePetImageSet || setupWizardController != nil
+    }
+
     /// Forwarded read views of the store's state, kept so UI code and probes do not reach through
     /// the store for every field.
     var importedImages: PetImageSet? {
@@ -332,7 +340,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func applicationDidBecomeActive(_ notification: Notification) {
         setupWizardController?.refreshPermissionStatus()
-        guard hasCompletePetImageSet, !isPaused, monitor.permissionGranted else { return }
+        guard shouldRunMonitoring, !isPaused, monitor.permissionGranted else { return }
         startMonitoring()
     }
 

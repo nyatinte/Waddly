@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// One setup action: the label, the identifier tests drive, and what it runs. Grouping them lets a
+/// route end with the same primary/alternative pair without repeating five arguments at each call.
+struct SetupAction {
+    let title: LocalizationKey
+    let identifier: String
+    let run: @MainActor () -> Void
+}
+
 @MainActor
 extension SetupWizardScreen {
     func step(_ key: LocalizationKey, index: Int) -> some View {
@@ -49,6 +57,27 @@ extension SetupWizardScreen {
             .accessibilityLabel(controller.localizedString(key))
     }
 
+    /// Title and current state as one block. The state is the first thing to read, so it belongs
+    /// under the title instead of between two cards further down the page.
+    func pageHeader(_ titleKey: LocalizationKey, statusKey: LocalizationKey, positive: Bool) -> some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            title(titleKey)
+            status(statusKey, positive: positive)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The one card shape the setup pages use. Callers stack their own rows inside it, so a page can
+    /// add a step or an action without rebuilding the surface.
+    func cardContainer(@ViewBuilder _ content: () -> some View) -> some View {
+        let shape = RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+        return VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) { content() }
+            .padding(DesignTokens.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(nsColor: .controlBackgroundColor), in: shape)
+            .overlay(shape.stroke(Color(nsColor: .separatorColor)))
+    }
+
     /// One outcome on the completion page. Same icon + words language as `status()`, so the finished
     /// step and the step that produced it agree on what "done" looks like.
     func resultRow(_ key: LocalizationKey, done: Bool) -> some View {
@@ -69,16 +98,47 @@ extension SetupWizardScreen {
             .accessibilityLabel(controller.localizedString(key))
     }
 
+    /// A numbered step's badge. Decorative: the step text carries the meaning.
+    func stepBadge(_ index: Int) -> some View {
+        Image(systemName: "\(index).circle.fill")
+            .foregroundStyle(Color.accentColor)
+            .accessibilityHidden(true)
+    }
+
+    func numberedStep(_ index: Int, _ key: LocalizationKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.sm) {
+            stepBadge(index)
+            Text(controller.localizedString(key)).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     func numbered(_ keys: [LocalizationKey]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        cardContainer { numberedSteps(keys) }
+    }
+
+    func numberedSteps(_ keys: [LocalizationKey]) -> some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             ForEach(Array(keys.enumerated()), id: \.offset) { index, key in
-                Label(controller.localizedString(key), systemImage: "\(index + 1).circle.fill")
-                    .fixedSize(horizontal: false, vertical: true)
+                numberedStep(index + 1, key)
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// The pair every permission route ends with: one primary action and one quiet alternative.
+    func permissionActions(primary: SetupAction, alternative: SetupAction) -> some View {
+        HStack(spacing: LayoutMetrics.actionGap) {
+            primaryActionButton(
+                controller.localizedString(primary.title),
+                identifier: primary.identifier,
+                action: primary.run
+            )
+            actionButton(
+                controller.localizedString(alternative.title),
+                identifier: alternative.identifier,
+                action: alternative.run
+            )
+            Spacer(minLength: 0)
+        }
     }
 
     func option(
@@ -123,6 +183,24 @@ extension SetupWizardScreen {
             Text(verbatim: title)
                 .actionLabel()
         }
+        .controlSize(.large)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: title))
+        .accessibilityIdentifier(identifier)
+    }
+
+    /// The accent-filled action of a page. The style goes on the button itself, so a caller cannot
+    /// end up with a secondary-looking primary by applying it to the wrapper instead.
+    func primaryActionButton(
+        _ title: String,
+        identifier: String,
+        action: @escaping @MainActor () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(verbatim: title)
+                .actionLabel()
+        }
+        .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(verbatim: title))

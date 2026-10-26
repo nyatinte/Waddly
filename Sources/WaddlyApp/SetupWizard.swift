@@ -199,6 +199,17 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         permission.isShowingManualSteps
     }
 
+    /// The guide is the one presentation that is not the designed two-column page. While it is on
+    /// screen the window is the narrow guide, so it can park beside System Settings without covering
+    /// the app list the user is dragging onto; every other page keeps `contentSize`.
+    var isCompactGuide: Bool {
+        currentStep == .monitoring && isShowingGuide
+    }
+
+    var contentSize: NSSize {
+        isCompactGuide ? SetupMetrics.compactGuideSize : SetupMetrics.contentSize
+    }
+
     func refreshPermissionStatus() {
         permission.refresh()
         guard currentStep != .pet else { return }
@@ -208,6 +219,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// The guide follows System Settings until the user moves it.
     private var following = GuideFollowing()
     private var wasShowingGuide = false
+    /// The size the window was last given, so a re-render only resizes on a real transition.
+    var appliedCompactGuide = false
     private var isMovingProgrammatically = false
     private var isConfirmingWindowClose = false
     private var mayCloseAfterConfirmedDiscard = false
@@ -316,6 +329,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 
 extension SetupWizardController {
     func renderCurrentStep() {
+        updateGuidePresentation()
         updatePreview()
         didRenderConfirmedReaction = isMonitoringReady
         objectWillChange.send()

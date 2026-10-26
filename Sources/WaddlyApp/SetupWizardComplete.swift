@@ -54,11 +54,10 @@ extension SetupWizardScreen {
                 caption(controller.monitoringIncompleteWarningKey).multilineTextAlignment(.center)
                 if controller.monitoringRecovery == .restart {
                     // The grant is already there; only a fresh process can use it.
-                    actionButton(
+                    primaryActionButton(
                         controller.localizedString(.setupRestartNow),
                         identifier: "relaunchApp"
                     ) { controller.relaunchApp() }
-                        .buttonStyle(.borderedProminent)
                 } else {
                     actionButton(
                         controller.localizedString(controller.monitoringIncompleteActionKey),
