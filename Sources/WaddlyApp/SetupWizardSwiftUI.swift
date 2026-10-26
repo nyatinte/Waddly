@@ -120,7 +120,7 @@ private extension SetupWizardScreen {
             .accessibilityIdentifier("copyPromptAndOpenChatGPT")
             Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
                 .font(.caption)
-                .foregroundStyle(controller.promptFeedbackIsError ? .red : .secondary)
+                .foregroundStyle(controller.promptFeedbackIsError ? DesignTokens.Status.critical : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
             bodyText(.setupWhenReady)

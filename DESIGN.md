@@ -197,7 +197,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 **Contrast rules**
 
 - Text up to 17 pt: **4.5:1 minimum**. 18 pt or bold: **3:1 minimum**. Check both Light and Dark, and again with Increase Contrast.
-- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status`, added with the Frame Editor; it selects the pair for the current appearance. The Frame Editor and the Setup Guide (status lines, completion result rows, inline errors) use it; Character Import and the setup prompt feedback still use system green/red until migrated.
+- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status` selects the pair for the current appearance and is what the Frame Editor, the Setup Guide (status lines, completion result rows, inline errors, prompt feedback), and Character Import's inline failures use.
 - Tertiary text is below 4.5:1 on purpose. It is reserved for metadata the user does not need to read to complete a task.
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
@@ -465,6 +465,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - The Frame Editor uses `DesignTokens` for type, spacing, radius, auxiliary controls, and status colors; Done/Reset are 36 pt, auxiliary controls are 28 pt, metadata is 11 pt.
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
 - Setup's status lines use `DesignTokens.Status`, and the completion page's result rows are captured by `CaptureHarness` in both monitoring outcomes.
+- Character Import's status text — the staged card's `positive` label and its `critical` inline failures — and the setup prompt feedback all use `DesignTokens.Status`; no `.green`/`.red` status text remains, and `DesignTokensStatusTests` pins the documented Light/Dark pairs.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
@@ -476,11 +477,6 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | --- | --- | --- |
 | Frame Editor geometry could drift back into one-off values | The densest surface is the easiest place to add a raw number | Keep `FrameEditorMetrics` geometry-only; review new literals |
 | Setup/Character still use literal type sizes | Their values match the scale, but the dependency is implicit | Move them to `DesignTokens.Typography`; review new literals |
-<<<<<<< HEAD
-| Character Import status text still uses system green/red | Small status text can fall below 4.5:1 in one appearance | Use `positive`/`critical` and the Dark pairs |
-=======
-| Character Import status text still uses system green/red | Small status text can fall below 4.5:1 | Use `positive`/`critical` and the Dark pairs |
->>>>>>> origin/main
 | Auxiliary control rule is new | New views can still add mini/small | 28 pt or padded hit area; no new mini/small |
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
@@ -497,7 +493,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | Preview width 360 | `LayoutMetrics.previewWidth` |
 | Type scale | `DesignTokens.Typography`; Setup/Character/Share literals must match the table until migrated |
 | Radius scale | `DesignTokens.Radius`; controls 6, cards 12, preview 16, brand X `full` |
-| Status colors | `DesignTokens.Status`; Character Import still uses `Color.green`/`Color.red` text |
+| Status colors | `DesignTokens.Status` Light/Dark pairs; Frame Editor, Setup Guide, and Character Import |
 
 **Enforcement**
 
@@ -515,11 +511,7 @@ The editor uses the dense workspace variant: `FrameEditorMetrics` is geometry-on
 **Setup and Character Import**
 
 - Replace the remaining ad-hoc 25/15/13/12/11 sizes with the type tokens (the values already match; make the dependency explicit).
-<<<<<<< HEAD
-- Setup now uses `DesignTokens.Status.positive`/`critical` for its status lines, spacing, and card radii; Character Import still uses `.green`/`.red` status text.
-=======
-- Replace the remaining `.green`/`.red` status text (prompt feedback) with `positive`/`critical`.
->>>>>>> origin/main
+- Setup and Character Import now both use `DesignTokens.Status` for status text; no `.green`/`.red` status text remains. Character Import still carries literal type sizes and card geometry.
 - Add a large-text/fixed-window layout test.
 
 **Share**
