@@ -197,7 +197,7 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 **Contrast rules**
 
 - Text up to 17 pt: **4.5:1 minimum**. 18 pt or bold: **3:1 minimum**. Check both Light and Dark, and again with Increase Contrast.
-- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status`, added with the Frame Editor; it selects the pair for the current appearance. Setup and Character Import still use system green/red until migrated.
+- System green/red are intended for icons and fills. The app's small positive/error text uses the accessible `positive` / `critical` (Light) or `positive-dark` / `critical-dark` (Dark) tokens; `Color.green` and `Color.red` are not text tokens. The migration API is `DesignTokens.Status`, added with the Frame Editor; it selects the pair for the current appearance. The Frame Editor and the Setup Guide (status lines, completion result rows, inline errors) use it; Character Import and the setup prompt feedback still use system green/red until migrated.
 - Tertiary text is below 4.5:1 on purpose. It is reserved for metadata the user does not need to read to complete a task.
 - Never convey state with color alone. A status is an icon + label (check/circle/triangle), and the label states the state in words.
 - Resolve layer colors for the current appearance (`shareLayerColor` in `PetShareDialogComponents.swift`); a `CGColor` captured in one appearance is stale in the other.
@@ -343,6 +343,7 @@ A pinned footer is the default action area for setup-class windows:
 ### Status and inline errors
 
 - Status = icon + text. Positive: check + `positive`; pending: circle + secondary; critical: triangle + `critical`.
+- A set of results (the Setup completion page) is one card, not loose lines: `controlBackgroundColor`, 1 px separator, radius 12, rows `sm` apart on a shared left edge. The card is the group; it does not replace the status color or the spoken label.
 - The label states the state in words ("Input Monitoring: allowed"), not just a color.
 - Recoverable failures stay **inline** in the current step: caption size, critical color, one native accessibility announcement, previous state preserved.
 - Use a native `NSAlert` only for destructive or blocking decisions (discard a draft, save failed, login item). Do not use a modal for a recoverable import/copy/browser failure.
@@ -463,6 +464,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Setup, Character Import, and Share use the shared action height (36) and footer geometry; Share tests assert 36 pt actions, centering, and the disabled content/fill contrast.
 - The Frame Editor uses `DesignTokens` for type, spacing, radius, auxiliary controls, and status colors; Done/Reset are 36 pt, auxiliary controls are 28 pt, metadata is 11 pt.
 - Setup's four permission/readiness states and Share's working/failure/copy/composer states are covered by tests.
+- Setup's status lines use `DesignTokens.Status`, and the completion page's result rows are captured by `CaptureHarness` in both monitoring outcomes.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
@@ -474,7 +476,11 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | --- | --- | --- |
 | Frame Editor geometry could drift back into one-off values | The densest surface is the easiest place to add a raw number | Keep `FrameEditorMetrics` geometry-only; review new literals |
 | Setup/Character still use literal type sizes | Their values match the scale, but the dependency is implicit | Move them to `DesignTokens.Typography`; review new literals |
+<<<<<<< HEAD
 | Character Import status text still uses system green/red | Small status text can fall below 4.5:1 in one appearance | Use `positive`/`critical` and the Dark pairs |
+=======
+| Character Import status text still uses system green/red | Small status text can fall below 4.5:1 | Use `positive`/`critical` and the Dark pairs |
+>>>>>>> origin/main
 | Auxiliary control rule is new | New views can still add mini/small | 28 pt or padded hit area; no new mini/small |
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
@@ -491,7 +497,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | Preview width 360 | `LayoutMetrics.previewWidth` |
 | Type scale | `DesignTokens.Typography`; Setup/Character/Share literals must match the table until migrated |
 | Radius scale | `DesignTokens.Radius`; controls 6, cards 12, preview 16, brand X `full` |
-| Status colors | `DesignTokens.Status`; Setup/Character still use `Color.green`/`Color.red` text |
+| Status colors | `DesignTokens.Status`; Character Import still uses `Color.green`/`Color.red` text |
 
 **Enforcement**
 
@@ -509,7 +515,11 @@ The editor uses the dense workspace variant: `FrameEditorMetrics` is geometry-on
 **Setup and Character Import**
 
 - Replace the remaining ad-hoc 25/15/13/12/11 sizes with the type tokens (the values already match; make the dependency explicit).
+<<<<<<< HEAD
 - Setup now uses `DesignTokens.Status.positive`/`critical` for its status lines, spacing, and card radii; Character Import still uses `.green`/`.red` status text.
+=======
+- Replace the remaining `.green`/`.red` status text (prompt feedback) with `positive`/`critical`.
+>>>>>>> origin/main
 - Add a large-text/fixed-window layout test.
 
 **Share**

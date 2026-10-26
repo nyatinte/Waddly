@@ -78,6 +78,17 @@ extension SetupWizardScreen {
             .overlay(shape.stroke(Color(nsColor: .separatorColor)))
     }
 
+    /// One outcome on the completion page. Same icon + words language as `status()`, so the finished
+    /// step and the step that produced it agree on what "done" looks like.
+    func resultRow(_ key: LocalizationKey, done: Bool) -> some View {
+        Label(controller.localizedString(key), systemImage: done ? "checkmark.circle.fill" : "circle")
+            .font(.callout.weight(.medium))
+            .foregroundStyle(done ? DesignTokens.Status.positive : Color.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(controller.localizedString(key))
+    }
+
     func errorMessage(_ key: LocalizationKey) -> some View {
         Label(controller.localizedString(key), systemImage: "exclamationmark.triangle.fill")
             .font(.caption)
