@@ -139,7 +139,7 @@ import WaddlyCore
     }
 }
 
-@Test func promptFilesMatchTheReadmeCopy() throws {
+@Test @MainActor func composedDefaultPromptsMatchTheReadmeCopy() throws {
     // The extractor rejects missing, unclosed, repeated, and empty fences, so a broken fence
     // fails the comparison below instead of passing against an empty block.
     #expect(textFenceBody(in: "no fence") == nil)
@@ -151,12 +151,13 @@ import WaddlyCore
 
     let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent()
-    for (language, readme) in [("en", "README.md"), ("ja", "README.ja.md")] {
-        let prompt = try String(contentsOf: root.appendingPathComponent("prompts/\(language).md"), encoding: .utf8)
+    for (language, readme) in [(AppLanguage.english, "README.md"), (.japanese, "README.ja.md")] {
+        let localization = try CaptureHarness.localized(language)
+        let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: root)
         let readmeCopy = try String(contentsOf: root.appendingPathComponent(readme), encoding: .utf8)
-        let promptBody = try #require(textFenceBody(in: prompt), "prompts/\(language).md has no usable text fence")
         let readmeBody = try #require(textFenceBody(in: readmeCopy), "\(readme) has no usable text fence")
-        #expect(promptBody == readmeBody, "\(readme) is stale against prompts/\(language).md")
+        #expect(!prompt.isEmpty)
+        #expect(prompt == readmeBody, "\(readme) is stale against the composed default prompt")
     }
 }
 
@@ -183,8 +184,12 @@ private func textFenceBody(in markdown: String) -> String? {
     let promptsURL = resourcesURL.appendingPathComponent("prompts", isDirectory: true)
     try FileManager.default.createDirectory(at: promptsURL, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: resourcesURL) }
-    try Data("```text\nこんにちは\n```".utf8).write(to: promptsURL.appendingPathComponent("ja.md"))
-    try Data("```text\nHello\n```".utf8).write(to: promptsURL.appendingPathComponent("en.md"))
+    try Data("```character\nペンギン\n```\n```text\nこんにちは {{character}}\n```".utf8)
+        .write(to: promptsURL.appendingPathComponent("ja.md"))
+    try Data("```character\npenguin\n```\n```text\nHello {{character}}\n```".utf8)
+        .write(to: promptsURL.appendingPathComponent("en.md"))
+    try Data("```text\nピクセル\n```".utf8).write(to: promptsURL.appendingPathComponent("pixel-art-ja.md"))
+    try Data("```text\nPixels\n```".utf8).write(to: promptsURL.appendingPathComponent("pixel-art-en.md"))
 
     let localization = LocalizationController(settings: AppSettings(defaults: defaults))
     localization.changeLanguage(.japanese)
@@ -204,9 +209,9 @@ private func textFenceBody(in markdown: String) -> String? {
         onClose: {}
     )
 
-    #expect(wizard.prompt == "こんにちは")
+    #expect(wizard.prompt == "こんにちは ペンギン\n\nピクセル")
     localization.changeLanguage(.english)
-    #expect(wizard.prompt == "Hello")
+    #expect(wizard.prompt == "Hello penguin\n\nPixels")
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {

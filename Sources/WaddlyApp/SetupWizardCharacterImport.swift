@@ -18,7 +18,10 @@ extension SetupWizardScreen {
             pickFile: controller.chooseCharacterFile,
             pasteboard: controller.pasteboard,
             // Setup's Continue advances the wizard, so an already valid pet may be committed as is.
-            primaryRequiresChange: false
+            primaryRequiresChange: false,
+            showsPrompt: true,
+            promptResourcesURL: controller.promptResourcesURL,
+            generationDraft: controller.generationDraft
         )
     }
 }

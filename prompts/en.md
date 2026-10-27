@@ -1,57 +1,54 @@
-# Pet Sprite Sheet Prompt for Waddly
+# Character Sprite Sheet Prompt for Waddly
 
-Copy the prompt below and send it to an image-generation model.
+Waddly composes this common contract with one [style block](pixel-art-en.md) and your character description. Pixel Art is the default. A ready-to-copy default prompt is in the [README](../README.md#prepare-a-sprite-sheet).
 
-- If you have an image of a pet or character you want to use, attach it along with the prompt.
-- If you don't have an image, replace “Character to draw” on the first line with your own description (for example `A small penguin with a round body. Short legs, black back and white belly.`). If you send it unchanged, the image model asks what you want to create.
-- You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
+For manual composition, replace `{{character}}` in the block below with your description, then append the `text` block from exactly one style file: [Pixel Art](pixel-art-en.md), [Hand Drawn](hand-drawn-en.md), [Iconic](iconic-en.md), [Retro Cartoon](retro-cartoon-en.md), [Anime](anime-en.md), or [Paper Cutout](paper-cutout-en.md). Do not include Markdown fences. The app inserts descriptions literally, without interpreting template markers in your text.
 
-```text
-Character to draw: <replace this line>
+An empty or whitespace-only description uses this default:
 
-If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
-
-Using that character, create a 3×3 animated sprite sheet for Waddly. If a reference image is attached, depict the individual in that image.
-
-[Character]
-- Keep the individual's features (species, colors, patterns, body shape) in every cell.
-
-[Art style]
-- Pixel art in the style of a 16-bit-era game. Few colors, thick outlines, two or three shades of shading.
-- Do not use blur, anti-aliasing, gradients, glow, or photorealistic rendering.
-- Keep the same size, facing direction, and camera position in all nine cells. Line up the top of the head, the bottom of the body, and the left-right centre at the same position in every cell, and do not change them between poses.
-
-[Sheet and placement]
-- Output one transparent PNG. Nine cells in a 3×3 grid. Make all cells equally sized squares, and make the side length divisible by 3.
-- Use real transparency, with alpha 0 outside the character's silhouette. Do not draw a checkerboard, white, grey, a colored backdrop, a gradient, a floor, or shadows.
-- Fit the whole character inside the central 50% of each cell (a 25% margin on every side). Keep ears, tails, wings, the keyboard, and effects inside that area too.
-- A cell that touches its own boundary or a neighboring cell by even one pixel is an invalid output.
-- If it does not fit, moderate the pose or the effects instead of shrinking the character.
-- Do not draw divider lines, frames, numbers, captions, logos, or watermarks. No text except the optional Enter-key symbol.
-
-[The nine cells: left to right, then top to bottom]
-1. Sitting relaxed
-2. The same pose as cell 1, but blinking
-3. Focused, facing the keyboard
-4. Typing slowly
-5. Typing in a pose slightly different from cell 4
-6. Leaning forward and typing quickly
-7. The instant it presses a large Enter key forcefully. If a reference image is attached, take that energy from it
-8. Drowsy, with heavy eyelids
-9. Curled up and sleeping peacefully
-
-[Keyboard and effects]
-- Draw the keyboard only in cells 3–7, the same shape and size in all nine cells. Keep it narrower than 40% of the cell width.
-- In cell 7, draw the Enter key larger than the other keys, and within 30% of the cell width. It may carry a “↵” symbol; do not write the word “Enter”.
-- In cell 7, place the star-shaped spark and the impact lines right next to the body. Use at most two short strokes, and do not let them reach more than 5% of the cell width beyond the body. Keep their tips at least 30% inside the cell's right and bottom edges.
-
-Output only the sprite sheet image that meets these requirements.
+```character
+A round penguin with a blue beanie, a black back, a white belly, and short orange feet.
 ```
 
-## Checking the generated image
+## Common contract
 
-An image-generation model cannot verify its own output, so the person who generated the image does the checking. Asking the model to check its work has little effect, and the longer the instructions get, the less it follows the other requirements. Check these three things.
+```text
+Character to draw: {{character}}
 
-- To confirm real transparency, put the image on a dark background or in a dark-mode window. If white or a checkerboard is baked in, it is not transparent.
-- Waddly's preview can switch between a light and a dark background. Look at the four edges of each of the nine cells for fragments of a neighboring pose or anything touching a boundary.
-- If you find a single-pixel speck or a fragment from another cell, generate another option that fits better, or fix just that cell in an image editor. Keep the intentional motion marks, sleep symbols, and Enter sparkles.
+Create one 3×3 sprite sheet for Waddly using this character. If I manually attach a reference image, preserve that individual's identity. A reference image is optional.
+
+[Character and held poses]
+- Keep the same species, face, body width and height, palette, accessories, facing direction, camera, and scale in all nine cells.
+- Keep the head top, body bottom, and horizontal center anchored at the same cell coordinates. Do not resize or shift the character between poses.
+- Design for a few held poses at small desktop-pet sizes, not fluid full-body animation. Idle/blink and typing variations need only small changes; drowsy/sleeping keep the same body silhouette. Reserve the larger expression for the Enter reaction, without moving the body anchor.
+
+[Sheet and placement]
+- Output one square transparent PNG: a 3×3 grid of nine equally sized square cells, with the canvas side divisible by 3.
+- Use genuine alpha transparency: alpha 0 outside the character and props. No simulated checkerboard, colored backdrop, floor, or cast shadow.
+- Keep the entire character, accessories, keyboard, and effects within the central 50% of each cell, leaving a 25% safe margin on every side. Nothing may touch a cell boundary or spill into a neighboring cell.
+- If a pose does not fit, reduce the gesture or effects, not the character's size. No gutters, divider lines, frames, numbers, captions, logos, or watermarks. No text except an optional Enter-key symbol.
+
+[Nine cells: left to right, then top to bottom]
+1. Idle: sitting relaxed.
+2. Blink: identical to cell 1 except for closed eyelids.
+3. Focused at keyboard: attentive, hands ready.
+4. Typing: a small, slow key press.
+5. Typing variation: a slightly different hand position from cell 4.
+6. Fast typing: a small forward lean and quicker hands, with the body anchor unchanged.
+7. Enter-key reaction: an expressive, forceful press on a larger Enter key, returning to the same anchor.
+8. Drowsy: heavy eyelids, seated at the idle anchor.
+9. Sleeping: eyes closed, resting in the same seated silhouette as cell 8.
+
+[Keyboard and effects]
+- Show the keyboard only in cells 3–7. Keep its position, shape, size, perspective, and colors identical wherever it appears; its width is at most 40% of the cell.
+- In cell 7 only, emphasize the Enter key within 30% of the cell width. An optional “↵” symbol is allowed, but not the word “Enter”.
+- Keep Enter sparkles and at most two short impact strokes next to the body, within the safe area. No effects in neighboring cells.
+
+Output only the sprite sheet image that meets these requirements and the following style guidance.
+```
+
+## Check and recover
+
+Generate externally in ChatGPT or another image generator, then import the PNG into Waddly. Waddly does not generate images or automatically upload a reference: attach one yourself in the external service if desired.
+
+Check all nine crops against light and dark backgrounds for real transparency, safe margins, neighbor fragments, and stable anchors. Use **Adjust frames…** for crop and alignment corrections. Uneven grids, missing poses, baked-in backgrounds, and clipped artwork may need regeneration or an image editor; alignment cannot reconstruct missing pixels. See the [README](../README.md#image-requirements) for the import workflow and maintenance checks.

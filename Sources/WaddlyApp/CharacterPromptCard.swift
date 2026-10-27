@@ -11,6 +11,9 @@ struct CharacterPromptCard: View {
     var resourcesURL: URL? = Bundle.main.resourceURL
     var openBrowser: @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) }
     var announce: @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement
+    @ObservedObject var draft = CharacterGenerationDraft()
+    private typealias PresentationState = SwiftUI.State<Bool>
+    @PresentationState private var showsStyles = false
     // Name the property-wrapper type explicitly; newer SDKs also export a State macro.
     private typealias FeedbackState = SwiftUI.State<SpriteSheetPrompt.Feedback?>
     @FeedbackState private var feedback = nil
@@ -23,6 +26,14 @@ struct CharacterPromptCard: View {
                 .font(DesignTokens.Typography.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Button { showsStyles = true } label: {
+                Label(localization.string(for: .generationChooseStyle), systemImage: "square.grid.2x2")
+                    .actionLabel()
+            }
+            .accessibilityIdentifier("characterChooseStyle")
+            Text(localization.string(for: draft.style.nameKey))
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(.secondary)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: LayoutMetrics.actionGap) { actions }
                 VStack(alignment: .leading, spacing: LayoutMetrics.actionGap) { actions }
@@ -49,6 +60,11 @@ struct CharacterPromptCard: View {
         )
         .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.card).stroke(Color(nsColor: .separatorColor)))
         .accessibilityIdentifier("characterPromptCard")
+        .sheet(isPresented: $showsStyles) {
+            CharacterGenerationView(draft: draft, localization: localization, resourcesURL: resourcesURL) {
+                copy(openChatGPT: $0)
+            }
+        }
     }
 
     @ViewBuilder private var actions: some View {
@@ -62,14 +78,16 @@ struct CharacterPromptCard: View {
         .accessibilityIdentifier("characterCopyPromptAndOpenChatGPT")
     }
 
-    func copy(openChatGPT: Bool) {
+    @discardableResult
+    func copy(openChatGPT: Bool) -> SpriteSheetPrompt.Feedback {
         let result = SpriteSheetPrompt.copy(
-            SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL),
+            draft.prompt(for: localization, resourcesAt: resourcesURL),
             to: pasteboard,
             openBrowser: openChatGPT ? openBrowser : nil
         )
         onClipboardChange()
         feedback = result
         announce(localization.string(for: result.messageKey))
+        return result
     }
 }

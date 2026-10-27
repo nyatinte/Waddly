@@ -26,9 +26,10 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// Reuses the permission page after onboarding without reopening character setup or progress.
     let isMonitoringSettings: Bool
     let promptResourcesURL: URL?
+    let generationDraft = CharacterGenerationDraft()
 
     var prompt: String {
-        SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
+        generationDraft.prompt(for: localization, resourcesAt: promptResourcesURL)
     }
 
     /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.

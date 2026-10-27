@@ -75,7 +75,7 @@ private extension SetupWizardScreen {
             if controller.hasImage || controller.didRegisterPet {
                 registeredPetContent
             } else if controller.isShowingChatGPTGuide {
-                chatGPTGuideContent
+                ScrollView { chatGPTGuideContent }
             } else {
                 petImportOptions
             }
@@ -108,21 +108,15 @@ private extension SetupWizardScreen {
     private var chatGPTGuideContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupChatGPTPromptBody)
-            numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
-            Button(action: controller.copyPromptAndOpenChatGPT) {
-                Label(controller.localizedString(.setupCopyAndOpen), systemImage: "doc.on.doc")
-                    .actionLabel()
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .accessibilityLabel(controller.localizedString(.setupCopyAndOpen))
-            .accessibilityIdentifier("copyPromptAndOpenChatGPT")
-            Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
-                .font(.caption)
-                .foregroundStyle(controller.promptFeedbackIsError ? DesignTokens.Status.critical : .secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            CharacterPromptCard(
+                localization: controller.localization,
+                pasteboard: controller.pasteboard,
+                onClipboardChange: {},
+                resourcesURL: controller.promptResourcesURL,
+                openBrowser: controller.openBrowser,
+                announce: controller.announce,
+                draft: controller.generationDraft
+            )
             bodyText(.setupWhenReady)
             actionButton(
                 controller.localizedString(.setupChoosePNG),

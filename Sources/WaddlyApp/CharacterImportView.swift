@@ -56,13 +56,15 @@ struct CharacterImportView: View {
     var primaryRequiresChange: Bool
     var showsPrompt = false
     var promptResourcesURL: URL? = Bundle.main.resourceURL
+    var generationDraft = CharacterGenerationDraft()
 
     var promptCard: CharacterPromptCard {
         CharacterPromptCard(
             localization: localization,
             pasteboard: pasteboard,
             onClipboardChange: { model.refreshClipboardAvailability(from: pasteboard) },
-            resourcesURL: promptResourcesURL
+            resourcesURL: promptResourcesURL,
+            draft: generationDraft
         )
     }
 
@@ -112,8 +114,14 @@ private extension CharacterImportView {
     /// and bottom edge, so the shorter one can no longer leave a stray void above the footer.
     var workingArea: some View {
         HStack(alignment: .top, spacing: LayoutMetrics.columnGap) {
-            acquisition
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            Group {
+                if showsPrompt {
+                    ScrollView { acquisition }
+                } else {
+                    acquisition
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             CharacterPreviewHost(
                 localization: localization,
                 frames: model.stagedFrames,
@@ -191,6 +199,7 @@ private extension CharacterImportView {
                 .padding(.top, 2)
             Spacer(minLength: 0)
         }
+        .frame(minHeight: CharacterGenerationMetrics.previewSide)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)

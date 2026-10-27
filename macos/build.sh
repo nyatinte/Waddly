@@ -32,6 +32,10 @@ cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
+mkdir -p "$APP/Contents/Resources/assets/character-styles"
+for style in pixel-art hand-drawn iconic retro-cartoon anime paper-cutout; do
+  cp "$ROOT/assets/character-styles/$style.png" "$APP/Contents/Resources/assets/character-styles/"
+done
 # Demo sprite sheet shown while no pet is registered. It is never imported automatically.
 cp "$ROOT/assets/examples/nyatinte-bot-3x3.png" "$APP/Contents/Resources/demo-pet.png"
 # Remove the SVG tracing canvas and draw white fills before black details.

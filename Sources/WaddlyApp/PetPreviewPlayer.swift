@@ -106,7 +106,7 @@ final class PetPreviewPlayer {
         return sequence
     }
 
-    private static func shotSequence(
+    static func shotSequence(
         for category: PetImageCategory,
         in images: PetImageSet,
         seconds: TimeInterval? = nil
