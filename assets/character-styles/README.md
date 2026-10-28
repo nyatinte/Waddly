@@ -69,10 +69,10 @@ Waddlyの画風選択画面で使う、画風ごとに1枚ずつの参考スプ�
 | --- | --- | --- | --- |
 | [`pixel-art.png`](pixel-art.png) | ピクセルアート | 限定パレットと硬いエッジの16-bit機風ピクセルアート。 | [EN](../../prompts/pixel-art-en.md) / [JA](../../prompts/pixel-art-ja.md) |
 | [`hand-drawn.png`](hand-drawn.png) | 手描き | 有機的で少し揺らぐ線に、フラットな塗りとステッカー風の仕上げ。 | [EN](../../prompts/hand-drawn-en.md) / [JA](../../prompts/hand-drawn-ja.md) |
-| [`iconic.png`](iconic.png) | アイコン | 太く単純化したシルエット、一定の線幅、フラットな塗り。 | [EN](../../prompts/iconic-en.md) / [JA](../../prompts/iconic-ja.md) |
+| [`iconic.png`](iconic.png) | ミニマル | 太く単純化したシルエット、一定の線幅、フラットな塗り。 | [EN](../../prompts/iconic-en.md) / [JA](../../prompts/iconic-ja.md) |
 | [`retro-cartoon.png`](retro-cartoon.png) | レトロカートゥーン | 太いインク線、丸みのある形、パイカット眼、落ち着いた配色。 | [EN](../../prompts/retro-cartoon-en.md) / [JA](../../prompts/retro-cartoon-ja.md) |
 | [`anime.png`](anime.png) | アニメ | セルシェーディング、先細りの線、重なった瞳のハイライト。 | [EN](../../prompts/anime-en.md) / [JA](../../prompts/anime-ja.md) |
-| [`paper-cutout.png`](paper-cutout.png) | ペーパーカット | 多角形の紙片の重なり、紙の繊維感、内側の縁。 | [EN](../../prompts/paper-cutout-en.md) / [JA](../../prompts/paper-cutout-ja.md) |
+| [`paper-cutout.png`](paper-cutout.png) | 切り絵 | 多角形の紙片の重なり、紙の繊維感、内側の縁。 | [EN](../../prompts/paper-cutout-en.md) / [JA](../../prompts/paper-cutout-ja.md) |
 
 6枚とも 768×768 RGBA（セルは256×256）。ファイルサイズは219,140〜284,646 bytesです。
 
