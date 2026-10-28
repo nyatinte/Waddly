@@ -16,4 +16,17 @@ enum CharacterStyle: String, CaseIterable, Identifiable {
     var id: String {
         rawValue
     }
+
+    /// The localized display name. Kept beside the enum so the list, the prompt resources, and the
+    /// sample sheets cannot disagree about which styles exist.
+    var nameKey: LocalizationKey {
+        switch self {
+        case .pixelArt: .characterStylePixelArt
+        case .handDrawn: .characterStyleHandDrawn
+        case .iconic: .characterStyleIconic
+        case .retroCartoon: .characterStyleRetroCartoon
+        case .anime: .characterStyleAnime
+        case .paperCutout: .characterStylePaperCutout
+        }
+    }
 }

@@ -74,8 +74,6 @@ private extension SetupWizardScreen {
             title(petTitleKey)
             if controller.hasImage || controller.didRegisterPet {
                 registeredPetContent
-            } else if controller.isShowingChatGPTGuide {
-                chatGPTGuideContent
             } else {
                 petImportOptions
             }
@@ -105,36 +103,6 @@ private extension SetupWizardScreen {
         }
     }
 
-    private var chatGPTGuideContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            bodyText(.setupChatGPTPromptBody)
-            numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
-            Button(action: controller.copyPromptAndOpenChatGPT) {
-                Label(controller.localizedString(.setupCopyAndOpen), systemImage: "doc.on.doc")
-                    .actionLabel()
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .accessibilityLabel(controller.localizedString(.setupCopyAndOpen))
-            .accessibilityIdentifier("copyPromptAndOpenChatGPT")
-            Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
-                .font(.caption)
-                .foregroundStyle(controller.promptFeedbackIsError ? DesignTokens.Status.critical : .secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            bodyText(.setupWhenReady)
-            actionButton(
-                controller.localizedString(.setupChoosePNG),
-                identifier: "importFromPanel"
-            ) { controller.beginCharacterImport() }
-            Button(controller.localizedString(.setupChangeMethod), action: controller.changeMethod)
-                .buttonStyle(.link)
-                .accessibilityLabel(controller.localizedString(.setupChangeMethod))
-                .accessibilityIdentifier("changeMethod")
-        }
-    }
-
     private var petImportOptions: some View {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupPetBody)
@@ -142,9 +110,9 @@ private extension SetupWizardScreen {
                 .setupMethodChatGPT,
                 detail: .setupMethodChatGPTDetail,
                 symbol: "sparkles",
-                action: controller.showChatGPTGuide
+                action: controller.presentCharacterGeneration
             )
-            .accessibilityIdentifier("showChatGPTGuide")
+            .accessibilityIdentifier("presentCharacterGeneration")
             option(
                 .setupMethodChoosePNG,
                 detail: .setupMethodChoosePNGDetail,
@@ -172,7 +140,7 @@ private extension SetupWizardScreen {
         if controller.hasImage || controller.didRegisterPet {
             return .setupRegisteredTitle
         }
-        return controller.isShowingChatGPTGuide ? .setupChatGPTPromptTitle : .setupPetTitle
+        return .setupPetTitle
     }
 }
 

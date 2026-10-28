@@ -9,7 +9,7 @@ Copy the prompt below and send it to an image-generation model.
 The prompt below is the shared contract and does not depend on art style. Waddly joins it with the `[Art style]` block of the selected style (pixel art while no style is selected; the available blocks are pixel-art, hand-drawn, iconic, retro-cartoon, anime, and paper-cutout). To use it outside the app, copy the shared prompt and the chosen style block and concatenate them.
 
 ```text
-Character to draw: <replace this line>
+Character to draw: {{character}}
 
 If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
 
@@ -44,6 +44,12 @@ Using that character, create a 3×3 animated sprite sheet for Waddly. If a refer
 - In cell 7, place the star-shaped spark and the impact lines right next to the body. Use at most two short strokes, and do not let them reach more than 5% of the cell width beyond the body. Keep their tips at least 30% inside the cell's right and bottom edges.
 
 Output only the sprite sheet image that meets these requirements.
+```
+
+The app fills `{{character}}` from what the person typed. When they leave it empty, the placeholder below keeps the prompt usable as-is; change it only to change that default.
+
+```character
+<replace this line>
 ```
 
 ## Checking the generated image

@@ -47,6 +47,7 @@ enum SetupWizardFixture {
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
         relaunch: @escaping @MainActor () -> Void = {},
         onPermissionService: @MainActor (PermissionService) -> Void = { _ in },
+        presentGeneration: @escaping @MainActor (CharacterGenerationWindowController) -> Void = { _ in },
         presenter: WindowPresenter = .invisible,
         isMonitoringSettings: Bool = false,
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
@@ -97,6 +98,7 @@ enum SetupWizardFixture {
             openBrowser: openBrowser,
             relaunch: relaunch,
             announce: { state.announcements.append($0) },
+            presentGeneration: presentGeneration,
             onStepChange: onStepChange,
             onShowOnDesktop: onShowOnDesktop,
             onClose: {

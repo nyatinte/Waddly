@@ -18,8 +18,10 @@ import Testing
         style: CharacterStyle
     ) throws {
         let resources = SetupWizardFixture.root()
-        let contract = try block("prompts/\(language.localization).md", in: resources)
+        let template = try block("prompts/\(language.localization).md", in: resources)
+        let fallback = try block("prompts/\(language.localization).md", in: resources, kind: "character")
         let guidance = try block("prompts/\(style.rawValue)-\(language.localization).md", in: resources)
+        let contract = template.replacingOccurrences(of: "{{character}}", with: fallback)
         let prompt = try SpriteSheetPrompt.load(
             for: CaptureHarness.localized(language), resourcesAt: resources, style: style
         )
@@ -59,8 +61,48 @@ import Testing
         }
     }
 
+    @Test(arguments: [AppLanguage.japanese, .english])
+    func descriptionReplacesTheCharacterLineAndFallsBackWhenEmpty(language: AppLanguage) throws {
+        let localization = try CaptureHarness.localized(language)
+        let resources = SetupWizardFixture.root()
+        let blank = SpriteSheetPrompt.load(for: localization, resourcesAt: resources, style: .anime)
+        let described = SpriteSheetPrompt.load(
+            for: localization,
+            resourcesAt: resources,
+            style: .anime,
+            character: "  A round blue penguin.  "
+        )
+        #expect(blank.contains("{{character}}") == false)
+        #expect(described.contains("{{character}}") == false)
+        #expect(described.contains("A round blue penguin."))
+        #expect(described != blank)
+        #expect(!described.contains("  A round blue penguin.  "))
+    }
+
+    @Test func aContractWithoutThePlaceholderFailsClosed() throws {
+        let resources = try makeResources([
+            "en.md": markdown("SHARED WITHOUT A SLOT"),
+            "anime-en.md": markdown("[Art style]\n- cel shading")
+        ])
+        defer { try? FileManager.default.removeItem(at: resources) }
+        #expect(try SpriteSheetPrompt.load(
+            for: CaptureHarness.localized(.english), resourcesAt: resources, style: .anime
+        ) == "")
+    }
+
     @Test func missingStyleResourceFailsClosed() throws {
         let resources = try makeResources(["en.md": markdown("SHARED")])
+        defer { try? FileManager.default.removeItem(at: resources) }
+        #expect(try SpriteSheetPrompt.load(
+            for: CaptureHarness.localized(.english), resourcesAt: resources, style: .anime
+        ) == "")
+    }
+
+    @Test func missingCharacterFallbackFailsClosed() throws {
+        let resources = try makeResources([
+            "en.md": "# Prompt\n\n```text\nHello {{character}}\n```\n",
+            "anime-en.md": markdown("[Art style]\n- cel shading")
+        ])
         defer { try? FileManager.default.removeItem(at: resources) }
         #expect(try SpriteSheetPrompt.load(
             for: CaptureHarness.localized(.english), resourcesAt: resources, style: .anime
@@ -116,9 +158,9 @@ import Testing
 
     // MARK: - Fixtures
 
-    private func block(_ path: String, in root: URL) throws -> String {
+    private func block(_ path: String, in root: URL, kind: String = "text") throws -> String {
         let markdown = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
-        let marker = "```text\n"
+        let marker = "```\(kind)\n"
         guard let start = markdown.range(of: marker),
               let end = markdown[start.upperBound...].range(of: "\n```")
         else {
@@ -129,7 +171,7 @@ import Testing
     }
 
     private func markdown(_ body: String) -> String {
-        "# Prompt\n\n```text\n\(body)\n```\n"
+        "# Prompt\n\n```text\n\(body)\n```\n```character\nDEFAULT\n```\n"
     }
 
     private func makeResources(_ files: [String: String]) throws -> URL {

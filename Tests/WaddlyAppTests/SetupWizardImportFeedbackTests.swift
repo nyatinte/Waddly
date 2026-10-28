@@ -4,7 +4,7 @@ import Testing
 import WaddlyCore
 
 @Suite(.serialized) @MainActor struct SetupWizardImportFeedbackTests {
-    enum NavigationAction: CaseIterable { case step, showGuide, changeMethod, close }
+    enum NavigationAction: CaseIterable { case step, beginImport, close }
 
     @Test(arguments: NavigationAction.allCases)
     func navigationInvalidatesASuspendedImportFailure(action: NavigationAction) async throws {
@@ -23,8 +23,7 @@ import WaddlyCore
         _ = await iterator.next()
         switch action {
         case .step: wizard.setStep(.monitoring)
-        case .showGuide: wizard.showChatGPTGuide()
-        case .changeMethod: wizard.changeMethod()
+        case .beginImport: wizard.beginCharacterImport()
         case .close: wizard.close()
         }
         pending?.resume(returning: nil)

@@ -55,16 +55,8 @@ struct CharacterImportView: View {
     /// Apply is only offered when the draft would actually change the saved pet. Both hosts state it.
     var primaryRequiresChange: Bool
     var showsPrompt = false
-    var promptResourcesURL: URL? = Bundle.main.resourceURL
-
-    var promptCard: CharacterPromptCard {
-        CharacterPromptCard(
-            localization: localization,
-            pasteboard: pasteboard,
-            onClipboardChange: { model.refreshClipboardAvailability(from: pasteboard) },
-            resourcesURL: promptResourcesURL
-        )
-    }
+    /// Opens the dedicated generation screen. The card below only explains the hand-off.
+    var onOpenGeneration: @MainActor () -> Void = {}
 
     var body: some View {
         VStack(spacing: 0) {
@@ -159,7 +151,7 @@ private extension CharacterImportView {
                     .accessibilityIdentifier("characterCommitRejected")
             }
             if showsPrompt {
-                promptCard
+                CharacterGenerationLauncherCard(localization: localization, onOpen: onOpenGeneration)
             }
         }
     }

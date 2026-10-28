@@ -16,16 +16,6 @@ extension SetupWizardController {
         localization.string(for: key)
     }
 
-    /// The inline message for the copy/open action, or `nil` before the first attempt.
-    var promptFeedbackKey: LocalizationKey? {
-        promptFeedback?.messageKey
-    }
-
-    /// Copy and open failures share the warning styling; a successful copy stays secondary.
-    var promptFeedbackIsError: Bool {
-        promptFeedback?.isError == true
-    }
-
     func refreshLocalization() {
         window?.title = localizedString(isMonitoringSettings ? .setupSetUpMonitoring : .setupWindowTitle)
         renderCurrentStep()

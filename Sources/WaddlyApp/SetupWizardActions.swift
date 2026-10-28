@@ -81,18 +81,26 @@ extension SetupWizardController {
         didFailImport = false
     }
 
-    @objc func showChatGPTGuide() {
-        isShowingChatGPTGuide = true
-        promptFeedback = nil
+    /// Opens the shared generation screen. The screen owns the style, the description, and the
+    /// prompt copy, so the Pet step only presents it and keeps its method list unchanged.
+    @objc func presentCharacterGeneration() {
         clearImportFeedback()
-        renderCurrentStep()
-    }
-
-    @objc func changeMethod() {
-        isShowingChatGPTGuide = false
-        promptFeedback = nil
-        clearImportFeedback()
-        renderCurrentStep()
+        if let generationWindow {
+            presentGeneration(generationWindow)
+            return
+        }
+        let model = CharacterGenerationModel(
+            localization: localization,
+            resourcesURL: promptResourcesURL,
+            pasteboard: pasteboard,
+            openBrowser: openBrowser,
+            announce: announce
+        )
+        let controller = CharacterGenerationWindowController(model: model) { [weak self] in
+            self?.generationWindow = nil
+        }
+        generationWindow = controller
+        presentGeneration(controller)
     }
 
     @objc func importFromPanel() {
@@ -111,7 +119,6 @@ extension SetupWizardController {
     /// Continue/commit path does, so setup progress and the sample rule are untouched.
     func beginCharacterImport() {
         clearImportFeedback()
-        isShowingChatGPTGuide = false
         characterImportModel.reload()
         isComposingCharacter = true
         renderCurrentStep()
@@ -198,19 +205,6 @@ extension SetupWizardController {
             guard response == .alertFirstButtonReturn else { return }
             discard()
         }
-    }
-
-    @objc func copyPromptAndOpenChatGPT() {
-        reportPromptFeedback(SpriteSheetPrompt.copy(prompt, to: pasteboard, openBrowser: openBrowser))
-    }
-
-    /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.
-    private func reportPromptFeedback(_ feedback: PromptActionFeedback) {
-        promptFeedback = feedback
-        if promptFeedbackIsError, let key = promptFeedbackKey {
-            announce(localizedString(key))
-        }
-        renderCurrentStep()
     }
 
     /// First attempt: ask macOS, then turn the wizard into the drag guide.

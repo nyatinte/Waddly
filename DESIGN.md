@@ -169,7 +169,7 @@ The system follows Apple's Human Interface Guidelines: native controls, semantic
 3. **Clarity over decoration.** Depth comes from native window layering, tonal surfaces, and 1 px separators, not shadows or gradients.
 4. **Private by default.** Key codes exist only inside the event tap to identify Enter. Never store, log, or transmit them; keep images local.
 5. **Accessible by default.** Every control has a label, every status is more than color, every animation respects Reduce Motion, and every action is reachable from the keyboard.
-6. **No surface is exempt.** The Setup Guide, Character Import, Frame Editor, Share dialog, menus, alerts, and the pet panel all follow this document. The Frame Editor is a dense workspace, not a separate design language.
+6. **No surface is exempt.** The Setup Guide, Character generation, Character Import, Frame Editor, Share dialog, menus, alerts, and the pet panel all follow this document. The Frame Editor is a dense workspace, not a separate design language.
 
 **Reference:** [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) — Foundations (Accessibility, Color, Dark Mode, Layout, Motion, Privacy, Typography) and Components (Buttons, Menus, Alerts, Windows). The numeric tokens below are the Waddly values; where the HIG gives a default (macOS 13 pt body, 28 × 28 pt default control, 20 × 20 pt minimum), this document narrows it, never widens it.
 
@@ -268,6 +268,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 | --- | --- | --- |
 | Setup Guide | 820 × 520 | Fixed, non-restorable; progress header; pinned footer |
 | Character Import / Change Character | 1040 × 640 | Resizable above the minimum; pinned footer |
+| Character generation | 1040 × 720 | Resizable above the minimum; centered on first show; opened from the Setup Guide or Change Character |
 | Frame Editor | 1320 × 800 preferred, 1040 × 700 minimum | Resizable; compact layout below 1160 pt |
 | Share | 700 × 380 | Fixed; two equal cards; pinned footer |
 | Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome |
@@ -371,6 +372,22 @@ A pinned footer is the default action area for setup-class windows:
 - Canvas guides and the checkerboard are content: 1–2 px lines and the defined checkerboard values are allowed.
 - Labels use `caption` 11 or `body` 13; there is no 9/10 pt text.
 
+### Character generation window
+
+The dedicated surface for choosing a style and composing the generation prompt. The Setup Guide's **Create an image with ChatGPT** option and Change Character's **Create another character** card both open it, and it never stages or applies a pet. Implementation: `CharacterGenerationView` in `CharacterGenerationWindowController`.
+
+- **Window:** 1040 × 720 content size, resizable above that minimum, centered on first show, native title bar titled **Create your character**. It has no pinned footer: the actions live in the prompt card and Back/Close sit in the header.
+- **Frame:** header, a 1 px divider, then a two-column body with `column-gap` 20; the left column scrolls and the right column is fixed at `preview-width` 360. Content uses `content-inset` 24 and `section-gap` 16 between groups.
+- **Header:** Back and Close are 28 pt circular auxiliary buttons (`control-height`) with `body` glyphs on `controlBackgroundColor` and a `separatorColor` ring. The title is `display`; the subtitle is `body` in the secondary color.
+- **Style gallery:** a 3 × 2 grid of whole-card buttons, one per style. Cards use `Radius.card` 12 and a 1 px `separatorColor` border on the window background; the selected card adds the accent at 0.12 fill plus an accent stroke and a `checkmark.circle.fill` badge. The 92 pt sample thumbnail sits on `textBackgroundColor` with `Radius.surface` 8, and the style name is `caption`. Selection exposes `.isSelected` and the identifier `generationStyle-<slug>`.
+- **Input picker:** three whole-card buttons for **Text description**, **Reference image**, and **Image + text**, using the same card and selected treatment, `heading` titles, `caption` details, and at least 68 pt height. Identifiers are `generationInput-text`, `generationInput-referenceImage`, and `generationInput-imageAndText`.
+- **Description editor:** a `body` `TextEditor` on `textBackgroundColor` with `Radius.surface` and a `separatorColor` stroke (72 pt tall), a tertiary placeholder, and a right-aligned `caption` counter (0/500; the model clamps at 500). Identifier `generationCharacter`.
+- **Preview:** the selected style's bundled sample in a `controlBackgroundColor` card (`Radius.card`, separator stroke, 196 pt tall) plus a nine-frame strip of 34 pt buttons (`Radius.control` 6, `textBackgroundColor`, accent stroke when selected, `.isSelected`, identifiers `generationFrame-0` through `generationFrame-8`). The strip inspects the bundled sample; it never shows the generated sheet.
+- **Prompt card:** a `controlBackgroundColor` card (`Radius.card`, separator stroke, `lg` padding) with a `title` heading, a `caption` explanation, and the composed prompt in `mono` inside a selectable 118 pt scroll area on `textBackgroundColor` (`Radius.surface`, separator stroke). Actions are 36 pt `action` buttons: **Open in ChatGPT** is the one accent (`.borderedProminent`) and **Copy Prompt** is bordered. Copy feedback is a status row (`caption`, positive check or critical triangle) that announces only failures; the footer note is `caption` tertiary.
+- **Typography:** `display` for the window title, `title` for section headings, `heading` for input-card titles, `body` for the subtitle and the editor, `callout` for the compact selection glyph, `caption` for metadata, and `mono` for the prompt.
+- **Accessibility:** every card is a whole-card button with a label; the current choice exposes `.isSelected`; decorative sample images and glyphs are hidden; the prompt text is selectable; copy and open keep the identifiers `generationCopyPrompt` and `generationOpenInChatGPT`, and the screen root is `characterGenerationView`.
+- **Tokens only:** spacing, type, radius, control heights, and colors come from `LayoutMetrics` and `DesignTokens`. `CharacterGenerationMetrics` holds only this surface's geometry (window 1040 × 720, preview 196, prompt 118, description 72, style thumbnail 92, frame strip 34).
+
 ### X share action
 
 - Official X glyph, template image, unmodified shape, 12 pt of clear space on the left inside the image so the pill edge cannot clip it.
@@ -449,6 +466,7 @@ Apple's macOS baselines and Waddly's stricter values:
 | --- | --- | --- | --- | --- | --- | --- |
 | Setup Guide (Pet / Keyboard reactions / Ready) | SwiftUI in AppKit window | 820 × 520 fixed | `LayoutMetrics` 24/16/20/8/36/12 | display 25, body 13, caption 11 | 36 pt | ✅ layout/actions; 🟡 type literals |
 | Character Import / Change Character | SwiftUI + AppKit preview | 1040 × 640 min | `LayoutMetrics` | title 15, body 13, caption 11 | 36 pt | ✅ |
+| Character generation | SwiftUI in AppKit window | 1040 × 720 min; resizable | `LayoutMetrics` 24/16/20/8/36 + preview 360 | display 25, title 15, heading 13, body 13, callout 12, caption 11, mono 11 | 36 pt actions, 28 pt auxiliary | ✅ tokens; screenshot in PR |
 | Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | `LayoutMetrics` + `DesignTokens`; geometry-only constants | 11/13/15 | 28 auxiliary, 36 actions | ✅ dense workspace variant |
 | Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions; 🟡 #154 recovery text |
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
@@ -468,6 +486,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Setup's status lines use `DesignTokens.Status`, and the completion page's result rows are captured by `CaptureHarness` in both monitoring outcomes.
 - Character Import's status text — the staged card's `positive` label and its `critical` inline failures — and the setup prompt feedback all use `DesignTokens.Status`; no `.green`/`.red` status text remains, and `DesignTokensStatusTests` pins the documented Light/Dark pairs.
 - Character Import states the saved pet or an unsaved draft with `DesignTokens.Status`; Change Character disables Apply when there is nothing to save, while Setup's Continue still advances with an unchanged pet. `CharacterDraftStatusTests` covers both hosts.
+- The Character generation window uses `LayoutMetrics` and `DesignTokens` for its frame, cards, controls, and type; `CharacterGenerationTests` covers the style/description composition, the sample frames, copy feedback, and the single shared window opened from Setup.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
