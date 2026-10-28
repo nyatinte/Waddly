@@ -32,6 +32,10 @@ cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 cp -R "$ROOT/macos/en.lproj" "$ROOT/macos/ja.lproj" "$APP/Contents/Resources/"
 cp "$ROOT"/prompts/*.md "$APP/Contents/Resources/prompts/"
+# Reference sheets for the style chooser. The contact sheet is documentation, not a runtime resource.
+mkdir -p "$APP/Contents/Resources/assets/character-styles"
+find "$ROOT/assets/character-styles" -maxdepth 1 -name '*.png' ! -name 'contact-sheet.png' \
+  -exec cp {} "$APP/Contents/Resources/assets/character-styles/" \;
 # Demo sprite sheet shown while no pet is registered. It is never imported automatically.
 cp "$ROOT/assets/examples/nyatinte-bot-3x3.png" "$APP/Contents/Resources/demo-pet.png"
 # Remove the SVG tracing canvas and draw white fills before black details.
