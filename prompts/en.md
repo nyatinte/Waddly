@@ -6,6 +6,8 @@ Copy the prompt below and send it to an image-generation model.
 - If you don't have an image, replace “Character to draw” on the first line with your own description (for example `A small penguin with a round body. Short legs, black back and white belly.`). If you send it unchanged, the image model asks what you want to create.
 - You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
 
+The prompt below is the shared contract and does not depend on art style. Waddly automatically joins it with the `[Art style]` block from the style file you choose (pixel-art, hand-drawn, iconic, retro-cartoon, anime, or paper-cutout); to use it outside the app, copy the shared prompt and the chosen style block and concatenate them.
+
 ```text
 Character to draw: <replace this line>
 
@@ -15,10 +17,6 @@ Using that character, create a 3×3 animated sprite sheet for Waddly. If a refer
 
 [Character]
 - Keep the individual's features (species, colors, patterns, body shape) in every cell.
-
-[Art style]
-- Pixel art in the style of a 16-bit-era game. Few colors, thick outlines, two or three shades of shading.
-- Do not use blur, anti-aliasing, gradients, glow, or photorealistic rendering.
 - Keep the same size, facing direction, and camera position in all nine cells. Line up the top of the head, the bottom of the body, and the left-right centre at the same position in every cell, and do not change them between poses.
 
 [Sheet and placement]

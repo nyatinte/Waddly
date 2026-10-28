@@ -185,6 +185,12 @@ private func textFenceBody(in markdown: String) -> String? {
     defer { try? FileManager.default.removeItem(at: resourcesURL) }
     try Data("```text\nこんにちは\n```".utf8).write(to: promptsURL.appendingPathComponent("ja.md"))
     try Data("```text\nHello\n```".utf8).write(to: promptsURL.appendingPathComponent("en.md"))
+    try Data("```text\n[Art style]\n- テスト\n```".utf8).write(
+        to: promptsURL.appendingPathComponent("pixel-art-ja.md")
+    )
+    try Data("```text\n[Art style]\n- test\n```".utf8).write(
+        to: promptsURL.appendingPathComponent("pixel-art-en.md")
+    )
 
     let localization = LocalizationController(settings: AppSettings(defaults: defaults))
     localization.changeLanguage(.japanese)
@@ -204,9 +210,9 @@ private func textFenceBody(in markdown: String) -> String? {
         onClose: {}
     )
 
-    #expect(wizard.prompt == "こんにちは")
+    #expect(wizard.prompt == "こんにちは\n\n[Art style]\n- テスト")
     localization.changeLanguage(.english)
-    #expect(wizard.prompt == "Hello")
+    #expect(wizard.prompt == "Hello\n\n[Art style]\n- test")
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {
