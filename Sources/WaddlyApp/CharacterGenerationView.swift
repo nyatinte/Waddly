@@ -30,6 +30,7 @@ struct CharacterGenerationView: View {
         )
         .background(Color(nsColor: .windowBackgroundColor))
         .task { model.loadSamplesIfNeeded() }
+        .onDisappear { model.stopPlayback() }
         .accessibilityIdentifier("characterGenerationView")
     }
 

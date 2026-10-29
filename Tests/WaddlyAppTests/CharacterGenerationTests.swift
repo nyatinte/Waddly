@@ -110,6 +110,114 @@ import Testing
         #expect(presented.first === presented.last)
     }
 
+    @Test func hoverPlaybackAnimatesTheHoveredCardAndStops() throws {
+        let model = try model(
+            localization: CaptureHarness.localized(.english),
+            sleep: { _ in }
+        )
+        model.loadSamplesIfNeeded()
+        model.play(.card(.anime), reduceMotion: false)
+        #expect(model.playingTarget == .card(.anime))
+        #expect(model.image(for: .anime) === model.playingFrame)
+        #expect(model.image(for: .pixelArt) === model.sampleFrames[.pixelArt]?.first)
+
+        model.stopPlayback(.card(.anime))
+        #expect(model.playingTarget == nil)
+        #expect(model.image(for: .anime) === model.sampleFrames[.anime]?.first)
+    }
+
+    @Test func reduceMotionKeepsEverySampleStatic() throws {
+        let model = try model(localization: CaptureHarness.localized(.english))
+        model.loadSamplesIfNeeded()
+        model.play(.card(.pixelArt), reduceMotion: true)
+        #expect(model.playingTarget == nil)
+        #expect(model.image(for: .pixelArt) === model.sampleFrames[.pixelArt]?.first)
+    }
+
+    @Test func previewPlaybackOutranksTheStripSelectionAndStops() throws {
+        let model = try model(localization: CaptureHarness.localized(.english))
+        model.loadSamplesIfNeeded()
+        model.previewIndex = 4
+        model.play(.preview, reduceMotion: false)
+        #expect(model.playingTarget == .preview)
+        #expect(model.previewFrame === model.playingFrame)
+
+        model.stopPlayback(.preview)
+        #expect(model.playingTarget == nil)
+        #expect(model.previewFrame === model.sampleFrames[.pixelArt]?[4])
+    }
+
+    @Test func changingTheStyleStopsPlaybackFromTheOldStyle() throws {
+        let model = try model(localization: CaptureHarness.localized(.english))
+        model.loadSamplesIfNeeded()
+        model.play(.preview, reduceMotion: false)
+        model.style = .handDrawn
+        #expect(model.playingTarget == nil)
+        #expect(model.previewFrame === model.sampleFrames[.handDrawn]?[0])
+    }
+
+    @Test func localizationRefreshRepaintsWithTheNewLanguage() throws {
+        let localization = try CaptureHarness.localized(.english)
+        let model = try model(localization: localization)
+        let english = model.prompt
+        #expect(!english.isEmpty)
+
+        localization.changeLanguage(.japanese)
+        // The language is part of the cache key, so a copy reads Japanese immediately; the window's
+        // refresh is what makes the visible screen (labels and prompt) repaint to match it.
+        let japanese = model.prompt
+        #expect(japanese != english)
+        #expect(japanese.contains("透明"))
+
+        model.refreshLocalization()
+        #expect(model.prompt == japanese)
+    }
+
+    @Test func thePromptCacheIsInvalidatedByARealInputChange() throws {
+        let resources = try makePromptResources()
+        defer { try? FileManager.default.removeItem(at: resources) }
+        let model = try model(
+            localization: CaptureHarness.localized(.english),
+            resourcesURL: resources
+        )
+        let first = model.prompt
+        #expect(first == "Hello DEFAULT\n\n[Art style]\n- pixel")
+
+        try FileManager.default.removeItem(
+            at: resources.appendingPathComponent("prompts/pixel-art-en.md")
+        )
+        // A cache hit must not care that the file just disappeared.
+        #expect(model.prompt == first)
+
+        model.character = "A round penguin."
+        #expect(model.prompt.isEmpty)
+    }
+
+    @Test func theWindowForwardsLocalizationRefreshToTheModel() throws {
+        let localization = try CaptureHarness.localized(.english)
+        let model = try model(localization: localization)
+        let controller = CharacterGenerationWindowController(model: model, presenter: .invisible) {}
+        defer { controller.close() }
+        let english = model.prompt
+
+        localization.changeLanguage(.japanese)
+        controller.refreshLocalization()
+        #expect(model.prompt != english)
+        #expect(controller.window?.title == localization.string(for: .characterGenerationTitle))
+    }
+
+    @Test func copyingReportsTheClipboardChangeToItsHost() throws {
+        var clipboardChanges = 0
+        let model = try model(
+            localization: CaptureHarness.localized(.english),
+            onClipboardChange: { clipboardChanges += 1 }
+        )
+        model.copyPrompt()
+        #expect(clipboardChanges == 1)
+        model.copyAndOpenChatGPT()
+        #expect(clipboardChanges == 2)
+    }
+
     // MARK: - Fixtures
 
     private func model(
@@ -117,15 +225,36 @@ import Testing
         resourcesURL: URL? = nil,
         pasteboard: NSPasteboard? = nil,
         openBrowser: @escaping @MainActor (URL) -> Bool = { _ in true },
-        announce: @escaping @MainActor (String) -> Void = { _ in }
+        announce: @escaping @MainActor (String) -> Void = { _ in },
+        onClipboardChange: @escaping @MainActor () -> Void = {},
+        sleep: @escaping @MainActor (TimeInterval) async -> Void = CharacterGenerationModel.defaultSleep
     ) throws -> CharacterGenerationModel {
         try CharacterGenerationModel(
             localization: localization,
             resourcesURL: resourcesURL ?? SetupWizardFixture.root(),
             pasteboard: pasteboard ?? namedPasteboard(),
             openBrowser: openBrowser,
-            announce: announce
+            announce: announce,
+            onClipboardChange: onClipboardChange,
+            sleep: sleep
         )
+    }
+
+    private func makePromptResources() throws -> URL {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WaddlyTests.generation.\(UUID().uuidString)", isDirectory: true)
+        let prompts = root.appendingPathComponent("prompts", isDirectory: true)
+        try FileManager.default.createDirectory(at: prompts, withIntermediateDirectories: true)
+        try "```text\nHello {{character}}\n```\n```character\nDEFAULT\n```\n".write(
+            to: prompts.appendingPathComponent("en.md"), atomically: true, encoding: .utf8
+        )
+        try "```text\n[Art style]\n- pixel\n```\n".write(
+            to: prompts.appendingPathComponent("pixel-art-en.md"), atomically: true, encoding: .utf8
+        )
+        try "```text\n[Art style]\n- anime\n```\n".write(
+            to: prompts.appendingPathComponent("anime-en.md"), atomically: true, encoding: .utf8
+        )
+        return root
     }
 
     private func namedPasteboard() -> NSPasteboard {

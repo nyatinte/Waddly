@@ -186,7 +186,7 @@
 "character.generation.title" = "Create your character";
 "character.generation.subtitle" = "Choose a style and describe your character. Then use the prompt to generate a 3×3 sprite sheet.";
 "character.generation.styleTitle" = "1. Choose an art style";
-"character.generation.styleCaption" = "Same character, different styles.";
+"character.generation.styleCaption" = "Same character, different styles. Hover a style to see it move.";
 "character.generation.fromTitle" = "2. Create from";
 "character.generation.fromText" = "Text description";
 "character.generation.fromTextDetail" = "Describe your character in words.";
@@ -198,7 +198,7 @@
 "character.generation.describePlaceholder" = "A small round penguin wearing a blue knit beanie. Cute, simple, and friendly.";
 "character.generation.countFormat" = "%1$d/%2$d";
 "character.generation.previewTitle" = "Preview";
-"character.generation.previewCaption" = "A reference sample of the selected style. Choose a frame to inspect it.";
+"character.generation.previewCaption" = "A reference sample of the selected style. Hover to play it, or choose a frame below.";
 "character.generation.frames" = "9 frames";
 "character.generation.frameLabelFormat" = "Frame %d";
 "character.generation.promptTitle" = "Generation prompt";

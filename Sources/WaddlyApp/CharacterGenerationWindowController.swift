@@ -44,6 +44,7 @@ final class CharacterGenerationWindowController: NSWindowController, NSWindowDel
 
     func refreshLocalization() {
         window?.title = model.localization.string(for: .characterGenerationTitle)
+        model.refreshLocalization()
     }
 
     func windowWillClose(_ notification: Notification) {

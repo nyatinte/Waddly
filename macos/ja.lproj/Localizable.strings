@@ -186,7 +186,7 @@
 "character.generation.title" = "キャラクターを作成";
 "character.generation.subtitle" = "画風を選び、キャラクターを説明してから、プロンプトで3×3のスプライトシートを生成します。";
 "character.generation.styleTitle" = "1. 画風を選ぶ";
-"character.generation.styleCaption" = "同じキャラクターでも、画風で印象が変わります。";
+"character.generation.styleCaption" = "同じキャラクターでも、画風で印象が変わります。画風にポインタを合わせると動きます。";
 "character.generation.fromTitle" = "2. 作成方法";
 "character.generation.fromText" = "テキストで説明";
 "character.generation.fromTextDetail" = "言葉でキャラクターを説明します。";
@@ -198,7 +198,7 @@
 "character.generation.describePlaceholder" = "青いニット帽をかぶった、丸い小さなペンギン。かわいく、シンプルに。";
 "character.generation.countFormat" = "%1$d/%2$d";
 "character.generation.previewTitle" = "プレビュー";
-"character.generation.previewCaption" = "選んだ画風の参考サンプルです。コマを選ぶと拡大できます。";
+"character.generation.previewCaption" = "選んだ画風の参考サンプルです。ポインタを合わせると再生します。下のコマから1枚選ぶこともできます。";
 "character.generation.frames" = "9コマ";
 "character.generation.frameLabelFormat" = "%dコマ目";
 "character.generation.promptTitle" = "生成プロンプト";

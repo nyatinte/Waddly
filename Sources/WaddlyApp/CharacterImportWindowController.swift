@@ -75,6 +75,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     func refreshLocalization() {
         window?.title = localization.string(for: .characterWindowTitle)
+        generationWindow?.refreshLocalization()
         model.refreshLocalization()
     }
 
@@ -106,7 +107,11 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             localization: localization,
             resourcesURL: promptResourcesURL,
             pasteboard: pasteboard,
-            openBrowser: openBrowser
+            openBrowser: openBrowser,
+            onClipboardChange: { [weak self] in
+                guard let self else { return }
+                self.model.refreshClipboardAvailability(from: pasteboard)
+            }
         )
         let controller = CharacterGenerationWindowController(model: model) { [weak self] in
             self?.generationWindow = nil

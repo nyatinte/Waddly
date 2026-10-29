@@ -17,6 +17,7 @@ enum CharacterGenerationMetrics {
 @MainActor
 struct CharacterStyleGallery: View {
     @ObservedObject var model: CharacterGenerationModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
@@ -38,11 +39,18 @@ struct CharacterStyleGallery: View {
     private func card(_ style: CharacterStyle) -> some View {
         CharacterStyleCard(
             name: model.localization.string(for: style.nameKey),
-            sample: model.sampleFrames[style]?.first,
+            sample: model.image(for: style),
             unavailableText: model.localization.string(for: .characterGenerationSampleUnavailable),
             isSelected: model.style == style,
             identifier: "generationStyle-\(style.rawValue)",
-            onSelect: { model.style = style }
+            onSelect: { model.style = style },
+            onHover: { hovering in
+                if hovering {
+                    model.play(.card(style), reduceMotion: reduceMotion)
+                } else {
+                    model.stopPlayback(.card(style))
+                }
+            }
         )
     }
 }
@@ -57,6 +65,7 @@ private struct CharacterStyleCard: View {
     let isSelected: Bool
     let identifier: String
     let onSelect: @MainActor () -> Void
+    let onHover: @MainActor (Bool) -> Void
 
     var body: some View {
         Button(action: onSelect) {
@@ -92,6 +101,7 @@ private struct CharacterStyleCard: View {
         .accessibilityLabel(Text(name))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(identifier)
+        .onHover(perform: onHover)
     }
 
     private var shape: RoundedRectangle {

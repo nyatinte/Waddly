@@ -18,6 +18,7 @@ extension SetupWizardController {
 
     func refreshLocalization() {
         window?.title = localizedString(isMonitoringSettings ? .setupSetUpMonitoring : .setupWindowTitle)
+        generationWindow?.refreshLocalization()
         renderCurrentStep()
     }
 }

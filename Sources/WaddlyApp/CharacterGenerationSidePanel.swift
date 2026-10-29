@@ -6,6 +6,7 @@ import SwiftUI
 @MainActor
 struct CharacterStylePreview: View {
     @ObservedObject var model: CharacterGenerationModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
@@ -48,6 +49,13 @@ struct CharacterStylePreview: View {
             RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .stroke(Color(nsColor: .separatorColor))
         )
+        .onHover { hovering in
+            if hovering {
+                model.play(.preview, reduceMotion: reduceMotion)
+            } else {
+                model.stopPlayback(.preview)
+            }
+        }
         .accessibilityIdentifier("generationPreview")
     }
 

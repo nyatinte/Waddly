@@ -26,7 +26,7 @@
 
 Waddly includes a dedicated **Create your character** window for choosing a style and preparing the prompt. Open it from the Setup Guide's **Create an image with ChatGPT** option, or, after registration, from **Change Character…** → **Create another character** → **Open character generator…**. The window opens at 1040 × 720 and can be resized.
 
-1. Under **1. Choose an art style**, pick one of the six styles below. **Preview** shows a bundled sample of that style, and its nine-frame strip lets you inspect each pose.
+1. Under **1. Choose an art style**, pick one of the six styles below. **Preview** shows a bundled sample of that style. Hover a style card or the preview to play its nine-pose showcase; the nine-frame strip selects a single pose. Reduce Motion keeps both static.
 2. Under **2. Create from**, choose **Text description**, **Reference image**, or **Image + text**. This only changes the guidance on screen; every style keeps the same nine poses.
 3. Under **Describe your character**, write what you want in up to 500 characters.
 4. Read the composed prompt under **Generation prompt**. It is the shared contract followed by the selected style's `[Art style]` block. Waddly replaces `{{character}}` with your description; if you leave the field empty, the prompt keeps its default line (`<replace this line>`).
