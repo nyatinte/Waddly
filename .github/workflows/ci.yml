@@ -36,6 +36,16 @@ jobs:
           swiftlint version
           hk --version
 
+      - name: Identify Swift toolchain
+        id: swift-toolchain
+        run: echo "key=$({ swift --version; xcodebuild -version; echo "$ImageVersion"; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Swift safety checker build
+        uses: actions/cache@v4.3.0
+        with:
+          path: Tools/SwiftSafetyCheck/.build
+          key: swift-safety-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-toolchain.outputs.key }}-${{ hashFiles('Tools/SwiftSafetyCheck/Package.swift', 'Tools/SwiftSafetyCheck/Package.resolved', 'Tools/SwiftSafetyCheck/Sources/**/*.swift') }}
+
       - name: Run full local validation
         run: mise run check
 
