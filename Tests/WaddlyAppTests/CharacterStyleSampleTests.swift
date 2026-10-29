@@ -66,7 +66,11 @@ import WaddlyCore
             idleHeights[style] = box.height
         }
         let heights = idleHeights.values.sorted()
-        let median = heights[heights.count / 2]
+        // Six styles give an even count: average the two middle heights instead of picking one,
+        // so the documented median is the real median.
+        let median = heights.count.isMultiple(of: 2)
+            ? (heights[heights.count / 2 - 1] + heights[heights.count / 2]) / 2
+            : heights[heights.count / 2]
         for (style, height) in idleHeights {
             #expect(
                 abs(height - median) <= median * 30 / 100,
@@ -108,18 +112,26 @@ import WaddlyCore
     private func raster(of url: URL) throws -> Raster {
         let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
         let image = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
-        var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
         let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
-            data: &pixels,
-            width: image.width,
-            height: image.height,
-            bitsPerComponent: 8,
-            bytesPerRow: image.width * 4,
-            space: space,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
-        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
+        // The context holds the buffer only while it draws, so scope the pointer to the draw call
+        // instead of handing it an `inout` array that outlives the context.
+        let didDraw = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: image.width,
+                height: image.height,
+                bitsPerComponent: 8,
+                bytesPerRow: image.width * 4,
+                space: space,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else {
+                return false
+            }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            return true
+        }
+        guard didDraw else { throw FixtureError.unreadableImage }
         return Raster(width: image.width, height: image.height, pixels: pixels)
     }
 
@@ -164,5 +176,6 @@ import WaddlyCore
 
     private enum FixtureError: Error {
         case emptyCell
+        case unreadableImage
     }
 }
