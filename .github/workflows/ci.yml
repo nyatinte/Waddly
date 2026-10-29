@@ -16,6 +16,17 @@ concurrency:
 jobs:
   verify:
     name: Build, lint, and self-test
+    needs: [tests, safety, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all validation jobs to pass
+        env:
+          RESULTS: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        run: test "$RESULTS" = false
+
+  tests:
+    name: Lint and self-test
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -36,18 +47,13 @@ jobs:
           swiftlint version
           hk --version
 
-      - name: Identify Swift toolchain
-        id: swift-toolchain
-        run: echo "key=$({ swift --version; xcodebuild -version; xcrun --sdk macosx --show-sdk-build-version; sw_vers -productVersion; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Swift safety checker build
-        uses: actions/cache@v4.3.0
-        with:
-          path: Tools/SwiftSafetyCheck/.build
-          key: swift-safety-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-toolchain.outputs.key }}-${{ hashFiles('Tools/SwiftSafetyCheck/Package.swift', 'Tools/SwiftSafetyCheck/Package.resolved', 'Tools/SwiftSafetyCheck/Sources/**/*.swift') }}
-
-      - name: Run full local validation
-        run: mise run check
+      - name: Run lint and tests
+        run: |
+          mise run format:check
+          mise run lint
+          mise run complexity
+          mise run test:guard
+          mise run test
 
       - name: Validate release-note ranges and rendering
         run: mise exec -- bash Tools/test_release_notes_range.sh
@@ -58,6 +64,54 @@ jobs:
         run: |
           gh extension install github/gh-actions-lock --pin v0.4.0
           gh actions-lock --verify
+
+  safety:
+    name: Swift safety checks
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install locked development tools
+        uses: jdx/mise-action@v4.3.0
+        with:
+          version: 2026.9.11
+
+      - name: Identify Swift toolchain
+        id: swift-toolchain
+        run: echo "key=$({ swift --version; xcodebuild -version; xcrun --sdk macosx --show-sdk-build-version; sw_vers -productVersion; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Swift safety checker build
+        uses: actions/cache@v4.3.0
+        with:
+          path: Tools/SwiftSafetyCheck/.build
+          key: swift-safety-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-toolchain.outputs.key }}-${{ hashFiles('Tools/SwiftSafetyCheck/Package.swift', 'Tools/SwiftSafetyCheck/Package.resolved', 'Tools/SwiftSafetyCheck/Sources/**/*.swift') }}
+
+      - name: Run safety checks
+        run: |
+          mise run safety
+          mise run safety:test
+
+  build:
+    name: Release build
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install locked development tools
+        uses: jdx/mise-action@v4.3.0
+        with:
+          version: 2026.9.11
+
+      - name: Build the app
+        run: mise run build
 
   memory:
     name: Release image memory budget
