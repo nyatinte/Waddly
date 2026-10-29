@@ -24,17 +24,51 @@ import WaddlyCore
         #expect(!english.contains("```"))
     }
 
-    @Test func browserFailureKeepsTheCopiedPromptAndOffersManualRecovery() throws {
+    @Test func theChatGPTLinkCarriesTheCurrentLanguagePrompt() throws {
+        let localization = try CaptureHarness.localized(.japanese)
+        let resources = SetupWizardFixture.root()
+        let japanese = SpriteSheetPrompt.load(for: localization, resourcesAt: resources)
+        #expect(!japanese.isEmpty)
+        let japaneseURL = try #require(SpriteSheetPrompt.chatGPTURL(for: japanese))
+        #expect(japaneseURL.host() == "chatgpt.com")
+        // The round trip matters for the Japanese prompt: the link has to survive percent-encoding.
+        #expect(queryItem(named: "q", in: japaneseURL) == japanese)
+
+        localization.changeLanguage(.english)
+        let english = SpriteSheetPrompt.load(for: localization, resourcesAt: resources)
+        #expect(english != japanese)
+        let englishURL = try #require(SpriteSheetPrompt.chatGPTURL(for: english))
+        #expect(queryItem(named: "q", in: englishURL) == english)
+    }
+
+    @Test func openingChatGPTDoesNotTouchTheClipboard() throws {
+        let pasteboard = namedPasteboard()
+        defer { pasteboard.releaseGlobally() }
+        #expect(pasteboard.setString("keep this", forType: .string))
+        var opened: [URL] = []
+        let feedback = SpriteSheetPrompt.open("prompt", to: pasteboard) { url in
+            opened.append(url)
+            return true
+        }
+        #expect(feedback == .opened)
+        #expect(!feedback.isError)
+        #expect(feedback.messageKey == .setupChatGPTOpened)
+        #expect(opened.count == 1)
+        #expect(try queryItem(named: "q", in: #require(opened.first)) == "prompt")
+        #expect(pasteboard.string(forType: .string) == "keep this")
+    }
+
+    @Test func browserFailureKeepsTheCopiedPromptAndOffersManualRecovery() {
         let pasteboard = namedPasteboard()
         defer { pasteboard.releaseGlobally() }
         var opened: [URL] = []
-        let feedback = SpriteSheetPrompt.copy("prompt", to: pasteboard) { url in
+        let feedback = SpriteSheetPrompt.open("prompt", to: pasteboard) { url in
             opened.append(url)
             return false
         }
-        #expect(try opened == [#require(URL(string: "https://chatgpt.com/"))])
+        #expect(opened.count == 1)
         #expect(pasteboard.string(forType: .string) == "prompt")
-        #expect(feedback == .openFailed)
+        #expect(feedback == .copiedAfterOpenFailed)
         #expect(feedback.isError)
         #expect(feedback.messageKey == .setupOpenFailed)
     }
@@ -46,7 +80,7 @@ import WaddlyCore
         let localization = try CaptureHarness.localized(.english)
         let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: nil)
         var didOpen = false
-        let feedback = SpriteSheetPrompt.copy(prompt, to: pasteboard) { _ in
+        let feedback = SpriteSheetPrompt.open(prompt, to: pasteboard) { _ in
             didOpen = true
             return true
         }
@@ -86,7 +120,7 @@ import WaddlyCore
         // Exercise the action used by the actual card, including its parent callback.
         var card = host.rootView.promptCard
         card.announce = { _ in }
-        card.copy(openChatGPT: false)
+        card.copyPrompt()
         let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: SetupWizardFixture.root())
         #expect(pasteboard.string(forType: .string) == prompt)
         #expect(!model.clipboardHasImage)
@@ -102,7 +136,7 @@ import WaddlyCore
         var announcements: [String] = []
         card.announce = { announcements.append($0) }
         card.openBrowser = { _ in false }
-        card.copy(openChatGPT: true)
+        card.openInChatGPT()
         #expect(!model.clipboardHasImage)
         #expect(pasteboard.string(forType: .string) == prompt)
         #expect(announcements == [localization.string(for: .setupOpenFailed)])
@@ -110,6 +144,13 @@ import WaddlyCore
         #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), draft))
         #expect(CharacterImportModel.sameFrames(model.committedBaseline, stored))
         #expect(commitCount == 0)
+    }
+
+    private func queryItem(named name: String, in url: URL) -> String? {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first { $0.name == name }?
+            .value
     }
 
     private func namedPasteboard() -> NSPasteboard {

@@ -52,24 +52,35 @@ struct CharacterPromptCard: View {
     }
 
     @ViewBuilder private var actions: some View {
-        Button { copy(openChatGPT: false) } label: {
+        Button(action: copyPrompt) {
             Text(localization.string(for: .characterCopyPrompt)).actionLabel()
         }
         .accessibilityIdentifier("characterCopyPrompt")
-        Button { copy(openChatGPT: true) } label: {
-            Text(localization.string(for: .setupCopyAndOpen)).actionLabel()
+        Button(action: openInChatGPT) {
+            Text(localization.string(for: .characterOpenChatGPT)).actionLabel()
         }
-        .accessibilityIdentifier("characterCopyPromptAndOpenChatGPT")
+        .accessibilityIdentifier("characterOpenChatGPT")
     }
 
-    func copy(openChatGPT: Bool) {
-        let result = SpriteSheetPrompt.copy(
+    func copyPrompt() {
+        report(SpriteSheetPrompt.copy(
+            SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL),
+            to: pasteboard
+        ))
+    }
+
+    func openInChatGPT() {
+        report(SpriteSheetPrompt.open(
             SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL),
             to: pasteboard,
-            openBrowser: openChatGPT ? openBrowser : nil
-        )
+            openBrowser: openBrowser
+        ))
+    }
+
+    /// The card's own callback notices the clipboard change; only the outcome is announced.
+    private func report(_ outcome: SpriteSheetPrompt.Feedback) {
         onClipboardChange()
-        feedback = result
-        announce(localization.string(for: result.messageKey))
+        feedback = outcome
+        announce(localization.string(for: outcome.messageKey))
     }
 }

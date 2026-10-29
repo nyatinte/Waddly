@@ -19,7 +19,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         case completed
     }
 
-    /// Inline result of "copy the prompt and open ChatGPT". `nil` means the user has not tried yet.
+    /// Inline result of handing the prompt to ChatGPT. `nil` means the user has not tried yet.
     typealias PromptActionFeedback = SpriteSheetPrompt.Feedback
 
     let localization: LocalizationController
@@ -86,6 +86,9 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     @Published var isShowingTroubleshooting = false
     /// True while the shared character import screen replaces the method list inside the Pet step.
     @Published var isComposingCharacter = false
+    /// True when setup handed the prompt to ChatGPT and jumped ahead to the drop screen, so that
+    /// screen explains why the image it waits for does not exist yet.
+    @Published var isAwaitingGeneratedSheet = false
 
     init(
         localization: LocalizationController,
