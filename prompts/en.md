@@ -6,7 +6,7 @@ Copy the prompt below and send it to an image-generation model.
 - If you don't have an image, replace “Character to draw” on the first line with your own description (for example `A small penguin with a round body. Short legs, black back and white belly.`). If you send it unchanged, the image model asks what you want to create.
 - You may also attach an action reference image showing a comedic, forceful key press for the Enter-key pose.
 
-The prompt below is the shared contract and does not depend on art style. Waddly automatically joins it with the `[Art style]` block from the style file you choose (pixel-art, hand-drawn, iconic, retro-cartoon, anime, or paper-cutout); to use it outside the app, copy the shared prompt and the chosen style block and concatenate them.
+The prompt below is the shared contract and does not depend on art style. Waddly joins it with the `[Art style]` block of the selected style (pixel art while no style is selected; the available blocks are pixel-art, hand-drawn, iconic, retro-cartoon, anime, and paper-cutout). To use it outside the app, copy the shared prompt and the chosen style block and concatenate them.
 
 ```text
 Character to draw: <replace this line>
