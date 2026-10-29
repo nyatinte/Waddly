@@ -28,11 +28,13 @@ final class SetupPreviewPane: PetImageDropView {
     let placeholderStack = NSStackView()
     let backgroundControl = NSSegmentedControl()
     private let stageLabel = NSTextField(labelWithString: "")
-    private let petView = PixelImageView()
+    private let petView = PreviewImageView()
     private let gridView = SpriteSheetGridView(frame: .zero)
     let categoryRow = NSStackView()
     private let captionLabel = NSTextField(wrappingLabelWithString: "")
-    private lazy var player = PetPreviewPlayer(imageView: petView)
+    private lazy var player = PetPreviewPlayer { [weak petView] image in
+        petView?.image = image
+    }
 
     var images = PetImageSet()
     var localization: LocalizationController?
@@ -195,8 +197,6 @@ final class SetupPreviewPane: PetImageDropView {
         placeholderStack.setAccessibilityElement(true)
 
         petView.translatesAutoresizingMaskIntoConstraints = false
-        petView.imageScaling = .scaleProportionallyUpOrDown
-        petView.wantsLayer = true
 
         categoryRow.orientation = .horizontal
         categoryRow.alignment = .centerY
