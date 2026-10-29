@@ -44,7 +44,7 @@ import WaddlyCore
                 player?.stop()
             }
         }
-        player = PetPreviewPlayer(imageView: view, sleep: recorder)
+        player = PetPreviewPlayer(showImage: { view.image = $0 }, sleep: recorder)
         player?.setImages(images)
         player?.play(.enter)
         for _ in 0 ..< 200 where seen.count < 3 {
@@ -53,6 +53,15 @@ import WaddlyCore
         player?.stop()
         #expect(seen.first == ObjectIdentifier(images[.enter][0]))
         #expect(seen.count >= 2)
+    }
+
+    @Test func previewImageViewUpdatesAndClearsItsLayer() throws {
+        let view = PreviewImageView()
+        let image = try #require(Fixture.sheetImages()[.idle].first)
+        view.image = image
+        #expect(view.layer?.contents != nil)
+        view.image = nil
+        #expect(view.layer?.contents == nil)
     }
 
     @Test func previewPaneSwapsPlaceholderForThePet() throws {

@@ -10,7 +10,7 @@ final class PetPreviewPlayer {
         let seconds: TimeInterval
     }
 
-    private let imageView: NSImageView
+    private let showImage: @MainActor (NSImage?) -> Void
     /// Injectable so tests can drive the sequence without waiting on real time.
     private let sleep: @MainActor (TimeInterval) async -> Void
     private var images = PetImageSet()
@@ -18,10 +18,10 @@ final class PetPreviewPlayer {
     private var generation = 0
 
     init(
-        imageView: NSImageView,
+        showImage: @escaping @MainActor (NSImage?) -> Void,
         sleep: @escaping @MainActor (TimeInterval) async -> Void = PetPreviewPlayer.defaultSleep
     ) {
-        self.imageView = imageView
+        self.showImage = showImage
         self.sleep = sleep
     }
 
@@ -74,7 +74,7 @@ final class PetPreviewPlayer {
     private func start(shots: [Shot], loops: Bool) {
         stop()
         guard !shots.isEmpty else {
-            imageView.image = nil
+            showImage(nil)
             return
         }
         generation += 1
@@ -84,7 +84,7 @@ final class PetPreviewPlayer {
             while !Task.isCancelled {
                 guard let self, token == generation else { return }
                 let shot = shots[index % shots.count]
-                imageView.image = shot.image
+                showImage(shot.image)
                 index += 1
                 await sleep(shot.seconds)
                 guard !Task.isCancelled, token == generation else { return }
