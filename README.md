@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. It does not appear above a fullscreen app.
-- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet locally, ready to copy and paste into X or chat apps.
+- Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
 
 ## Use your own pet
 
@@ -84,8 +84,7 @@ You can also create the sprite sheet by hand.
 
 ### Image requirements
 
-- Prepare a square transparent PNG (9 frames in a 3×3 grid, up to 20 MB).
-- Make both width and height divisible by 3 (up to 4096 px per side; sheets over 3072 px are automatically scaled down to at most 1024 px per frame on import).
+- Prepare a square transparent PNG (9 frames in a 3×3 grid) with width and height divisible by 3.
 - Order the 9 frames from top-left to bottom-right: 2 Idle, 4 Typing, 1 Enter, and 2 Sleep frames (the prompt above generates this order).
 
 ### Quick setup
@@ -106,7 +105,7 @@ Keyboard events are used only to drive animations; Waddly never stores, logs, or
 
 ## Measured memory
 
-The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target (a known exception in 1.0). See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite.
+The app targets a physical memory footprint below 100 MB in typical use. See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite.
 
 ## Contributing
 
