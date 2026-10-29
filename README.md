@@ -22,15 +22,43 @@
 
 ## Use your own pet
 
+### Create a character with a style
+
+Waddly includes a dedicated **Create your character** window for choosing a style and preparing the prompt. Open it from the Setup Guide's **Create an image with ChatGPT** option, or, after registration, from **Change Character…** → **Create another character** → **Open character generator…**. The window opens at 1040 × 720 and can be resized.
+
+1. Under **1. Choose an art style**, pick one of the six styles below. **Preview** shows a bundled sample of that style. Hover a style card or the preview to play its nine-pose showcase; the nine-frame strip selects a single pose. Reduce Motion keeps both static.
+2. Under **2. Create from**, choose **Text description**, **Reference image**, or **Image + text**. This only changes the guidance on screen; every style keeps the same nine poses.
+3. Under **Describe your character**, write what you want in up to 500 characters.
+4. Read the composed prompt under **Generation prompt**. It is the shared contract followed by the selected style's `[Art style]` block. Waddly replaces `{{character}}` with your description; if you leave the field empty, the prompt keeps its default line (`<replace this line>`).
+5. Choose **Copy Prompt** (clipboard only) or **Open in ChatGPT** (copies the prompt and opens chatgpt.com), then paste it into your image generation service.
+6. Generate a 3×3 transparent PNG and import it into Waddly. The result goes through the same preview, frame adjustment, and Apply flow as any other sheet.
+
+Choosing a style, writing a description, and copying the prompt never change your current pet or a staged image. Waddly does not send your text or images to the generation service.
+
+| Style | Look | Sample | Prompt |
+| --- | --- | --- | --- |
+| Pixel Art | 16-bit-era pixel art with a small palette and hard edges. | [pixel-art.png](assets/character-styles/pixel-art.png) | [prompt](prompts/pixel-art-en.md) |
+| Hand-Drawn | Organic, slightly wobbly lines with flat colors and a sticker-like finish. | [hand-drawn.png](assets/character-styles/hand-drawn.png) | [prompt](prompts/hand-drawn-en.md) |
+| Iconic | A bold, simplified silhouette with uniform line width and flat fills. | [iconic.png](assets/character-styles/iconic.png) | [prompt](prompts/iconic-en.md) |
+| Retro Cartoon | Thick ink lines, rounded features, pie-cut eyes, and a muted vintage palette. | [retro-cartoon.png](assets/character-styles/retro-cartoon.png) | [prompt](prompts/retro-cartoon-en.md) |
+| Anime | Cel shading with clean tapered lines and layered eye highlights. | [anime.png](assets/character-styles/anime.png) | [prompt](prompts/anime-en.md) |
+| Paper Cutout | Overlapping polygonal paper pieces with paper texture and inner edges. | [paper-cutout.png](assets/character-styles/paper-cutout.png) | [prompt](prompts/paper-cutout-en.md) |
+
+The six samples side by side on light and dark backgrounds:
+
+<img src="assets/character-styles/contact-sheet.png" alt="Six art styles side by side on light and dark backgrounds" width="900">
+
+See [assets/character-styles/README.md](assets/character-styles/README.md) for the sample sources, normalization, and known limitations.
+
 ### Prepare a sprite sheet
 
-Send the [sprite sheet prompt](prompts/en.md) to [ChatGPT](https://chatgpt.com/) or another image generator to create a 3×3 sprite sheet.
+If you prefer to copy the prompt yourself, send the [sprite sheet prompt](prompts/en.md) to [ChatGPT](https://chatgpt.com/) or another image generator to create a 3×3 sprite sheet.
 
 <details>
 <summary>Show the sprite sheet prompt</summary>
 
 ```text
-Character to draw: <replace this line>
+Character to draw: {{character}}
 
 If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
 
@@ -94,7 +122,7 @@ When Waddly is the frontmost app, the menu bar also carries the standard menus: 
 
 After setup, use **Set Up Input Monitoring…** for permission, status, and recovery guidance, and **Change Character…** to replace or edit images. Initial or unfinished setup opens **Setup Guide…** instead. The Setup Guide and **Change Character…** share one character screen, and a chosen image stays a draft until you press Continue or Apply. A failed save keeps the draft for another try, and closing with a changed draft asks before discarding it. The shared screen says “Currently in use” while it shows the saved pet and “Changes not saved” while a draft would replace it; **Apply** stays unavailable until the draft differs from the saved pet, while the Setup Guide’s **Continue** still advances with an unchanged pet. If macOS requires a restart after you allow Input Monitoring, **Restart Waddly** relaunches the app and returns you to the same setup step.
 
-To create another character after registration, open **Change Character…** from the menu bar or the pet’s right-click menu. The **Create another character** card stays available with a saved pet or a staged image: **Copy prompt** copies the current app language’s generation prompt without opening a browser; **Copy the prompt and open ChatGPT** also opens ChatGPT. Paste the prompt into your chosen image generator and import the resulting PNG here. Your current pet and any staged image are unchanged by copying; only Apply saves a replacement. Waddly does not upload images to the generator.
+To create another character after registration, open **Change Character…** from the menu bar or the pet’s right-click menu. The **Create another character** card stays available with a saved pet or a staged image: **Open character generator…** opens the style-and-description window described above, where **Copy Prompt** copies the current app language’s prompt without opening a browser and **Open in ChatGPT** also opens ChatGPT. Paste the prompt into your chosen image generator and import the resulting PNG here. Your current pet and any staged image are unchanged by copying; only Apply saves a replacement. Waddly does not upload images to the generator.
 
 If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**.
 

@@ -90,17 +90,13 @@ typealias Fixture = SetupWizardFixture
         #expect(wizard.previewPane.hasPet)
     }
 
-    @Test func savedStepAndChatGPTGuideCanBeRestoredAndDismissed() throws {
+    @Test func savedStepCanBeRestoredAndDismissed() throws {
         let wizard = try Fixture.makeWizard(savedStep: SetupWizardController.Step.monitoring.rawValue)
         defer { wizard.close() }
         #expect(wizard.currentStep == .monitoring)
 
         wizard.goBack()
-        wizard.showChatGPTGuide()
         #expect(wizard.currentStep == .pet)
-        #expect(wizard.isShowingChatGPTGuide)
-        wizard.changeMethod()
-        #expect(!wizard.isShowingChatGPTGuide)
     }
 
     @Test func troubleshootingStaysInTheWizard() throws {
@@ -134,40 +130,6 @@ typealias Fixture = SetupWizardFixture
         #expect(reopened.previewPane.isPlayingPreview)
     }
 
-    @Test func copyingThePromptReportsCopyAndBrowserOpenResults() throws {
-        let chatGPT = try #require(URL(string: "https://chatgpt.com/"))
-        let failingState = Fixture.State()
-        var opened: [URL] = []
-        let failingOpen = try Fixture.makeWizard(state: failingState, openBrowser: { url in
-            opened.append(url)
-            return false
-        })
-        defer { failingOpen.close() }
-        failingOpen.showChatGPTGuide()
-        failingOpen.copyPromptAndOpenChatGPT()
-        #expect(opened == [chatGPT])
-        #expect(failingOpen.promptFeedback == .openFailed)
-        #expect(failingOpen.promptFeedbackKey == .setupOpenFailed)
-        #expect(failingOpen.promptFeedbackIsError)
-        #expect(failingState.announcements == [failingOpen.localizedString(.setupOpenFailed)])
-
-        let succeedingState = Fixture.State()
-        var didOpen = false
-        let succeedingOpen = try Fixture.makeWizard(state: succeedingState, openBrowser: { _ in
-            didOpen = true
-            return true
-        })
-        defer { succeedingOpen.close() }
-        succeedingOpen.showChatGPTGuide()
-        succeedingOpen.copyPromptAndOpenChatGPT()
-        #expect(didOpen)
-        #expect(succeedingOpen.promptFeedback == .copied)
-        #expect(succeedingOpen.promptFeedbackKey == .setupPromptCopied)
-        #expect(!succeedingOpen.promptFeedbackIsError)
-        // Only a failure is announced.
-        #expect(succeedingState.announcements.isEmpty)
-    }
-
     @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {
         let state = Fixture.State()
         let previous = try Fixture.sheetImages()
@@ -185,8 +147,9 @@ typealias Fixture = SetupWizardFixture
         #expect(state.announcements == [wizard.localizedString(.petImportErrorMessage)])
 
         // Choosing a method again clears the stale message.
-        wizard.showChatGPTGuide()
+        wizard.beginCharacterImport()
         #expect(!wizard.didFailImport)
+        wizard.cancelCharacterImport()
     }
 
     @Test func importFailureStaysOnItsStepAndClearsWhenTheStepChanges() async throws {

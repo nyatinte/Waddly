@@ -19,17 +19,14 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         case completed
     }
 
-    /// Inline result of "copy the prompt and open ChatGPT". `nil` means the user has not tried yet.
-    typealias PromptActionFeedback = SpriteSheetPrompt.Feedback
-
     let localization: LocalizationController
     /// Reuses the permission page after onboarding without reopening character setup or progress.
     let isMonitoringSettings: Bool
     let promptResourcesURL: URL?
-
-    var prompt: String {
-        SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
-    }
+    /// Presenter for the generation screen. Tests substitute one that records the call instead of
+    /// opening a real window.
+    let presentGeneration: @MainActor (CharacterGenerationWindowController) -> Void
+    var generationWindow: CharacterGenerationWindowController?
 
     /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
     let onPreviewImage: @MainActor (URL) async -> PetImageSet?
@@ -63,13 +60,11 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var demoImages: PetImageSet?
 
     @Published var currentStep = Step.pet
-    @Published var isShowingChatGPTGuide = false
     @Published var didRegisterPet = false
     /// Set only when the user explicitly chose the bundled sample, so the page can say which pet
     /// is active. It is session state, like `importedFileName`.
     @Published var didUseSamplePet = false
     @Published var importedFileName: String?
-    @Published var promptFeedback: PromptActionFeedback?
     /// Set when a chosen sheet could not be read, so the page can explain it in place.
     @Published var didFailImport = false
     /// Identifies the interaction that may publish asynchronous import feedback.
@@ -103,6 +98,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
         relaunch: @escaping @MainActor () -> Void = SetupWizardController.performRelaunch,
         announce: @escaping @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement,
+        presentGeneration: @escaping @MainActor (CharacterGenerationWindowController) -> Void = { $0.focus() },
         onStepChange: @escaping @MainActor (Int?) -> Void = { _ in },
         onShowOnDesktop: @escaping @MainActor () -> Void = {},
         onClose: @escaping @MainActor () -> Void
@@ -121,6 +117,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.openBrowser = openBrowser
         self.relaunch = relaunch
         self.announce = announce
+        self.presentGeneration = presentGeneration
         self.presenter = presenter
         self.onStepChange = onStepChange
         self.onShowOnDesktop = onShowOnDesktop
@@ -296,6 +293,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 
     func windowWillClose(_ notification: Notification) {
         clearImportFeedback()
+        generationWindow?.close()
+        generationWindow = nil
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()

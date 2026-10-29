@@ -1,9 +1,9 @@
 import AppKit
-import SwiftUI
 import Testing
 @testable import WaddlyApp
-import WaddlyCore
 
+/// Clipboard behaviour of the prompt hand-off. The composition itself is covered by
+/// `CharacterStylePromptTests`; this suite keeps the copy action honest about failures.
 @Suite(.serialized) @MainActor struct CharacterPromptTests {
     @Test func copyUsesTheCurrentLanguageWithoutOpeningABrowser() throws {
         let localization = try CaptureHarness.localized(.japanese)
@@ -55,61 +55,6 @@ import WaddlyCore
         #expect(feedback.isError)
         #expect(!didOpen)
         #expect(pasteboard.string(forType: .string) == "keep this")
-    }
-
-    @Test func changeCharacterOffersPromptsWithSavedAndStagedImagesWithoutCommitting() async throws {
-        let stored = try SetupWizardFixture.sheetImages()
-        var commitCount = 0
-        let model = CharacterImportModel(currentImages: { stored }, commit: { _ in
-            commitCount += 1
-            return .committed
-        })
-        let localization = try CaptureHarness.localized(.english)
-        let pasteboard = try CaptureHarness.pasteboard(holdsSheet: true)
-        defer { pasteboard.releaseGlobally() }
-        let controller = CharacterImportWindowController(
-            model: model, localization: localization, presenter: .invisible,
-            pasteboard: pasteboard, promptResourcesURL: SetupWizardFixture.root(), onClose: {}
-        )
-        controller.focus()
-        defer {
-            model.discard()
-            controller.close()
-        }
-        let content = try #require(controller.window?.contentView)
-        let host = try #require(content.subviews.first as? NSHostingView<CharacterImportView>)
-        #expect(host.rootView.showsPrompt)
-        #expect(model.hasStagedCandidate)
-        #expect(!model.isDirty)
-        model.refreshClipboardAvailability(from: pasteboard)
-        #expect(model.clipboardHasImage)
-        // Exercise the action used by the actual card, including its parent callback.
-        var card = host.rootView.promptCard
-        card.announce = { _ in }
-        card.copy(openChatGPT: false)
-        let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: SetupWizardFixture.root())
-        #expect(pasteboard.string(forType: .string) == prompt)
-        #expect(!model.clipboardHasImage)
-        #expect(!model.isDirty)
-        #expect(commitCount == 0)
-
-        try await model.stageFiles(at: [SetupWizardFixture.sheetURL()])
-        let draft = try #require(model.stagedFrames)
-        let frame = try #require(stored[.idle].first)
-        try pasteboard.setData(#require(PetSpriteSheetImporter.pngData(for: frame)), forType: .png)
-        model.refreshClipboardAvailability(from: pasteboard)
-        #expect(model.clipboardHasImage)
-        var announcements: [String] = []
-        card.announce = { announcements.append($0) }
-        card.openBrowser = { _ in false }
-        card.copy(openChatGPT: true)
-        #expect(!model.clipboardHasImage)
-        #expect(pasteboard.string(forType: .string) == prompt)
-        #expect(announcements == [localization.string(for: .setupOpenFailed)])
-        #expect(model.isDirty)
-        #expect(try CharacterImportModel.sameFrames(#require(model.stagedFrames), draft))
-        #expect(CharacterImportModel.sameFrames(model.committedBaseline, stored))
-        #expect(commitCount == 0)
     }
 
     private func namedPasteboard() -> NSPasteboard {

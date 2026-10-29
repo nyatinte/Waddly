@@ -174,7 +174,7 @@ private func textFenceBody(in markdown: String) -> String? {
     return String(markdown[start.upperBound ..< end.lowerBound])
 }
 
-@Test @MainActor func setupWizardPromptTracksTheInjectedLanguage() throws {
+@Test @MainActor func generationPromptTracksTheInjectedLanguage() throws {
     _ = NSApplication.shared
     let suiteName = "WaddlyTests.prompt.\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -183,8 +183,12 @@ private func textFenceBody(in markdown: String) -> String? {
     let promptsURL = resourcesURL.appendingPathComponent("prompts", isDirectory: true)
     try FileManager.default.createDirectory(at: promptsURL, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: resourcesURL) }
-    try Data("```text\nこんにちは\n```".utf8).write(to: promptsURL.appendingPathComponent("ja.md"))
-    try Data("```text\nHello\n```".utf8).write(to: promptsURL.appendingPathComponent("en.md"))
+    try Data("```text\nこんにちは {{character}}\n```\n```character\n（だれか）\n```".utf8).write(
+        to: promptsURL.appendingPathComponent("ja.md")
+    )
+    try Data("```text\nHello {{character}}\n```\n```character\n(someone)\n```".utf8).write(
+        to: promptsURL.appendingPathComponent("en.md")
+    )
     try Data("```text\n[Art style]\n- テスト\n```".utf8).write(
         to: promptsURL.appendingPathComponent("pixel-art-ja.md")
     )
@@ -194,25 +198,15 @@ private func textFenceBody(in markdown: String) -> String? {
 
     let localization = LocalizationController(settings: AppSettings(defaults: defaults))
     localization.changeLanguage(.japanese)
-    let wizard = SetupWizardController(
+    let model = CharacterGenerationModel(
         localization: localization,
-        promptResourcesURL: resourcesURL,
-        onPreviewImage: { _ in nil },
-        onConfirmImage: { _, _ in false },
-        currentPetImages: { PetImageSet() },
-        permission: PermissionService(
-            hasPermission: { false },
-            isReceivingKeys: { false },
-            hasObservedReaction: { false },
-            requestAccess: { false },
-            restartTap: {}
-        ),
-        onClose: {}
+        resourcesURL: resourcesURL,
+        pasteboard: NSPasteboard(name: NSPasteboard.Name("WaddlyTests.generation.\(UUID().uuidString)"))
     )
 
-    #expect(wizard.prompt == "こんにちは\n\n[Art style]\n- テスト")
+    #expect(model.prompt == "こんにちは （だれか）\n\n[Art style]\n- テスト")
     localization.changeLanguage(.english)
-    #expect(wizard.prompt == "Hello\n\n[Art style]\n- test")
+    #expect(model.prompt == "Hello (someone)\n\n[Art style]\n- test")
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {

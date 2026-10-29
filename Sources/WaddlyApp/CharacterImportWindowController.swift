@@ -15,8 +15,12 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     static let contentSize = NSSize(width: 1040, height: 640)
     private let localization: LocalizationController
     private let presenter: WindowPresenter
+    private let pasteboard: NSPasteboard
+    private let promptResourcesURL: URL?
+    private let openBrowser: @MainActor (URL) -> Bool
     private let onClose: @MainActor () -> Void
     private var isConfirmingClose = false
+    private var generationWindow: CharacterGenerationWindowController?
     private weak var embeddedPreviewPane: SetupPreviewPane?
 
     init(
@@ -25,11 +29,15 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         presenter: WindowPresenter,
         pasteboard: NSPasteboard = .general,
         promptResourcesURL: URL? = Bundle.main.resourceURL,
+        openBrowser: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) },
         onClose: @escaping @MainActor () -> Void
     ) {
         self.model = model
         self.localization = localization
         self.presenter = presenter
+        self.pasteboard = pasteboard
+        self.promptResourcesURL = promptResourcesURL
+        self.openBrowser = openBrowser
         self.onClose = onClose
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: Self.contentSize),
@@ -43,7 +51,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         window.center()
         super.init(window: window)
         window.delegate = self
-        buildContent(pasteboard: pasteboard, promptResourcesURL: promptResourcesURL)
+        buildContent()
     }
 
     required init?(coder: NSCoder) {
@@ -67,6 +75,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
 
     func refreshLocalization() {
         window?.title = localization.string(for: .characterWindowTitle)
+        generationWindow?.refreshLocalization()
         model.refreshLocalization()
     }
 
@@ -79,13 +88,39 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     }
 
     func windowWillClose(_ notification: Notification) {
+        generationWindow?.close()
+        generationWindow = nil
         stopEmbeddedPreview()
         window?.contentView = nil
         window?.delegate = nil
         onClose()
     }
 
-    private func buildContent(pasteboard: NSPasteboard, promptResourcesURL: URL?) {
+    /// Opens the shared generation screen over this window. The screen owns the prompt copy, so this
+    /// controller only keeps the window alive while Change Character is using it.
+    func presentCharacterGeneration() {
+        if let generationWindow {
+            generationWindow.focus()
+            return
+        }
+        let model = CharacterGenerationModel(
+            localization: localization,
+            resourcesURL: promptResourcesURL,
+            pasteboard: pasteboard,
+            openBrowser: openBrowser,
+            onClipboardChange: { [weak self] in
+                guard let self else { return }
+                self.model.refreshClipboardAvailability(from: pasteboard)
+            }
+        )
+        let controller = CharacterGenerationWindowController(model: model) { [weak self] in
+            self?.generationWindow = nil
+        }
+        generationWindow = controller
+        controller.focus()
+    }
+
+    private func buildContent() {
         let root = PetImageDropView()
         root.idleBorderWidth = 0
         root.shouldPreserveUnsupportedDropURLs = { true }
@@ -107,7 +142,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             // Change Character only writes when the draft would actually change the saved pet.
             primaryRequiresChange: true,
             showsPrompt: true,
-            promptResourcesURL: promptResourcesURL
+            onOpenGeneration: { [weak self] in self?.presentCharacterGeneration() }
         ))
         host.translatesAutoresizingMaskIntoConstraints = true
         host.autoresizingMask = [.width, .height]
