@@ -153,7 +153,7 @@ import zlib
 }
 
 private func makeOversizedPNG() -> Data? {
-    guard let png = makePNG(width: 6, height: 6) else { return nil }
+    guard let png = makePNG(width: 1026, height: 1026) else { return nil }
 
     // A valid private ancillary chunk makes the PNG oversized without encoding millions of pixels.
     var chunk = Data("waDd".utf8)
@@ -236,4 +236,11 @@ private func makePNG(
         return
     }
     #expect(reason == .fileTooLarge)
+}
+
+@Test func oversizedFixtureWouldBeDownsampledWithoutThePadding() throws {
+    let png = try #require(makePNG(width: 1026, height: 1026))
+    let optimized = try #require(PetSpriteSheetImporter.optimizedImage(from: png))
+    #expect(optimized.wasDownsampled)
+    #expect(optimized.pngData.count < PetSpriteSheetImporter.maximumFileSize)
 }
