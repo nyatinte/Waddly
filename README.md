@@ -84,25 +84,23 @@ You can also create the sprite sheet by hand.
 
 ### Image requirements
 
-- Transparent PNG with a square canvas
-- Both dimensions divisible by 3
-- Maximum file size: 20 MB; maximum side length: 4096 px
+- **Format:** Square transparent PNG (9 frames in a 3×3 grid)
+- **Dimensions:** Width and height divisible by 3 (up to 4096 px per side)
+- **File size:** 20 MB or less
+- **Auto-scaling:** Sheets larger than 3072 px per side are automatically scaled down on import (up to 1024 px per frame)
+- **Frame order:** 2 Idle, 4 Typing, 1 Enter, and 2 Sleep frames (use the current prompt, as older prompts may use a different order)
 
-An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. After importing a 3×3 sheet, **Adjust frames…** opens a crop and alignment editor over the staged draft. It exposes exactly nine fixed cells (2 Idle, 4 Typing, 1 Enter, 2 Sleep); resizing the 1:1 crop only narrows the visible frame, while the Align tool moves the character itself. Pan and zoom the canvas with the trackpad or ⌘+/⌘−/⌘0, and check Before/After with the center crosshair.
+### Quick setup
 
-Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. The shared character screen accepts a chosen PNG, a window-wide PNG drop, or **Paste from Clipboard** (⌘V). Changes stay a draft until you press Continue or Apply.
+1. **Import an image:** Open **Setup Guide…** (on first launch) or **Change Character…** from the menu, then select a PNG file, drag and drop it, or paste it with ⌘V. If you do not have an image yet, click **Try the sample pet first** to use the bundled pet right away.
+2. **Adjust frame alignment (optional):** If an AI-generated sheet shifts the character's position between cells, open **Adjust frames…** to fine-tune the crop and character alignment while checking the preview.
+3. **Apply:** Click **Apply** (or **Continue** during initial setup) to update your desktop pet.
 
-Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Disabled commands explain what they need in native menu help, and at least one of Dock or menu bar access must remain on.
+### Tips and local storage
 
-When Waddly is the frontmost app, the menu bar also carries the standard menus: **Waddly** (**About Waddly** shows the version and build, plus Hide and Quit), **Edit** (⌘C/⌘V in text fields), and **Window**.
-
-After setup, use **Set Up Input Monitoring…** for permission, status, and recovery guidance, and **Change Character…** to replace or edit images. Initial or unfinished setup opens **Setup Guide…** instead. The Setup Guide and **Change Character…** share one character screen, and a chosen image stays a draft until you press Continue or Apply. A failed save keeps the draft for another try, and closing with a changed draft asks before discarding it. The shared screen says “Currently in use” while it shows the saved pet and “Changes not saved” while a draft would replace it; **Apply** stays unavailable until the draft differs from the saved pet, while the Setup Guide’s **Continue** still advances with an unchanged pet. If macOS requires a restart after you allow Input Monitoring, **Restart Waddly** relaunches the app and returns you to the same setup step.
-
-To create another character after registration, open **Change Character…** from the menu bar or the pet’s right-click menu. The **Create another character** card stays available with a saved pet or a staged image: **Copy prompt** copies the current app language’s generation prompt without opening a browser; **Copy the prompt and open ChatGPT** also opens ChatGPT. Paste the prompt into your chosen image generator and import the resulting PNG here. Your current pet and any staged image are unchanged by copying; only Apply saves a replacement. Waddly does not upload images to the generator.
-
-If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**.
-
-Images are stored on your Mac as individual PNG frames, plus the optional original 3×3 sheet and its crop/alignment metadata when the frame editor was used. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
+- **Create another character:** From **Change Character…**, you can copy the generation prompt in the current app language or open ChatGPT at any time.
+- **Everyday settings:** Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
+- **Local-only storage:** Imported images and alignment edits are saved only on your Mac without modifying the original files. Waddly never uploads your images or prompts to external servers.
 
 ## Privacy
 
