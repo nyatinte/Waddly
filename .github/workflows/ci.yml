@@ -38,7 +38,7 @@ jobs:
 
       - name: Identify Swift toolchain
         id: swift-toolchain
-        run: echo "key=$({ swift --version; xcodebuild -version; echo "$ImageVersion"; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+        run: echo "key=$({ swift --version; xcodebuild -version; xcrun --sdk macosx --show-sdk-build-version; sw_vers -productVersion; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Swift safety checker build
         uses: actions/cache@v4.3.0
