@@ -31,9 +31,9 @@
       "Tests/WaddlyAppTests/PetShareDialogTests.swift:104",
       "Tests/WaddlyCoreTests/PetClipboardImporterTests.swift:25",
       "Tests/WaddlyCoreTests/PetClipboardImporterTests.swift:37",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:100",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:123",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:78",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:103",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:126",
+      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:81",
       "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:11",
       "Tests/WaddlyCoreTests/PetImageStorageManifestTests.swift:12",
       "Tests/WaddlyAppTests/ShareSnapshotTests.swift:99",
@@ -64,9 +64,7 @@
       "Sources/WaddlyApp/Waddly.swift:109",
       "Sources/WaddlyApp/Waddly.swift:154",
       "Sources/WaddlyApp/Waddly.swift:155",
-      "Sources/WaddlyApp/Waddly.swift:172",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:154",
-      "Tests/WaddlyCoreTests/PetImageCoreTests.swift:169"
+      "Sources/WaddlyApp/Waddly.swift:172"
     ]
   }
 }

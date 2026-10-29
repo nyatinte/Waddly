@@ -3,6 +3,7 @@ import ImageIO
 import Testing
 import UniformTypeIdentifiers
 import WaddlyCore
+import zlib
 
 @Test func rejectsInvalidPngData() {
     let invalidData = Data("not a PNG".utf8)
@@ -36,7 +37,9 @@ import WaddlyCore
 }
 
 @Test func rejectsValidPngDataLargerThanTheFileLimit() throws {
-    let data = try #require(makeLargePNG(width: 3072, height: 3072))
+    let data = try #require(makeOversizedPNG())
+    let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+    #expect(CGImageSourceCreateImageAtIndex(source, 0, nil) != nil)
 
     #expect(data.count > PetSpriteSheetImporter.maximumFileSize)
     #expect(PetSpriteSheetImporter.frames(from: data) == nil)
@@ -149,46 +152,23 @@ import WaddlyCore
     #expect(!FileManager.default.fileExists(atPath: directory.path))
 }
 
-private func makeLargePNG(width: Int, height: Int) -> Data? {
-    let bytesPerRow = width * 4
-    let pixelBytes = UnsafeMutablePointer<UInt8>.allocate(capacity: bytesPerRow * height)
-    defer { pixelBytes.deallocate() }
+private func makeOversizedPNG() -> Data? {
+    guard let png = makePNG(width: 1026, height: 1026) else { return nil }
 
-    var state: UInt32 = 0xA5A5_1234
-    for offset in stride(from: 0, to: bytesPerRow * height, by: 4) {
-        for channel in 0 ..< 3 {
-            state ^= state << 13
-            state ^= state >> 17
-            state ^= state << 5
-            pixelBytes[offset + channel] = UInt8(truncatingIfNeeded: state)
-        }
-        pixelBytes[offset + 3] = 255
+    // A valid private ancillary chunk makes the PNG oversized without encoding millions of pixels.
+    var chunk = Data("waDd".utf8)
+    chunk.append(Data(count: PetSpriteSheetImporter.maximumFileSize))
+    let checksum = chunk.withUnsafeBytes { bytes in
+        crc32(0, bytes.bindMemory(to: UInt8.self).baseAddress, uInt(bytes.count))
     }
-
-    guard let context = CGContext(
-        data: UnsafeMutableRawPointer(pixelBytes),
-        width: width,
-        height: height,
-        bitsPerComponent: 8,
-        bytesPerRow: bytesPerRow,
-        space: CGColorSpaceCreateDeviceRGB(),
-        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-    ), let image = context.makeImage() else {
-        return nil
-    }
-
-    let data = NSMutableData()
-    guard let destination = CGImageDestinationCreateWithData(
-        data,
-        UTType.png.identifier as CFString,
-        1,
-        nil
-    ) else {
-        return nil
-    }
-    CGImageDestinationAddImage(destination, image, nil)
-    guard CGImageDestinationFinalize(destination) else { return nil }
-    return data as Data
+    var length = UInt32(PetSpriteSheetImporter.maximumFileSize).bigEndian
+    var crc = UInt32(checksum).bigEndian
+    var data = Data(png.dropLast(12)) // Insert before IEND.
+    withUnsafeBytes(of: &length) { data.append(contentsOf: $0) }
+    data.append(chunk)
+    withUnsafeBytes(of: &crc) { data.append(contentsOf: $0) }
+    data.append(png.suffix(12))
+    return data
 }
 
 private func makePNG(
@@ -250,10 +230,17 @@ private func makePNG(
 }
 
 @Test func inspectionUsesTheSameFileLimitAsFrames() throws {
-    let data = try #require(makeLargePNG(width: 3072, height: 3072))
+    let data = try #require(makeOversizedPNG())
     guard case let .failure(reason) = PetSpriteSheetImporter.inspect(data) else {
         Issue.record("a PNG over the file limit must fail inspection")
         return
     }
     #expect(reason == .fileTooLarge)
+}
+
+@Test func oversizedFixtureWouldBeDownsampledWithoutThePadding() throws {
+    let png = try #require(makePNG(width: 1026, height: 1026))
+    let optimized = try #require(PetSpriteSheetImporter.optimizedImage(from: png))
+    #expect(optimized.wasDownsampled)
+    #expect(optimized.pngData.count < PetSpriteSheetImporter.maximumFileSize)
 }
