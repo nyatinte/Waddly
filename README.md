@@ -18,7 +18,7 @@
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
 - The pet joins every desktop Space. It does not appear above a fullscreen app.
-- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames) locally. You can copy the video or the image, and “Post on X” opens the composer with only `#ShareMyWaddly`, so you write the post and attach the file yourself. Waddly has no share save-to-file action.
+- Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
 
 ## Use your own pet
 
@@ -84,33 +84,28 @@ You can also create the sprite sheet by hand.
 
 ### Image requirements
 
-- Transparent PNG with a square canvas
-- Both dimensions divisible by 3
-- Maximum file size: 20 MB; maximum side length: 4096 px
+- Prepare a square transparent PNG (9 frames in a 3×3 grid) with width and height divisible by 3.
+- Order the 9 frames from top-left to bottom-right: 2 Idle, 4 Typing, 1 Enter, and 2 Sleep frames (the prompt above generates this order).
 
-An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. After importing a 3×3 sheet, **Adjust frames…** opens a crop and alignment editor over the staged draft. It exposes exactly nine fixed cells (2 Idle, 4 Typing, 1 Enter, 2 Sleep); resizing the 1:1 crop only narrows the visible frame, while the Align tool moves the character itself. Pan and zoom the canvas with the trackpad or ⌘+/⌘−/⌘0, and check Before/After with the center crosshair.
+### Quick setup
 
-Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. The shared character screen accepts a chosen PNG, a window-wide PNG drop, or **Paste from Clipboard** (⌘V). Changes stay a draft until you press Continue or Apply.
+1. Open **Setup Guide…** (or **Change Character…** from the menu after initial setup) and import a PNG by choosing a file, dragging and dropping, or pressing ⌘V. If you do not have an image yet, click **Try the sample pet first** to use the bundled pet.
+2. If the character's position shifts between cells, open **Adjust frames…** to align the crop and position while checking the preview.
+3. Click **Apply** (or **Continue** during initial setup) to update your desktop pet.
 
-Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Disabled commands explain what they need in native menu help, and at least one of Dock or menu bar access must remain on.
+### Tips and local storage
 
-When Waddly is the frontmost app, the menu bar also carries the standard menus: **Waddly** (**About Waddly** shows the version and build, plus Hide and Quit), **Edit** (⌘C/⌘V in text fields), and **Window**.
-
-After setup, use **Set Up Input Monitoring…** for permission, status, and recovery guidance, and **Change Character…** to replace or edit images. Initial or unfinished setup opens **Setup Guide…** instead. The Setup Guide and **Change Character…** share one character screen, and a chosen image stays a draft until you press Continue or Apply. A failed save keeps the draft for another try, and closing with a changed draft asks before discarding it. The shared screen says “Currently in use” while it shows the saved pet and “Changes not saved” while a draft would replace it; **Apply** stays unavailable until the draft differs from the saved pet, while the Setup Guide’s **Continue** still advances with an unchanged pet. If macOS requires a restart after you allow Input Monitoring, **Restart Waddly** relaunches the app and returns you to the same setup step.
-
-To create another character after registration, open **Change Character…** from the menu bar or the pet’s right-click menu. The **Create another character** card stays available with a saved pet or a staged image: **Copy prompt** copies the current app language’s generation prompt without opening a browser; **Copy the prompt and open ChatGPT** also opens ChatGPT. Paste the prompt into your chosen image generator and import the resulting PNG here. Your current pet and any staged image are unchanged by copying; only Apply saves a replacement. Waddly does not upload images to the generator.
-
-If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**.
-
-Images are stored on your Mac as individual PNG frames, plus the optional original 3×3 sheet and its crop/alignment metadata when the frame editor was used. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
+- When creating a new character, open **Change Character…** to copy the generation prompt in the current app language or open ChatGPT at any time.
+- Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
+- Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly never sends your images or prompts to external servers.
 
 ## Privacy
 
-Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (carrying `#ShareMyWaddly` and no post text); attach the asset and write your own post.
+Keyboard events are used only to drive animations; Waddly never stores, logs, or transmits typed text or key codes. Imported images and “Share Pet” exports are processed and stored locally on your Mac and are never uploaded automatically (“Post on X” only opens a composer prefilled with `#ShareMyWaddly`, so you attach the media and publish the post yourself).
 
 ## Measured memory
 
-The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target (a known exception in 1.0). See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite. The frame editor reuses one Before and one After preview when their image inputs are unchanged, rather than regenerating them for zoom or guide changes. Editor cleanup drops its decoded-sheet and preview references; closing a sheet does not guarantee that process memory immediately returns to its previous level.
+The app targets a physical memory footprint below 100 MB in typical use. See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite.
 
 ## Contributing
 
