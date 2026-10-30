@@ -6,65 +6,32 @@ import WaddlyCore
 /// First-run journey coverage: the sample shortcut, and the progress that survives an interrupted
 /// permission hand-off. Kept apart from `SetupWizardTests` so each suite stays readable.
 @Suite(.serialized) @MainActor struct SetupWizardJourneyTests {
-    @Test func tryingTheSampleCommitsTheBundledSampleInPlace() async throws {
+    @Test func sharedScreenStagesSampleUntilNext() async throws {
         let state = Fixture.State()
-        var recorded: [Int?] = []
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            confirmResult: true,
-            onStepChange: { recorded.append($0) }
-        )
+        let wizard = try Fixture.makeWizard(state: state, demoURL: Fixture.sheetURL(), confirmResult: true)
         defer { wizard.close() }
-        #expect(wizard.canTrySample)
+        let sample = try #require(wizard.demoImages)
+        wizard.characterImportModel.stageSample(sample, name: "Sample")
+        #expect(wizard.characterImportModel.hasStagedCandidate)
+        #expect(wizard.characterImportModel.isDirty)
+        #expect(state.confirmCount == 0)
         #expect(!wizard.hasImage)
-
-        await wizard.trySamplePet().value
-
-        #expect(wizard.didUseSamplePet)
-        #expect(wizard.didRegisterPet)
+        await wizard.commitCharacterImportAndContinue().value
+        #expect(state.confirmCount == 1)
         #expect(wizard.hasImage)
-        #expect(wizard.importedFileName == nil)
-        // Choosing the sample is a pet choice, not a step change: progress stays untouched.
-        #expect(wizard.currentStep == .pet)
-        #expect(recorded.isEmpty)
-        #expect(!wizard.canTrySample)
-        #expect(wizard.previewPane.hasPet)
+        #expect(wizard.currentStep == .monitoring)
     }
 
-    @Test func tryingTheSampleNeverReplacesAnExistingPet() async throws {
+    @Test func discardingStagedSampleDoesNotSaveIt() throws {
         let state = Fixture.State()
-        let own = try Fixture.sheetImages()
-        state.images = own
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            confirmResult: true
-        )
+        let wizard = try Fixture.makeWizard(state: state, demoURL: Fixture.sheetURL())
         defer { wizard.close() }
-        // The shortcut is not offered while a pet is stored, and a stray call writes nothing.
-        #expect(!wizard.canTrySample)
-        await wizard.trySamplePet().value
-        #expect(!wizard.didUseSamplePet)
-        #expect(wizard.currentPetImages()[.idle].first === own[.idle].first)
-    }
-
-    @Test func importingARealSheetClearsTheSampleChoice() async throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            previewResult: Fixture.sheetImages(),
-            confirmResult: true
-        )
-        defer { wizard.close() }
-        await wizard.trySamplePet().value
-        #expect(wizard.didUseSamplePet)
-
-        let sheetURL = try Fixture.sheetURL()
-        await wizard.importImage(from: sheetURL).value
-        #expect(!wizard.didUseSamplePet)
-        #expect(wizard.importedFileName == sheetURL.lastPathComponent)
+        let sample = try #require(wizard.demoImages)
+        wizard.characterImportModel.stageSample(sample, name: "Sample")
+        wizard.characterImportModel.discard()
+        #expect(state.confirmCount == 0)
+        #expect(!wizard.characterImportModel.hasStagedCandidate)
+        #expect(!wizard.hasImage)
     }
 
     /// Closing part-way keeps the saved step. On relaunch macOS has applied the grant, but the tap
@@ -175,7 +142,7 @@ import WaddlyCore
 
         // The delivered-key callback repaints the step, and only then is it ready.
         state.observedReaction = true
-        wizard.monitoringDidObserveReaction()
+        wizard.monitoringDidObserveReaction(isEnter: false)
         #expect(wizard.monitoringReadiness == .reactionObserved)
         #expect(wizard.isMonitoringReady)
         wizard.goNext()
@@ -206,7 +173,7 @@ import WaddlyCore
 
         // A delivered key confirms it from the completion page too.
         state.observedReaction = true
-        wizard.monitoringDidObserveReaction()
+        wizard.monitoringDidObserveReaction(isEnter: false)
         #expect(wizard.isMonitoringReady)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoring)
     }
@@ -229,25 +196,5 @@ import WaddlyCore
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoring)
         wizard.renderCurrentStep()
         #expect(wizard.isMonitoringReady)
-    }
-
-    /// Two rapid clicks on the sample shortcut must start one commit, not two writes.
-    @Test func rapidSampleRequestsCommitOnce() async throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            demoURL: Fixture.sheetURL(),
-            confirmResult: true
-        )
-        defer { wizard.close() }
-
-        let first = wizard.trySamplePet()
-        let second = wizard.trySamplePet()
-        _ = await first.value
-        _ = await second.value
-
-        #expect(state.confirmCount == 1)
-        #expect(wizard.didUseSamplePet)
-        #expect(wizard.hasImage)
     }
 }

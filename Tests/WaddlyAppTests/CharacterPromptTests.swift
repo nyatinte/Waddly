@@ -112,7 +112,6 @@ import WaddlyCore
         }
         let content = try #require(controller.window?.contentView)
         let host = try #require(content.subviews.first as? NSHostingView<CharacterImportView>)
-        #expect(host.rootView.showsPrompt)
         #expect(model.hasStagedCandidate)
         #expect(!model.isDirty)
         model.refreshClipboardAvailability(from: pasteboard)

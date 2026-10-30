@@ -76,9 +76,3 @@ enum SpriteSheetPrompt {
         return pasteboard.setString(prompt, forType: .string) ? .copied : .copyFailed
     }
 }
-
-extension SetupWizardController {
-    static func loadPrompt(for localization: LocalizationController, resourcesAt resourceURL: URL?) -> String {
-        SpriteSheetPrompt.load(for: localization, resourcesAt: resourceURL)
-    }
-}

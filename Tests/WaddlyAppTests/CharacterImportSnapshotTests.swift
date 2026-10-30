@@ -95,12 +95,12 @@ import WaddlyCore
 
     /// The Pet step's inline import failure. The monitoring states live in
     /// `SetupMonitoringSnapshotTests`; this is the one setup status surface without a home there.
-    @Test func capturesSetupPetImportError() throws {
+    @Test func capturesSetupPetImportError() async throws {
         guard CaptureHarness.isEnabled else { return }
         try CaptureHarness.prepare()
         for language in [AppLanguage.english, .japanese] {
             for dark in [false, true] {
-                try captureSetupPetError(language: language, dark: dark)
+                try await captureSetupPetError(language: language, dark: dark)
             }
         }
     }
@@ -328,14 +328,6 @@ private extension CharacterImportSnapshotTests {
         let content = try #require(wizard.window?.contentView)
         let tag = CaptureHarness.suffix(language, dark)
 
-        // The ChatGPT hand-off lands here before the image exists, with the note that says so.
-        wizard.showChatGPTGuide()
-        // The guide offers the link and the clipboard as separate actions.
-        try CaptureHarness.write(content, dark: dark, named: "setup-prompt-guide-\(tag)")
-        wizard.openPromptInChatGPT()
-        try CaptureHarness.write(content, dark: dark, named: "setup-chatgpt-handoff-\(tag)")
-
-        wizard.beginCharacterImport()
         try CaptureHarness.write(content, dark: dark, named: "setup-empty-\(tag)")
         try await wizard.characterImportModel.stageFiles(at: [CaptureHarness.sheetURL()])
         CaptureHarness.showStagedFrames(wizard.characterImportModel, in: content)
@@ -387,10 +379,10 @@ private extension CharacterImportSnapshotTests {
     }
 
     /// The Pet step's inline import failure, rendered from the same shell as the saved state.
-    func captureSetupPetError(language: AppLanguage, dark: Bool) throws {
+    func captureSetupPetError(language: AppLanguage, dark: Bool) async throws {
         let wizard = try SetupWizardFixture.makeWizard(language: language)
         defer { wizard.close() }
-        wizard.didFailImport = true
+        await wizard.characterImportModel.stageFiles(at: [URL(fileURLWithPath: "/invalid.jpg")])
         try CaptureHarness.write(
             #require(wizard.window?.contentView),
             dark: dark,

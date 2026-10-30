@@ -90,10 +90,7 @@ import Testing
         }
         let root = try #require(wizard.window?.contentView as? PetImageDropView)
         let jpg = URL(fileURLWithPath: "/tmp/native-setup.jpg")
-        #expect(try !root.performFileURLDrop(from: fileDropPasteboard([jpg])))
-        #expect(!wizard.isComposingCharacter)
-
-        wizard.beginCharacterImport()
+        #expect(wizard.isComposingCharacter)
         let png = try SetupWizardFixture.sheetURL()
         await wizard.characterImportModel.stageFiles(at: [png])
         let staged = try #require(wizard.characterImportModel.stagedFrames)

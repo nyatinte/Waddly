@@ -3,13 +3,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
 
-/// Why a pet image set is being committed. A user's own file must always win, so the sample
-/// convenience is refused once any pet is already stored, however the current window got there.
-enum PetImageCommitSource {
-    case userFile
-    case sample
-}
-
 @MainActor
 final class SetupWizardController: NSWindowController, NSWindowDelegate, ObservableObject {
     /// Two setup steps, then a completion screen that hands the pet over to the desktop.
@@ -19,25 +12,12 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         case completed
     }
 
-    /// Inline result of handing the prompt to ChatGPT. `nil` means the user has not tried yet.
-    typealias PromptActionFeedback = SpriteSheetPrompt.Feedback
-
     let localization: LocalizationController
     /// Reuses the permission page after onboarding without reopening character setup or progress.
     let isMonitoringSettings: Bool
     let promptResourcesURL: URL?
 
-    var prompt: String {
-        SetupWizardController.loadPrompt(for: localization, resourcesAt: promptResourcesURL)
-    }
-
-    /// Reads a sheet without writing anything; a read failure leaves the stored set untouched.
-    let onPreviewImage: @MainActor (URL) async -> PetImageSet?
-    /// Commits a set the wizard just read; there is no separate confirmation step in the wizard.
-    let onConfirmImage: @MainActor (PetImageSet, PetImageCommitSource) async -> Bool
-    /// Commits a reviewed draft with the outcome the shared import screen needs. Defaults to deriving
-    /// from `onConfirmImage`, so a caller that has not migrated keeps the same behavior.
-    let onCommitCharacter: @MainActor (PetImageSet) async -> CharacterCommitOutcome
+    let onCommitCharacter: @MainActor (PetImageSet, PetImageCommitSource) async -> CharacterCommitOutcome
     let currentPetImages: @MainActor () -> PetImageSet
     /// Owns the permission rules, the waiting, and the System Settings hand-off.
     let permission: PermissionService
@@ -63,40 +43,18 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     var demoImages: PetImageSet?
 
     @Published var currentStep = Step.pet
-    @Published var isShowingChatGPTGuide = false
-    @Published var didRegisterPet = false
-    /// Set only when the user explicitly chose the bundled sample, so the page can say which pet
-    /// is active. It is session state, like `importedFileName`.
-    @Published var didUseSamplePet = false
-    @Published var importedFileName: String?
-    @Published var promptFeedback: PromptActionFeedback?
-    /// Set when a chosen sheet could not be read, so the page can explain it in place.
-    @Published var didFailImport = false
-    /// Identifies the interaction that may publish asynchronous import feedback.
-    var importFeedbackGeneration = UUID()
     /// The confirmation the step last repainted, so a delivered key repaints the page once.
     var didRenderConfirmedReaction = false
-    /// The in-flight sample commit, so a rapid second click cannot start a second write.
-    var sampleCommitTask: Task<Void, Never>?
-    /// How many file imports are between the user's choice and their commit. The sample is refused
-    /// while any of them is pending, because a sample commit queued behind one would replace the pet
-    /// the user asked for. Published so the shortcut disappears as soon as an import starts instead
-    /// of staying visible and ignoring clicks.
-    @Published var pendingImportCount = 0
     @Published var isShowingTroubleshooting = false
-    /// True while the shared character import screen replaces the method list inside the Pet step.
-    @Published var isComposingCharacter = false
-    /// True when setup handed the prompt to ChatGPT and jumped ahead to the drop screen, so that
-    /// screen explains why the image it waits for does not exist yet.
-    @Published var isAwaitingGeneratedSheet = false
+    var isComposingCharacter: Bool {
+        !isMonitoringSettings && currentStep == .pet
+    }
 
     init(
         localization: LocalizationController,
         promptResourcesURL: URL? = Bundle.main.resourceURL,
         demoPetURL: URL? = Bundle.main.url(forResource: "demo-pet", withExtension: "png"),
-        onPreviewImage: @escaping @MainActor (URL) async -> PetImageSet?,
-        onConfirmImage: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> Bool,
-        onCommitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
+        onCommitCharacter: @escaping @MainActor (PetImageSet, PetImageCommitSource) async -> CharacterCommitOutcome,
         currentPetImages: @escaping @MainActor () -> PetImageSet,
         permission: PermissionService,
         presenter: WindowPresenter = .live,
@@ -113,11 +71,7 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         self.localization = localization
         self.isMonitoringSettings = isMonitoringSettings
         self.promptResourcesURL = promptResourcesURL
-        self.onPreviewImage = onPreviewImage
-        self.onConfirmImage = onConfirmImage
-        self.onCommitCharacter = onCommitCharacter ?? { images in
-            await onConfirmImage(images, .userFile) ? .committed : .rejected
-        }
+        self.onCommitCharacter = onCommitCharacter
         self.currentPetImages = currentPetImages
         self.permission = permission
         self.pasteboard = pasteboard
@@ -161,22 +115,22 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         currentPetImages().isComplete
     }
 
-    /// The sample shortcut is offered only while the pet store is empty and no file import is still
-    /// on its way to a commit, so choosing it can never replace a pet the user asked for. It is
-    /// explicit: nothing is written until the user picks it.
     var canTrySample: Bool {
-        !hasImage && demoImages != nil && pendingImportCount == 0
+        !hasImage && demoImages != nil
     }
 
-    /// The shared acquisition → inspect → commit state machine, created once and rebased every time
-    /// the import screen opens. Staging writes nothing; the existing Continue/commit path does.
     lazy var characterImportModel = CharacterImportModel(
         currentImages: { [weak self] in self?.currentPetImages() ?? PetImageSet() },
         commit: { [weak self] images in
             guard let self else { return .rejected }
-            return await onCommitCharacter(images)
+            return await commitCharacterDraft(images)
         }
     )
+
+    private func commitCharacterDraft(_ images: PetImageSet) async -> CharacterCommitOutcome {
+        let source: PetImageCommitSource = characterImportModel.isSampleCandidate ? .sample : .userFile
+        return await onCommitCharacter(images, source)
+    }
 
     var isMonitoringGranted: Bool {
         permission.isGranted
@@ -196,10 +150,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// The wizard itself is the drag guide, so it never hands off to a floating panel.
     var isShowingGuide: Bool {
         permission.isGuiding
-    }
-
-    var isShowingManualSteps: Bool {
-        permission.isShowingManualSteps
     }
 
     /// The guide is the one presentation that is not the designed two-column page. While it is on
@@ -298,7 +248,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     func windowWillClose(_ notification: Notification) {
-        clearImportFeedback()
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
@@ -316,8 +265,6 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
         return frames
     }
 
-    /// The native macOS announcement API. The wizard calls it only when an inline error appears, so
-    /// VoiceOver hears the reason once; re-rendering never re-announces.
     static func postAccessibilityAnnouncement(_ message: String) {
         NSAccessibility.post(
             element: NSApp as Any,
@@ -334,7 +281,7 @@ extension SetupWizardController {
     func renderCurrentStep() {
         updateGuidePresentation()
         if let contentView = window?.contentView as? PetImageDropView {
-            if isComposingCharacter, !isMonitoringSettings {
+            if isComposingCharacter {
                 contentView.registerForDraggedTypes([.fileURL])
             } else {
                 contentView.unregisterDraggedTypes()
@@ -346,6 +293,7 @@ extension SetupWizardController {
     }
 
     private func updatePreview() {
+        previewPane.setReactionTest(currentStep == .monitoring)
         let images = currentPetImages()
         if images.isComplete {
             previewPane.showPet(images, caption: previewCaption, sleeping: shouldSleepInPreview)

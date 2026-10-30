@@ -7,6 +7,18 @@ import WaddlyCore
 /// The two states the shared character screen can show once it has a complete frame set — the saved
 /// pet and an unsaved draft — and the footer action each host allows in those states.
 @Suite(.serialized) @MainActor struct CharacterDraftStatusTests {
+    @Test func samplePreviewDistinguishesAnExampleFromASelectedDraft() throws {
+        let sample = try SetupWizardFixture.sheetImages()
+        let model = makeModel(current: PetImageSet())
+        var view = try makeView(model: model, requiresChange: false)
+        view.sampleImages = sample
+        #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleUnselected))
+        model.stageSample(sample, name: "Sample")
+        #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleSelected))
+        model.discard()
+        #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleUnselected))
+    }
+
     @Test func aSavedPetIsCurrentInUseAndOnlyChangeCharacterDisablesApply() throws {
         let saved = try SetupWizardFixture.sheetImages()
         let model = makeModel(current: saved)

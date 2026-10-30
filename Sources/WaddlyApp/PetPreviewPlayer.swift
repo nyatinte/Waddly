@@ -41,6 +41,15 @@ final class PetPreviewPlayer {
         start(shots: Self.demoShots(for: images), loops: true)
     }
 
+    /// The reaction test stays idle until a real key event arrives.
+    func playIdle() {
+        start(shots: Self.shotSequence(for: .idle, in: images), loops: true)
+    }
+
+    func playReaction(_ category: PetImageCategory) {
+        start(shots: Self.shotSequence(for: category, in: images), loops: false, idleAfter: true)
+    }
+
     /// The permission step shows the pet asleep until reactions are actually live.
     func playSleeping() {
         start(shots: Self.shotSequence(for: .sleep, in: images, seconds: 2.0), loops: true)
@@ -71,7 +80,7 @@ final class PetPreviewPlayer {
 
     /// Shows each shot for its own duration before advancing. The first shot must be held, not
     /// immediately overwritten: a one-shot category such as Enter would otherwise never be seen.
-    private func start(shots: [Shot], loops: Bool) {
+    private func start(shots: [Shot], loops: Bool, idleAfter: Bool = false) {
         stop()
         guard !shots.isEmpty else {
             showImage(nil)
@@ -89,7 +98,11 @@ final class PetPreviewPlayer {
                 await sleep(shot.seconds)
                 guard !Task.isCancelled, token == generation else { return }
                 if !loops, index >= shots.count {
-                    playLoop()
+                    if idleAfter {
+                        playIdle()
+                    } else {
+                        playLoop()
+                    }
                     return
                 }
             }

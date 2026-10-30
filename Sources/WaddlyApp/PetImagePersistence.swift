@@ -1,6 +1,11 @@
 import AppKit
 import WaddlyCore
 
+enum PetImageCommitSource {
+    case userFile
+    case sample
+}
+
 extension AppDelegate {
     /// Serialize complete image transactions, including the manifest commit (run on a worker).
     ///
@@ -35,12 +40,14 @@ extension AppDelegate {
         }
     }
 
-    /// Commit a reviewed character draft through the store's serialized queue.
-    ///
-    /// No alert: the shared import screen shows its own inline retry message, so a save failure must
-    /// come back as `.failed` rather than as a sheet over a window the user is still working in.
-    func commitCharacterImages(_ images: PetImageSet) async -> CharacterCommitOutcome {
-        switch await imageStore.confirmPetImage(images) {
+    /// Check the sample guard inside the store queue, after any earlier commits have finished.
+    func commitCharacterImages(
+        _ images: PetImageSet,
+        source: PetImageCommitSource = .userFile
+    ) async -> CharacterCommitOutcome {
+        switch await imageStore.confirmPetImage(images, accepting: {
+            Self.shouldCommitPetImages(source: source, petIsStored: self.hasCompletePetImageSet)
+        }) {
         case .confirmed: .committed
         case .failed: .failed
         case .aborted: .rejected

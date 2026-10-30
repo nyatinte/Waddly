@@ -8,11 +8,9 @@ import Testing
         defer { wizard.close() }
         let content = try #require(wizard.window?.contentView as? PetImageDropView)
         #expect(content.onDrop != nil)
-        #expect(!content.registeredDraggedTypes.contains(.fileURL))
-        #expect(!wizard.previewPane.registeredDraggedTypes.contains(.fileURL))
-        wizard.beginCharacterImport()
         #expect(content.registeredDraggedTypes.contains(.fileURL))
-        wizard.cancelCharacterImport()
+        #expect(!wizard.previewPane.registeredDraggedTypes.contains(.fileURL))
+        wizard.setStep(.monitoring)
         #expect(!content.registeredDraggedTypes.contains(.fileURL))
     }
 }

@@ -4,33 +4,6 @@ import Testing
 import WaddlyCore
 
 @Suite(.serialized) @MainActor struct SetupWizardPreviewTests {
-    @Test func choosingASheetRegistersItRightAway() async throws {
-        let images = try Fixture.sheetImages()
-        let wizard = try Fixture.makeWizard(
-            previewResult: images,
-            confirmResult: true
-        )
-        defer { wizard.close() }
-        let url = try Fixture.sheetURL()
-        await wizard.importImage(from: url).value
-        #expect(wizard.didRegisterPet)
-        #expect(wizard.importedFileName == url.lastPathComponent)
-        #expect(wizard.previewPane.hasPet)
-    }
-
-    @Test func unreadableSheetLeavesThePreviousSetAlone() async throws {
-        let state = Fixture.State()
-        let previous = try Fixture.sheetImages()
-        state.images = previous
-        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
-        defer { wizard.close() }
-        try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(wizard.hasImage)
-        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
-        #expect(!wizard.didRegisterPet)
-        #expect(wizard.currentStep == .pet)
-    }
-
     @Test func previewPlayerHoldsEachShotBeforeAdvancing() async throws {
         let images = try Fixture.sheetImages()
         let view = NSImageView()
@@ -53,6 +26,32 @@ import WaddlyCore
         player?.stop()
         #expect(seen.first == ObjectIdentifier(images[.enter][0]))
         #expect(seen.count >= 2)
+    }
+
+    @Test(arguments: [PetImageCategory.typing, .enter])
+    func reactionPreviewPlaysTheKeyThenReturnsToIdle(category: PetImageCategory) async throws {
+        let images = try Fixture.sheetImages()
+        let view = NSImageView()
+        var seen: [ObjectIdentifier] = []
+        var player: PetPreviewPlayer?
+        let expectedCount = images[category].count + 1
+        player = PetPreviewPlayer(showImage: { view.image = $0 }, sleep: { _ in
+            if let image = view.image {
+                seen.append(ObjectIdentifier(image))
+            }
+            if seen.count >= expectedCount {
+                player?.stop()
+            }
+        })
+        player?.setImages(images)
+        player?.playReaction(category)
+        for _ in 0 ..< 200 where seen.count < expectedCount {
+            await Task.yield()
+        }
+        player?.stop()
+        #expect(seen.count == expectedCount)
+        #expect(seen.first == ObjectIdentifier(images[category][0]))
+        #expect(seen.last == ObjectIdentifier(images[.idle][0]))
     }
 
     @Test func previewImageViewUpdatesAndClearsItsLayer() throws {

@@ -318,7 +318,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             guard let self else { return }
             animationController.handleKeyDown(isEnter: isEnter)
             // A delivered key is what actually confirms reactions; let an open guide repaint once.
-            setupWizardController?.monitoringDidObserveReaction()
+            setupWizardController?.monitoringDidObserveReaction(isEnter: isEnter)
         }
         Task {
             _ = await queueImageUpdate {

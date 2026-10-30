@@ -4,115 +4,24 @@ import UniformTypeIdentifiers
 // MARK: - Actions
 
 extension SetupWizardController {
-    /// Reading and saving happen in one step: choosing a file is already the user's decision.
-    /// Cancelling the picker leaves everything untouched, and "画像を変更" is always available.
-    @discardableResult
-    func importImage(from url: URL) -> Task<Void, Never> {
-        clearImportFeedback()
-        let generation = importFeedbackGeneration
-        // Counted before the task starts, so a sample click made while this import is still decoding
-        // or committing sees it instead of racing the first await.
-        pendingImportCount += 1
-        return Task { [weak self] in
-            guard let self else { return }
-            defer { pendingImportCount -= 1 }
-            guard let images = await onPreviewImage(url) else {
-                // A previous decode must not restore feedback after navigation or a newer attempt.
-                guard importFeedbackGeneration == generation else { return }
-                didFailImport = true
-                announce(localizedString(.petImportErrorMessage))
-                renderCurrentStep()
-                return
-            }
-            if await onConfirmImage(images, .userFile) {
-                importedFileName = url.lastPathComponent
-                didRegisterPet = true
-                didUseSamplePet = false
-                if importFeedbackGeneration == generation {
-                    didFailImport = false
-                }
-            }
+    /// A real key both confirms readiness and drives the matching preview animation.
+    func monitoringDidObserveReaction(isEnter: Bool) {
+        guard currentStep == .monitoring || currentStep == .completed else { return }
+        if isMonitoringReady != didRenderConfirmedReaction {
             renderCurrentStep()
         }
-    }
-
-    /// Uses the bundled sample as the pet, without a file picker. The commit goes through the same
-    /// path as an import, so the sample becomes a real, local pet image; the user stays on this
-    /// step and can see which pet is active. Offered only while the store is empty and no import is
-    /// pending, so it never replaces a pet the user asked for, and it never touches the saved step.
-    @discardableResult
-    func trySamplePet() -> Task<Void, Never> {
-        // A rapid second click must not start a second write: hand back the commit already running.
-        if let inFlight = sampleCommitTask {
-            return inFlight
+        if currentStep == .monitoring, isMonitoringReady {
+            previewPane.reactToKey(isEnter: isEnter)
         }
-        clearImportFeedback()
-        let task = Task { [weak self] in
-            guard let self else { return }
-            defer { sampleCommitTask = nil }
-            guard canTrySample, let sample = demoImages else { return }
-            guard await onConfirmImage(sample, .sample) else {
-                // A refusal can still change the page: another window may have committed a pet in the
-                // meantime, so repaint instead of leaving the stale option list behind.
-                renderCurrentStep()
-                return
-            }
-            didUseSamplePet = true
-            didRegisterPet = true
-            importedFileName = nil
-            renderCurrentStep()
-        }
-        sampleCommitTask = task
-        return task
-    }
-
-    /// A real key reached the app while the guide was open. Repaints the step once, when the
-    /// confirmation actually changes, so the status can move from “waiting” to “confirmed”.
-    func monitoringDidObserveReaction() {
-        guard currentStep == .monitoring || currentStep == .completed,
-              isMonitoringReady != didRenderConfirmedReaction
-        else { return }
-        renderCurrentStep()
-    }
-
-    /// Invalidates pending feedback without cancelling image commits already in progress.
-    func clearImportFeedback() {
-        importFeedbackGeneration = UUID()
-        didFailImport = false
-    }
-
-    @objc func showChatGPTGuide() {
-        isShowingChatGPTGuide = true
-        promptFeedback = nil
-        clearImportFeedback()
-        renderCurrentStep()
-    }
-
-    @objc func importFromPanel() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.png]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        panel.prompt = localizedString(.setupChoosePNG)
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        importImage(from: url)
     }
 
     // MARK: - Shared character import screen
 
-    /// Opens the shared import screen inside the Pet step. Staging writes nothing; the existing
-    /// Continue/commit path does, so setup progress and the sample rule are untouched.
-    func beginCharacterImport(awaitingGeneratedSheet: Bool = false) {
-        clearImportFeedback()
-        isShowingChatGPTGuide = false
+    func beginCharacterImport() {
         characterImportModel.reload()
-        isComposingCharacter = true
-        isAwaitingGeneratedSheet = awaitingGeneratedSheet
         renderCurrentStep()
     }
 
-    /// The setup shell owns commit: Continue applies the staged draft, then advances the step.
-    /// A failed save stays on this step with the shared screen's inline retry and the draft intact.
     @discardableResult
     func commitCharacterImportAndContinue() -> Task<Void, Never> {
         Task { [weak self] in
@@ -121,28 +30,11 @@ extension SetupWizardController {
                 renderCurrentStep()
                 return
             }
-            importedFileName = characterImportModel.sourceName
-            didRegisterPet = true
-            didUseSamplePet = false
             stopEmbeddedCharacterPreview()
-            isComposingCharacter = false
-            isAwaitingGeneratedSheet = false
             goNext()
         }
     }
 
-    /// Leaving the shared screen. A staged-but-uncommitted change asks first; an untouched screen
-    /// returns to the method list immediately.
-    func cancelCharacterImport() {
-        guard !characterImportModel.isApplying else { return }
-        guard characterImportModel.isDirty else {
-            leaveCharacterImport()
-            return
-        }
-        confirmDiscard { [weak self] in self?.leaveCharacterImport() }
-    }
-
-    /// The native picker for the shared screen. Cancelling is not an error and stages nothing.
     func chooseCharacterFile() -> URL? {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.png]
@@ -153,70 +45,14 @@ extension SetupWizardController {
         return panel.url
     }
 
-    /// Window-wide drops are available only while the character import screen is open.
     func handleWindowDrop(_ urls: [URL]) {
-        guard !isMonitoringSettings, isComposingCharacter else { return }
+        guard isComposingCharacter else { return }
         Task { [weak self] in await self?.characterImportModel.stageFiles(at: urls) }
-    }
-
-    private func leaveCharacterImport() {
-        guard !characterImportModel.isApplying else { return }
-        characterImportModel.discard()
-        stopEmbeddedCharacterPreview()
-        isComposingCharacter = false
-        isAwaitingGeneratedSheet = false
-        renderCurrentStep()
     }
 
     func stopEmbeddedCharacterPreview() {
         embeddedCharacterPreviewPane?.stopPlayback()
         embeddedCharacterPreviewPane = nil
-    }
-
-    private func confirmDiscard(then discard: @escaping @MainActor () -> Void) {
-        guard !characterImportModel.isApplying else { return }
-        guard let window else {
-            discard()
-            return
-        }
-        let alert = NSAlert()
-        alert.messageText = localizedString(.characterDiscardTitle)
-        alert.informativeText = localizedString(.characterDiscardMessage)
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: localizedString(.characterDiscardConfirm))
-        alert.addButton(withTitle: localizedString(.characterCancel))
-        presenter.presentAlert(alert, window) { response in
-            guard response == .alertFirstButtonReturn else { return }
-            discard()
-        }
-    }
-
-    /// Hands the prompt to ChatGPT through the link, so nothing has to be pasted, then moves straight
-    /// to the drop screen. The user comes back with a generated PNG, and the place to put it is
-    /// already waiting instead of the method list they would have to walk through again.
-    @objc func openPromptInChatGPT() {
-        let feedback = SpriteSheetPrompt.open(prompt, to: pasteboard, openBrowser: openBrowser)
-        guard feedback == .opened else {
-            reportPromptFeedback(feedback)
-            return
-        }
-        promptFeedback = nil
-        beginCharacterImport(awaitingGeneratedSheet: true)
-    }
-
-    /// Copies the prompt without leaving the guide. This is the path for every other image
-    /// generator, so it must not open a browser or jump to the drop screen.
-    @objc func copyPrompt() {
-        reportPromptFeedback(SpriteSheetPrompt.copy(prompt, to: pasteboard))
-    }
-
-    /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.
-    private func reportPromptFeedback(_ feedback: PromptActionFeedback) {
-        promptFeedback = feedback
-        if promptFeedbackIsError, let key = promptFeedbackKey {
-            announce(localizedString(key))
-        }
-        renderCurrentStep()
     }
 
     /// First attempt: ask macOS, then turn the wizard into the drag guide.
@@ -313,10 +149,6 @@ extension SetupWizardController {
 
     @objc func openInputMonitoringSettings() {
         PermissionGuidePlacement.openInputMonitoringSettings()
-    }
-
-    @objc func toggleManualSteps() {
-        permission.toggleManualSteps()
     }
 
     @objc func deferMonitoring() {
