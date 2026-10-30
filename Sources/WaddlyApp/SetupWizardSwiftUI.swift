@@ -109,15 +109,10 @@ private extension SetupWizardScreen {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupChatGPTPromptBody)
             numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
-            Button(action: controller.openPromptInChatGPT) {
-                Label(controller.localizedString(.setupOpenChatGPT), systemImage: "arrow.up.right.square")
-                    .actionLabel()
-                    .frame(maxWidth: .infinity)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: LayoutMetrics.actionGap) { promptActions }
+                VStack(alignment: .leading, spacing: LayoutMetrics.actionGap) { promptActions }
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .accessibilityLabel(controller.localizedString(.setupOpenChatGPT))
-            .accessibilityIdentifier("openPromptInChatGPT")
             Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
                 .font(.caption)
                 .foregroundStyle(controller.promptFeedbackIsError ? DesignTokens.Status.critical : .secondary)
@@ -133,6 +128,29 @@ private extension SetupWizardScreen {
                 .accessibilityLabel(controller.localizedString(.setupChangeMethod))
                 .accessibilityIdentifier("changeMethod")
         }
+    }
+
+    /// The link is the one-click path; the clipboard is the path that works with any image
+    /// generator, so it sits beside it instead of hiding behind the ChatGPT hand-off.
+    @ViewBuilder private var promptActions: some View {
+        Button(action: controller.openPromptInChatGPT) {
+            Label(controller.localizedString(.setupOpenChatGPT), systemImage: "arrow.up.right.square")
+                .actionLabel()
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .accessibilityLabel(controller.localizedString(.setupOpenChatGPT))
+        .accessibilityIdentifier("openPromptInChatGPT")
+        Button(action: controller.copyPrompt) {
+            Label(controller.localizedString(.setupCopyPrompt), systemImage: "doc.on.doc")
+                .actionLabel()
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .accessibilityLabel(controller.localizedString(.setupCopyPrompt))
+        .accessibilityIdentifier("copyPrompt")
     }
 
     private var petImportOptions: some View {

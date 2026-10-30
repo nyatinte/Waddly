@@ -203,6 +203,7 @@ enum LocalizationKey: String, CaseIterable {
     case setupCompleteWarningWaiting = "setup.completeWarningWaiting"
     case setupConfirmTyping = "setup.confirmTyping"
     case setupCopyFailed = "setup.copyFailed"
+    case setupCopyPrompt = "setup.copyPrompt"
     case setupDemoCaption = "setup.demoCaption"
     case setupDemoLabel = "setup.demoLabel"
     case setupDragAppIcon = "setup.dragAppIcon"

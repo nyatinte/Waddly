@@ -216,6 +216,12 @@ extension SetupWizardController {
         beginCharacterImport(awaitingGeneratedSheet: true)
     }
 
+    /// Copies the prompt without leaving the guide. This is the path for every other image
+    /// generator, so it must not open a browser or jump to the drop screen.
+    @objc func copyPrompt() {
+        reportPromptFeedback(SpriteSheetPrompt.copy(prompt, to: pasteboard))
+    }
+
     /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.
     private func reportPromptFeedback(_ feedback: PromptActionFeedback) {
         promptFeedback = feedback

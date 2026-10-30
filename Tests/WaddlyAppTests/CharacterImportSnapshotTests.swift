@@ -330,6 +330,8 @@ private extension CharacterImportSnapshotTests {
 
         // The ChatGPT hand-off lands here before the image exists, with the note that says so.
         wizard.showChatGPTGuide()
+        // The guide offers the link and the clipboard as separate actions.
+        try CaptureHarness.write(content, dark: dark, named: "setup-prompt-guide-\(tag)")
         wizard.openPromptInChatGPT()
         try CaptureHarness.write(content, dark: dark, named: "setup-chatgpt-handoff-\(tag)")
 
