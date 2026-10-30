@@ -97,11 +97,11 @@ You can also create the sprite sheet by hand.
 
 - When creating a new character, open **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy the prompt for another image generator, or import a finished PNG at any time.
 - Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
-- Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly never sends your images or prompts to external servers.
+- Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly uploads nothing by itself.
 
 ## Privacy
 
-Keyboard events are used only to drive animations; Waddly never stores, logs, or transmits typed text or key codes. Imported images and “Share Pet” exports are processed and stored locally on your Mac and are never uploaded automatically (“Post on X” only opens a composer prefilled with `#ShareMyWaddly`, so you attach the media and publish the post yourself).
+Keyboard events are used only to drive animations; Waddly never stores, logs, or transmits typed text or key codes. Imported images and “Share Pet” exports are processed and stored locally on your Mac and are never uploaded automatically (“Post on X” only opens a composer prefilled with `#ShareMyWaddly`, so you attach the media and publish the post yourself). **Open in ChatGPT** hands the bundled sprite-sheet prompt to the ChatGPT page your browser opens, so ChatGPT receives that prompt — the same text the README prints below — and nothing else leaves your Mac.
 
 ## Measured memory
 
