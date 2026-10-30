@@ -120,8 +120,17 @@
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";
 "setup.previewMonitoringWaiting" = "キーを押すと反応します";
 "setup.guideStepAccessibility" = "%1$ld番目：%2$@";
-"setup.manualStep3" = "Waddlyをオンにする。";
-"setup.restartPromptStep" = "表示されたら「終了して再度開く」を選ぶ。";
+"setup.guideIntro" = "Waddly がキー入力を検知するには、入力監視の許可が必要です。";
+"setup.guideAddTitle" = "Waddly を一覧に追加する";
+"setup.guideAddBody" = "右のボタンでシステム設定を開き、Waddly を一覧に追加してください。表示されない場合は、アイコンをドラッグするか「＋」から追加します。";
+"setup.guideTurnOnTitle" = "Waddly をオンにする";
+"setup.guideTurnOnBody" = "システム設定の「入力監視」で、Waddly をオンにしてください。";
+"setup.guideRestartTitle" = "Waddly を再起動する";
+"setup.guideRestartBody" = "設定が完了したら、Waddly を終了して再度開いてください。";
+"setup.guidePreviewInputMonitoring" = "入力監視";
+"setup.guidePreviewOtherApps" = "その他のアプリ";
+"setup.guidePreviewQuitAndReopen" = "終了して再度開く";
+"setup.guidePreviewQuit" = "終了";
 "setup.openSystemSettings" = "システム設定を開く";
 "setup.revealInFinder" = "FinderでWaddlyを表示";
 "setup.dragAppIcon" = "Waddlyアプリのアイコン。入力監視の一覧へドラッグします。";
@@ -156,8 +165,6 @@
 "setup.checkMonitoringWaiting" = "キー入力への反応：キー入力を待っています";
 "setup.troubleshootingBody" = "Waddlyを再起動してから、もう一度キーを押してみてください。";
 "setup.imageDetails" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px";
-"setup.dropGuideBody" = "一覧にない場合、アイコンを一覧へドラッグ。";
-"setup.dragAlternative" = "ドラッグできない場合は「＋」から追加できます。";
 
 "images.memoryLimit" = "画像セットが40 MiBの画像メモリ上限を超えています。画像を減らすか、小さいPNGを選んでください。読み込みに失敗しても保存済み画像は保持されます。";
 
