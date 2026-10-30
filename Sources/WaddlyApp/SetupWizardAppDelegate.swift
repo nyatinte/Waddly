@@ -77,6 +77,14 @@ extension AppDelegate {
         }
     }
 
+    /// Cmd+Tab sends only `didBecomeActive`, so a closed guide is reopened here. The saved step answers
+    /// before the images, which load asynchronously at launch.
+    func restoreSetupGuideOnActivation() {
+        guard !settings.setupWizardSeen || settings.setupStep != nil,
+              setupWizardController?.window?.isVisible != true else { return }
+        showSetupWizard()
+    }
+
     private func makeSetupWizardController() -> SetupWizardController {
         let monitoringSettings = isSetupComplete
         return SetupWizardController(

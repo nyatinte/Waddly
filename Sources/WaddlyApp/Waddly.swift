@@ -339,6 +339,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
+        restoreSetupGuideOnActivation()
         setupWizardController?.refreshPermissionStatus()
         guard shouldRunMonitoring, !isPaused, monitor.permissionGranted else { return }
         startMonitoring()
