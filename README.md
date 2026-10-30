@@ -13,6 +13,15 @@
   <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
 </p>
 
+## What Waddly does
+
+- Add your own pet images.
+- Your pet reacts to keyboard input. Typed text and key codes are not stored.
+- While idle, it breathes and blinks, then falls asleep after a while.
+- Drag your pet anywhere on the desktop.
+- The pet joins every desktop Space. It does not appear above a fullscreen app.
+- Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
+
 ## Install
 
 ### Install with Homebrew
@@ -37,25 +46,6 @@ To try Waddly from source, follow the developer [build instructions](CONTRIBUTIN
 Choose **Start setup**, then turn Waddly on under System Settings → Privacy & Security → Input Monitoring. If it is not in the list, drag its icon in or add it with **+**. If macOS asks, choose **Quit & Reopen**.
 
 ![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
-
-### Uninstall
-
-```sh
-brew uninstall --cask waddly
-```
-
-Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
-
-If you installed from the DMG, quit Waddly and move /Applications/Waddly.app to the Trash.
-
-## What Waddly does
-
-- Add your own pet images.
-- Your pet reacts to keyboard input. Typed text and key codes are not stored.
-- While idle, it breathes and blinks, then falls asleep after a while.
-- Drag your pet anywhere on the desktop.
-- The pet joins every desktop Space. It does not appear above a fullscreen app.
-- Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
 
 ## Use your own pet
 
@@ -137,6 +127,16 @@ The app targets a physical memory footprint below 100 MB in typical use. See [CO
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions.
+
+## Uninstall
+
+```sh
+brew uninstall --cask waddly
+```
+
+Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
+
+If you installed from the DMG, quit Waddly and move /Applications/Waddly.app to the Trash.
 
 ## Share and feedback
 
