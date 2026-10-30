@@ -61,10 +61,14 @@ extension SetupWizardScreen {
 
     /// The one card shape the setup pages use. Callers stack their own rows inside it, so a page can
     /// add a step or an action without rebuilding the surface.
-    func cardContainer(@ViewBuilder _ content: () -> some View) -> some View {
+    func cardContainer(
+        spacing: CGFloat = DesignTokens.Spacing.md,
+        padding: CGFloat = DesignTokens.Spacing.md,
+        @ViewBuilder _ content: () -> some View
+    ) -> some View {
         let shape = RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-        return VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) { content() }
-            .padding(DesignTokens.Spacing.md)
+        return VStack(alignment: .leading, spacing: spacing) { content() }
+            .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(nsColor: .controlBackgroundColor), in: shape)
             .overlay(shape.stroke(Color(nsColor: .separatorColor)))
@@ -135,11 +139,21 @@ extension SetupWizardScreen {
     func primaryActionButton(
         _ title: String,
         identifier: String,
+        systemImage: String? = nil,
         action: @escaping @MainActor () -> Void
     ) -> some View {
         Button(action: action) {
-            Text(verbatim: title)
+            if let systemImage {
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Text(verbatim: title)
+                    Image(systemName: systemImage)
+                        .accessibilityHidden(true)
+                }
                 .actionLabel()
+            } else {
+                Text(verbatim: title)
+                    .actionLabel()
+            }
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)

@@ -271,12 +271,12 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 | Frame Editor | 1320 × 800 preferred, 1040 × 700 minimum | Resizable; compact layout below 1160 pt |
 | Share | 700 × 380 | Fixed; two equal cards; pinned footer |
 | Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome |
-| Permission guide | 480 × 460 compact, 820 × 520 before the guide opens | Floats beside System Settings; drops the preview column so the settings app list stays visible; manual steps fallback |
+| Permission guide | 480 × 540 compact, 820 × 520 before the guide opens | Floats beside System Settings; drops the preview column so the settings app list stays visible; manual steps fallback |
 
 - Fixed windows must not be restorable to a stale frame; set `isRestorable = false` and re-assert the content size when shown.
 - Resizable windows define a minimum that keeps the footer and every column visible. Do not let a resizable window reflow into a broken compact state; switch to the explicit compact layout instead (Frame Editor below 1160 pt).
 - Every window centers on first show and remembers a user move only where the surface supports it (the pet panel and the permission guide).
-- The permission guide is the one window that changes size: while it waits for the grant it is the 480 × 460 compact guide (page column only, no preview), which is narrow enough to park beside System Settings without covering the app list the user drags onto. Every other state and page uses the designed size.
+- The permission guide is the one window that changes size: while it waits for the grant it is the 480 × 540 compact guide (page column only, no preview), which is narrow enough to park beside System Settings without covering the app list the user drags onto. 540 is the tallest content height whose titled frame still parks inside a 602 pt-tall display. Every other state and page uses the designed size.
 
 **Dense workspace variant.** The Frame Editor is denser than the setup-class windows, but it uses the same tokens: `lg` 16 for the title bar and panel padding (the workspace is edge-to-edge and does not add a 24 pt window margin), `section-gap` between groups, `action-height` for Done and Reset, `control-height` for zoom/stepper/segmented controls, and the type/radius scales. `FrameEditorMetrics` keeps only geometry that is specific to the canvas (sidebar 306, inspector 300/268, compact rail 58, breakpoint 1160, canvas reserves); it does not introduce spacing, type, control, or radius values. The title bar and panels use `lg`; metadata is 11 pt; controls use `sm`; cards use `lg`.
 
@@ -455,7 +455,7 @@ Apple's macOS baselines and Waddly's stricter values:
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
 | Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
-| Permission guide | Setup shell beside System Settings | 820 × 520; 480 × 460 compact while guiding | Setup tokens; one instruction card, one primary action, status under the title | Setup tokens | 36 pt | ✅; live QA pending |
+| Permission guide | Setup shell beside System Settings | 820 × 520; 480 × 540 compact while guiding | Setup tokens; three step cards, one primary action, explanation under the title | Setup tokens | 36 pt | ✅; live QA pending |
 
 Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row names the conforming part and the gap); ⚪ intentional product exception. The Frame Editor is **not** an exception: it uses the dense workspace variant.
 

@@ -120,8 +120,17 @@
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
 "setup.previewMonitoringWaiting" = "Press a key to see it react";
 "setup.guideStepAccessibility" = "Step %1$ld: %2$@";
-"setup.manualStep3" = "Turn Waddly on.";
-"setup.restartPromptStep" = "If prompted, choose “Quit & Reopen”.";
+"setup.guideIntro" = "Waddly needs Input Monitoring permission to notice when you type.";
+"setup.guideAddTitle" = "Add Waddly to the list";
+"setup.guideAddBody" = "Open System Settings with the button, then add Waddly to the list. If it does not appear, drag its icon in, or add it with +.";
+"setup.guideTurnOnTitle" = "Turn Waddly on";
+"setup.guideTurnOnBody" = "In System Settings, under Input Monitoring, turn Waddly on.";
+"setup.guideRestartTitle" = "Restart Waddly";
+"setup.guideRestartBody" = "When you are done, quit Waddly and open it again.";
+"setup.guidePreviewInputMonitoring" = "Input Monitoring";
+"setup.guidePreviewOtherApps" = "Other apps";
+"setup.guidePreviewQuitAndReopen" = "Quit & Reopen";
+"setup.guidePreviewQuit" = "Quit";
 "setup.openSystemSettings" = "Open System Settings";
 "setup.revealInFinder" = "Show Waddly in Finder";
 "setup.dragAppIcon" = "Waddly app icon. Drag it into the Input Monitoring list.";
@@ -156,8 +165,6 @@
 "setup.checkMonitoringWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.troubleshootingBody" = "Restart Waddly, then try typing again.";
 "setup.imageDetails" = "%1$d × %1$d px · cell %2$d × %2$d px";
-"setup.dropGuideBody" = "If Waddly is not listed, drag the icon into the list.";
-"setup.dragAlternative" = "If you cannot drag, add Waddly using +.";
 
 "images.memoryLimit" = "This image set exceeds the 40 MiB image memory budget. Remove images or choose smaller PNGs. Saved images are kept if loading fails.";
 
