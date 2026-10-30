@@ -24,7 +24,7 @@
 
 ### Prepare a sprite sheet
 
-In setup, choose **Create an image with ChatGPT**. Waddly opens ChatGPT with the [sprite sheet prompt](prompts/en.md) already filled in and moves on to the import screen, so the PNG it generates can be dropped there as soon as you come back. To use another image generator, copy the prompt below.
+In setup, choose **Create an image with an image generator**. Waddly opens ChatGPT with the [sprite sheet prompt](prompts/en.md) already filled in and moves on to the import screen, so the PNG it generates can be dropped there as soon as you come back. To use another image generator, choose **Copy prompt** in the same guide and paste it there; the text is also printed below.
 
 <details>
 <summary>Show the sprite sheet prompt</summary>
@@ -89,13 +89,13 @@ You can also create the sprite sheet by hand.
 
 ### Quick setup
 
-1. Open **Setup Guide…** (or **Change Character…** from the menu after initial setup) and import a PNG by choosing a file, dragging and dropping, or pressing ⌘V. If you do not have an image yet, choose **Create an image with ChatGPT** to open ChatGPT with the prompt filled in, or click **Try the sample pet first** to use the bundled pet.
+1. Open **Setup Guide…** (or **Change Character…** from the menu after initial setup) and import a PNG by choosing a file, dragging and dropping, or pressing ⌘V. If you do not have an image yet, choose **Create an image with an image generator** to open ChatGPT with the prompt filled in, or click **Try the sample pet first** to use the bundled pet.
 2. If the character's position shifts between cells, open **Adjust frames…** to align the crop and position while checking the preview.
 3. Click **Apply** (or **Continue** during initial setup) to update your desktop pet.
 
 ### Tips and local storage
 
-- When creating a new character, open **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy the prompt for another image generator, or import a finished PNG at any time.
+- When creating a new character, open **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy the prompt for another image generator, or import a finished PNG at any time. Opening ChatGPT puts the prompt in the page URL, so it is also recorded in your browser history; **Copy prompt** leaves no trace there.
 - Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
 - Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly uploads nothing by itself.
 

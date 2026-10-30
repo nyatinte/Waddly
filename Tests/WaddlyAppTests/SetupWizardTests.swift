@@ -182,6 +182,27 @@ typealias Fixture = SetupWizardFixture
         #expect(state.announcements == [wizard.localizedString(.setupOpenFailed)])
     }
 
+    @Test func copyingThePromptStaysOnTheGuideWithoutOpeningTheBrowser() throws {
+        let state = Fixture.State()
+        var didOpen = false
+        let wizard = try Fixture.makeWizard(state: state, openBrowser: { _ in
+            didOpen = true
+            return true
+        })
+        defer { wizard.close() }
+        wizard.showChatGPTGuide()
+        wizard.copyPrompt()
+        // The clipboard is the path for every other image generator: no browser, no hand-off.
+        #expect(!didOpen)
+        #expect(wizard.isShowingChatGPTGuide)
+        #expect(!wizard.isComposingCharacter)
+        #expect(wizard.pasteboard.string(forType: .string) == wizard.prompt)
+        #expect(wizard.promptFeedback == .copied)
+        #expect(wizard.promptFeedbackKey == .setupPromptCopied)
+        #expect(!wizard.promptFeedbackIsError)
+        #expect(state.announcements.isEmpty)
+    }
+
     @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {
         let state = Fixture.State()
         let previous = try Fixture.sheetImages()
