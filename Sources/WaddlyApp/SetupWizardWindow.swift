@@ -11,15 +11,8 @@ extension SetupWizardController {
         }
 
         previewPane.configure(localization: localization, showsControls: true)
-        previewPane.shouldPreserveUnsupportedDropURLs = { [weak self] in self?.isComposingCharacter ?? false }
-        previewPane.onDrop = { [weak self] urls in
-            self?.handleWindowDrop(urls)
-        }
-
-        if isMonitoringSettings {
-            contentView.unregisterDraggedTypes()
-            previewPane.unregisterDraggedTypes()
-        }
+        contentView.unregisterDraggedTypes()
+        previewPane.unregisterDraggedTypes()
         let hostingView = NSHostingView(rootView: SetupWizardScreen(controller: self))
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(hostingView)
@@ -32,16 +25,23 @@ extension SetupWizardController {
 
         bindPermission()
         window?.contentView = contentView
-        renderCurrentStep()
+        if !isMonitoringSettings, currentStep == .pet {
+            beginCharacterImport()
+        } else {
+            renderCurrentStep()
+        }
     }
 
     /// All step changes funnel through here so the saved step always matches the screen.
     func setStep(_ step: Step?) {
         guard !isMonitoringSettings else { return }
         currentStep = step ?? .pet
-        // The inline import error belongs to the step where the drop happened, not the next one.
-        clearImportFeedback()
         onStepChange(step?.rawValue)
-        renderCurrentStep()
+        if currentStep == .pet {
+            beginCharacterImport()
+        } else {
+            stopEmbeddedCharacterPreview()
+            renderCurrentStep()
+        }
     }
 }

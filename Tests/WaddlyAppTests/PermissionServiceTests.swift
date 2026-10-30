@@ -133,28 +133,11 @@ import Testing
         #expect(fake.tapRestarts == 1)
     }
 
-    @Test func manualStepsToggleBackToTheDragGuide() {
+    /// The guide keeps watching whether the user adds the app by dragging or using +.
+    @Test func theGuideKeepsWaitingForTheGrant() {
         let fake = Fake()
         let service = fake.makeService()
         service.request()
-
-        service.toggleManualSteps()
-        #expect(service.phase == .manual)
-        #expect(service.isShowingManualSteps)
-        #expect(service.isGuiding)
-
-        service.toggleManualSteps()
-        #expect(service.phase == .guiding)
-        #expect(fake.settingsOpened == 2)
-    }
-
-    /// The manual steps are instructions to follow elsewhere, so the guide has to keep watching:
-    /// the user adds the app by hand and macOS grants it while this page is still on screen.
-    @Test func theManualStepsKeepWaitingForTheGrant() {
-        let fake = Fake()
-        let service = fake.makeService()
-        service.request()
-        service.toggleManualSteps()
 
         var ticks = 0
         service.onTick = { ticks += 1 }

@@ -39,12 +39,14 @@ extension PetSheetValidationFailure {
 /// same position always means the same thing.
 @MainActor
 struct CharacterImportView: View {
+    typealias ReplacingState = SwiftUI.State<Bool>
     @ObservedObject var model: CharacterImportModel
+    @ReplacingState var isReplacing = false
     let localization: LocalizationController
     let titleKey: LocalizationKey
     let primaryKey: LocalizationKey
     let onPrimary: () -> Void
-    let onCancel: () -> Void
+    let onCancel: (() -> Void)?
     let onPreviewPaneCreated: (SetupPreviewPane) -> Void
     let isPreviewActive: () -> Bool
     let onPreviewHostDisappear: () -> Void
@@ -54,18 +56,19 @@ struct CharacterImportView: View {
     /// Setup's Continue commits an unchanged, valid pet so the step can advance; Change Character's
     /// Apply is only offered when the draft would actually change the saved pet. Both hosts state it.
     var primaryRequiresChange: Bool
-    var showsPrompt = false
-    /// Setup hands the user off to ChatGPT before the image exists, so the empty drop zone has to say
-    /// why it is already on screen.
-    var awaitsGeneratedSheet = false
+    var sampleImages: PetImageSet?
     var promptResourcesURL: URL? = Bundle.main.resourceURL
+    var openBrowser: @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) }
+    var announce: @MainActor (String) -> Void = SetupWizardController.postAccessibilityAnnouncement
 
     var promptCard: CharacterPromptCard {
         CharacterPromptCard(
             localization: localization,
             pasteboard: pasteboard,
             onClipboardChange: { model.refreshClipboardAvailability(from: pasteboard) },
-            resourcesURL: promptResourcesURL
+            resourcesURL: promptResourcesURL,
+            openBrowser: openBrowser,
+            announce: announce
         )
     }
 
@@ -88,6 +91,24 @@ struct CharacterImportView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { model.refreshClipboardAvailability(from: pasteboard) }
         .onDisappear(perform: onPreviewHostDisappear)
+        .onChange(of: model.acquisitionRevision) { _, _ in
+            isReplacing = false
+        }
+        .onChange(of: model.failure) { _, failure in
+            if let failure {
+                announce(localization.string(for: failure.messageKey))
+            }
+        }
+        .onChange(of: model.commitFailed) { _, failed in
+            if failed {
+                announce(localization.string(for: .characterCommitFailed))
+            }
+        }
+        .onChange(of: model.commitRejected) { _, rejected in
+            if rejected {
+                announce(localization.string(for: .characterCommitRejected))
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.refreshClipboardAvailability(from: pasteboard)
         }
@@ -98,7 +119,7 @@ struct CharacterImportView: View {
 }
 
 @MainActor
-private extension CharacterImportView {
+extension CharacterImportView {
     var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(localization.string(for: titleKey))
@@ -115,13 +136,20 @@ private extension CharacterImportView {
     /// and bottom edge, so the shorter one can no longer leave a stray void above the footer.
     var workingArea: some View {
         HStack(alignment: .top, spacing: LayoutMetrics.columnGap) {
-            acquisition
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            GeometryReader { geometry in
+                ScrollView {
+                    acquisition
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .topLeading)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             CharacterPreviewHost(
                 localization: localization,
                 frames: model.stagedFrames,
+                demoFrames: sampleImages,
+                stageLabel: previewStageLabel,
                 placeholder: localization.string(for: .characterEmptyPreview),
-                onDrop: { urls in Task { await model.stageDroppedFiles(at: urls) } },
+                onDrop: { urls in Task { await model.stageFiles(at: urls) } },
                 isActive: isPreviewActive,
                 onPaneCreated: onPreviewPaneCreated
             )
@@ -131,18 +159,19 @@ private extension CharacterImportView {
     }
 
     var acquisition: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if awaitsGeneratedSheet, !model.hasStagedCandidate {
-                handoffNote
-            }
-            if model.hasStagedCandidate {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+            promptCard
+            if model.hasStagedCandidate, !isReplacing {
                 stagedSheetCard
             } else {
                 dropZone
-                Text(localization.string(for: .characterMetadataPlaceholder))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if isReplacing {
+                    Button(localization.string(for: .characterKeepImage)) {
+                        isReplacing = false
+                    }
+                    .controlSize(.large)
+                    .accessibilityIdentifier("characterKeepImage")
+                }
             }
             if model.isReading {
                 HStack(spacing: 8) {
@@ -164,20 +193,12 @@ private extension CharacterImportView {
                 statusLine(.characterCommitRejected, symbol: "exclamationmark.triangle.fill")
                     .accessibilityIdentifier("characterCommitRejected")
             }
-            if showsPrompt {
-                promptCard
-            }
         }
     }
 
     /// The empty state: everything that starts an import lives inside this one zone.
     var dropZone: some View {
-        VStack(spacing: 10) {
-            Spacer(minLength: 0)
-            Image(systemName: model.isDropTargeted ? "arrow.down.doc" : "photo.badge.plus")
-                .font(.system(size: 36, weight: .light))
-                .foregroundStyle(model.isDropTargeted ? Color.accentColor : Color.secondary)
-                .accessibilityHidden(true)
+        VStack(spacing: DesignTokens.Spacing.sm) {
             Text(localization.string(
                 for: model.isDropTargeted ? .characterDropHighlight : .characterDropInstruction
             ))
@@ -185,18 +206,16 @@ private extension CharacterImportView {
             .foregroundStyle(model.isDropTargeted ? Color.accentColor : Color.secondary)
             Text(localization.string(for: .characterDropHint))
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
             Button(action: chooseFile) {
                 Text(localization.string(for: .characterChooseFile))
                     .actionLabel()
             }
             .controlSize(.large)
-            .padding(.top, 6)
             .accessibilityIdentifier("characterChooseFile")
             pasteControl
-                .padding(.top, 2)
-            Spacer(minLength: 0)
         }
+        .padding(DesignTokens.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -212,7 +231,7 @@ private extension CharacterImportView {
                 )
         )
         .dropDestination(for: URL.self) { urls, _ in
-            Task { await model.stageDroppedFiles(at: urls) }
+            Task { await model.stageFiles(at: urls) }
             return true
         } isTargeted: { targeted in
             model.setDropTargeted(targeted)
@@ -255,7 +274,9 @@ private extension CharacterImportView {
                 Spacer(minLength: 0)
             }
             HStack(spacing: LayoutMetrics.actionGap) {
-                Button(action: chooseFile) {
+                Button {
+                    isReplacing = true
+                } label: {
                     Text(localization.string(for: .characterReplace))
                         .actionLabel()
                 }
@@ -298,7 +319,7 @@ private extension CharacterImportView {
                 )
         )
         .dropDestination(for: URL.self) { urls, _ in
-            Task { await model.stageDroppedFiles(at: urls) }
+            Task { await model.stageFiles(at: urls) }
             return true
         } isTargeted: { targeted in
             model.setDropTargeted(targeted)
@@ -350,29 +371,6 @@ private extension CharacterImportView {
             total + (model.stagedFrames?[category].count ?? 0)
         }
         return String(format: localization.string(for: .characterFrameCountFormat), count)
-    }
-
-    var footer: some View {
-        HStack(spacing: LayoutMetrics.actionGap) {
-            Button(action: onCancel) {
-                Text(localization.string(for: .characterCancel))
-                    .actionLabel()
-            }
-            .controlSize(.large)
-            .keyboardShortcut(.cancelAction)
-            .disabled(model.isApplying)
-            .accessibilityIdentifier("characterCancel")
-            Spacer(minLength: 0)
-            Button(action: onPrimary) {
-                Text(localization.string(for: primaryKey))
-                    .actionLabel()
-            }
-            .controlSize(.large)
-            .buttonStyle(.borderedProminent)
-            .keyboardShortcut(.defaultAction)
-            .disabled(!isPrimaryActionEnabled)
-            .accessibilityIdentifier("characterPrimary")
-        }
     }
 
     func statusLine(_ key: LocalizationKey, symbol: String) -> some View {

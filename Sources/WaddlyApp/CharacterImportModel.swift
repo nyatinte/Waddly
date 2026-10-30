@@ -29,6 +29,8 @@ enum CharacterCommitOutcome: Equatable {
 @MainActor
 final class CharacterImportModel: ObservableObject {
     @Published private(set) var stagedFrames: PetImageSet?
+    private(set) var isSampleCandidate = false
+    @Published private(set) var acquisitionRevision = 0
     @Published private(set) var sourceName: String?
     @Published private(set) var sourceDimension: Int?
     @Published private(set) var cellSize: Int?
@@ -94,18 +96,13 @@ final class CharacterImportModel: ObservableObject {
         isDirty || commitFailed || commitRejected
     }
 
-    /// The footer action policy. Setup's Continue must be able to commit an already valid, unchanged
-    /// pet and advance; Change Character's Apply only exists to save a difference.
-    func canPerformPrimaryAction(requiresChange: Bool) -> Bool {
-        canApply && (!requiresChange || hasUnsavedChanges)
-    }
-
     /// Rebase the draft on the pet that is committed now, so reopening shows the real pet.
     func reload() {
         guard !isApplying else { return }
         generation += 1
         committedBaseline = currentImages()
         stagedFrames = committedBaseline.isComplete ? committedBaseline : nil
+        isSampleCandidate = false
         sourceName = nil
         sourceDimension = nil
         cellSize = nil
@@ -118,7 +115,28 @@ final class CharacterImportModel: ObservableObject {
         isDropTargeted = false
     }
 
+    func refreshRestoredImagesIfUntouched() {
+        guard acquisitionRevision == 0, !isReading, !isApplying, !isEditingFrames, failure == nil else { return }
+        reload()
+    }
+
     // MARK: - Acquisition
+
+    /// A sample is a draft too: only the parent Next action may commit it.
+    func stageSample(_ images: PetImageSet, name: String) {
+        guard !isApplying, images.isComplete else { return }
+        generation += 1
+        isReading = false
+        stagedFrames = images
+        acquisitionRevision += 1
+        isSampleCandidate = true
+        sourceName = name
+        sourceDimension = nil
+        cellSize = nil
+        failure = nil
+        commitFailed = false
+        commitRejected = false
+    }
 
     /// Stage one dropped or chosen PNG. A multi-file drop is rejected rather than silently using one.
     func stageFiles(at urls: [URL]) async {
@@ -133,11 +151,6 @@ final class CharacterImportModel: ObservableObject {
             : .invalid(.notPNG)
         guard token == generation else { return }
         apply(outcome, name: url.lastPathComponent)
-    }
-
-    /// Forward every shared drop URL to the same validation path used by file picking and window drops.
-    func stageDroppedFiles(at urls: [URL]) async {
-        await stageFiles(at: urls)
     }
 
     /// Stage the explicit paste. Reads the clipboard only now, never on focus.
@@ -181,7 +194,9 @@ final class CharacterImportModel: ObservableObject {
         isReading = false
         switch outcome {
         case let .valid(candidate):
+            isSampleCandidate = false
             stagedFrames = candidate.images
+            acquisitionRevision += 1
             sourceName = name
             sourceDimension = candidate.sourceDimension
             cellSize = candidate.cellSize

@@ -15,8 +15,6 @@ final class PermissionService {
         case idle
         /// System Settings is open; waiting for the grant.
         case guiding
-        /// The guide's fallback: manual steps for adding the app by hand.
-        case manual
         /// The user chose "set up later".
         case deferred
     }
@@ -89,15 +87,9 @@ final class PermissionService {
         readiness == .reactionObserved
     }
 
-    /// The guide is on screen and waiting for the grant. Both presentations count: the drag route
-    /// and the manual steps are the same wait, and only the rendering differs.
+    /// The guide is on screen and waiting for the grant.
     var isGuiding: Bool {
-        phase == .guiding || phase == .manual
-    }
-
-    /// The guide's fallback presentation: add Waddly to the list by hand.
-    var isShowingManualSteps: Bool {
-        phase == .manual
+        phase == .guiding
     }
 
     var didDefer: Bool {
@@ -127,15 +119,6 @@ final class PermissionService {
         phase = .guiding
         openSettings()
         startPolling()
-        onUpdate?()
-    }
-
-    func toggleManualSteps() {
-        phase = isShowingManualSteps ? .guiding : .manual
-        if phase == .guiding {
-            startPolling()
-            openSettings()
-        }
         onUpdate?()
     }
 

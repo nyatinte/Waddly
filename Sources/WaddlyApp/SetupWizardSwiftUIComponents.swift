@@ -1,13 +1,5 @@
 import SwiftUI
 
-/// One setup action: the label, the identifier tests drive, and what it runs. Grouping them lets a
-/// route end with the same primary/alternative pair without repeating five arguments at each call.
-struct SetupAction {
-    let title: LocalizationKey
-    let identifier: String
-    let run: @MainActor () -> Void
-}
-
 @MainActor
 extension SetupWizardScreen {
     func step(_ key: LocalizationKey, index: Int) -> some View {
@@ -108,65 +100,14 @@ extension SetupWizardScreen {
     func numberedStep(_ index: Int, _ key: LocalizationKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.sm) {
             stepBadge(index)
-            Text(controller.localizedString(key)).fixedSize(horizontal: false, vertical: true)
+            Text(controller.localizedString(key))
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityLabel(stepAccessibilityLabel(index, key))
         }
     }
 
-    func numbered(_ keys: [LocalizationKey]) -> some View {
-        cardContainer { numberedSteps(keys) }
-    }
-
-    func numberedSteps(_ keys: [LocalizationKey]) -> some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            ForEach(Array(keys.enumerated()), id: \.offset) { index, key in
-                numberedStep(index + 1, key)
-            }
-        }
-    }
-
-    /// The pair every permission route ends with: one primary action and one quiet alternative.
-    func permissionActions(primary: SetupAction, alternative: SetupAction) -> some View {
-        HStack(spacing: LayoutMetrics.actionGap) {
-            primaryActionButton(
-                controller.localizedString(primary.title),
-                identifier: primary.identifier,
-                action: primary.run
-            )
-            actionButton(
-                controller.localizedString(alternative.title),
-                identifier: alternative.identifier,
-                action: alternative.run
-            )
-            Spacer(minLength: 0)
-        }
-    }
-
-    func option(
-        _ title: LocalizationKey,
-        detail: LocalizationKey,
-        symbol: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol).font(.title2).foregroundStyle(Color.accentColor).frame(width: 26)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(controller.localizedString(title)).font(.headline)
-                    Text(controller.localizedString(detail)).font(.subheadline).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: SetupMetrics.optionCardHeight, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(nsColor: .separatorColor)))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: controller.localizedString(title)))
-        .accessibilityHint(Text(verbatim: controller.localizedString(detail)))
+    func stepAccessibilityLabel(_ index: Int, _ key: LocalizationKey) -> String {
+        String(format: controller.localizedString(.setupGuideStepAccessibility), index, controller.localizedString(key))
     }
 }
 

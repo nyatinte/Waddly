@@ -21,8 +21,8 @@ import WaddlyCore
         await wizard.commitCharacterImportAndContinue().value
 
         #expect(!wizard.isComposingCharacter)
-        #expect(wizard.didRegisterPet)
-        #expect(try wizard.importedFileName == (Fixture.sheetURL()).lastPathComponent)
+        #expect(state.commitCharacterCount == 1)
+        #expect(state.images.isComplete)
         #expect(wizard.currentStep == .monitoring)
         #expect(recordedBefore == .pet)
     }
@@ -41,7 +41,6 @@ import WaddlyCore
         let first = wizard.commitCharacterImportAndContinue()
         #expect(await gate.waitUntilEntered())
         await wizard.commitCharacterImportAndContinue().value
-        wizard.cancelCharacterImport()
         #expect(try !wizard.windowShouldClose(#require(wizard.window)))
         #expect(wizard.currentStep == .pet)
         #expect(wizard.isComposingCharacter)
@@ -158,19 +157,6 @@ import WaddlyCore
         #expect(try wizard.windowShouldClose(#require(wizard.window)))
     }
 
-    @Test func cancellingAnUntouchedSharedScreenLeavesWithoutPrompting() throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(state: state)
-        defer { wizard.close() }
-        wizard.beginCharacterImport()
-        #expect(wizard.isComposingCharacter)
-
-        wizard.cancelCharacterImport()
-
-        #expect(!wizard.isComposingCharacter)
-        #expect(state.commitCharacterCount == 0)
-    }
-
     /// A staged-but-uncommitted draft is discarded without writing anything.
     @Test func discardingAStagedDraftLeavesTheCommittedPetUntouched() async throws {
         let state = Fixture.State()
@@ -198,20 +184,19 @@ import WaddlyCore
         #expect(!wizard.characterImportModel.isDropTargeted)
     }
 
-    /// The window-wide drop stages while composing and keeps the direct import otherwise; the drop
-    /// itself never commits a staged draft, so only Continue can write one.
-    @Test func windowWideDropStagesWhileComposingAndImportsOtherwise() async throws {
+    /// A drop stages only in the import screen and never commits without Continue.
+    @Test func windowWideDropStagesOnlyWhileComposing() async throws {
         let url = try Fixture.sheetURL()
 
         let legacyState = Fixture.State()
         let legacy = try Fixture.makeWizard(
             state: legacyState,
-            previewResult: Fixture.sheetImages(),
             confirmResult: true
         )
         defer { legacy.close() }
         legacy.handleWindowDrop([url])
-        #expect(await waitUntil { legacyState.confirmCount == 1 })
+        #expect(legacyState.confirmCount == 0)
+        #expect(!legacy.hasImage)
 
         let composingState = Fixture.State()
         let composing = try Fixture.makeWizard(state: composingState)

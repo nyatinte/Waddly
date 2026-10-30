@@ -188,25 +188,9 @@ private func textFenceBody(in markdown: String) -> String? {
 
     let localization = LocalizationController(settings: AppSettings(defaults: defaults))
     localization.changeLanguage(.japanese)
-    let wizard = SetupWizardController(
-        localization: localization,
-        promptResourcesURL: resourcesURL,
-        onPreviewImage: { _ in nil },
-        onConfirmImage: { _, _ in false },
-        currentPetImages: { PetImageSet() },
-        permission: PermissionService(
-            hasPermission: { false },
-            isReceivingKeys: { false },
-            hasObservedReaction: { false },
-            requestAccess: { false },
-            restartTap: {}
-        ),
-        onClose: {}
-    )
-
-    #expect(wizard.prompt == "こんにちは")
+    #expect(SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL) == "こんにちは")
     localization.changeLanguage(.english)
-    #expect(wizard.prompt == "Hello")
+    #expect(SpriteSheetPrompt.load(for: localization, resourcesAt: resourcesURL) == "Hello")
 }
 
 @Test func enterDetectionRecognizesBothMacEnterKeys() {

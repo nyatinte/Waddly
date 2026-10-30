@@ -66,6 +66,9 @@ struct CharacterFrameEditor: View {
     var body: some View {
         FrameEditorContent(model: model, localization: localization, onDone: done)
             .frame(width: contentSize.width, height: contentSize.height)
+            // Done returns edits to the parent draft; prevent an accidental sheet dismissal from
+            // silently discarding work in the editor.
+            .interactiveDismissDisabled()
             .task { await model.prepare() }
             .onDisappear { model.releaseResources() }
     }

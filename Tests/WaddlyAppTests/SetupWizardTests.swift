@@ -59,7 +59,7 @@ typealias Fixture = SetupWizardFixture
         #expect(!wizard.hasImage)
     }
 
-    @Test func permissionActionEntersTheGuideAndManualFallback() throws {
+    @Test func permissionActionEntersTheGuide() throws {
         let state = Fixture.State()
         state.images = try Fixture.sheetImages()
         let wizard = try Fixture.makeWizard(state: state, requestPermission: { false })
@@ -67,40 +67,6 @@ typealias Fixture = SetupWizardFixture
         wizard.goNext()
         wizard.enableMonitoring()
         #expect(wizard.isShowingGuide)
-        wizard.toggleManualSteps()
-        #expect(wizard.isShowingManualSteps)
-        #expect(wizard.isShowingGuide)
-        wizard.toggleManualSteps()
-        #expect(!wizard.isShowingManualSteps)
-    }
-
-    @Test func importUpdatesTheSwiftUIObservedStateWithoutChangingTheStep() async throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            previewResult: Fixture.sheetImages(),
-            confirmResult: true
-        )
-        defer { wizard.close() }
-        let sheetURL = try Fixture.sheetURL()
-        await wizard.importImage(from: sheetURL).value
-        #expect(wizard.currentStep == .pet)
-        #expect(wizard.didRegisterPet)
-        #expect(wizard.importedFileName == sheetURL.lastPathComponent)
-        #expect(wizard.previewPane.hasPet)
-    }
-
-    @Test func savedStepAndChatGPTGuideCanBeRestoredAndDismissed() throws {
-        let wizard = try Fixture.makeWizard(savedStep: SetupWizardController.Step.monitoring.rawValue)
-        defer { wizard.close() }
-        #expect(wizard.currentStep == .monitoring)
-
-        wizard.goBack()
-        wizard.showChatGPTGuide()
-        #expect(wizard.currentStep == .pet)
-        #expect(wizard.isShowingChatGPTGuide)
-        wizard.changeMethod()
-        #expect(!wizard.isShowingChatGPTGuide)
     }
 
     @Test func troubleshootingStaysInTheWizard() throws {
@@ -132,113 +98,6 @@ typealias Fixture = SetupWizardFixture
         defer { reopened.close() }
         reopened.showWindow(nil)
         #expect(reopened.previewPane.isPlayingPreview)
-    }
-
-    @Test func openingThePromptLinkAdvancesToTheDropScreen() throws {
-        let state = Fixture.State()
-        var opened: [URL] = []
-        let wizard = try Fixture.makeWizard(state: state, openBrowser: { url in
-            opened.append(url)
-            return true
-        })
-        defer { wizard.close() }
-        wizard.showChatGPTGuide()
-        wizard.openPromptInChatGPT()
-
-        // The prompt goes into the link, so nothing is copied and the user can send it directly.
-        #expect(opened.count == 1)
-        let url = try #require(opened.first)
-        let sent = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-            .queryItems?.first { $0.name == "q" }?.value
-        #expect(sent == wizard.prompt)
-        #expect(wizard.pasteboard.string(forType: .string) == nil)
-
-        // The image does not exist yet, so the screen that accepts it is already waiting.
-        #expect(wizard.currentStep == .pet)
-        #expect(wizard.isComposingCharacter)
-        #expect(wizard.isAwaitingGeneratedSheet)
-        #expect(wizard.promptFeedback == nil)
-        #expect(state.announcements.isEmpty)
-
-        // Backing out of the drop screen clears the hand-off note with it.
-        wizard.cancelCharacterImport()
-        #expect(!wizard.isComposingCharacter)
-        #expect(!wizard.isAwaitingGeneratedSheet)
-    }
-
-    @Test func failedBrowserCopiesThePromptAndStaysOnTheGuide() throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(state: state, openBrowser: { _ in false })
-        defer { wizard.close() }
-        wizard.showChatGPTGuide()
-        wizard.openPromptInChatGPT()
-        #expect(!wizard.isComposingCharacter)
-        #expect(wizard.isShowingChatGPTGuide)
-        #expect(wizard.promptFeedback == .copiedAfterOpenFailed)
-        #expect(wizard.promptFeedbackKey == .setupOpenFailed)
-        #expect(wizard.promptFeedbackIsError)
-        // A failed hand-off still leaves the prompt somewhere the user can paste it from.
-        #expect(wizard.pasteboard.string(forType: .string) == wizard.prompt)
-        #expect(state.announcements == [wizard.localizedString(.setupOpenFailed)])
-    }
-
-    @Test func copyingThePromptStaysOnTheGuideWithoutOpeningTheBrowser() throws {
-        let state = Fixture.State()
-        var didOpen = false
-        let wizard = try Fixture.makeWizard(state: state, openBrowser: { _ in
-            didOpen = true
-            return true
-        })
-        defer { wizard.close() }
-        wizard.showChatGPTGuide()
-        wizard.copyPrompt()
-        // The clipboard is the path for every other image generator: no browser, no hand-off.
-        #expect(!didOpen)
-        #expect(wizard.isShowingChatGPTGuide)
-        #expect(!wizard.isComposingCharacter)
-        #expect(wizard.pasteboard.string(forType: .string) == wizard.prompt)
-        #expect(wizard.promptFeedback == .copied)
-        #expect(wizard.promptFeedbackKey == .setupPromptCopied)
-        #expect(!wizard.promptFeedbackIsError)
-        #expect(state.announcements.isEmpty)
-    }
-
-    @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {
-        let state = Fixture.State()
-        let previous = try Fixture.sheetImages()
-        state.images = previous
-        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
-        defer { wizard.close() }
-        try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(wizard.didFailImport)
-        #expect(wizard.currentStep == .pet)
-        // The failed read writes nothing, so the seeded set and its preview survive untouched.
-        #expect(wizard.hasImage)
-        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
-        #expect(wizard.previewPane.hasPet)
-        #expect(!wizard.didRegisterPet)
-        #expect(state.announcements == [wizard.localizedString(.petImportErrorMessage)])
-
-        // Choosing a method again clears the stale message.
-        wizard.showChatGPTGuide()
-        #expect(!wizard.didFailImport)
-    }
-
-    @Test func importFailureStaysOnItsStepAndClearsWhenTheStepChanges() async throws {
-        let state = Fixture.State()
-        state.images = try Fixture.sheetImages()
-        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
-        defer { wizard.close() }
-        // The drop target is window-wide, so a failure on a later step must stay visible there.
-        wizard.setStep(.monitoring)
-        try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(wizard.currentStep == .monitoring)
-        #expect(wizard.didFailImport)
-        #expect(wizard.hasImage)
-
-        wizard.goBack()
-        #expect(wizard.currentStep == .pet)
-        #expect(!wizard.didFailImport)
     }
 
     @Test func permissionGrantedAndReadyStayDistinctStates() throws {

@@ -258,7 +258,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 
 **HIG constraints**
 
-- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area).
+- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area). The permission guide's draggable app icon uses the `dragIconSize` token (64 pt).
 - Leave about 12 pt around bezeled controls and about 24 pt around bezel-less elements' visible edges. Use `action-gap` between actions and `section-gap` between groups.
 - Prefer one primary action. Place it at the trailing edge of a pinned footer; secondary actions go to the leading edge. The share action is centered because it is the single action in that footer (see Components).
 
@@ -331,6 +331,7 @@ A pinned footer is the default action area for setup-class windows:
 - Full-width 1 px separator, `footer-inset` 12 above and below, a 36 pt row, content inset 24.
 - Primary action at the trailing edge, secondary at the leading edge, 8 pt gap.
 - The footer belongs to the window, not to the scrollable content. The content above must never hide it.
+- Setup and Change Character share the generation/import screen. Its acquisition column scrolls when needed; setup keeps the sample action visible in the footer. A selected sample or image stays a draft until Next or Apply.
 - Share uses the same footer geometry but centers its single brand action; the composer-failure status sits on the left and wraps to two lines.
 
 ### Cards and option cards

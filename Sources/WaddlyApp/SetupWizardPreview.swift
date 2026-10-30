@@ -40,6 +40,7 @@ final class SetupPreviewPane: PetImageDropView {
     var localization: LocalizationController?
     var showsControls = false
     var isSleeping = false
+    private var isReactionTest = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -80,10 +81,28 @@ final class SetupPreviewPane: PetImageDropView {
     func configure(localization: LocalizationController, showsControls: Bool) {
         self.localization = localization
         self.showsControls = showsControls
-        modeControl.isHidden = !showsControls
-        backgroundControl.isHidden = !showsControls
-        categoryRow.isHidden = !showsControls
+        modeControl.isHidden = !showsControls || isReactionTest
+        backgroundControl.isHidden = !showsControls || isReactionTest
+        categoryRow.isHidden = !showsControls || isReactionTest
         rebuildControls()
+        applyMode()
+    }
+
+    /// The permission screen tests real input rather than showing a self-playing demo.
+    func setReactionTest(_ enabled: Bool) {
+        guard enabled != isReactionTest else { return }
+        isReactionTest = enabled
+        modeControl.isHidden = enabled || !showsControls
+        if enabled {
+            modeControl.selectedSegment = Mode.animation.rawValue
+        }
+        player.stop()
+        applyMode()
+    }
+
+    func reactToKey(isEnter: Bool) {
+        guard isReactionTest, !isSleeping, hasPet else { return }
+        player.playReaction(isEnter ? .enter : .typing)
     }
 
     /// `sleeping` drives the permission step: the pet stays asleep until reactions are live.
@@ -104,6 +123,8 @@ final class SetupPreviewPane: PetImageDropView {
         if framesChanged || poseChanged {
             if sleeping {
                 player.playSleeping()
+            } else if isReactionTest {
+                player.playIdle()
             } else if poseChanged {
                 // Waking up is an event: sleep → blink → typing, then the normal loop.
                 player.playWakeUp()
@@ -117,7 +138,13 @@ final class SetupPreviewPane: PetImageDropView {
         applyMode()
     }
 
-    func showDemo(_ images: PetImageSet, caption: String) {
+    /// The shared import screen labels a preview according to its draft state.
+    func setStageLabel(_ label: String?) {
+        stageLabel.stringValue = label ?? ""
+        stageLabel.isHidden = label == nil
+    }
+
+    func showDemo(_ images: PetImageSet) {
         self.images = images
         player.setImages(images)
         isSleeping = false
@@ -126,8 +153,12 @@ final class SetupPreviewPane: PetImageDropView {
         placeholderStack.isHidden = true
         petView.isHidden = false
         gridView.setFrames(images.sheetOrderedFrames)
-        captionLabel.stringValue = caption
-        player.playLoop()
+        captionLabel.stringValue = ""
+        if isReactionTest {
+            player.playIdle()
+        } else {
+            player.playLoop()
+        }
         applyMode()
     }
 
@@ -187,7 +218,7 @@ final class SetupPreviewPane: PetImageDropView {
         backgroundControl.action = #selector(changeBackground)
 
         stageLabel.font = .systemFont(ofSize: 11, weight: .medium)
-        stageLabel.textColor = .tertiaryLabelColor
+        stageLabel.textColor = .secondaryLabelColor
         stageLabel.translatesAutoresizingMaskIntoConstraints = false
 
         placeholderStack.orientation = .vertical
@@ -297,16 +328,22 @@ extension SetupPreviewPane {
         let hasFrames = !images.sheetOrderedFrames.isEmpty
         petView.isHidden = isCells || !hasFrames
         gridView.isHidden = !isCells || !hasFrames
-        categoryRow.isHidden = isCells || !showsControls || !hasFrames
-        backgroundControl.isHidden = !isCells || !showsControls
+        categoryRow.isHidden = isCells || !showsControls || isReactionTest || !hasFrames
+        backgroundControl.isHidden = !isCells || !showsControls || isReactionTest
         if isCells {
             player.stop()
         } else if hasFrames, !player.isPlaying {
-            if isSleeping {
-                player.playSleeping()
-            } else {
-                player.playLoop()
-            }
+            startPlayer()
+        }
+    }
+
+    private func startPlayer() {
+        if isSleeping {
+            player.playSleeping()
+        } else if isReactionTest {
+            player.playIdle()
+        } else {
+            player.playLoop()
         }
     }
 

@@ -106,7 +106,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             pasteboard: pasteboard,
             // Change Character only writes when the draft would actually change the saved pet.
             primaryRequiresChange: true,
-            showsPrompt: true,
             promptResourcesURL: promptResourcesURL
         ))
         host.translatesAutoresizingMaskIntoConstraints = true

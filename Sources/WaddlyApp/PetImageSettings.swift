@@ -10,6 +10,10 @@ extension AppDelegate {
     func loadSavedPetImage() async {
         do {
             try await imageStore.restore()
+            if let wizard = setupWizardController, wizard.isComposingCharacter {
+                wizard.characterImportModel.refreshRestoredImagesIfUntouched()
+                wizard.renderCurrentStep()
+            }
         } catch {
             await showImageSaveError(error)
         }
@@ -29,37 +33,6 @@ extension AppDelegate {
             await showImageSaveError(error)
             return false
         case .cancelled, .aborted:
-            return false
-        }
-    }
-
-    /// Reads a sheet without writing. The wizard calls `confirmPetImage` immediately on success;
-    /// a failed read returns `nil` and leaves the saved set untouched. A read failure returns
-    /// `nil`; the wizard explains it in place instead of raising a separate alert.
-    func previewPetImage(from url: URL) async -> PetImageSet? {
-        let images = await Task.detached(priority: .userInitiated) {
-            autoreleasepool { () -> PetImageSet? in
-                guard let data = PetSpriteSheetImporter.readPNG(from: url) else { return nil }
-                return PetSpriteSheetImporter.frames(from: data)
-            }
-        }.value
-        guard !isShuttingDown else { return nil }
-        return images
-    }
-
-    /// Commits the decoded set on the store's queue. The sample refusal rule runs inside that same
-    /// queue so a reopened guide cannot overwrite a user import queued by the previous guide.
-    func confirmPetImage(_ images: PetImageSet, source: PetImageCommitSource = .userFile) async -> Bool {
-        let outcome = await imageStore.confirmPetImage(images) {
-            Self.shouldCommitPetImages(source: source, petIsStored: self.hasCompletePetImageSet)
-        }
-        switch outcome {
-        case .confirmed:
-            return true
-        case let .failed(error):
-            await showImageSaveError(error)
-            return false
-        case .aborted:
             return false
         }
     }

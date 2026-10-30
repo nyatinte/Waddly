@@ -52,14 +52,15 @@ struct CharacterPromptCard: View {
     }
 
     @ViewBuilder private var actions: some View {
+        Button(action: openInChatGPT) {
+            Label(localization.string(for: .characterOpenChatGPT), systemImage: "arrow.up.right.square")
+                .actionLabel()
+        }
+        .accessibilityIdentifier("characterOpenChatGPT")
         Button(action: copyPrompt) {
             Text(localization.string(for: .characterCopyPrompt)).actionLabel()
         }
         .accessibilityIdentifier("characterCopyPrompt")
-        Button(action: openInChatGPT) {
-            Text(localization.string(for: .characterOpenChatGPT)).actionLabel()
-        }
-        .accessibilityIdentifier("characterOpenChatGPT")
     }
 
     func copyPrompt() {
