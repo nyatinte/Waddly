@@ -83,14 +83,10 @@
 "setup.methodChatGPTDetail" = "Turn a photo into an animated sprite sheet.";
 "setup.methodChoosePNG" = "Choose a PNG file";
 "setup.methodChoosePNGDetail" = "Use a sprite sheet you already have.";
-"setup.dropHint" = "You can also drag and drop a transparent PNG onto this window.";
 "setup.trySample" = "Try the sample pet first";
 "setup.sampleActive" = "The sample pet is in use. Choose Change image to use your own.";
 "setup.chatGPTPromptTitle" = "Create an image with an image generator";
-"setup.chatGPTPromptBody" = "Create a nine-cell sprite sheet from a photo of your pet. Open ChatGPT, or copy the prompt for another image generator.";
-"setup.chatGPTStep1" = "Open ChatGPT or copy the prompt";
-"setup.chatGPTStep2" = "Attach the photo and generate";
-"setup.chatGPTStep3" = "Drop the generated PNG onto this window";
+"setup.chatGPTPromptBody" = "Open ChatGPT or copy the prompt to another image generator, then attach a photo of your pet to create a nine-cell sprite sheet.";
 "setup.openChatGPT" = "Open in ChatGPT";
 "setup.copyPrompt" = "Copy prompt";
 "setup.promptCopied" = "The prompt has been copied.";
@@ -98,7 +94,6 @@
 "setup.copyFailed" = "The prompt could not be copied. Please try again.";
 "setup.openFailed" = "The prompt was copied, but ChatGPT could not be opened. Open chatgpt.com in your browser and paste it.";
 "setup.whenReady" = "If you already have a PNG, you can import it here.";
-"setup.changeMethod" = "Change method";
 "setup.choosePNG" = "Choose a PNG file";
 "setup.imageMissing" = "No pet image has been added yet.";
 "setup.registeredTitle" = "Your pet image is set";
@@ -152,7 +147,6 @@
 "setup.previewSleep" = "Sleep";
 "setup.previewBackground" = "Check on a dark background";
 "setup.demoLabel" = "Sample";
-"setup.demoCaption" = "This is how your pet moves when you type.";
 "setup.previewLight" = "Light";
 "setup.previewDark" = "Dark";
 "setup.retry" = "Try again";

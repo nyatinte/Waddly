@@ -88,13 +88,6 @@ extension SetupWizardController {
         renderCurrentStep()
     }
 
-    @objc func changeMethod() {
-        isShowingChatGPTGuide = false
-        promptFeedback = nil
-        clearImportFeedback()
-        renderCurrentStep()
-    }
-
     @objc func importFromPanel() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.png]
@@ -160,15 +153,10 @@ extension SetupWizardController {
         return panel.url
     }
 
-    /// Routes the window-wide drop: the shared screen stages, the legacy path imports directly.
+    /// Window-wide drops are available only while the character import screen is open.
     func handleWindowDrop(_ urls: [URL]) {
-        guard !isMonitoringSettings else { return }
-        if isComposingCharacter {
-            Task { [weak self] in await self?.characterImportModel.stageFiles(at: urls) }
-            return
-        }
-        guard let url = urls.first else { return }
-        importImage(from: url)
+        guard !isMonitoringSettings, isComposingCharacter else { return }
+        Task { [weak self] in await self?.characterImportModel.stageFiles(at: urls) }
     }
 
     private func leaveCharacterImport() {

@@ -11,15 +11,8 @@ extension SetupWizardController {
         }
 
         previewPane.configure(localization: localization, showsControls: true)
-        previewPane.shouldPreserveUnsupportedDropURLs = { [weak self] in self?.isComposingCharacter ?? false }
-        previewPane.onDrop = { [weak self] urls in
-            self?.handleWindowDrop(urls)
-        }
-
-        if isMonitoringSettings {
-            contentView.unregisterDraggedTypes()
-            previewPane.unregisterDraggedTypes()
-        }
+        contentView.unregisterDraggedTypes()
+        previewPane.unregisterDraggedTypes()
         let hostingView = NSHostingView(rootView: SetupWizardScreen(controller: self))
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(hostingView)

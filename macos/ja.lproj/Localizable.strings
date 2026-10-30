@@ -83,14 +83,10 @@
 "setup.methodChatGPTDetail" = "写真からアニメーション画像を作成します。";
 "setup.methodChoosePNG" = "PNGファイルを選択";
 "setup.methodChoosePNGDetail" = "作成済みの画像を読み込みます。";
-"setup.dropHint" = "透過PNGをこのウィンドウにドラッグ＆ドロップすることもできます。";
 "setup.trySample" = "まずサンプルで試す";
 "setup.sampleActive" = "サンプルを表示中です。「画像を変更」から自分の画像に切り替えられます。";
 "setup.chatGPTPromptTitle" = "画像生成AIで画像を作成";
-"setup.chatGPTPromptBody" = "ペットの写真から、9コマのアニメーション画像を作成します。ChatGPTを開くか、他の画像生成AIにプロンプトを貼り付けてください。";
-"setup.chatGPTStep1" = "ChatGPTを開くか、プロンプトをコピー";
-"setup.chatGPTStep2" = "写真を添付して生成";
-"setup.chatGPTStep3" = "できたPNGをこの画面にドロップ";
+"setup.chatGPTPromptBody" = "ChatGPTを開くか、プロンプトを他の画像生成AIに貼り付け、ペットの写真を添付して9コマの画像を作成してください。";
 "setup.openChatGPT" = "ChatGPTで開く";
 "setup.copyPrompt" = "プロンプトをコピー";
 "setup.promptCopied" = "プロンプトをコピーしました。";
@@ -98,7 +94,6 @@
 "setup.copyFailed" = "プロンプトをコピーできませんでした。もう一度お試しください。";
 "setup.openFailed" = "プロンプトはコピーしましたが、ChatGPTを開けませんでした。ブラウザでchatgpt.comを開き、コピーしたプロンプトを貼り付けてください。";
 "setup.whenReady" = "すでにPNGがある場合は、ここから読み込むこともできます。";
-"setup.changeMethod" = "方法を変更";
 "setup.choosePNG" = "PNGファイルを選択";
 "setup.imageMissing" = "ペットの画像が登録されていません。";
 "setup.registeredTitle" = "ペットの画像は登録済みです";
@@ -152,7 +147,6 @@
 "setup.previewSleep" = "睡眠";
 "setup.previewBackground" = "ダーク背景で確認する";
 "setup.demoLabel" = "サンプル";
-"setup.demoCaption" = "キー入力に合わせてアニメーションします。";
 "setup.previewLight" = "ライト";
 "setup.previewDark" = "ダーク";
 "setup.retry" = "もう一度試す";

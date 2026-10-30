@@ -117,7 +117,7 @@ final class SetupPreviewPane: PetImageDropView {
         applyMode()
     }
 
-    func showDemo(_ images: PetImageSet, caption: String) {
+    func showDemo(_ images: PetImageSet) {
         self.images = images
         player.setImages(images)
         isSleeping = false
@@ -126,7 +126,7 @@ final class SetupPreviewPane: PetImageDropView {
         placeholderStack.isHidden = true
         petView.isHidden = false
         gridView.setFrames(images.sheetOrderedFrames)
-        captionLabel.stringValue = caption
+        captionLabel.stringValue = ""
         player.playLoop()
         applyMode()
     }

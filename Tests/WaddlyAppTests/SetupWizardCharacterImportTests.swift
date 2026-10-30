@@ -198,9 +198,8 @@ import WaddlyCore
         #expect(!wizard.characterImportModel.isDropTargeted)
     }
 
-    /// The window-wide drop stages while composing and keeps the direct import otherwise; the drop
-    /// itself never commits a staged draft, so only Continue can write one.
-    @Test func windowWideDropStagesWhileComposingAndImportsOtherwise() async throws {
+    /// A drop stages only in the import screen and never commits without Continue.
+    @Test func windowWideDropStagesOnlyWhileComposing() async throws {
         let url = try Fixture.sheetURL()
 
         let legacyState = Fixture.State()
@@ -211,7 +210,8 @@ import WaddlyCore
         )
         defer { legacy.close() }
         legacy.handleWindowDrop([url])
-        #expect(await waitUntil { legacyState.confirmCount == 1 })
+        #expect(legacyState.confirmCount == 0)
+        #expect(!legacy.hasImage)
 
         let composingState = Fixture.State()
         let composing = try Fixture.makeWizard(state: composingState)

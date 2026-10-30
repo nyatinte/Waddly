@@ -99,7 +99,7 @@ typealias Fixture = SetupWizardFixture
         wizard.showChatGPTGuide()
         #expect(wizard.currentStep == .pet)
         #expect(wizard.isShowingChatGPTGuide)
-        wizard.changeMethod()
+        wizard.beginCharacterImport()
         #expect(!wizard.isShowingChatGPTGuide)
     }
 

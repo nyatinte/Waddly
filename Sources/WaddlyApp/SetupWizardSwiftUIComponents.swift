@@ -112,10 +112,6 @@ extension SetupWizardScreen {
         }
     }
 
-    func numbered(_ keys: [LocalizationKey]) -> some View {
-        cardContainer { numberedSteps(keys) }
-    }
-
     func numberedSteps(_ keys: [LocalizationKey]) -> some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             ForEach(Array(keys.enumerated()), id: \.offset) { index, key in
@@ -145,6 +141,7 @@ extension SetupWizardScreen {
         _ title: LocalizationKey,
         detail: LocalizationKey,
         symbol: String,
+        primary: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -160,7 +157,8 @@ extension SetupWizardScreen {
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: SetupMetrics.optionCardHeight, alignment: .leading)
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(nsColor: .separatorColor)))
+            .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+                .stroke(primary ? Color.accentColor : Color(nsColor: .separatorColor)))
             .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)

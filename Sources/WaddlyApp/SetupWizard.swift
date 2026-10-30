@@ -333,6 +333,13 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
 extension SetupWizardController {
     func renderCurrentStep() {
         updateGuidePresentation()
+        if let contentView = window?.contentView as? PetImageDropView {
+            if isComposingCharacter, !isMonitoringSettings {
+                contentView.registerForDraggedTypes([.fileURL])
+            } else {
+                contentView.unregisterDraggedTypes()
+            }
+        }
         updatePreview()
         didRenderConfirmedReaction = isMonitoringReady
         objectWillChange.send()
@@ -343,7 +350,7 @@ extension SetupWizardController {
         if images.isComplete {
             previewPane.showPet(images, caption: previewCaption, sleeping: shouldSleepInPreview)
         } else if let demoImages {
-            previewPane.showDemo(demoImages, caption: localizedString(.setupDemoCaption))
+            previewPane.showDemo(demoImages)
         } else {
             previewPane.showPlaceholder(
                 symbol: "pawprint",

@@ -144,7 +144,7 @@ You can also create the sprite sheet by hand.
 
 ### Quick setup
 
-1. Open **Setup Guide…** (or **Change Character…** from the menu after initial setup) and import a PNG by choosing a file, dragging and dropping, or pressing ⌘V. If you do not have an image yet, choose **Create an image with an image generator** to open ChatGPT with the prompt filled in, or click **Try the sample pet first** to use the bundled pet.
+1. Open **Setup Guide…** (or **Change Character…** from the menu after initial setup), then open the character import screen to choose a PNG, drag and drop it, or press ⌘V. If you do not have an image yet, choose **Create an image with an image generator** to open ChatGPT with the prompt filled in, or click **Try the sample pet first** to use the bundled pet.
 2. If the character's position shifts between cells, open **Adjust frames…** to align the crop and position while checking the preview.
 3. Click **Apply** (or **Continue** during initial setup) to update your desktop pet.
 

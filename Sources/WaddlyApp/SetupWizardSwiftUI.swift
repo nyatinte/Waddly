@@ -24,8 +24,7 @@ struct SetupWizardScreen: View {
             } else {
                 HStack(alignment: .top, spacing: LayoutMetrics.columnGap) {
                     VStack(alignment: .leading, spacing: 12) {
-                        // Window-wide drops stay live on every step, so the failure has to be visible
-                        // here too; `setStep` clears it when the user moves on.
+                        // Import failures stay visible on the current step until the user moves on.
                         if controller.didFailImport {
                             errorMessage(.petImportErrorMessage)
                         }
@@ -108,7 +107,6 @@ private extension SetupWizardScreen {
     private var chatGPTGuideContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupChatGPTPromptBody)
-            numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: LayoutMetrics.actionGap) { promptActions }
                 VStack(alignment: .leading, spacing: LayoutMetrics.actionGap) { promptActions }
@@ -123,10 +121,6 @@ private extension SetupWizardScreen {
                 controller.localizedString(.setupChoosePNG),
                 identifier: "importFromPanel"
             ) { controller.beginCharacterImport() }
-            Button(controller.localizedString(.setupChangeMethod), action: controller.changeMethod)
-                .buttonStyle(.link)
-                .accessibilityLabel(controller.localizedString(.setupChangeMethod))
-                .accessibilityIdentifier("changeMethod")
         }
     }
 
@@ -160,6 +154,7 @@ private extension SetupWizardScreen {
                 .setupMethodChatGPT,
                 detail: .setupMethodChatGPTDetail,
                 symbol: "sparkles",
+                primary: true,
                 action: controller.showChatGPTGuide
             )
             .accessibilityIdentifier("showChatGPTGuide")
@@ -171,7 +166,6 @@ private extension SetupWizardScreen {
             )
             .accessibilityIdentifier("importFromPanel")
             sampleOption
-            caption(.setupDropHint)
         }
     }
 

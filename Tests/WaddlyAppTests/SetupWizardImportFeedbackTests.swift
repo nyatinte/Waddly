@@ -4,7 +4,7 @@ import Testing
 import WaddlyCore
 
 @Suite(.serialized) @MainActor struct SetupWizardImportFeedbackTests {
-    enum NavigationAction: CaseIterable { case step, showGuide, changeMethod, openPromptLink, close }
+    enum NavigationAction: CaseIterable { case step, showGuide, openPromptLink, close }
 
     @Test(arguments: NavigationAction.allCases)
     func navigationInvalidatesASuspendedImportFailure(action: NavigationAction) async throws {
@@ -24,7 +24,6 @@ import WaddlyCore
         switch action {
         case .step: wizard.setStep(.monitoring)
         case .showGuide: wizard.showChatGPTGuide()
-        case .changeMethod: wizard.changeMethod()
         case .openPromptLink: wizard.openPromptInChatGPT()
         case .close: wizard.close()
         }

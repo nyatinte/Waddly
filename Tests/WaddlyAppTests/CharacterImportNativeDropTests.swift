@@ -82,7 +82,7 @@ import Testing
         #expect(!embeddedPane.isPlayingPreview)
     }
 
-    @Test func setupDropAdaptersPreserveLegacyFilteringButValidateSharedDrops() async throws {
+    @Test func setupDropAdapterValidatesSharedDrops() async throws {
         let wizard = try SetupWizardFixture.makeWizard()
         defer {
             wizard.characterImportModel.discard()
@@ -103,7 +103,7 @@ import Testing
             #require(wizard.characterImportModel.stagedFrames), staged
         ))
 
-        #expect(try wizard.previewPane.performFileURLDrop(from: fileDropPasteboard([jpg])))
+        #expect(try root.performFileURLDrop(from: fileDropPasteboard([jpg])))
         #expect(await waitUntil { wizard.characterImportModel.failure == .sheet(.notPNG) })
     }
 }
