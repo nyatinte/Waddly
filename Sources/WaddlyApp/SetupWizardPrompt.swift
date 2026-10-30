@@ -1,24 +1,33 @@
 import AppKit
 
-/// The bundled prompt and clipboard action are shared by setup and character management.
+/// The bundled prompt and the two hand-offs to an image generator, shared by setup and character
+/// management. The link carries the prompt, so the usual path needs no clipboard round trip.
 enum SpriteSheetPrompt {
     enum Feedback: Equatable {
+        /// ChatGPT was opened with the prompt already in its composer.
+        case opened
+        /// The clipboard-only hand-off for another generator. Change Character still offers it.
         case copied
+        /// The browser could not be opened, so the prompt is on the clipboard for a manual paste.
+        case copiedAfterOpenFailed
         case copyFailed
-        case openFailed
         case unavailable
 
         var messageKey: LocalizationKey {
             switch self {
+            case .opened: .setupChatGPTOpened
             case .copied: .setupPromptCopied
+            case .copiedAfterOpenFailed: .setupOpenFailed
             case .copyFailed: .setupCopyFailed
-            case .openFailed: .setupOpenFailed
             case .unavailable: .characterPromptUnavailable
             }
         }
 
         var isError: Bool {
-            self != .copied
+            switch self {
+            case .opened, .copied: false
+            case .copiedAfterOpenFailed, .copyFailed, .unavailable: true
+            }
         }
     }
 
@@ -33,18 +42,38 @@ enum SpriteSheetPrompt {
         return String(markdown[start.upperBound ..< end.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// A missing prompt must not erase the user's clipboard or open a browser with nothing to paste.
+    /// ChatGPT copies the `q` parameter into its composer, so the prompt travels in the link instead
+    /// of the pasteboard. `URLComponents` percent-encodes the whole prompt, which matters because the
+    /// bundled prompts carry quotes and, in Japanese, non-ASCII text.
+    static func chatGPTURL(for prompt: String) -> URL? {
+        guard var components = URLComponents(string: "https://chatgpt.com/") else { return nil }
+        components.queryItems = [URLQueryItem(name: "q", value: prompt)]
+        return components.url
+    }
+
+    /// Opens ChatGPT with the prompt already written into its composer. When the browser cannot be
+    /// opened the prompt goes to the clipboard instead, so a failed hand-off still leaves the user
+    /// with something to paste rather than an empty browser tab.
     @MainActor
-    static func copy(
+    static func open(
         _ prompt: String,
         to pasteboard: NSPasteboard,
-        openBrowser: (@MainActor (URL) -> Bool)? = nil
+        openBrowser: @MainActor (URL) -> Bool
     ) -> Feedback {
         guard !prompt.isEmpty else { return .unavailable }
+        guard let url = chatGPTURL(for: prompt) else { return .copyFailed }
+        guard openBrowser(url) else {
+            return copy(prompt, to: pasteboard) == .copied ? .copiedAfterOpenFailed : .copyFailed
+        }
+        return .opened
+    }
+
+    /// A missing prompt must not erase the user's clipboard.
+    @MainActor
+    static func copy(_ prompt: String, to pasteboard: NSPasteboard) -> Feedback {
+        guard !prompt.isEmpty else { return .unavailable }
         pasteboard.clearContents()
-        guard pasteboard.setString(prompt, forType: .string) else { return .copyFailed }
-        guard let openBrowser, let url = URL(string: "https://chatgpt.com/") else { return .copied }
-        return openBrowser(url) ? .copied : .openFailed
+        return pasteboard.setString(prompt, forType: .string) ? .copied : .copyFailed
     }
 }
 

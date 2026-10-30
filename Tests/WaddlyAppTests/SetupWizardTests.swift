@@ -134,38 +134,52 @@ typealias Fixture = SetupWizardFixture
         #expect(reopened.previewPane.isPlayingPreview)
     }
 
-    @Test func copyingThePromptReportsCopyAndBrowserOpenResults() throws {
-        let chatGPT = try #require(URL(string: "https://chatgpt.com/"))
-        let failingState = Fixture.State()
+    @Test func openingThePromptLinkAdvancesToTheDropScreen() throws {
+        let state = Fixture.State()
         var opened: [URL] = []
-        let failingOpen = try Fixture.makeWizard(state: failingState, openBrowser: { url in
+        let wizard = try Fixture.makeWizard(state: state, openBrowser: { url in
             opened.append(url)
-            return false
-        })
-        defer { failingOpen.close() }
-        failingOpen.showChatGPTGuide()
-        failingOpen.copyPromptAndOpenChatGPT()
-        #expect(opened == [chatGPT])
-        #expect(failingOpen.promptFeedback == .openFailed)
-        #expect(failingOpen.promptFeedbackKey == .setupOpenFailed)
-        #expect(failingOpen.promptFeedbackIsError)
-        #expect(failingState.announcements == [failingOpen.localizedString(.setupOpenFailed)])
-
-        let succeedingState = Fixture.State()
-        var didOpen = false
-        let succeedingOpen = try Fixture.makeWizard(state: succeedingState, openBrowser: { _ in
-            didOpen = true
             return true
         })
-        defer { succeedingOpen.close() }
-        succeedingOpen.showChatGPTGuide()
-        succeedingOpen.copyPromptAndOpenChatGPT()
-        #expect(didOpen)
-        #expect(succeedingOpen.promptFeedback == .copied)
-        #expect(succeedingOpen.promptFeedbackKey == .setupPromptCopied)
-        #expect(!succeedingOpen.promptFeedbackIsError)
-        // Only a failure is announced.
-        #expect(succeedingState.announcements.isEmpty)
+        defer { wizard.close() }
+        wizard.showChatGPTGuide()
+        wizard.openPromptInChatGPT()
+
+        // The prompt goes into the link, so nothing is copied and the user can send it directly.
+        #expect(opened.count == 1)
+        let url = try #require(opened.first)
+        let sent = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first { $0.name == "q" }?.value
+        #expect(sent == wizard.prompt)
+        #expect(wizard.pasteboard.string(forType: .string) == nil)
+
+        // The image does not exist yet, so the screen that accepts it is already waiting.
+        #expect(wizard.currentStep == .pet)
+        #expect(wizard.isComposingCharacter)
+        #expect(wizard.isAwaitingGeneratedSheet)
+        #expect(wizard.promptFeedback == nil)
+        #expect(state.announcements.isEmpty)
+
+        // Backing out of the drop screen clears the hand-off note with it.
+        wizard.cancelCharacterImport()
+        #expect(!wizard.isComposingCharacter)
+        #expect(!wizard.isAwaitingGeneratedSheet)
+    }
+
+    @Test func failedBrowserCopiesThePromptAndStaysOnTheGuide() throws {
+        let state = Fixture.State()
+        let wizard = try Fixture.makeWizard(state: state, openBrowser: { _ in false })
+        defer { wizard.close() }
+        wizard.showChatGPTGuide()
+        wizard.openPromptInChatGPT()
+        #expect(!wizard.isComposingCharacter)
+        #expect(wizard.isShowingChatGPTGuide)
+        #expect(wizard.promptFeedback == .copiedAfterOpenFailed)
+        #expect(wizard.promptFeedbackKey == .setupOpenFailed)
+        #expect(wizard.promptFeedbackIsError)
+        // A failed hand-off still leaves the prompt somewhere the user can paste it from.
+        #expect(wizard.pasteboard.string(forType: .string) == wizard.prompt)
+        #expect(state.announcements == [wizard.localizedString(.setupOpenFailed)])
     }
 
     @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {

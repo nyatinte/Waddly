@@ -55,6 +55,9 @@ struct CharacterImportView: View {
     /// Apply is only offered when the draft would actually change the saved pet. Both hosts state it.
     var primaryRequiresChange: Bool
     var showsPrompt = false
+    /// Setup hands the user off to ChatGPT before the image exists, so the empty drop zone has to say
+    /// why it is already on screen.
+    var awaitsGeneratedSheet = false
     var promptResourcesURL: URL? = Bundle.main.resourceURL
 
     var promptCard: CharacterPromptCard {
@@ -129,6 +132,9 @@ private extension CharacterImportView {
 
     var acquisition: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if awaitsGeneratedSheet, !model.hasStagedCandidate {
+                handoffNote
+            }
             if model.hasStagedCandidate {
                 stagedSheetCard
             } else {

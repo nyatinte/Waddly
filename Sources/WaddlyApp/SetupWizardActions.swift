@@ -109,11 +109,12 @@ extension SetupWizardController {
 
     /// Opens the shared import screen inside the Pet step. Staging writes nothing; the existing
     /// Continue/commit path does, so setup progress and the sample rule are untouched.
-    func beginCharacterImport() {
+    func beginCharacterImport(awaitingGeneratedSheet: Bool = false) {
         clearImportFeedback()
         isShowingChatGPTGuide = false
         characterImportModel.reload()
         isComposingCharacter = true
+        isAwaitingGeneratedSheet = awaitingGeneratedSheet
         renderCurrentStep()
     }
 
@@ -132,6 +133,7 @@ extension SetupWizardController {
             didUseSamplePet = false
             stopEmbeddedCharacterPreview()
             isComposingCharacter = false
+            isAwaitingGeneratedSheet = false
             goNext()
         }
     }
@@ -174,6 +176,7 @@ extension SetupWizardController {
         characterImportModel.discard()
         stopEmbeddedCharacterPreview()
         isComposingCharacter = false
+        isAwaitingGeneratedSheet = false
         renderCurrentStep()
     }
 
@@ -200,8 +203,17 @@ extension SetupWizardController {
         }
     }
 
-    @objc func copyPromptAndOpenChatGPT() {
-        reportPromptFeedback(SpriteSheetPrompt.copy(prompt, to: pasteboard, openBrowser: openBrowser))
+    /// Hands the prompt to ChatGPT through the link, so nothing has to be pasted, then moves straight
+    /// to the drop screen. The user comes back with a generated PNG, and the place to put it is
+    /// already waiting instead of the method list they would have to walk through again.
+    @objc func openPromptInChatGPT() {
+        let feedback = SpriteSheetPrompt.open(prompt, to: pasteboard, openBrowser: openBrowser)
+        guard feedback == .opened else {
+            reportPromptFeedback(feedback)
+            return
+        }
+        promptFeedback = nil
+        beginCharacterImport(awaitingGeneratedSheet: true)
     }
 
     /// Sets the inline result, announcing only a failure so VoiceOver hears the reason once.

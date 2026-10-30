@@ -109,15 +109,15 @@ private extension SetupWizardScreen {
         VStack(alignment: .leading, spacing: 12) {
             bodyText(.setupChatGPTPromptBody)
             numbered([.setupChatGPTStep1, .setupChatGPTStep2, .setupChatGPTStep3])
-            Button(action: controller.copyPromptAndOpenChatGPT) {
-                Label(controller.localizedString(.setupCopyAndOpen), systemImage: "doc.on.doc")
+            Button(action: controller.openPromptInChatGPT) {
+                Label(controller.localizedString(.setupOpenChatGPT), systemImage: "arrow.up.right.square")
                     .actionLabel()
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .accessibilityLabel(controller.localizedString(.setupCopyAndOpen))
-            .accessibilityIdentifier("copyPromptAndOpenChatGPT")
+            .accessibilityLabel(controller.localizedString(.setupOpenChatGPT))
+            .accessibilityIdentifier("openPromptInChatGPT")
             Text(controller.promptFeedbackKey.map { controller.localizedString($0) } ?? " ")
                 .font(.caption)
                 .foregroundStyle(controller.promptFeedbackIsError ? DesignTokens.Status.critical : .secondary)
@@ -149,7 +149,7 @@ private extension SetupWizardScreen {
                 .setupMethodChoosePNG,
                 detail: .setupMethodChoosePNGDetail,
                 symbol: "square.and.arrow.down",
-                action: controller.beginCharacterImport
+                action: { controller.beginCharacterImport() }
             )
             .accessibilityIdentifier("importFromPanel")
             sampleOption

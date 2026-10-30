@@ -325,10 +325,15 @@ private extension CharacterImportSnapshotTests {
             demoURL: CaptureHarness.sheetURL()
         )
         defer { wizard.close() }
-        wizard.beginCharacterImport()
         let content = try #require(wizard.window?.contentView)
         let tag = CaptureHarness.suffix(language, dark)
 
+        // The ChatGPT hand-off lands here before the image exists, with the note that says so.
+        wizard.showChatGPTGuide()
+        wizard.openPromptInChatGPT()
+        try CaptureHarness.write(content, dark: dark, named: "setup-chatgpt-handoff-\(tag)")
+
+        wizard.beginCharacterImport()
         try CaptureHarness.write(content, dark: dark, named: "setup-empty-\(tag)")
         try await wizard.characterImportModel.stageFiles(at: [CaptureHarness.sheetURL()])
         CaptureHarness.showStagedFrames(wizard.characterImportModel, in: content)

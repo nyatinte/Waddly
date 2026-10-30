@@ -42,4 +42,14 @@ extension CharacterImportView {
     var isPrimaryActionEnabled: Bool {
         model.canPerformPrimaryAction(requiresChange: primaryRequiresChange)
     }
+
+    /// Setup hands the user to ChatGPT before the image exists, so the empty drop zone it jumped to
+    /// has to say why it is already on screen.
+    var handoffNote: some View {
+        Label(localization.string(for: .characterPromptHandoff), systemImage: "sparkles")
+            .font(DesignTokens.Typography.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("characterPromptHandoff")
+    }
 }
