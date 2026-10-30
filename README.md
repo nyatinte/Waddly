@@ -5,11 +5,64 @@
 
 <p align="center">Put your pet on your Mac desktop and let it react to keyboard input.</p>
 
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">Download DMG</a> · <a href="#install">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+
 <p align="center"><a href="README.ja.md">日本語README</a></p>
 
 <p align="center">
   <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
 </p>
+
+## Install
+
+Waddly runs on Apple Silicon Macs with macOS 14 or later. There are two ways to install it.
+
+### Install with Homebrew
+
+Use this when you also want Homebrew to handle updates. Homebrew 6.0 or later requires explicit trust for third-party Casks, so the commands below trust only the Cask you install. Run `brew update` first so `brew trust` is available (`brew trust` exists only in Homebrew 6.0+; earlier versions report “Unknown command”).
+
+```sh
+brew update
+brew tap nyatinte/waddly
+brew trust --cask nyatinte/waddly/waddly
+brew install --cask waddly
+```
+
+If you prefer not to use `brew trust`, install by the full Cask name — that trusts only this Cask ([Tap Trust](https://docs.brew.sh/Tap-Trust)):
+
+```sh
+brew tap nyatinte/waddly
+brew install --cask nyatinte/waddly/waddly
+```
+
+Update with `brew upgrade --cask waddly`. To revoke the trust, run `brew untrust --cask nyatinte/waddly/waddly` (Homebrew 6+).
+
+### Install from GitHub Releases
+
+Download `Waddly-<version>-macos-arm64.dmg` from the [latest release](https://github.com/nyatinte/Waddly/releases/latest), open it, and drag Waddly into your Applications folder. Verify the download with the `.sha256` file in the same release.
+
+The app is ad-hoc signed and not notarized, so Gatekeeper may block the first launch. Allow it under System Settings → Privacy & Security → Open Anyway. On macOS 15 or later, Control-click → Open no longer clears the warning.
+
+To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
+
+On first launch, follow the Setup Guide to import your images.
+
+### Turning on keyboard reactions
+
+The second step asks for Input Monitoring. Drag the icon into the list, then switch Waddly on.
+
+![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
+
+macOS applies the permission only after the app restarts. Click **Restart Waddly** to relaunch and resume from the same step. After the restart, press a key; when the pet reacts, the step shows as confirmed and you can continue.
+
+### Uninstall
+
+```sh
+brew uninstall --cask waddly
+brew untrust --cask nyatinte/waddly/waddly
+```
+
+`brew untrust` requires Homebrew 6+. Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
 
 ## What Waddly does
 
@@ -110,6 +163,10 @@ The app targets a physical memory footprint below 100 MB in typical use. See [CO
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions.
+
+## Share and feedback
+
+Share your pet with [#ShareMyWaddly](https://x.com/hashtag/ShareMyWaddly) on X. Report bugs or request features via [GitHub Issues](https://github.com/nyatinte/Waddly/issues). If you like Waddly, star the repository.
 
 ## License
 

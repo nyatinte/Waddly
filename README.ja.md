@@ -8,6 +8,8 @@
 
 <p align="center">自分のペットをデスクトップに表示し、キー入力に合わせて動かせるmacOSアプリです。</p>
 
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">DMGをダウンロード</a> · <a href="#はじめる">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+
 <p align="center"><a href="README.md">English README</a></p>
 
 <p align="center">
@@ -31,15 +33,23 @@ WaddlyはApple Silicon搭載MacのmacOS 14以降で動作します。インス�
 
 ### Homebrewでインストール
 
-今後の更新もHomebrewで行いたい場合に向いています。Homebrew 6.0以降ではサードパーティのCaskを明示的に信頼する必要があるため、次のコマンドで、インストールするCaskだけを信頼します。
+今後の更新もHomebrewで行いたい場合に向いています。Homebrew 6.0以降ではサードパーティのCaskを明示的に信頼する必要があるため、次のコマンドで、インストールするCaskだけを信頼します。先に `brew update` を実行してください（`brew trust` は Homebrew 6.0以降でのみ存在し、それより前のバージョンでは Unknown command と表示されます）。
 
 ```sh
+brew update
 brew tap nyatinte/waddly
 brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
-更新するには `brew upgrade --cask waddly` を実行します。信頼を取り消すには `brew untrust --cask nyatinte/waddly/waddly` を実行してください。
+`brew trust` を使わない場合は、フルネームでインストールしてください。この方法でもそのCaskだけが信頼されます（[Tap Trust](https://docs.brew.sh/Tap-Trust)）。
+
+```sh
+brew tap nyatinte/waddly
+brew install --cask nyatinte/waddly/waddly
+```
+
+更新するには `brew upgrade --cask waddly` を実行します。信頼を取り消すには `brew untrust --cask nyatinte/waddly/waddly` を実行してください（Homebrew 6以降）。
 
 ### GitHub Releasesからインストール
 
@@ -58,6 +68,15 @@ brew install --cask waddly
 ![Waddlyを入力監視の一覧へドラッグする様子](assets/examples/input-monitoring-guide.gif)
 
 macOSが許可を反映するのはアプリの再起動後です。「Waddlyを再起動」を押すと、同じステップから再開します。再起動後にキーを押してペットが反応すると「確認済み」になり、次のステップへ進めます。
+
+### アンインストール
+
+```sh
+brew uninstall --cask waddly
+brew untrust --cask nyatinte/waddly/waddly
+```
+
+`brew untrust` には Homebrew 6以降が必要です。あわせて「システム設定 → プライバシーとセキュリティ → 入力監視」の一覧から Waddly を削除してください。
 
 ## 自分のペットを使う
 
@@ -149,6 +168,10 @@ macOSが許可を反映するのはアプリの再起動後です。「Waddlyを
 ## コントリビュート
 
 開発への参加方法は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+
+## シェアとフィードバック
+
+ペットの様子は X で [#ShareMyWaddly](https://x.com/hashtag/ShareMyWaddly) を付けてシェアしてください。不具合報告や機能要望は [GitHub Issues](https://github.com/nyatinte/Waddly/issues) へ。気に入ったらリポジトリに Star を付けてもらえると嬉しいです。
 
 ## ライセンス
 
