@@ -56,7 +56,6 @@ brew install --cask nyatinte/waddly/waddly
 
 ```sh
 brew uninstall --cask waddly
-brew untrust --cask nyatinte/waddly/waddly
 ```
 
 あわせて「システム設定 → プライバシーとセキュリティ → 入力監視」の一覧から Waddly を削除してください。

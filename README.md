@@ -42,7 +42,6 @@ Choose **Start setup**, then turn Waddly on under System Settings → Privacy & 
 
 ```sh
 brew uninstall --cask waddly
-brew untrust --cask nyatinte/waddly/waddly
 ```
 
 Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
