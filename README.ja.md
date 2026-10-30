@@ -8,7 +8,7 @@
 
 <p align="center">自分のペットをデスクトップに表示し、キー入力に合わせて動かせるmacOSアプリです。</p>
 
-<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">DMGをダウンロード</a> · <a href="#はじめる">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">DMGをダウンロード</a> · <a href="#homebrewでインストール">Homebrew</a> · macOS 14+ / Apple Silicon</p>
 
 <p align="center"><a href="README.md">English README</a></p>
 
@@ -33,7 +33,14 @@ WaddlyはApple Silicon搭載MacのmacOS 14以降で動作します。インス�
 
 ### Homebrewでインストール
 
-今後の更新もHomebrewで行いたい場合に向いています。Homebrew 6.0以降ではサードパーティのCaskを明示的に信頼する必要があるため、次のコマンドで、インストールするCaskだけを信頼します。先に `brew update` を実行してください（`brew trust` は Homebrew 6.0以降でのみ存在し、それより前のバージョンでは Unknown command と表示されます）。
+今後の更新もHomebrewで行いたい場合に向いています。Homebrew 6.0以降ではサードパーティのCaskを信頼する必要があります。`brew trust` で `Unknown command` と出る場合は、先に `brew update` を実行してください。フルネームでインストールすると、そのCaskだけが信頼されます（[Tap Trust](https://docs.brew.sh/Tap-Trust)）。
+
+```sh
+brew tap nyatinte/waddly
+brew install --cask nyatinte/waddly/waddly
+```
+
+短い名前でインストールしたい場合は、先にCaskを信頼します。
 
 ```sh
 brew update
@@ -42,20 +49,13 @@ brew trust --cask nyatinte/waddly/waddly
 brew install --cask waddly
 ```
 
-`brew trust` を使わない場合は、フルネームでインストールしてください。この方法でもそのCaskだけが信頼されます（[Tap Trust](https://docs.brew.sh/Tap-Trust)）。
-
-```sh
-brew tap nyatinte/waddly
-brew install --cask nyatinte/waddly/waddly
-```
-
-更新するには `brew upgrade --cask waddly` を実行します。信頼を取り消すには `brew untrust --cask nyatinte/waddly/waddly` を実行してください（Homebrew 6以降）。
+更新するには `brew upgrade --cask waddly` を実行します。信頼を取り消すには `brew untrust --cask nyatinte/waddly/waddly` を実行してください。
 
 ### GitHub Releasesからインストール
 
 [最新リリース](https://github.com/nyatinte/Waddly/releases/latest)から `Waddly-<バージョン>-macos-arm64.dmg` をダウンロードして開き、Waddlyをアプリケーションフォルダへドラッグします。同じリリースにある `.sha256` でチェックサムを確認できます。
 
-配布アプリはad-hoc署名で公証されていないため、初回起動時にGatekeeperが止めることがあります。「システム設定 → プライバシーとセキュリティ → このまま開く」で許可してください。macOS 15以降ではControlキーを押しながらの「開く」では解除できません。
+配布アプリはad-hoc署名で公証されていないため、初回起動時にGatekeeperが止めることがあります。macOSが初回起動を止めた場合は、「システム設定」→「プライバシーとセキュリティ」を開き、セキュリティまでスクロールして「このまま開く」をクリックしてください。macOS 15以降ではControlキーを押しながらの「開く」では解除できません。
 
 ソースから試す場合は、開発者向けの[ビルド手順](CONTRIBUTING.md)を参照してください。
 
@@ -76,7 +76,9 @@ brew uninstall --cask waddly
 brew untrust --cask nyatinte/waddly/waddly
 ```
 
-`brew untrust` には Homebrew 6以降が必要です。あわせて「システム設定 → プライバシーとセキュリティ → 入力監視」の一覧から Waddly を削除してください。
+あわせて「システム設定 → プライバシーとセキュリティ → 入力監視」の一覧から Waddly を削除してください。
+
+DMGで入れた場合は、Waddlyを終了してアプリケーションフォルダのWaddly.appをゴミ箱に入れてください。
 
 ## 自分のペットを使う
 
