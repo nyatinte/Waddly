@@ -15,27 +15,14 @@
 
 ## Install
 
-Waddly runs on Apple Silicon Macs with macOS 14 or later. There are two ways to install it.
-
 ### Install with Homebrew
-
-Use this when you also want Homebrew to handle updates. Homebrew 6.0+ requires trust for third-party Casks. If `brew trust` reports `Unknown command`, run `brew update` first. Installing by the full Cask name trusts only that Cask ([Tap Trust](https://docs.brew.sh/Tap-Trust)):
 
 ```sh
 brew tap nyatinte/waddly
 brew install --cask nyatinte/waddly/waddly
 ```
 
-To install by short name instead, trust the Cask first:
-
-```sh
-brew update
-brew tap nyatinte/waddly
-brew trust --cask nyatinte/waddly/waddly
-brew install --cask waddly
-```
-
-Update with `brew upgrade --cask waddly`. To revoke the trust, run `brew untrust --cask nyatinte/waddly/waddly`.
+Update with `brew upgrade --cask waddly`.
 
 ### Install from GitHub Releases
 
@@ -45,15 +32,11 @@ The app is ad-hoc signed and not notarized, so Gatekeeper may block the first la
 
 To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
 
-On first launch, follow the Setup Guide to import your images.
-
 ### Turning on keyboard reactions
 
-The second step asks for Input Monitoring. Drag the icon into the list, then switch Waddly on.
+Choose **Start setup**, then turn Waddly on under System Settings → Privacy & Security → Input Monitoring. If it is not in the list, drag its icon in or add it with **+**. If macOS asks, choose **Quit & Reopen**.
 
 ![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
-
-macOS applies the permission only after the app restarts. Click **Restart Waddly** to relaunch and resume from the same step. After the restart, press a key; when the pet reacts, the step shows as confirmed and you can continue.
 
 ### Uninstall
 
@@ -137,17 +120,6 @@ You can also create the sprite sheet by hand.
 | --- | --- |
 | ![nyatinte-bot reference image](assets/examples/nyatinte-bot.png) | ![nyatinte-bot 3×3 transparent sprite sheet](assets/examples/nyatinte-bot-3x3.png) |
 
-### Image requirements
-
-- Prepare a square transparent PNG (9 frames in a 3×3 grid) with width and height divisible by 3.
-- Order the 9 frames from top-left to bottom-right: 2 Idle, 4 Typing, 1 Enter, and 2 Sleep frames (the prompt above generates this order).
-
-### Quick setup
-
-1. Open **Setup Guide…** or **Change Character…**. Choose or drop a PNG, or paste one with ⌘V. The pet shown during setup is an example; choose **Try the sample pet first** to use it.
-2. If the character's position shifts between cells, open **Adjust frames…** to align the crop and position while checking the preview.
-3. Click **Apply** (or **Next** during initial setup) to save the pet. To enable keyboard reactions, choose **Start setup**, then add Waddly to the Input Monitoring list in System Settings by dragging its icon or using **+**, and turn its switch on. If prompted, choose **Quit & Reopen**, then press a key to see your pet react. You can also choose **Set up later**.
-
 ### Tips and local storage
 
 - If the pet does not react, choose **If it does not work** to restart Waddly or check Input Monitoring in System Settings.
@@ -157,7 +129,7 @@ You can also create the sprite sheet by hand.
 
 ## Privacy
 
-Keyboard events are used only to drive animations; Waddly never stores, logs, or transmits typed text or key codes. Imported images and “Share Pet” exports are processed and stored locally on your Mac and are never uploaded automatically (“Post on X” only opens a composer prefilled with `#ShareMyWaddly`, so you attach the media and publish the post yourself). **Open in ChatGPT** hands the bundled sprite-sheet prompt to the ChatGPT page your browser opens, so ChatGPT receives that prompt — the same text the README prints below — and nothing else leaves your Mac.
+Keystrokes are used only to animate the pet and are never stored, logged, or sent. Images and share videos or images stay on your Mac and are never uploaded automatically. “Post on X” only opens a compose window with `#ShareMyWaddly`, and only “Open in ChatGPT” sends the bundled prompt to ChatGPT.
 
 ## Measured memory
 
