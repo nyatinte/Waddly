@@ -135,6 +135,8 @@ brew install --cask nyatinte/waddly/waddly
 
 ## アンインストール
 
+Homebrewで入れた場合は、次を実行します。
+
 ```sh
 brew uninstall --cask waddly
 ```
