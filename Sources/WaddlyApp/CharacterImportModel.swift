@@ -115,6 +115,11 @@ final class CharacterImportModel: ObservableObject {
         isDropTargeted = false
     }
 
+    func refreshRestoredImagesIfUntouched() {
+        guard acquisitionRevision == 0, !isReading, !isApplying, !isEditingFrames, failure == nil else { return }
+        reload()
+    }
+
     // MARK: - Acquisition
 
     /// A sample is a draft too: only the parent Next action may commit it.

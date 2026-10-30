@@ -10,6 +10,10 @@ extension AppDelegate {
     func loadSavedPetImage() async {
         do {
             try await imageStore.restore()
+            if let wizard = setupWizardController, wizard.isComposingCharacter {
+                wizard.characterImportModel.refreshRestoredImagesIfUntouched()
+                wizard.renderCurrentStep()
+            }
         } catch {
             await showImageSaveError(error)
         }

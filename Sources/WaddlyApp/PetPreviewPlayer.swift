@@ -16,6 +16,7 @@ final class PetPreviewPlayer {
     private var images = PetImageSet()
     private var task: Task<Void, Never>?
     private var generation = 0
+    private var activeReaction: PetImageCategory?
 
     init(
         showImage: @escaping @MainActor (NSImage?) -> Void,
@@ -47,7 +48,9 @@ final class PetPreviewPlayer {
     }
 
     func playReaction(_ category: PetImageCategory) {
+        guard category != .typing || activeReaction != .typing else { return }
         start(shots: Self.shotSequence(for: category, in: images), loops: false, idleAfter: true)
+        activeReaction = isPlaying ? category : nil
     }
 
     /// The permission step shows the pet asleep until reactions are actually live.
@@ -76,6 +79,7 @@ final class PetPreviewPlayer {
         generation += 1
         task?.cancel()
         task = nil
+        activeReaction = nil
     }
 
     /// Shows each shot for its own duration before advancing. The first shot must be held, not

@@ -54,6 +54,51 @@ import WaddlyCore
         #expect(seen.last == ObjectIdentifier(images[.idle][0]))
     }
 
+    @Test func repeatedTypingDoesNotRestartTheCurrentAnimation() async throws {
+        let images = try Fixture.sheetImages()
+        var seen: [ObjectIdentifier] = []
+        var pending: CheckedContinuation<Void, Never>?
+        let player = PetPreviewPlayer(showImage: { image in
+            if let image {
+                seen.append(ObjectIdentifier(image))
+            }
+        }, sleep: { _ in
+            await withCheckedContinuation { pending = $0 }
+        })
+        defer {
+            player.stop()
+            pending?.resume()
+        }
+        player.setImages(images)
+        player.playReaction(.typing)
+        for _ in 0 ..< 200 where pending == nil {
+            await Task.yield()
+        }
+        let firstDelay = try #require(pending)
+        for _ in 0 ..< 5 {
+            player.playReaction(.typing)
+        }
+        await Task.yield()
+        #expect(seen == [ObjectIdentifier(images[.typing][0])])
+
+        pending = nil
+        firstDelay.resume()
+        for _ in 0 ..< 200 where pending == nil {
+            await Task.yield()
+        }
+        let secondDelay = try #require(pending)
+        #expect(seen == [ObjectIdentifier(images[.typing][0]), ObjectIdentifier(images[.typing][1])])
+
+        pending = nil
+        player.playReaction(.enter)
+        secondDelay.resume()
+        for _ in 0 ..< 200 where pending == nil {
+            await Task.yield()
+        }
+        #expect(pending != nil)
+        #expect(seen.last == ObjectIdentifier(images[.enter][0]))
+    }
+
     @Test func previewImageViewUpdatesAndClearsItsLayer() throws {
         let view = PreviewImageView()
         let image = try #require(Fixture.sheetImages()[.idle].first)
