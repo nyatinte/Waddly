@@ -1,5 +1,7 @@
 build/
 dist/
+result
+result-*
 .build/
 .swiftpm/
 DerivedData/

@@ -8,7 +8,7 @@
 
 <p align="center">自分のペットをデスクトップに表示し、キー入力に合わせて動かせるmacOSアプリです。</p>
 
-<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">DMGをダウンロード</a> · <a href="#homebrewでインストール">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">DMGをダウンロード</a> · <a href="#homebrewでインストール">Homebrew</a> · <a href="#nixでインストール">Nix</a> · macOS 14+ / Apple Silicon</p>
 
 <p align="center"><a href="README.md">English README</a></p>
 
@@ -37,6 +37,58 @@ brew install --cask nyatinte/waddly/waddly
 ```
 
 更新するには `brew upgrade --cask waddly` を実行します。
+
+### Nixでインストール
+
+flakeはGitHub ReleasesのApple Silicon用DMGをインストールします。パッケージは `aarch64-darwin` だけです。
+
+インストールせずに最新リリースを起動します。
+
+```sh
+nix run github:nyatinte/Waddly
+```
+
+プロファイルへインストールしてから開きます。
+
+```sh
+nix profile install github:nyatinte/Waddly
+open ~/.nix-profile/Applications/Waddly.app
+```
+
+flakeの入力に追加します。
+
+```nix
+inputs.waddly.url = "github:nyatinte/Waddly";
+```
+
+nix-darwinでは有効にすると `/Applications/Nix Apps` へコピーされます。
+
+```nix
+imports = [ inputs.waddly.darwinModules.default ];
+
+programs.waddly.enable = true;
+```
+
+Home Managerでは `home.packages` に追加されます。`targets.darwin.copyApps` が有効なとき（`stateVersion` が 25.11 以降なら既定で有効）、`~/Applications/Home Manager Apps` へコピーされます。
+
+```nix
+imports = [ inputs.waddly.homeModules.default ];
+
+programs.waddly.enable = true;
+```
+
+overlayを適用すると、設定のほかの箇所から `pkgs.waddly` を参照できます。
+
+```nix
+pkgs = import nixpkgs {
+  system = "aarch64-darwin";
+  overlays = [ inputs.waddly.overlays.default ];
+};
+```
+
+別のビルドを使うときは `programs.waddly.package` を設定します。モジュールは `pkgs.waddly` があればそれを使い、なければこのflakeのパッケージを使います。
+
+配布物はDMGと同じad-hoc署名のビルドです。macOSが初回起動を止めた場合は[GitHub Releasesからインストール](#github-releasesからインストール)の手順に従ってください。その後、下の手順でキー入力への反応を有効にします。
 
 ### GitHub Releasesからインストール
 
@@ -140,6 +192,14 @@ Homebrewで入れた場合は、次を実行します。
 ```sh
 brew uninstall --cask waddly
 ```
+
+Nixで入れた場合は、次を実行します。
+
+```sh
+nix profile remove waddly
+```
+
+nix-darwinまたはHome Managerで入れた場合は、`programs.waddly.enable = false` にして再ビルドします。
 
 あわせて「システム設定 → プライバシーとセキュリティ → 入力監視」の一覧から Waddly を削除してください。
 

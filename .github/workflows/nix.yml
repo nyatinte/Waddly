@@ -1,0 +1,99 @@
+name: Nix
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Flake check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      darwin: ${{ steps.gate.outputs.darwin }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Decide whether to build the Darwin package
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "darwin=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            files=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" --jq '.[].filename')
+          elif [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "darwin=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            files=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/compare/${BEFORE}...${SHA}" --jq '.files[].filename')
+          fi
+
+          if printf '%s\n' "$files" | grep -Eq '^(flake\.(nix|lock)|nix/|\.github/workflows/nix)'; then
+            echo "darwin=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "darwin=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.3
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Check the flake
+        run: |
+          set -euo pipefail
+          nix flake check
+          test -n "$(nix eval --raw .#packages.aarch64-darwin.default.version)"
+          result=$(nix eval --raw .#packages.aarch64-darwin.default.meta.platforms --apply 'ps: if builtins.elem "aarch64-darwin" ps then "ok" else builtins.throw "waddly is not marked aarch64-darwin"')
+          test "$result" = ok
+
+  build:
+    name: Build Apple Silicon package
+    needs: check
+    if: needs.check.outputs.darwin == 'true'
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.3
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Build and check the app bundle
+        run: |
+          set -euo pipefail
+          nix flake check
+          nix build .#default --print-out-paths
+          test -d result/Applications/Waddly.app
+          test -x result/Applications/Waddly.app/Contents/MacOS/Waddly
+          test -x result/bin/waddly
+          expected=$(nix eval --raw .#packages.aarch64-darwin.default.version)
+          actual=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' result/Applications/Waddly.app/Contents/Info.plist)
+          test "$actual" = "$expected"
