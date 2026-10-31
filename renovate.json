@@ -9,6 +9,12 @@
       "matchManagers": ["github-actions"],
       "minimumReleaseAge": "7 days",
       "internalChecksFilter": "strict"
+    },
+    {
+      "description": "Pinned to the 0.2.0 commit of swift-memory-allocation. Upstream removed its tags and rewrote main without the MemoryAllocation product, so Renovate must not float this dependency.",
+      "matchManagers": ["swift"],
+      "matchPackageNames": ["swift-molecules/swift-memory-allocation"],
+      "enabled": false
     }
   ],
   "constraints": {
