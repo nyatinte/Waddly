@@ -5,7 +5,7 @@
 
 <p align="center">Put your pet on your Mac desktop and let it react to keyboard input.</p>
 
-<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">Download DMG</a> · <a href="#install-with-homebrew">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">Download DMG</a> · <a href="#install-with-homebrew">Homebrew</a> · <a href="#install-with-nix">Nix</a> · macOS 14+ / Apple Silicon</p>
 
 <p align="center"><a href="README.ja.md">日本語README</a></p>
 
@@ -32,6 +32,58 @@ brew install --cask nyatinte/waddly/waddly
 ```
 
 Update with `brew upgrade --cask waddly`.
+
+### Install with Nix
+
+The flake installs the Apple Silicon DMG from GitHub Releases. The package is `aarch64-darwin` only.
+
+Run the latest release without installing it:
+
+```sh
+nix run github:nyatinte/Waddly
+```
+
+Install it into your profile, then open the app:
+
+```sh
+nix profile install github:nyatinte/Waddly
+open ~/.nix-profile/Applications/Waddly.app
+```
+
+Add the flake as an input:
+
+```nix
+inputs.waddly.url = "github:nyatinte/Waddly";
+```
+
+nix-darwin installs it and copies the bundle to `/Applications/Nix Apps`:
+
+```nix
+imports = [ inputs.waddly.darwinModules.default ];
+
+programs.waddly.enable = true;
+```
+
+Home Manager installs it through `home.packages`. With `targets.darwin.copyApps` enabled (the default when `stateVersion` is 25.11 or newer), the app is copied to `~/Applications/Home Manager Apps`:
+
+```nix
+imports = [ inputs.waddly.homeModules.default ];
+
+programs.waddly.enable = true;
+```
+
+Apply the overlay so the rest of the configuration can use `pkgs.waddly`:
+
+```nix
+pkgs = import nixpkgs {
+  system = "aarch64-darwin";
+  overlays = [ inputs.waddly.overlays.default ];
+};
+```
+
+`programs.waddly.package` selects a different build. The module uses `pkgs.waddly` when that attribute exists, and otherwise the package from this flake.
+
+The app is the same ad-hoc signed build as the DMG. If macOS blocks the first launch, follow the steps under [Install from GitHub Releases](#install-from-github-releases). Then turn on keyboard reactions as described below.
 
 ### Install from GitHub Releases
 
@@ -135,6 +187,14 @@ If you installed with Homebrew:
 ```sh
 brew uninstall --cask waddly
 ```
+
+If you installed with Nix:
+
+```sh
+nix profile remove Waddly
+```
+
+For nix-darwin or Home Manager, set `programs.waddly.enable = false` and rebuild.
 
 Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
 

@@ -1,0 +1,107 @@
+name: Nix package update
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without a leading v. Empty uses the latest GitHub release."
+        required: false
+        type: string
+
+# A release published by the Release workflow does not start a `release:` workflow.
+# workflow_run still runs after that workflow completes.
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: nix-package-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Open a pull request for the release DMG
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
+          ref: main
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.11.3
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Pin the published DMG
+        id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version || '' }}
+          RELEASE_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
+        run: |
+          set -euo pipefail
+          version="$INPUT_VERSION"
+          if [ -z "$version" ] && [[ "$RELEASE_BRANCH" == v* ]]; then
+            version="${RELEASE_BRANCH#v}"
+          fi
+          if [ -n "$version" ]; then
+            nix/update.sh "$version"
+          else
+            nix/update.sh
+          fi
+          version=$(python3 - <<'PY'
+          import pathlib, re
+          text = pathlib.Path("nix/package.nix").read_text()
+          match = re.search(r'^  version = "([^"]+)";', text, re.M)
+          if match is None:
+              raise SystemExit("version line not found in nix/package.nix")
+          print(match.group(1))
+          PY
+          )
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git diff --quiet -- nix/package.nix; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NIX_UPDATE_TOKEN || github.token }}
+          VERSION: ${{ steps.update.outputs.version }}
+        run: |
+          set -euo pipefail
+          branch="nix-update/waddly-${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gh auth setup-git
+          git checkout -B "$branch"
+          git add nix/package.nix
+          git commit -m "chore(nix): update the package to ${VERSION}"
+          git push --force-with-lease origin "HEAD:${branch}"
+
+          body_file=$(mktemp)
+          cat > "$body_file" <<EOF
+          Updates the Nix package to the Apple Silicon DMG for ${VERSION}.
+
+          nix/update.sh prefetched the release asset and checked its hash against the .sha256 file published in the same release.
+
+          - [x] No user-visible UI change
+
+          Pull requests opened with the default GITHUB_TOKEN do not start other workflows. This job dispatches the Nix workflow on ${branch}. Set the NIX_UPDATE_TOKEN Actions secret to a fine-grained token with contents and pull requests write on this repository when the Swift checks should start on their own.
+          EOF
+
+          if [ "$(gh pr list --head "$branch" --json number --jq 'length')" = 0 ]; then
+            gh pr create --base main --head "$branch" --title "chore(nix): update the package to ${VERSION}" --body-file "$body_file"
+          fi
+
+          gh workflow run "Nix" --ref "$branch"

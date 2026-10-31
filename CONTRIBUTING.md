@@ -130,7 +130,7 @@ Importing a very large sheet (for example 3072 × 3072 with nine frames) exceeds
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. It installs the locked tools with mise-action and runs `mise run check`, including the complexity gate. The app targets macOS 14, but CI does not verify runtime execution on macOS 14: the macOS 14 runner image provides Xcode 16.2 / Swift 6.0, whose older SDK does not mark `NSImage` as `Sendable`, so the current Swift 6 sources fail to compile there. CI uses a newer SDK on macOS 26; actual runtime support on macOS 14 remains unverified. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
+`.github/workflows/ci.yml` runs on `macos-26` for pull requests, pushes to `main`, and manual dispatches. `.github/workflows/nix.yml` runs `nix flake check` on Ubuntu for the same events, and builds the Apple Silicon Nix package on `macos-26` when the flake, `nix/`, or that workflow changes. It installs the locked tools with mise-action and runs `mise run check`, including the complexity gate. The app targets macOS 14, but CI does not verify runtime execution on macOS 14: the macOS 14 runner image provides Xcode 16.2 / Swift 6.0, whose older SDK does not mark `NSImage` as `Sendable`, so the current Swift 6 sources fail to compile there. CI uses a newer SDK on macOS 26; actual runtime support on macOS 14 remains unverified. `.github/workflows/pr-hygiene.yml` requires a screenshot or GIF in the pull request description when a visible UI change is declared.
 
 ## Localization keys
 
@@ -156,12 +156,15 @@ The script writes an arm64 DMG to `dist/`. Release builds are ad-hoc signed and 
 
 To publish a release, create a fine-grained GitHub token restricted to `nyatinte/homebrew-waddly` with Contents read/write permission, then add it to this repository's Actions secrets as `HOMEBREW_TAP_TOKEN`. No Apple signing certificate or notarization credentials are used. Push a tag only after updating the app version in `macos/Info.plist` and merging that change to `main`.
 
+`.github/workflows/nix-update.yml` runs after that Release workflow succeeds, and it can also be started manually. `nix/update.sh` prefetches `Waddly-<version>-macos-arm64.dmg`, checks the hash against the release `.sha256` file, updates `nix/package.nix`, and opens a pull request. It does not push to `main`. A pull request opened with the default token does not start other workflows; the job dispatches the Nix workflow on the update branch. Set the `NIX_UPDATE_TOKEN` Actions secret to a fine-grained token with contents and pull requests write on this repository when the Swift checks should start on their own.
+
 ## Project structure
 
 - `Sources/WaddlyCore`: image models, import, and processing
 - `Sources/WaddlyApp`: app lifecycle, input monitoring, and UI
 - `Tests`: Swift Testing suites for core image and app behavior
 - `macos`: localized strings, app metadata, and build/package scripts
+- `nix`: the flake package, the nix-darwin and Home Manager modules, and `update.sh`
 - `assets`: the app icon and README examples; pet frames are not bundled
 
 ## Contribution notes
