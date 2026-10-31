@@ -43,6 +43,7 @@ jobs:
       - name: Pin the published DMG
         id: update
         env:
+          GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ inputs.version || '' }}
           RELEASE_BRANCH: ${{ github.event.workflow_run.head_branch || '' }}
         run: |
@@ -99,7 +100,7 @@ jobs:
           Pull requests opened with the default GITHUB_TOKEN do not start other workflows. This job dispatches the Nix workflow on ${branch}. Set the NIX_UPDATE_TOKEN Actions secret to a fine-grained token with contents and pull requests write on this repository when the Swift checks should start on their own.
           EOF
 
-          if [ -z "$(gh pr list --head "$branch" --json number --jq '.[0].number')" ]; then
+          if [ "$(gh pr list --head "$branch" --json number --jq 'length')" = 0 ]; then
             gh pr create --base main --head "$branch" --title "chore(nix): update the package to ${VERSION}" --body-file "$body_file"
           fi
 

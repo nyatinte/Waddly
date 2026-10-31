@@ -196,7 +196,7 @@ brew uninstall --cask waddly
 Nixで入れた場合は、次を実行します。
 
 ```sh
-nix profile remove waddly
+nix profile remove Waddly
 ```
 
 nix-darwinまたはHome Managerで入れた場合は、`programs.waddly.enable = false` にして再ビルドします。

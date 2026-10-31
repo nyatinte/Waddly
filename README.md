@@ -191,7 +191,7 @@ brew uninstall --cask waddly
 If you installed with Nix:
 
 ```sh
-nix profile remove waddly
+nix profile remove Waddly
 ```
 
 For nix-darwin or Home Manager, set `programs.waddly.enable = false` and rebuild.

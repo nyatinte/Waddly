@@ -21,11 +21,15 @@ in
 
   # Home Manager surfaces these bundles when targets.darwin.copyApps or linkApps is on.
   # Preferences stay in the app; this module only installs the package.
-  config = lib.mkIf cfg.enable (
-    lib.throwIf (pkgs.stdenv.hostPlatform.system != "aarch64-darwin")
-      "Waddly publishes an Apple Silicon DMG only, so programs.waddly supports aarch64-darwin only."
+  # The platform check is an assertion so a disabled module can be imported on
+  # other hosts. mkIf still walks a thrown value before it tests its condition.
+  config = lib.mkIf cfg.enable {
+    home.packages = [ cfg.package ];
+    assertions = [
       {
-        home.packages = [ cfg.package ];
+        assertion = pkgs.stdenv.hostPlatform.system == "aarch64-darwin";
+        message = "Waddly publishes an Apple Silicon DMG only, so programs.waddly supports aarch64-darwin only.";
       }
-  );
+    ];
+  };
 }

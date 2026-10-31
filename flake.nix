@@ -24,7 +24,7 @@
       };
       moduleSmoke = import ./nix/checks.nix {
         inherit lib;
-        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        pkgsBySystem = nixpkgs.legacyPackages;
       };
       formatterFor =
         pkgs:
@@ -64,10 +64,18 @@
               {
                 homeCount = toString moduleSmoke.homeCount;
                 darwinCount = toString moduleSmoke.darwinCount;
+                enabledAssertionsHold = if moduleSmoke.enabledAssertionsHold then "yes" else "no";
+                disabledLinuxEnable = if moduleSmoke.disabledLinuxEnable then "yes" else "no";
+                disabledIntelEnable = if moduleSmoke.disabledIntelEnable then "yes" else "no";
+                enabledLinuxRejected = if moduleSmoke.enabledLinuxRejected then "yes" else "no";
               }
               ''
                 test "$homeCount" = 1
                 test "$darwinCount" = 1
+                test "$enabledAssertionsHold" = yes
+                test "$disabledLinuxEnable" = no
+                test "$disabledIntelEnable" = no
+                test "$enabledLinuxRejected" = yes
                 touch $out
               '';
         }
