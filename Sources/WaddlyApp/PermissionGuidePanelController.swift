@@ -41,7 +41,9 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         panel.delegate = self
     }
 
-    required init?(coder: NSCoder) { nil }
+    required init?(coder: NSCoder) {
+        nil
+    }
 
     func show() {
         guard let wizard, let panel = window as? NSPanel else { return }
@@ -54,7 +56,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         placeBesideSettings()
         settingsTimer?.invalidate()
         settingsTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.placeBesideSettings() }
+            Task { @MainActor in self?.placeBesideSettings() }
         }
         NotificationCenter.default.addObserver(
             self,
@@ -131,7 +133,8 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         panel.setFrameOrigin(origin)
         guard let wizard, !wizard.isMonitoringDragDemoStopped,
               wizard.monitoringReadiness == .permissionMissing,
-              let sourceView, sourceView.window === panel, let screen else {
+              let sourceView, sourceView.window === panel, let screen
+        else {
             overlay.close()
             return
         }
@@ -295,10 +298,18 @@ private struct PermissionGuidePanelView: View {
 
     private static func sourceOpacity(at referenceTime: TimeInterval) -> Double {
         let time = referenceTime.truncatingRemainder(dividingBy: 4.0)
-        if time < 0.35 { return 1 }
-        if time < 0.55 { return 1 - 0.78 * smooth((time - 0.35) / 0.2) }
-        if time < 2.0 { return 0.22 }
-        if time < 2.85 { return 0.22 + 0.78 * smooth((time - 2.0) / 0.85) }
+        if time < 0.35 {
+            return 1
+        }
+        if time < 0.55 {
+            return 1 - 0.78 * smooth((time - 0.35) / 0.2)
+        }
+        if time < 2.0 {
+            return 0.22
+        }
+        if time < 2.85 {
+            return 0.22 + 0.78 * smooth((time - 2.0) / 0.85)
+        }
         return 1
     }
 
