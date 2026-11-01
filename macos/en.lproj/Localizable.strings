@@ -109,17 +109,9 @@
 "setup.notWorking" = "If it does not work";
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
 "setup.previewMonitoringWaiting" = "Press a key to see it react";
-"setup.guideStepAccessibility" = "Step %1$ld: %2$@";
 "setup.guideTitle" = "Allow Input Monitoring";
 "setup.guideIntro" = "Drag Waddly to the settings list on the right to add it.";
-"setup.guideDragHint" = "Drag this icon to the right";
 "setup.guideDragFallback" = "Can't drag? Add Waddly with + in Settings.";
-"setup.guideTurnOnTitle" = "Turn Waddly on";
-"setup.guideTurnOnBody" = "In Input Monitoring.";
-"setup.guideRestartTitle" = "Restart Waddly";
-"setup.guideRestartBody" = "Choose Quit & Reopen.";
-"setup.guidePreviewInputMonitoring" = "Input Monitoring";
-"setup.guidePreviewOtherApps" = "Other apps";
 "setup.openSystemSettings" = "Open System Settings";
 "setup.revealInFinder" = "Show Waddly in Finder";
 "setup.dragAppIcon" = "Waddly app icon. Drag it into the Input Monitoring list.";

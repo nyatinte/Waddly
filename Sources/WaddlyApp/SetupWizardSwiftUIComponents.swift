@@ -59,21 +59,6 @@ extension SetupWizardScreen {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The one card shape the setup pages use. Callers stack their own rows inside it, so a page can
-    /// add a step or an action without rebuilding the surface.
-    func cardContainer(
-        spacing: CGFloat = DesignTokens.Spacing.md,
-        padding: CGFloat = DesignTokens.Spacing.md,
-        @ViewBuilder _ content: () -> some View
-    ) -> some View {
-        let shape = RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-        return VStack(alignment: .leading, spacing: spacing) { content() }
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: shape)
-            .overlay(shape.stroke(Color(nsColor: .separatorColor)))
-    }
-
     /// One outcome on the completion page. Same icon + words language as `status()`, so the finished
     /// step and the step that produced it agree on what "done" looks like.
     func resultRow(_ key: LocalizationKey, done: Bool) -> some View {
@@ -92,26 +77,6 @@ extension SetupWizardScreen {
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(controller.localizedString(key))
-    }
-
-    /// A numbered step's badge. Decorative: the step text carries the meaning.
-    func stepBadge(_ index: Int) -> some View {
-        Image(systemName: "\(index).circle.fill")
-            .foregroundStyle(Color.accentColor)
-            .accessibilityHidden(true)
-    }
-
-    func numberedStep(_ index: Int, _ key: LocalizationKey) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.sm) {
-            stepBadge(index)
-            Text(controller.localizedString(key))
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityLabel(stepAccessibilityLabel(index, key))
-        }
-    }
-
-    func stepAccessibilityLabel(_ index: Int, _ key: LocalizationKey) -> String {
-        String(format: controller.localizedString(.setupGuideStepAccessibility), index, controller.localizedString(key))
     }
 }
 
@@ -140,7 +105,6 @@ extension SetupWizardScreen {
         _ title: String,
         identifier: String,
         systemImage: String? = nil,
-        expands: Bool = false,
         action: @escaping @MainActor () -> Void
     ) -> some View {
         Button(action: action) {
@@ -155,7 +119,6 @@ extension SetupWizardScreen {
                     Text(verbatim: title)
                 }
             }
-            .frame(maxWidth: expands ? .infinity : nil)
             .actionLabel()
         }
         .buttonStyle(.borderedProminent)

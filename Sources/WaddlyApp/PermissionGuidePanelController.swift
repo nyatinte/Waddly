@@ -58,12 +58,6 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         settingsTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.placeBesideSettings() }
         }
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screenConfigurationChanged),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
         if !wizard.permission.isGranted, !wizard.permission.isGuiding {
             wizard.permission.beginGuiding()
         } else if wizard.permission.readiness == .tapUnavailable {
@@ -71,18 +65,9 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         }
     }
 
-    func refreshPlacement() {
-        placeBesideSettings()
-    }
-
     func stop() {
         settingsTimer?.invalidate()
         settingsTimer = nil
-        NotificationCenter.default.removeObserver(
-            self,
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
         overlay.close()
         window?.orderOut(nil)
     }
@@ -93,14 +78,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         wizard?.window?.close()
     }
 
-    @objc private func screenConfigurationChanged() {
-        placeBesideSettings()
-    }
-
     private func openSettings() {
         guard let wizard else { return }
-        SystemSettingsLauncher.openInputMonitoringSettings()
-        if !wizard.permission.isGuiding {
+        if wizard.permission.isGuiding {
+            SystemSettingsLauncher.openInputMonitoringSettings()
+        } else {
             wizard.permission.beginGuiding()
         }
         placeBesideSettings()

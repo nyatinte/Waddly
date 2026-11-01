@@ -109,17 +109,9 @@
 "setup.notWorking" = "動作しない場合";
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";
 "setup.previewMonitoringWaiting" = "キーを押すと反応します";
-"setup.guideStepAccessibility" = "%1$ld番目：%2$@";
 "setup.guideTitle" = "入力監視を許可しよう";
 "setup.guideIntro" = "Waddlyを右の設定画面にドラッグして追加してね";
-"setup.guideDragHint" = "このアイコンを右側にドラッグ";
 "setup.guideDragFallback" = "ドラッグできない場合は、設定画面の「＋」から追加できます。";
-"setup.guideTurnOnTitle" = "Waddly をオンにする";
-"setup.guideTurnOnBody" = "「入力監視」でオンにする。";
-"setup.guideRestartTitle" = "Waddly を再起動する";
-"setup.guideRestartBody" = "「終了して再度開く」を選ぶ。";
-"setup.guidePreviewInputMonitoring" = "入力監視";
-"setup.guidePreviewOtherApps" = "その他のアプリ";
 "setup.openSystemSettings" = "システム設定を開く";
 "setup.revealInFinder" = "FinderでWaddlyを表示";
 "setup.dragAppIcon" = "Waddlyアプリのアイコン。入力監視の一覧へドラッグします。";

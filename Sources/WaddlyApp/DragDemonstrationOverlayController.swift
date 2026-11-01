@@ -3,21 +3,17 @@ import SwiftUI
 
 @MainActor
 private final class DragDemonstrationModel: ObservableObject {
-    @Published var screenFrame: CGRect = .zero
     @Published var source: CGPoint = .zero
     @Published var target: CGPoint = .zero
-    @Published var isVisible = false
 }
 
 @MainActor
 final class DragDemonstrationOverlayController {
     private let model = DragDemonstrationModel()
     private var panel: NSPanel?
-    private var screenID: CGDirectDisplayID?
 
     func update(screen: NSScreen, source: NSPoint, target: CGPoint) {
-        if panel == nil || screenID != screenNumber(screen) {
-            close()
+        if panel == nil {
             let panel = NSPanel(
                 contentRect: screen.frame,
                 styleMask: [.borderless, .nonactivatingPanel],
@@ -34,25 +30,16 @@ final class DragDemonstrationOverlayController {
             panel.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
             panel.contentView = NSHostingView(rootView: DragDemonstrationOverlayView(model: model))
             self.panel = panel
-            screenID = screenNumber(screen)
         }
         panel?.setFrame(screen.frame, display: true)
-        model.screenFrame = screen.frame
         model.source = CGPoint(x: source.x - screen.frame.minX, y: screen.frame.maxY - source.y)
         model.target = CGPoint(x: target.x - screen.frame.minX, y: screen.frame.maxY - target.y)
-        model.isVisible = true
         panel?.orderFrontRegardless()
     }
 
     func close() {
-        model.isVisible = false
         panel?.orderOut(nil)
         panel = nil
-        screenID = nil
-    }
-
-    private func screenNumber(_ screen: NSScreen) -> CGDirectDisplayID? {
-        screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
     }
 }
 
@@ -65,7 +52,7 @@ private struct DragDemonstrationOverlayView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            if model.isVisible, !reduceMotion {
+            if !reduceMotion {
                 TimelineView<AnimationTimelineSchedule, AnyView>(
                     .animation(minimumInterval: 1.0 / 30.0, paused: false)
                 ) { context in

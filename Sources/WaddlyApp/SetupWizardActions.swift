@@ -106,9 +106,6 @@ extension SetupWizardController {
             refreshGuideFollowing()
             renderCurrentStep()
         }
-        permission.onTick = { [weak self] in
-            self?.permissionGuidePanelController?.refreshPlacement()
-        }
     }
 
     /// The guide floats and follows System Settings on the one page it belongs to. Entering that page
