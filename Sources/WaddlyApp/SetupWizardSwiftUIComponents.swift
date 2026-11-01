@@ -140,20 +140,23 @@ extension SetupWizardScreen {
         _ title: String,
         identifier: String,
         systemImage: String? = nil,
+        expands: Bool = false,
         action: @escaping @MainActor () -> Void
     ) -> some View {
         Button(action: action) {
-            if let systemImage {
-                HStack(spacing: DesignTokens.Spacing.xs) {
+            Group {
+                if let systemImage {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
+                        Text(verbatim: title)
+                        Image(systemName: systemImage)
+                            .accessibilityHidden(true)
+                    }
+                } else {
                     Text(verbatim: title)
-                    Image(systemName: systemImage)
-                        .accessibilityHidden(true)
                 }
-                .actionLabel()
-            } else {
-                Text(verbatim: title)
-                    .actionLabel()
             }
+            .frame(maxWidth: expands ? .infinity : nil)
+            .actionLabel()
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)

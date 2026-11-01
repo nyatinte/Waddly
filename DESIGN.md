@@ -258,7 +258,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 
 **HIG constraints**
 
-- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area). The permission guide's draggable app icon uses the `dragIconSize` token (64 pt).
+- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area). The permission guide's draggable app icon uses `dragIconSize` (112 pt); its click-through demo ghost uses `dragGhostSize` (64 pt).
 - Leave about 12 pt around bezeled controls and about 24 pt around bezel-less elements' visible edges. Use `action-gap` between actions and `section-gap` between groups.
 - Prefer one primary action. Place it at the trailing edge of a pinned footer; secondary actions go to the leading edge. The share action is centered because it is the single action in that footer (see Components).
 
@@ -271,12 +271,12 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 | Frame Editor | 1320 × 800 preferred, 1040 × 700 minimum | Resizable; compact layout below 1160 pt |
 | Share | 700 × 380 | Fixed; two equal cards; pinned footer |
 | Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome; always floats above ordinary app windows and is re-ordered above other apps' floating panels when the front app or Space changes |
-| Permission guide | 480 × 540 compact, 820 × 520 before the guide opens | Floats beside System Settings; drops the preview column so the settings app list stays visible; manual steps fallback |
+| Permission guide | 380 × 400 floating companion panel; 820 × 520 setup shell remains hidden | Non-activating panel stays visible beside System Settings. Shows the real draggable app icon; a click-through screen overlay demonstrates a drag into the actual settings window. Has a + fallback; no settings mockup |
 
 - Fixed windows must not be restorable to a stale frame; set `isRestorable = false` and re-assert the content size when shown.
 - Resizable windows define a minimum that keeps the footer and every column visible. Do not let a resizable window reflow into a broken compact state; switch to the explicit compact layout instead (Frame Editor below 1160 pt).
 - Every window centers on first show and remembers a user move only where the surface supports it (the pet panel and the permission guide).
-- The permission guide is the one window that changes size: while it waits for the grant it is the 480 × 540 compact guide (page column only, no preview), which is narrow enough to park beside System Settings without covering the app list the user drags onto. 540 is the tallest content height whose titled frame still parks inside a 602 pt-tall display. Every other state and page uses the designed size.
+- Entering Input Monitoring opens Apple's real Input Monitoring pane and hides the setup shell behind a 380 × 400 non-activating companion panel. The panel prefers the left side of System Settings so its app list remains clear, and stays visible while Settings is active. A transparent, click-through overlay follows a short repeated path from the real icon to a point inside the detected Settings window; it is illustrative only, never starts an OS drag, and stops on a real drag or under Reduce Motion. The actual icon remains a user-initiated AppKit drag source. The manual + route remains available if the deep link or window detection fails.
 
 **Dense workspace variant.** The Frame Editor is denser than the setup-class windows, but it uses the same tokens: `lg` 16 for the title bar and panel padding (the workspace is edge-to-edge and does not add a 24 pt window margin), `section-gap` between groups, `action-height` for Done and Reset, `control-height` for zoom/stepper/segmented controls, and the type/radius scales. `FrameEditorMetrics` keeps only geometry that is specific to the canvas (sidebar 306, inspector 300/268, compact rail 58, breakpoint 1160, canvas reserves); it does not introduce spacing, type, control, or radius values. The title bar and panels use `lg`; metadata is 11 pt; controls use `sm`; cards use `lg`.
 
@@ -456,7 +456,7 @@ Apple's macOS baselines and Waddly's stricter values:
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
 | Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception; ✅ floating level, collectionBehavior, re-ordering, and accessibility identity pinned by tests |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
-| Permission guide | Setup shell beside System Settings | 820 × 520; 480 × 540 compact while guiding | Setup tokens; three step cards, one primary action, explanation under the title | Setup tokens | 36 pt | ✅; live QA pending |
+| Permission guide | Non-activating NSPanel beside System Settings | 380 × 400 | Setup tokens; state-specific guidance and click-through cross-window demo | Setup tokens | 36 pt | 🟡; live OS drag/permission QA pending |
 
 Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row names the conforming part and the gap); ⚪ intentional product exception. The Frame Editor is **not** an exception: it uses the dense workspace variant.
 

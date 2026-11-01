@@ -3,11 +3,10 @@ import AppKit
 /// Shared window metrics keep the hosted preview and SwiftUI layout aligned.
 enum SetupMetrics {
     static let contentSize = NSSize(width: 820, height: 520)
-    /// The guide parks beside System Settings, where the app list has to stay visible, so it gives up
-    /// the preview column and the width that column needed. 480 keeps the window left of the list on
-    /// a 1200 pt-wide display: the settings window starts near 290 pt and its sidebar is 230 pt wide.
-    /// 540 is the tallest content height whose titled frame still parks inside a 602 pt-tall display.
-    static let compactGuideSize = NSSize(width: 480, height: 540)
+    /// Narrow enough to sit beside System Settings without obscuring its app list.
+    static let compactGuideSize = NSSize(width: 420, height: 500)
+    static let permissionGuideSize = NSSize(width: 380, height: 400)
+    static let permissionGuideMinimumSize = NSSize(width: 380, height: 240)
     static let previewCornerRadius: CGFloat = 16
 }
 

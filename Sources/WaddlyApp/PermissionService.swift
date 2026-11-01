@@ -184,10 +184,8 @@ final class PermissionService {
         pollTimer = nil
     }
 
-    /// Opened without any extra permission: `x-apple.systempreferences` deep links are public.
+    /// Opens the system-owned Input Monitoring pane without requesting Accessibility access.
     static func openInputMonitoringSettings() {
-        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
-        guard let url else { return }
-        NSWorkspace.shared.open(url)
+        SystemSettingsLauncher.openInputMonitoringSettings()
     }
 }
