@@ -270,7 +270,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 | Character Import / Change Character | 1040 × 640 | Resizable above the minimum; pinned footer |
 | Frame Editor | 1320 × 800 preferred, 1040 × 700 minimum | Resizable; compact layout below 1160 pt |
 | Share | 700 × 380 | Fixed; two equal cards; pinned footer |
-| Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome |
+| Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome; always floats above ordinary app windows and is re-ordered above other apps' floating panels when the front app or Space changes |
 | Permission guide | 480 × 460 compact, 820 × 520 before the guide opens | Floats beside System Settings; drops the preview column so the settings app list stays visible; manual steps fallback |
 
 - Fixed windows must not be restorable to a stale frame; set `isRestorable = false` and re-assert the content size when shown.
@@ -284,7 +284,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 
 Depth is native and quiet.
 
-- Windows sit in the normal window-server order. The pet panel and the permission guide may float because their function requires it; they do not use decorative shadows.
+- Windows sit in the normal window-server order; the permission guide may float because its function requires it, and the pet panel always floats at `.floating` level, above ordinary app windows. Neither uses decorative shadows. The pet keeps `.canJoinAllSpaces`, `.stationary`, and `.ignoresCycle`, and it deliberately never carries `.fullScreenAuxiliary`, so a fullscreen app covers the pet. Another app's floating panel can order itself in front while that app is active, so the pet re-orders itself without activating whenever another app activates or the active Space changes. macOS system UI (menu bar, Spotlight, alerts) stays above the pet, and a `.statusBar`-or-higher utility window can still cover it.
 - Cards are **tonal surfaces** (`controlBackgroundColor`) with a 1 px `separatorColor` border. They do not use drop shadows.
 - The frame editor's canvas uses a dimmed surround (`controlBackgroundColor` at 0.7) and a 1 px border to separate the sheet from the workspace. Guides are 1–2 px lines; they are not UI chrome and do not need the radius scale.
 - Native alerts and sheets provide their own elevation. Do not build a custom modal layer.
@@ -440,6 +440,7 @@ Apple's macOS baselines and Waddly's stricter values:
 - One announcement per status transition or inline error; re-rendering must not repeat it.
 - Reduce Motion: no scale/zoom/slide for essential feedback; use fades or immediate state changes.
 - VoiceOver reading order matches the visual order; decorative images and icons are hidden.
+- The pet panel is the one untitled, borderless surface: it supplies its own accessibility identity (a localized window title and `.floatingWindow` subrole) and exposes the pet as an image with a localized label and hint, so VoiceOver can name it even though the panel never becomes key.
 - Test at larger text, Increase Contrast, Light/Dark, and both languages.
 
 **Known gaps (track in the audit below):** fixed window sizes and fixed fonts vs. larger text; live VoiceOver and physical keyboard acceptance; #154 Japanese recovery-text truncation.
@@ -453,7 +454,7 @@ Apple's macOS baselines and Waddly's stricter values:
 | Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | `LayoutMetrics` + `DesignTokens`; geometry-only constants | 11/13/15 | 28 auxiliary, 36 actions | ✅ dense workspace variant |
 | Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions; 🟡 #154 recovery text |
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
-| Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception |
+| Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception; ✅ floating level, collectionBehavior, re-ordering, and accessibility identity pinned by tests |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
 | Permission guide | Setup shell beside System Settings | 820 × 520; 480 × 460 compact while guiding | Setup tokens; one instruction card, one primary action, status under the title | Setup tokens | 36 pt | ✅; live QA pending |
 
@@ -471,6 +472,8 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Character Import states the saved pet or an unsaved draft with `DesignTokens.Status`; Change Character disables Apply when there is nothing to save, while Setup's Continue still advances with an unchanged pet. `CharacterDraftStatusTests` covers both hosts.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
+- The pet panel's floating level and `collectionBehavior` are applied in one place (`applyPetWindowLevel()`) on launch, on every reveal, and before every re-order, so the window server and the app cannot drift apart. `startKeepingPetInFront()` observes app activation and Space changes and puts the pet back on top without activating the app. `PetAlwaysOnTopTests` pins the level, the collection behavior, every reveal path, and the activation/Space re-ordering.
+- The pet panel carries a localized accessibility title and floating subrole, and the pet image carries a localized label and hint, so VoiceOver and accessibility tooling can name the app's only always-visible surface. `PetAccessibilityTests` pins both languages and the language refresh.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
 - Share's X glyph, clear space, and disabled contrast have regression tests.
 
@@ -484,6 +487,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
 | No `DESIGN.md` lint in CI | Token drift is possible | Optional `npx @google/design.md lint DESIGN.md`; do not add a Node dependency without a decision |
+| Always-on-top stacking against other processes is not covered by automated tests | Unit tests pin the level and that app activation re-orders the pet; a manual pass confirmed an app switch re-orders the pet above another process's `.floating` panel, but Mission Control, fullscreen, and system-level windows could differ | Manual pass for Mission Control, a fullscreen app, and system UI (menu bar, Spotlight); also reproduce or explain the menu-bar-sized accessory windows listed in issue #201 |
 
 **Implementation contract**
 

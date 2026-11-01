@@ -4,6 +4,9 @@
 // swiftlint:disable:next type_body_length
 enum LocalizationKey: String, CaseIterable {
     case a11yMenuBar = "a11y.menuBar"
+    case a11yPet = "a11y.pet"
+    case a11yPetHelp = "a11y.petHelp"
+    case a11yPetWindow = "a11y.petWindow"
     case a11ySpritePreview = "a11y.spritePreview"
     case characterAdjustFrames = "character.adjustFrames"
     case characterAdjustFramesUnavailable = "character.adjustFramesUnavailable"

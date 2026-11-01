@@ -58,6 +58,9 @@
 "images.readErrorMessage" = "Waddly could not read the saved image list, or one of its frames is missing. Import your images again to start over; nothing has been deleted.";
 "common.cancel" = "Cancel";
 "a11y.spritePreview" = "3×3 pet sprite sheet preview";
+"a11y.petWindow" = "Waddly pet window";
+"a11y.pet" = "Waddly pet";
+"a11y.petHelp" = "Drag to move the pet. Right-click for the menu.";
 "tooltip.paused" = "Waddly: reactions paused";
 "tooltip.active" = "Waddly: reacting to keyboard input";
 "tooltip.permission" = "Waddly: Input Monitoring permission required";

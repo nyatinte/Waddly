@@ -30,7 +30,7 @@ extension AppDelegate {
             animationController.imageSetDidChange(resetActivity: resetActivity)
             return
         }
-        presenter.reveal(panel)
+        revealPet()
         animationController.imageSetDidChange(resetActivity: resetActivity)
     }
 

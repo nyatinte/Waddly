@@ -58,6 +58,9 @@
 "images.readErrorMessage" = "保存済み画像の一覧を読み込めなかったか、一部の画像が見つかりません。画像をインポートし直すと最初からやり直せます。この状態では画像を削除しません。";
 "common.cancel" = "キャンセル";
 "a11y.spritePreview" = "3×3ペットスプライトシートのプレビュー";
+"a11y.petWindow" = "Waddlyのペットウインドウ";
+"a11y.pet" = "Waddlyのペット";
+"a11y.petHelp" = "ドラッグでペットを移動できます。右クリックでメニューを開きます。";
 "tooltip.paused" = "Waddly：入力反応を一時停止中";
 "tooltip.active" = "Waddly：入力に反応中";
 "tooltip.permission" = "Waddly：入力監視の許可が必要";
