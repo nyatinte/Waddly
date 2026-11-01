@@ -15,6 +15,7 @@ import WaddlyCore
         let data = try fixture.frameData()
         #expect(app.hasCompletePetImageSet)
         #expect(app.panel.isVisible)
+        #expect(app.panel.alphaValue == 0)
         await app.moveImage(from: 0, to: 1, in: .idle)?.value
         #expect(app.settings.petImageFiles["idle"] == original["idle"]?.reversed().map(\.self))
         // A reorder rewrites only the manifest; the frame files themselves stay untouched.
@@ -49,6 +50,8 @@ import WaddlyCore
         app.showSetupWizard()
         let restore = Task { await app.loadSavedPetImage() }
         let alert = try await waitForSheet(app)
+        #expect(alert.alphaValue == 0)
+        #expect(alert.sheetParent?.alphaValue == 0)
         alert.sheetParent?.endSheet(alert, returnCode: .alertFirstButtonReturn)
         await restore.value
         #expect(app.imageLoadFailed)
