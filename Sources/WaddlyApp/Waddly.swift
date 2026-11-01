@@ -17,16 +17,11 @@ final class PetWindow: NSPanel {
 @MainActor
 final class DraggableImageView: PixelImageView {
     var contextMenuProvider: (() -> NSMenu?)?
-    var onFileDrop: ((URL) -> Void)?
 
     override func draw(_ dirtyRect: NSRect) {
         // Pixel art: never smooth the pet's outlines when it is scaled to the display size.
         NSGraphicsContext.current?.imageInterpolation = .none
         super.draw(dirtyRect)
-    }
-
-    func acceptPNGFileDrops() {
-        registerForDraggedTypes([.fileURL])
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -36,29 +31,6 @@ final class DraggableImageView: PixelImageView {
     override func rightMouseDown(with event: NSEvent) {
         guard let contextMenu = contextMenuProvider?() else { return }
         NSMenu.popUpContextMenu(contextMenu, with: event, for: self)
-    }
-
-    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        fileURL(from: sender) == nil ? [] : .copy
-    }
-
-    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        guard let url = fileURL(from: sender) else { return false }
-        onFileDrop?(url)
-        return true
-    }
-
-    private func fileURL(from sender: NSDraggingInfo) -> URL? {
-        guard let urls = sender.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self],
-            options: [.urlReadingFileURLsOnly: true]
-        ) as? [URL],
-            let url = urls.first,
-            url.pathExtension.lowercased() == "png"
-        else {
-            return nil
-        }
-        return url
     }
 }
 
@@ -309,11 +281,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             object: nil
         )
         updatePresenceOptions()
-        petView.onFileDrop = { [weak self] url in
-            Task { _ = await self?.importPetImage(from: url) }
-        }
-        petView.acceptPNGFileDrops()
-        petView.toolTip = localizedString(.petDropTooltip)
         monitor.onKeyDown = { [weak self] isEnter in
             guard let self else { return }
             animationController.handleKeyDown(isEnter: isEnter)

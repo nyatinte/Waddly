@@ -38,32 +38,6 @@ import WaddlyCore
         #expect(try fixture.frameData().count == 8)
     }
 
-    @Test func cancelingReplacementAndInvalidImportsPreserveSavedImages() async throws {
-        let fixture = try AppIntegrationFixture()
-        defer { fixture.close() }
-        let app = fixture.app
-        try await app.persistPetImages(fixture.exampleImages())
-        let manifest = app.settings.petImageFiles
-        let data = try fixture.savedData()
-        app.showSetupWizard()
-        let replacement = Task { await app.importPetImage(from: fixture.exampleURL) }
-        let sheet = try await waitForSheet(app)
-        #expect(sheet.alphaValue == 0)
-        #expect(sheet.sheetParent?.alphaValue == 0)
-        sheet.sheetParent?.endSheet(sheet, returnCode: .alertSecondButtonReturn)
-        #expect(await !replacement.value)
-        #expect(app.settings.petImageFiles == manifest)
-        #expect(try fixture.savedData() == data)
-        let invalidURL = fixture.directory.appendingPathComponent("invalid.png")
-        try Data("not a PNG".utf8).write(to: invalidURL)
-        let invalid = Task { await app.importPetImage(from: invalidURL) }
-        let errorSheet = try await waitForSheet(app)
-        errorSheet.sheetParent?.endSheet(errorSheet, returnCode: .alertFirstButtonReturn)
-        #expect(await !invalid.value)
-        #expect(app.settings.petImageFiles == manifest)
-        #expect(app.hasCompletePetImageSet)
-    }
-
     @Test func setupReplacementClearsCorruptManifestFailureAndRestoresEditing() async throws {
         let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
@@ -76,6 +50,8 @@ import WaddlyCore
         app.showSetupWizard()
         let restore = Task { await app.loadSavedPetImage() }
         let alert = try await waitForSheet(app)
+        #expect(alert.alphaValue == 0)
+        #expect(alert.sheetParent?.alphaValue == 0)
         alert.sheetParent?.endSheet(alert, returnCode: .alertFirstButtonReturn)
         await restore.value
         #expect(app.imageLoadFailed)
