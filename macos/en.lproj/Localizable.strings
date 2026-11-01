@@ -47,9 +47,6 @@
 "language.system" = "Follow System Settings";
 "language.japanese" = "日本語";
 "language.english" = "English";
-"pet.dropTooltip" = "Drop a transparent 3×3 PNG on the pet to change it";
-"pet.importErrorTitle" = "Could not import the pet image";
-"pet.importErrorMessage" = "Choose a square transparent PNG no larger than 20 MB, with sides no longer than 4096 px and a 3×3 grid.";
 "images.category.idle" = "Idle";
 "images.category.typing" = "Typing";
 "images.category.sleep" = "Sleep";
@@ -59,15 +56,6 @@
 "images.saveErrorMessage" = "An image exceeds the storage limit, or disk space is low. Check the files and try again.";
 "images.readErrorTitle" = "Could not load the saved pet images";
 "images.readErrorMessage" = "Waddly could not read the saved image list, or one of its frames is missing. Import your images again to start over; nothing has been deleted.";
-"pet.previewTitle" = "Import this pet image?";
-"pet.previewPrompt" = "Check all nine cells on both backgrounds before importing.";
-"pet.previewBackground" = "Check on a dark background";
-"pet.previewCheckTitle" = "What to look for";
-"pet.previewCheckEdges" = "No fragments of a neighbouring pose along the cell edges";
-"pet.previewCheckEffects" = "Keep intentional motion marks and sleep symbols";
-"pet.previewTechSummary" = "%1$d × %1$d px · cell %2$d × %2$d px · shown %3$d px";
-"pet.previewPosition" = "Its current desktop position is kept.";
-"pet.importConfirm" = "Import image";
 "common.cancel" = "Cancel";
 "a11y.spritePreview" = "3×3 pet sprite sheet preview";
 "tooltip.paused" = "Waddly: reactions paused";

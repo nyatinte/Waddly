@@ -47,9 +47,6 @@
 "language.system" = "システム設定に従う";
 "language.japanese" = "日本語";
 "language.english" = "English";
-"pet.dropTooltip" = "透過3×3 PNGをペットにドロップして変更";
-"pet.importErrorTitle" = "ペット画像を読み込めませんでした";
-"pet.importErrorMessage" = "20 MB以下、4096 px以下の正方形で、3×3に分割できる透過PNGを選んでください。";
 "images.category.idle" = "待機";
 "images.category.typing" = "タイピング";
 "images.category.sleep" = "スリープ";
@@ -59,15 +56,6 @@
 "images.saveErrorMessage" = "画像の容量上限を超えているか、空き容量が不足しています。画像と空き容量を確認してください。";
 "images.readErrorTitle" = "ペット画像を読み込めませんでした";
 "images.readErrorMessage" = "保存済み画像の一覧を読み込めなかったか、一部の画像が見つかりません。画像をインポートし直すと最初からやり直せます。この状態では画像を削除しません。";
-"pet.previewTitle" = "このペット画像を読み込みますか？";
-"pet.previewPrompt" = "読み込む前に、9コマをどちらの背景でも確認してください。";
-"pet.previewBackground" = "ダーク背景で確認する";
-"pet.previewCheckTitle" = "確認してほしいこと";
-"pet.previewCheckEdges" = "コマの端に隣のポーズが混ざっていない";
-"pet.previewCheckEffects" = "効果線や睡眠マークは消さずに残す";
-"pet.previewTechSummary" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px ・ 表示 %3$d px";
-"pet.previewPosition" = "デスクトップ上の現在の位置はそのまま。";
-"pet.importConfirm" = "画像を読み込む";
 "common.cancel" = "キャンセル";
 "a11y.spritePreview" = "3×3ペットスプライトシートのプレビュー";
 "tooltip.paused" = "Waddly：入力反応を一時停止中";

@@ -325,7 +325,6 @@ extension AppDelegate {
         if pendingLocalizationRefresh {
             pendingLocalizationRefresh = false
             buildMenu()
-            petView.toolTip = localizedString(.petDropTooltip)
             setupWizardController?.refreshLocalization()
             characterImportWindowController?.refreshLocalization()
             shareWindowController?.refreshLocalization()
