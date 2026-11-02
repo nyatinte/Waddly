@@ -176,6 +176,20 @@ import Testing
         #expect(service.phase == .idle)
     }
 
+    @Test func reopeningAfterStopRestartsPolling() async throws {
+        let fake = Fake()
+        let service = fake.makeService(pollInterval: 0.05)
+        defer { service.stop() }
+        service.beginGuiding()
+        service.stop()
+        #expect(!service.isGuiding)
+
+        service.beginGuiding()
+        fake.granted = true
+        try await waitUntil(timeout: .seconds(3)) { service.phase == .idle }
+        #expect(fake.tapRestarts == 1)
+    }
+
     @Test func stoppingEndsThePolling() async throws {
         let fake = Fake()
         let service = fake.makeService(pollInterval: 0.05)

@@ -43,7 +43,7 @@ To try Waddly from source, follow the developer [build instructions](CONTRIBUTIN
 
 ### Turning on keyboard reactions
 
-Choose **Start setup**. Waddly opens **System Settings → Privacy & Security → Input Monitoring** and keeps a small guide beside it. Drag Waddly’s real app icon into the list, or use **+** if drag-and-drop is unavailable. The guide’s animated example is visual only; it does not grant permission or perform a system drag. If macOS asks, choose **Quit & Reopen**.
+Choose **Start setup**. Waddly opens **System Settings → Privacy & Security → Input Monitoring** and keeps a small guide beside it. If Waddly is not listed, drag its real app icon into the list, or use **+** if drag-and-drop is unavailable. Turn on Waddly’s switch in the list. The guide’s animated example is visual only; it does not grant permission or perform a system drag. If macOS asks, choose **Quit & Reopen**.
 
 ![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
 

@@ -70,12 +70,15 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         settingsTimer = nil
         overlay.close()
         window?.orderOut(nil)
+        window?.contentView = nil
     }
 
     func windowWillClose(_ notification: Notification) {
+        guard let wizard else { return }
         stop()
-        wizard?.permission.stop()
-        wizard?.window?.close()
+        wizard.permission.stop()
+        wizard.permissionGuidePanelController = nil
+        wizard.window?.close()
     }
 
     private func openSettings() {

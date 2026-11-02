@@ -110,7 +110,7 @@
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";
 "setup.previewMonitoringWaiting" = "キーを押すと反応します";
 "setup.guideTitle" = "入力監視を許可しよう";
-"setup.guideIntro" = "Waddlyを右の設定画面にドラッグして追加してね";
+"setup.guideIntro" = "Waddlyが一覧にない場合は、右の一覧にドラッグして追加してね。Waddlyのスイッチをオンにしよう。";
 "setup.guideDragFallback" = "ドラッグできない場合は、設定画面の「＋」から追加できます。";
 "setup.openSystemSettings" = "システム設定を開く";
 "setup.revealInFinder" = "FinderでWaddlyを表示";

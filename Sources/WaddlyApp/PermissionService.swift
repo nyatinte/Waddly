@@ -152,6 +152,9 @@ final class PermissionService {
 
     func stop() {
         stopPolling()
+        if phase == .guiding {
+            phase = .idle
+        }
     }
 
     private func finishGuiding() {

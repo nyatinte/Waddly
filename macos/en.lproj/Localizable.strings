@@ -110,7 +110,7 @@
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
 "setup.previewMonitoringWaiting" = "Press a key to see it react";
 "setup.guideTitle" = "Allow Input Monitoring";
-"setup.guideIntro" = "Drag Waddly to the settings list on the right to add it.";
+"setup.guideIntro" = "If Waddly isn't listed, drag it into the list on the right. Then turn its switch on.";
 "setup.guideDragFallback" = "Can't drag? Add Waddly with + in Settings.";
 "setup.openSystemSettings" = "Open System Settings";
 "setup.revealInFinder" = "Show Waddly in Finder";

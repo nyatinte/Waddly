@@ -250,6 +250,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     func windowWillClose(_ notification: Notification) {
+        permissionGuidePanelController?.stop()
+        permissionGuidePanelController = nil
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()
