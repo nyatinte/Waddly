@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing or new version tag to publish (for example, v1.9.0)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -34,7 +40,7 @@ jobs:
       - name: Verify tag and Homebrew tap credentials
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           set -euo pipefail
@@ -63,7 +69,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           if [ "$(uname -m)" != "arm64" ]; then
@@ -123,7 +129,7 @@ jobs:
 
       - name: Generate release notes
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+$'
@@ -141,7 +147,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
           RELEASE_EXISTS: ${{ steps.package.outputs.release_exists }}
           UPLOAD_DMG: ${{ steps.package.outputs.upload_dmg }}
           UPLOAD_CHECKSUM: ${{ steps.package.outputs.upload_checksum }}
@@ -169,7 +175,7 @@ jobs:
       - name: Update Homebrew tap
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#v}"
