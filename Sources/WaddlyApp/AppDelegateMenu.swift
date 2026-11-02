@@ -325,6 +325,7 @@ extension AppDelegate {
         if pendingLocalizationRefresh {
             pendingLocalizationRefresh = false
             buildMenu()
+            applyPetAccessibility()
             setupWizardController?.refreshLocalization()
             characterImportWindowController?.refreshLocalization()
             shareWindowController?.refreshLocalization()

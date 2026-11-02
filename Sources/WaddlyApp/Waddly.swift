@@ -229,6 +229,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var pendingMenuError = false
     var pendingLocalizationRefresh = false
+    /// Whether the workspace observers that keep the pet in front of other apps are installed.
+    var isKeepingPetInFront = false
+    /// The second re-order that runs once an activating app has finished ordering its own panels.
+    var keepInFrontWorkItem: DispatchWorkItem?
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
     var characterImportWindowController: CharacterImportWindowController?
@@ -255,10 +259,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         .first
         .map { PetImageLocation.directoryURL(for: Bundle.main.bundleIdentifier, applicationSupport: $0) }
 
-    init(settings: AppSettings = .standard, presenter: WindowPresenter = .live) {
+    init(
+        settings: AppSettings = .standard,
+        presenter: WindowPresenter = .live,
+        localization: LocalizationController? = nil
+    ) {
         self.settings = settings
         self.presenter = presenter
-        localization = LocalizationController(settings: settings)
+        self.localization = localization ?? LocalizationController(settings: settings)
         super.init()
     }
 
@@ -280,6 +288,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+        // Another app's floating panel can be ordered in front of the pet while that app is active.
+        // These observers put the pet back on top whenever the front app or Space changes, without
+        // ever taking focus. Registered here so fixtures that only build the panel stay observer-free.
+        startKeepingPetInFront()
         updatePresenceOptions()
         monitor.onKeyDown = { [weak self] isEnter in
             guard let self else { return }
@@ -326,7 +338,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     /// A Dock click after setup just puts the pet back in view.
     func bringPetToFront() {
         guard hasCompletePetImageSet else { return }
-        presenter.reveal(panel)
+        revealPet()
     }
 
     /// Setup opens on launch until it is finished. `setupStep` is the resume signal, so a relaunch
@@ -343,6 +355,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        stopKeepingPetInFront()
         imageStore.beginShutdown()
         animationController.shutdown()
         monitor.stop()

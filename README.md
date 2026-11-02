@@ -19,7 +19,7 @@
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
-- The pet joins every desktop Space. It does not appear above a fullscreen app.
+- The pet joins every desktop Space and stays above ordinary app windows. It returns to the front whenever you switch apps or Spaces, so another app's floating panel cannot keep covering it. It does not appear above a fullscreen app, and the menu bar and Spotlight stay in front of it.
 - Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
 
 ## Install
@@ -114,6 +114,7 @@ You can also create the sprite sheet by hand.
 - If the pet does not react, choose **If it does not work** to restart Waddly or check Input Monitoring in System Settings.
 - When creating a new character, choose **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy it for another image generator, or import a finished PNG at any time in that window. Opening ChatGPT puts the prompt in the page URL, so it is also recorded in your browser history; **Copy prompt** leaves no trace there.
 - Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
+- With VoiceOver, the pet is announced as “Waddly pet”, with a hint for dragging it and opening its menu.
 - Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly uploads nothing by itself.
 
 ## Privacy
