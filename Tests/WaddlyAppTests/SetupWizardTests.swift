@@ -100,6 +100,29 @@ typealias Fixture = SetupWizardFixture
         #expect(reopened.previewPane.isPlayingPreview)
     }
 
+    @Test(arguments: [true, false])
+    func closingCompanionOrWizardReleasesBoth(closeCompanion: Bool) throws {
+        weak var weakWizard: SetupWizardController?
+        weak var weakGuide: PermissionGuidePanelController?
+        try autoreleasepool {
+            let wizard = try Fixture.makeWizard()
+            let guide = PermissionGuidePanelController(wizard: wizard)
+            weakWizard = wizard
+            weakGuide = guide
+            wizard.permissionGuidePanelController = guide
+
+            if closeCompanion {
+                try #require(guide.window).close()
+            } else {
+                try #require(wizard.window).close()
+            }
+            #expect(wizard.permissionGuidePanelController == nil)
+            #expect(guide.window?.contentView == nil)
+        }
+        #expect(weakGuide == nil)
+        #expect(weakWizard == nil)
+    }
+
     @Test func permissionGrantedAndReadyStayDistinctStates() throws {
         let state = Fixture.State()
         state.images = try Fixture.sheetImages()

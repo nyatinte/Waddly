@@ -96,8 +96,7 @@
 "setup.monitoringTitle" = "キー入力に反応させる";
 "setup.monitoringBody" = "キーボードを打つとペットが動きます。この機能には、macOSの「入力監視」の許可が必要です。";
 "setup.monitoringActionHint" = "macOSの確認画面やシステム設定が開きます。";
-"setup.privacyTitle" = "入力内容は保存・送信しません";
-"setup.privacyNote" = "キーが押されたことと、Enterキーかどうかだけを判定します。";
+"setup.privacySummary" = "入力内容は保存・送信しません。キーが押されたことと、Enterキーかどうかだけを判定します。";
 "setup.monitoringStatusGranted" = "入力監視：許可済み";
 "setup.monitoringStatusOff" = "入力監視：未許可";
 "setup.enableMonitoring" = "設定をはじめる";
@@ -110,9 +109,9 @@
 "setup.notWorking" = "動作しない場合";
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";
 "setup.previewMonitoringWaiting" = "キーを押すと反応します";
-"setup.guideStepAccessibility" = "%1$ld番目：%2$@";
-"setup.manualStep3" = "Waddlyをオンにする。";
-"setup.restartPromptStep" = "表示されたら「終了して再度開く」を選ぶ。";
+"setup.guideTitle" = "入力監視を許可しよう";
+"setup.guideIntro" = "Waddlyが一覧にない場合は、右の一覧にドラッグして追加してね。Waddlyのスイッチをオンにしよう。";
+"setup.guideDragFallback" = "ドラッグできない場合は、設定画面の「＋」から追加できます。";
 "setup.openSystemSettings" = "システム設定を開く";
 "setup.revealInFinder" = "FinderでWaddlyを表示";
 "setup.dragAppIcon" = "Waddlyアプリのアイコン。入力監視の一覧へドラッグします。";
@@ -147,8 +146,6 @@
 "setup.checkMonitoringWaiting" = "キー入力への反応：キー入力を待っています";
 "setup.troubleshootingBody" = "Waddlyを再起動してから、もう一度キーを押してみてください。";
 "setup.imageDetails" = "%1$d × %1$d px ・ 1コマ %2$d × %2$d px";
-"setup.dropGuideBody" = "一覧にない場合、アイコンを一覧へドラッグ。";
-"setup.dragAlternative" = "ドラッグできない場合は「＋」から追加できます。";
 
 "images.memoryLimit" = "画像セットが40 MiBの画像メモリ上限を超えています。画像を減らすか、小さいPNGを選んでください。読み込みに失敗しても保存済み画像は保持されます。";
 

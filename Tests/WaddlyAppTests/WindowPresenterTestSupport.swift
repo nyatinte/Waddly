@@ -25,6 +25,7 @@ extension WindowPresenter {
             window.alphaValue = 0
             window.orderFrontRegardless()
         }
+        presenter.allowsFloatingPermissionGuide = false
         presenter.presentAlert = { alert, parent, then in
             // Attaching a sheet orders its parent front too, so both have to stay transparent.
             parent.alphaValue = 0

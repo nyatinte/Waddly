@@ -96,8 +96,7 @@
 "setup.monitoringTitle" = "Let your pet react to typing";
 "setup.monitoringBody" = "Your pet moves when you type. This feature needs macOS Input Monitoring permission.";
 "setup.monitoringActionHint" = "A macOS permission prompt or System Settings will open.";
-"setup.privacyTitle" = "Your typing is never saved or sent";
-"setup.privacyNote" = "Waddly only checks that a key was pressed and whether it was Enter.";
+"setup.privacySummary" = "Your typing is never saved or sent. Waddly only checks that a key was pressed and whether it was Enter.";
 "setup.monitoringStatusGranted" = "Input Monitoring: allowed";
 "setup.monitoringStatusOff" = "Input Monitoring: not allowed";
 "setup.enableMonitoring" = "Start setup";
@@ -110,9 +109,9 @@
 "setup.notWorking" = "If it does not work";
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
 "setup.previewMonitoringWaiting" = "Press a key to see it react";
-"setup.guideStepAccessibility" = "Step %1$ld: %2$@";
-"setup.manualStep3" = "Turn Waddly on.";
-"setup.restartPromptStep" = "If prompted, choose “Quit & Reopen”.";
+"setup.guideTitle" = "Allow Input Monitoring";
+"setup.guideIntro" = "If Waddly isn't listed, drag it into the list on the right. Then turn its switch on.";
+"setup.guideDragFallback" = "Can't drag? Add Waddly with + in Settings.";
 "setup.openSystemSettings" = "Open System Settings";
 "setup.revealInFinder" = "Show Waddly in Finder";
 "setup.dragAppIcon" = "Waddly app icon. Drag it into the Input Monitoring list.";
@@ -147,8 +146,6 @@
 "setup.checkMonitoringWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.troubleshootingBody" = "Restart Waddly, then try typing again.";
 "setup.imageDetails" = "%1$d × %1$d px · cell %2$d × %2$d px";
-"setup.dropGuideBody" = "If Waddly is not listed, drag the icon into the list.";
-"setup.dragAlternative" = "If you cannot drag, add Waddly using +.";
 
 "images.memoryLimit" = "This image set exceeds the 40 MiB image memory budget. Remove images or choose smaller PNGs. Saved images are kept if loading fails.";
 

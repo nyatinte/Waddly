@@ -11,8 +11,8 @@ enum PermissionGuidePlacement {
     /// Tiny overlays such as the desktop pet must not push the window around.
     static let ownWindowMinimumSide: CGFloat = 240
 
-    /// Places the guide window below the settings window when there is room (which structurally
-    /// cannot cover the app list), then to a side. `ownWindows` keeps it off our own windows.
+    /// Prefers the left side of System Settings to keep its app list clear, then tries below or right.
+    /// `ownWindows` keeps it off our own windows.
     static func origin(
         windowSize: NSSize,
         settings: CGRect,
@@ -22,7 +22,7 @@ enum PermissionGuidePlacement {
         let below = NSPoint(x: settings.minX + sidebarWidth, y: settings.minY - windowSize.height - gap)
         let left = NSPoint(x: settings.minX - windowSize.width - gap, y: settings.maxY - windowSize.height - 48)
         let right = NSPoint(x: settings.maxX + gap, y: settings.maxY - windowSize.height - 48)
-        let candidates = [below, left, right]
+        let candidates = [left, below, right]
         let relevantOwn = ownWindows.filter {
             $0.width >= ownWindowMinimumSide && $0.height >= ownWindowMinimumSide
         }
@@ -120,9 +120,7 @@ enum PermissionGuidePlacement {
     }
 
     static func openInputMonitoringSettings() {
-        let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
-        guard let url else { return }
-        NSWorkspace.shared.open(url)
+        SystemSettingsLauncher.openInputMonitoringSettings()
     }
 }
 
