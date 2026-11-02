@@ -230,6 +230,7 @@ jobs:
           VALIDATION_CASK="$(brew --repository)/Library/Taps/local/homebrew-waddly-validation/Casks/waddly.rb"
           mkdir -p "$(dirname "$VALIDATION_CASK")"
           cp "$TAP_DIR/Casks/waddly.rb" "$VALIDATION_CASK"
+          brew trust --cask "$VALIDATION_TAP/waddly"
           if ! brew audit --cask --strict "$VALIDATION_TAP/waddly"; then
             printf '::error::Homebrew strict cask audit failed (including any tap or network errors).\n' >&2
             exit 1
