@@ -23,6 +23,7 @@ Use this checklist for release scope, versioning, security review, and verificat
 3. **Tag the merged main commit.** After the version PR is merged, run:
 
    ```sh
+   set -euo pipefail
    git fetch origin
    git switch main
    git pull --ff-only origin main
