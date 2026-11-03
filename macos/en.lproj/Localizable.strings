@@ -1,7 +1,7 @@
 "motion.off" = "Off";
 "motion.weak" = "Low";
 "motion.strong" = "High";
-"menu.pause" = "Pause reactions";
+"menu.pause" = "Typing reactions";
 "share.menu" = "Share Pet";
 "share.title" = "Share Pet";
 "share.video" = "5-second video";
@@ -23,7 +23,6 @@
 "share.loading" = "Preparing share assets…";
 "share.error" = "Could not create the share assets.";
 "share.retry" = "Try Again";
-"menu.resume" = "Resume reactions";
 "menu.displaySize" = "Display size";
 "size.small" = "Small";
 "size.medium" = "Medium";
