@@ -19,12 +19,12 @@ import Testing
         )
     }
 
-    @Test func topLevelMenusAreTheApplicationEditAndWindowMenus() throws {
+    @Test func topLevelMenusAreTheApplicationFileEditAndWindowMenus() throws {
         let menus = try menus()
-        #expect(menus.main.items.map(\.title) == ["Waddly", "Edit", "Window"])
+        #expect(menus.main.items.map(\.title) == ["Waddly", "File", "Edit", "Window"])
         #expect(menus.main.items.allSatisfy { $0.submenu != nil })
         #expect(menus.main.item(at: 0)?.submenu?.item(at: 2)?.submenu === menus.services)
-        #expect(menus.main.item(at: 2)?.submenu === menus.window)
+        #expect(menus.main.item(at: 3)?.submenu === menus.window)
     }
 
     @Test func aboutOpensTheStandardPanelThatReportsTheBundleVersion() throws {
@@ -37,6 +37,18 @@ import Testing
         let quit = try #require(appMenu.items.last)
         #expect(quit.action == #selector(NSApplication.terminate(_:)))
         #expect(quit.keyEquivalent == "q")
+        #expect(quit.keyEquivalentModifierMask == .command)
+        #expect(quit.target === NSApplication.shared)
+    }
+
+    @Test func closeUsesTheStandardWindowAction() throws {
+        let fileMenu = try #require(try menus().main.item(at: 1)?.submenu)
+        let close = try #require(fileMenu.items.first)
+        #expect(close.title == "Close")
+        #expect(close.action == #selector(NSWindow.performClose(_:)))
+        #expect(close.keyEquivalent == "w")
+        #expect(close.keyEquivalentModifierMask == .command)
+        #expect(close.target == nil)
     }
 
     private struct ExpectedCommand {
@@ -46,7 +58,7 @@ import Testing
     }
 
     @Test func editingCommandsKeepTheirSystemShortcuts() throws {
-        let editMenu = try #require(try menus().main.item(at: 1)?.submenu)
+        let editMenu = try #require(try menus().main.item(at: 2)?.submenu)
         let expected = [
             ExpectedCommand(title: "Undo", key: "z", action: Selector(("undo:"))),
             ExpectedCommand(title: "Redo", key: "z", action: Selector(("redo:"))),
@@ -67,8 +79,10 @@ import Testing
     @Test func menuTitlesFollowTheSelectedLanguage() throws {
         let japanese = try menus(language: .japanese).main
         #expect(japanese.item(at: 0)?.title == "Waddly")
-        #expect(japanese.item(at: 1)?.title == "編集")
-        #expect(japanese.item(at: 2)?.title == "ウインドウ")
-        #expect(try menus(language: .english).main.item(at: 1)?.title == "Edit")
+        #expect(japanese.item(at: 1)?.title == "ファイル")
+        #expect(japanese.item(at: 1)?.submenu?.items.first?.title == "閉じる")
+        #expect(japanese.item(at: 2)?.title == "編集")
+        #expect(japanese.item(at: 3)?.title == "ウインドウ")
+        #expect(try menus(language: .english).main.item(at: 2)?.title == "Edit")
     }
 }

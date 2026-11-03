@@ -32,6 +32,7 @@ enum AppMainMenu {
         let window = makeWindowMenu(localization: localization)
         let main = NSMenu(title: appName)
         main.addItem(wrapping: makeAppMenu(localization: localization, appName: appName, services: services))
+        main.addItem(wrapping: makeFileMenu(localization: localization))
         main.addItem(wrapping: makeEditMenu(localization: localization))
         main.addItem(wrapping: window)
         return Menus(main: main, services: services, window: window)
@@ -78,6 +79,16 @@ enum AppMainMenu {
             action: #selector(NSApplication.terminate(_:)),
             key: "q",
             target: app
+        ))
+        return menu
+    }
+
+    private static func makeFileMenu(localization: LocalizationController) -> NSMenu {
+        let menu = NSMenu(title: localization.string(for: .mainMenuFile))
+        menu.addItem(item(
+            localization.string(for: .mainMenuClose),
+            action: #selector(NSWindow.performClose(_:)),
+            key: "w"
         ))
         return menu
     }

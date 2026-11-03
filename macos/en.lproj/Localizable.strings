@@ -272,6 +272,8 @@
 "mainMenu.hideOthers" = "Hide Others";
 "mainMenu.showAll" = "Show All";
 "mainMenu.quit" = "Quit Waddly";
+"mainMenu.file" = "File";
+"mainMenu.close" = "Close";
 "mainMenu.edit" = "Edit";
 "mainMenu.undo" = "Undo";
 "mainMenu.redo" = "Redo";

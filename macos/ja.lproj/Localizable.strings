@@ -272,6 +272,8 @@
 "mainMenu.hideOthers" = "ほかを隠す";
 "mainMenu.showAll" = "すべてを表示";
 "mainMenu.quit" = "Waddlyを終了";
+"mainMenu.file" = "ファイル";
+"mainMenu.close" = "閉じる";
 "mainMenu.edit" = "編集";
 "mainMenu.undo" = "取り消す";
 "mainMenu.redo" = "やり直す";
