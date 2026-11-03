@@ -196,8 +196,6 @@ final class SetupPreviewPane: PetImageDropView {
         player.stop()
     }
 
-    // MARK: - Layout
-
     private func build() {
         configureControls()
         gridView.isHidden = true
@@ -248,6 +246,8 @@ final class SetupPreviewPane: PetImageDropView {
     }
 
     private func activatePaneLayout() {
+        let preferredGridHeight = gridView.heightAnchor.constraint(equalToConstant: 240)
+        preferredGridHeight.priority = .defaultHigh
         NSLayoutConstraint.activate([
             modeControl.topAnchor.constraint(equalTo: topAnchor, constant: 14),
             modeControl.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -271,9 +271,11 @@ final class SetupPreviewPane: PetImageDropView {
             petView.heightAnchor.constraint(equalToConstant: 200),
 
             gridView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            gridView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -4),
-            gridView.widthAnchor.constraint(equalToConstant: 240),
-            gridView.heightAnchor.constraint(equalToConstant: 240),
+            gridView.topAnchor.constraint(equalTo: backgroundControl.bottomAnchor, constant: DesignTokens.Spacing.sm),
+            gridView.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -DesignTokens.Spacing.sm),
+            gridView.widthAnchor.constraint(equalTo: gridView.heightAnchor),
+            gridView.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor),
+            preferredGridHeight,
 
             categoryRow.centerXAnchor.constraint(equalTo: centerXAnchor),
             categoryRow.topAnchor.constraint(equalTo: petView.bottomAnchor, constant: 10),
@@ -296,8 +298,6 @@ final class SetupPreviewPane: PetImageDropView {
 
     static let darkBackground = NSColor(calibratedWhite: 0.09, alpha: 1)
 }
-
-// MARK: - Preview controls
 
 extension SetupPreviewPane {
     @objc private func changePreviewMode() {

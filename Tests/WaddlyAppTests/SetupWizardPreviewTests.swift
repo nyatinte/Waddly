@@ -179,6 +179,26 @@ import WaddlyCore
         #expect(label.isHidden)
     }
 
+    @Test(arguments: [300.0, 430.0])
+    func cellsGridFitsBelowBackgroundSelector(height: CGFloat) throws {
+        let pane = SetupPreviewPane(frame: NSRect(x: 0, y: 0, width: 360, height: height))
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        pane.configure(localization: wizard.localization, showsControls: true)
+        try pane.showPet(Fixture.sheetImages(), caption: "")
+        pane.modeControl.selectedSegment = 1
+        _ = pane.modeControl.sendAction(pane.modeControl.action, to: pane.modeControl.target)
+        pane.layoutSubtreeIfNeeded()
+
+        let grid = try #require(pane.subviews.compactMap { $0 as? SpriteSheetGridView }.first)
+        #expect(!pane.backgroundControl.isHidden)
+        #expect(!grid.isHidden)
+        #expect(!grid.frame.intersects(pane.backgroundControl.frame))
+        #expect(pane.bounds.contains(grid.frame))
+        #expect(grid.frame.width >= 120)
+        #expect(abs(grid.frame.width - grid.frame.height) < 1)
+    }
+
     @Test func previewLoopsEveryCategoryOfTheImportedSheet() throws {
         let shots = try PetPreviewPlayer.demoShots(for: Fixture.sheetImages())
         #expect(shots.count == 9)
