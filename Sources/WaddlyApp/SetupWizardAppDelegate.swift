@@ -86,7 +86,8 @@ extension AppDelegate {
     /// before the images, which load asynchronously at launch.
     func restoreSetupGuideOnActivation() {
         guard !settings.setupWizardSeen || settings.setupStep != nil,
-              setupWizardController?.window?.isVisible != true else { return }
+              setupWizardController?.window?.isVisible != true,
+              setupWizardController?.permissionGuidePanelController?.window?.isVisible != true else { return }
         showSetupWizard()
     }
 

@@ -1,17 +1,36 @@
 import AppKit
 import SwiftUI
 
+/// A non-activating companion still accepts keyboard focus when the user clicks it. Key equivalents
+/// must be handled by the panel itself because another application may own the menu bar.
+@MainActor
+final class PermissionGuidePanel: NSPanel {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let isClose = event.type == .keyDown
+            && event.modifierFlags.intersection([.command, .shift, .option, .control]) == .command
+            && event.charactersIgnoringModifiers?.lowercased() == "w"
+        guard isClose else { return super.performKeyEquivalent(with: event) }
+        performClose(nil)
+        return true
+    }
+}
+
 @MainActor
 final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate {
     private weak var wizard: SetupWizardController?
     private let overlay = DragDemonstrationOverlayController()
     private var settingsTimer: Timer?
     private weak var sourceView: DraggableAppIconView?
+    private var following = GuideFollowing()
+    private var isMovingProgrammatically = false
+    var isFollowingSystemSettings: Bool {
+        following.isActive
+    }
 
     init(wizard: SetupWizardController) {
         self.wizard = wizard
         let size = SetupMetrics.permissionGuideSize
-        let panel = NSPanel(
+        let panel = PermissionGuidePanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.titled, .closable, .nonactivatingPanel],
             backing: .buffered,
@@ -21,7 +40,8 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
-        panel.becomesKeyOnlyIfNeeded = true
+        // Clicking the guide must give it keyboard focus even though it has no text fields.
+        panel.becomesKeyOnlyIfNeeded = false
         panel.isReleasedWhenClosed = false
         panel.isRestorable = false
         panel.contentMinSize = SetupMetrics.permissionGuideMinimumSize
@@ -33,6 +53,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             onOpenSettings: { [weak self] in self?.openSettings() },
             onBack: { [weak self] in self?.returnToCharacterStep() },
             onLater: { [weak self] in self?.deferSetup() },
+            onClose: { [weak panel] in panel?.performClose(nil) },
             onNext: { [weak self] in self?.continueSetup() },
             onRestart: { [weak wizard] in wizard?.relaunchApp() },
             onReadinessChanged: { [weak self] in self?.fitToContent() },
@@ -47,6 +68,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
 
     func show() {
         guard let wizard, let panel = window as? NSPanel else { return }
+        if panel.isVisible {
+            panel.orderFrontRegardless()
+            return
+        }
+        following.begin()
         wizard.window?.orderOut(nil)
         panel.setContentSize(SetupMetrics.permissionGuideSize)
         panel.level = .floating
@@ -73,6 +99,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         window?.contentView = nil
     }
 
+    func windowDidMove(_ notification: Notification) {
+        guard !isMovingProgrammatically, let window else { return }
+        following.recordMove(to: window.frame.origin)
+    }
+
     func windowWillClose(_ notification: Notification) {
         guard let wizard else { return }
         stop()
@@ -81,10 +112,10 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         wizard.window?.close()
     }
 
-    private func openSettings() {
+    func openSettings() {
         guard let wizard else { return }
-        if wizard.permission.isGuiding {
-            SystemSettingsLauncher.openInputMonitoringSettings()
+        if wizard.permission.isGuiding || wizard.permission.isGranted {
+            wizard.permission.openSettingsForTroubleshooting()
         } else {
             wizard.permission.beginGuiding()
         }
@@ -100,7 +131,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
                     x: visible.midX - panel.frame.width / 2,
                     y: visible.midY - panel.frame.height / 2
                 )
-                panel.setFrameOrigin(PermissionGuidePlacement.clamped(origin, size: panel.frame.size, into: visible))
+                movePanel(to: PermissionGuidePlacement.clamped(origin, size: panel.frame.size, into: visible))
             }
             return
         }
@@ -115,7 +146,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             visible: visible,
             ownWindows: ownWindows
         )
-        panel.setFrameOrigin(origin)
+        movePanel(to: origin)
         guard let wizard, !wizard.isMonitoringDragDemoStopped,
               wizard.monitoringReadiness == .permissionMissing,
               let sourceView, sourceView.window === panel, let screen
@@ -137,6 +168,14 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         )
     }
 
+    private func movePanel(to origin: NSPoint) {
+        guard following.isActive, let panel = window else { return }
+        isMovingProgrammatically = true
+        panel.setFrameOrigin(origin)
+        following.recordProgrammaticMove(to: panel.frame.origin)
+        isMovingProgrammatically = false
+    }
+
     private func fitToContent() {
         DispatchQueue.main.async { [weak self] in
             guard let self, let panel = window,
@@ -145,7 +184,10 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             let width = SetupMetrics.permissionGuideSize.width
             let height = hosting.fittingSize.height
             guard height > 0 else { return }
+            isMovingProgrammatically = true
             panel.setContentSize(NSSize(width: width, height: height))
+            following.recordProgrammaticMove(to: panel.frame.origin)
+            isMovingProgrammatically = false
             placeBesideSettings()
         }
     }
@@ -191,6 +233,7 @@ private struct PermissionGuidePanelView: View {
     let onOpenSettings: () -> Void
     let onBack: () -> Void
     let onLater: () -> Void
+    let onClose: () -> Void
     let onNext: () -> Void
     let onRestart: () -> Void
     let onReadinessChanged: () -> Void
@@ -245,8 +288,23 @@ private struct PermissionGuidePanelView: View {
                 Button(wizard.localizedString(.setupRestartNow), action: onRestart)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
+                Button(wizard.localizedString(.setupOpenSystemSettings), action: onOpenSettings)
+                    .buttonStyle(.bordered)
             case .awaitingReaction, .reactionObserved:
-                EmptyView()
+                Button(wizard.localizedString(.setupNotWorking)) {
+                    wizard.toggleTroubleshooting()
+                }
+                .buttonStyle(.bordered)
+                if wizard.isShowingTroubleshooting {
+                    Text(wizard.localizedString(.setupTroubleshootingBody))
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button(wizard.localizedString(.setupRestartNow), action: onRestart)
+                        .buttonStyle(.bordered)
+                    Button(wizard.localizedString(.setupOpenSystemSettings), action: onOpenSettings)
+                        .buttonStyle(.bordered)
+                }
             }
 
             HStack {
@@ -258,6 +316,7 @@ private struct PermissionGuidePanelView: View {
                 if wizard.monitoringReadiness == .reactionObserved {
                     Button(wizard.localizedString(.setupNext), action: onNext)
                         .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.defaultAction)
                 } else {
                     Button(wizard.localizedString(.setupLater), action: onLater)
                         .buttonStyle(.bordered)
@@ -267,7 +326,9 @@ private struct PermissionGuidePanelView: View {
         .padding(DesignTokens.Spacing.lg)
         .frame(width: SetupMetrics.permissionGuideSize.width)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onExitCommand(perform: onClose)
         .onChange(of: wizard.monitoringReadiness) { _, _ in onReadinessChanged() }
+        .onChange(of: wizard.isShowingTroubleshooting) { _, _ in onReadinessChanged() }
     }
 
     private var title: String {

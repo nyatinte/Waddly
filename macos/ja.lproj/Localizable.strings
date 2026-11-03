@@ -1,7 +1,7 @@
 "motion.off" = "オフ";
 "motion.weak" = "弱";
 "motion.strong" = "強";
-"menu.pause" = "入力反応を一時停止";
+"menu.pause" = "入力反応";
 "share.menu" = "ペットをシェア";
 "share.title" = "ペットをシェア";
 "share.video" = "5秒の動画";
@@ -23,7 +23,6 @@
 "share.loading" = "共有素材を作成中…";
 "share.error" = "共有素材を作成できませんでした。";
 "share.retry" = "再試行";
-"menu.resume" = "入力反応を再開";
 "menu.displaySize" = "表示サイズ";
 "size.small" = "小";
 "size.medium" = "中";
@@ -104,7 +103,7 @@
 "setup.monitoringGrantedTitle" = "反応を確認できました";
 "setup.monitoringGrantedBody" = "ペットがキー入力に反応しています。";
 "setup.monitoringWaitingTitle" = "キーを押してみよう";
-"setup.monitoringWaitingBody" = "キーボードを押すと、右のペットが動きます。";
+"setup.monitoringWaitingBody" = "キーを押して、ペットの反応を確認しましょう。";
 "setup.monitoringStatusWaiting" = "キー入力を待っています";
 "setup.notWorking" = "動作しない場合";
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";

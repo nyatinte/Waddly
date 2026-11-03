@@ -187,6 +187,11 @@ final class PermissionService {
         pollTimer = nil
     }
 
+    /// Open settings for troubleshooting without changing the permission lifecycle or restarting a live tap.
+    func openSettingsForTroubleshooting() {
+        openSettings()
+    }
+
     /// Opens the system-owned Input Monitoring pane without requesting Accessibility access.
     static func openInputMonitoringSettings() {
         SystemSettingsLauncher.openInputMonitoringSettings()
