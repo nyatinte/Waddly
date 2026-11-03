@@ -20,6 +20,10 @@ When adding or changing user-facing strings, update both `macos/ja.lproj/Localiz
 
 Update both `README.md` and `README.ja.md` when a change affects information users need to discover or use a feature, or makes existing setup instructions inaccurate. Keep both accurate and consistent; avoid documenting UI details already clear in the app or implementation details that do not help users.
 
+## Releases
+
+For release planning or publishing, follow [`RELEASING.md`](RELEASING.md).
+
 ## Verification
 
 After changing Swift code, run `mise run test` and `mise run build`. Run `mise run check` when full format, lint, test, and build validation is appropriate.
