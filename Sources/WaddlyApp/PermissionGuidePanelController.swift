@@ -1,6 +1,20 @@
 import AppKit
 import SwiftUI
 
+/// A non-activating companion still accepts keyboard focus when the user clicks it. Key equivalents
+/// must be handled by the panel itself because another application may own the menu bar.
+@MainActor
+final class PermissionGuidePanel: NSPanel {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let isClose = event.type == .keyDown
+            && event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command
+            && event.charactersIgnoringModifiers?.lowercased() == "w"
+        guard isClose else { return super.performKeyEquivalent(with: event) }
+        performClose(nil)
+        return true
+    }
+}
+
 @MainActor
 final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate {
     private weak var wizard: SetupWizardController?
@@ -11,7 +25,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
     init(wizard: SetupWizardController) {
         self.wizard = wizard
         let size = SetupMetrics.permissionGuideSize
-        let panel = NSPanel(
+        let panel = PermissionGuidePanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.titled, .closable, .nonactivatingPanel],
             backing: .buffered,
@@ -21,7 +35,8 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
-        panel.becomesKeyOnlyIfNeeded = true
+        // Clicking the guide must give it keyboard focus even though it has no text fields.
+        panel.becomesKeyOnlyIfNeeded = false
         panel.isReleasedWhenClosed = false
         panel.isRestorable = false
         panel.contentMinSize = SetupMetrics.permissionGuideMinimumSize
@@ -33,6 +48,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             onOpenSettings: { [weak self] in self?.openSettings() },
             onBack: { [weak self] in self?.returnToCharacterStep() },
             onLater: { [weak self] in self?.deferSetup() },
+            onClose: { [weak panel] in panel?.performClose(nil) },
             onNext: { [weak self] in self?.continueSetup() },
             onRestart: { [weak wizard] in wizard?.relaunchApp() },
             onReadinessChanged: { [weak self] in self?.fitToContent() },
@@ -191,6 +207,7 @@ private struct PermissionGuidePanelView: View {
     let onOpenSettings: () -> Void
     let onBack: () -> Void
     let onLater: () -> Void
+    let onClose: () -> Void
     let onNext: () -> Void
     let onRestart: () -> Void
     let onReadinessChanged: () -> Void
@@ -258,6 +275,7 @@ private struct PermissionGuidePanelView: View {
                 if wizard.monitoringReadiness == .reactionObserved {
                     Button(wizard.localizedString(.setupNext), action: onNext)
                         .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.defaultAction)
                 } else {
                     Button(wizard.localizedString(.setupLater), action: onLater)
                         .buttonStyle(.bordered)
@@ -267,6 +285,7 @@ private struct PermissionGuidePanelView: View {
         .padding(DesignTokens.Spacing.lg)
         .frame(width: SetupMetrics.permissionGuideSize.width)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onExitCommand(perform: onClose)
         .onChange(of: wizard.monitoringReadiness) { _, _ in onReadinessChanged() }
     }
 
