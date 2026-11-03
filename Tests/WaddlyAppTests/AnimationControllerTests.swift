@@ -82,10 +82,12 @@ private final class AnimationFixture {
 
     fixture.breathingEnabled = true
     fixture.controller.breathingPreferenceDidChange()
-    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") != nil)
+    let enabledAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
+    #expect((enabledAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
 
     fixture.controller.imageSetDidChange()
-    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") != nil)
+    let refreshedAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
+    #expect((refreshedAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
     fixture.controller.shutdown()
 }
 
