@@ -21,6 +21,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
     private let overlay = DragDemonstrationOverlayController()
     private var settingsTimer: Timer?
     private weak var sourceView: DraggableAppIconView?
+    private var following = GuideFollowing()
+    private var isMovingProgrammatically = false
+    var isFollowingSystemSettings: Bool {
+        following.isActive
+    }
 
     init(wizard: SetupWizardController) {
         self.wizard = wizard
@@ -63,6 +68,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
 
     func show() {
         guard let wizard, let panel = window as? NSPanel else { return }
+        if panel.isVisible {
+            panel.orderFrontRegardless()
+            return
+        }
+        following.begin()
         wizard.window?.orderOut(nil)
         panel.setContentSize(SetupMetrics.permissionGuideSize)
         panel.level = .floating
@@ -87,6 +97,11 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         overlay.close()
         window?.orderOut(nil)
         window?.contentView = nil
+    }
+
+    func windowDidMove(_ notification: Notification) {
+        guard !isMovingProgrammatically, let window else { return }
+        following.recordMove(to: window.frame.origin)
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -116,7 +131,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
                     x: visible.midX - panel.frame.width / 2,
                     y: visible.midY - panel.frame.height / 2
                 )
-                panel.setFrameOrigin(PermissionGuidePlacement.clamped(origin, size: panel.frame.size, into: visible))
+                movePanel(to: PermissionGuidePlacement.clamped(origin, size: panel.frame.size, into: visible))
             }
             return
         }
@@ -131,7 +146,7 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             visible: visible,
             ownWindows: ownWindows
         )
-        panel.setFrameOrigin(origin)
+        movePanel(to: origin)
         guard let wizard, !wizard.isMonitoringDragDemoStopped,
               wizard.monitoringReadiness == .permissionMissing,
               let sourceView, sourceView.window === panel, let screen
@@ -153,6 +168,14 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         )
     }
 
+    private func movePanel(to origin: NSPoint) {
+        guard following.isActive, let panel = window else { return }
+        isMovingProgrammatically = true
+        panel.setFrameOrigin(origin)
+        following.recordProgrammaticMove(to: panel.frame.origin)
+        isMovingProgrammatically = false
+    }
+
     private func fitToContent() {
         DispatchQueue.main.async { [weak self] in
             guard let self, let panel = window,
@@ -161,7 +184,10 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
             let width = SetupMetrics.permissionGuideSize.width
             let height = hosting.fittingSize.height
             guard height > 0 else { return }
+            isMovingProgrammatically = true
             panel.setContentSize(NSSize(width: width, height: height))
+            following.recordProgrammaticMove(to: panel.frame.origin)
+            isMovingProgrammatically = false
             placeBesideSettings()
         }
     }
