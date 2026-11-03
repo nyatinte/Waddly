@@ -53,57 +53,7 @@ Click the guide, then press ⌘W to close it.
 
 ### Prepare a sprite sheet
 
-Prepare a photo of your pet and choose **Open in ChatGPT** in Waddly. Attach the photo in ChatGPT, then return to Waddly and import the generated PNG. To use another image generator, choose **Copy prompt**. The [prompt](prompts/en.md) is also available below.
-
-<details>
-<summary>Show the sprite sheet prompt</summary>
-
-```text
-Character to draw: <replace this line>
-
-If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
-
-Using that character, create a 3×3 animated sprite sheet for Waddly. If a reference image is attached, depict the individual in that image.
-
-[Character]
-- Keep the individual's features (species, colors, patterns, body shape) in every cell.
-
-[Art style]
-- Pixel art in the style of a 16-bit-era game. Few colors, thick outlines, two or three shades of shading.
-- Do not use blur, anti-aliasing, gradients, glow, or photorealistic rendering.
-- Keep the same size, facing direction, and camera position in all nine cells. Line up the top of the head, the bottom of the body, and the left-right centre at the same position in every cell, and do not change them between poses.
-
-[Sheet and placement]
-- Output one transparent PNG. Nine cells in a 3×3 grid. Make all cells equally sized squares, and make the side length divisible by 3.
-- Use real transparency, with alpha 0 outside the character's silhouette. Do not draw a checkerboard, white, grey, a colored backdrop, a gradient, a floor, or shadows.
-- Fit the whole character inside the central 50% of each cell (a 25% margin on every side). Keep ears, tails, wings, the keyboard, and effects inside that area too.
-- A cell that touches its own boundary or a neighboring cell by even one pixel is an invalid output.
-- If it does not fit, moderate the pose or the effects instead of shrinking the character.
-- Do not draw divider lines, frames, numbers, captions, logos, or watermarks. No text except the optional Enter-key symbol.
-
-[The nine cells: left to right, then top to bottom]
-1. Sitting relaxed
-2. The same pose as cell 1, but blinking
-3. Focused, facing the keyboard
-4. Typing slowly
-5. Typing in a pose slightly different from cell 4
-6. Leaning forward and typing quickly
-7. The instant it presses a large Enter key forcefully. If a reference image is attached, take that energy from it
-8. Drowsy, with heavy eyelids
-9. Curled up and sleeping peacefully
-
-[Keyboard and effects]
-- Draw the keyboard only in cells 3–7, the same shape and size in all nine cells. Keep it narrower than 40% of the cell width.
-- In cell 7, draw the Enter key larger than the other keys, and within 30% of the cell width. It may carry a “↵” symbol; do not write the word “Enter”.
-- In cell 7, place the star-shaped spark and the impact lines right next to the body. Use at most two short strokes, and do not let them reach more than 5% of the cell width beyond the body. Keep their tips at least 30% inside the cell's right and bottom edges.
-
-Output only the sprite sheet image that meets these requirements.
-```
-
-</details>
-
-- If you have an image of a pet or character you want to use, attach it along with the prompt.
-- If you don't have an image, describe the character in words, such as “a small penguin with a round body.” No image attachment is needed.
+Prepare a photo of your pet and choose **Open in ChatGPT** in Waddly. Attach the photo in ChatGPT, then return to Waddly and import the generated PNG. To use another image generator, choose **Copy prompt**. You can also view the [prompt and image-checking tips](prompts/en.md).
 
 You can also create the sprite sheet by hand.
 
@@ -116,16 +66,11 @@ You can also create the sprite sheet by hand.
 - If the pet does not react, choose **If it does not work** to restart Waddly or check Input Monitoring in System Settings.
 - When creating a new character, choose **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy it for another image generator, or import a finished PNG at any time in that window. Opening ChatGPT puts the prompt in the page URL, so it is also recorded in your browser history; **Copy prompt** leaves no trace there.
 - Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
-- With VoiceOver, the pet is announced as “Waddly pet”, with a hint for dragging it and opening its menu.
 - Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly uploads nothing by itself.
 
 ## Privacy
 
 Keystrokes are used only to animate the pet and are never stored, logged, or sent. Images and share videos or images stay on your Mac and are never uploaded automatically. “Post on X” only opens a compose window with `#ShareMyWaddly`, and only “Open in ChatGPT” sends the bundled prompt to ChatGPT.
-
-## Measured memory
-
-The app targets a physical memory footprint below 100 MB in typical use. See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite.
 
 ## Contributing
 
