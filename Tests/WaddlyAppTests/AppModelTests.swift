@@ -139,9 +139,7 @@ import WaddlyCore
     }
 }
 
-@Test func promptFilesMatchTheReadmeCopy() throws {
-    // The extractor rejects missing, unclosed, repeated, and empty fences, so a broken fence
-    // fails the comparison below instead of passing against an empty block.
+@Test func readmesLinkToLocalizedPromptFiles() throws {
     #expect(textFenceBody(in: "no fence") == nil)
     #expect(textFenceBody(in: "```text\n```") == nil)
     #expect(textFenceBody(in: "```text\n\n```") == nil)
@@ -153,10 +151,10 @@ import WaddlyCore
         .deletingLastPathComponent().deletingLastPathComponent()
     for (language, readme) in [("en", "README.md"), ("ja", "README.ja.md")] {
         let prompt = try String(contentsOf: root.appendingPathComponent("prompts/\(language).md"), encoding: .utf8)
-        let readmeCopy = try String(contentsOf: root.appendingPathComponent(readme), encoding: .utf8)
-        let promptBody = try #require(textFenceBody(in: prompt), "prompts/\(language).md has no usable text fence")
-        let readmeBody = try #require(textFenceBody(in: readmeCopy), "\(readme) has no usable text fence")
-        #expect(promptBody == readmeBody, "\(readme) is stale against prompts/\(language).md")
+        let readmeContent = try String(contentsOf: root.appendingPathComponent(readme), encoding: .utf8)
+        #expect(textFenceBody(in: prompt) != nil, "prompts/\(language).md has no usable text fence")
+        #expect(readmeContent.contains("](prompts/\(language).md)"), "\(readme) does not link to its localized prompt")
+        #expect(textFenceBody(in: readmeContent) == nil, "\(readme) duplicates the prompt text")
     }
 }
 
