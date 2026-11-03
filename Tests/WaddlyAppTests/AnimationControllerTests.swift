@@ -76,9 +76,12 @@ private final class AnimationFixture {
 @Test @MainActor func idleBreathingRunsAndIsRestoredAfterImageReplacement() {
     let fixture = AnimationFixture()
     fixture.view.wantsLayer = true
-    fixture.breathingEnabled = true
     fixture.controller.start()
     #expect(fixture.controller.currentPhase == .idle)
+    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") == nil)
+
+    fixture.breathingEnabled = true
+    fixture.controller.breathingPreferenceDidChange()
     #expect(fixture.view.layer?.animation(forKey: "idle-breathe") != nil)
 
     fixture.controller.imageSetDidChange()

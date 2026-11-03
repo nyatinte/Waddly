@@ -156,7 +156,7 @@ final class PetAnimationController {
         petView.layer?.removeAnimation(forKey: "sleep-breathe")
         guard isBreathingEnabled(), !isPaused else { return }
         switch currentPhase {
-        case .idle: breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+        case .idle: breathe(key: "idle-breathe", breathScale: 1.03, duration: 3.2)
         case .sleeping: breathe()
         case .typing, .frozen, nil: break
         }
