@@ -166,7 +166,6 @@ enum LocalizationKey: String, CaseIterable {
     case menuPause = "menu.pause"
     case menuPresence = "menu.presence"
     case menuQuit = "menu.quit"
-    case menuResume = "menu.resume"
     case menuSetupWizard = "menu.setupWizard"
     case menuShareNeedsCharacter = "menu.shareNeedsCharacter"
     case menuShowInDock = "menu.showInDock"

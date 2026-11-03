@@ -112,11 +112,6 @@ import WaddlyCore
     }
 }
 
-@Test func pauseMenuTitleFollowsThePausedState() {
-    #expect(pauseMenuTitleKey(isPaused: true) == .menuResume)
-    #expect(pauseMenuTitleKey(isPaused: false) == .menuPause)
-}
-
 @MainActor private func makeSelectionMenu(action: Selector) -> NSMenu {
     let menu = NSMenu()
     for size in [180, 240, 320] {

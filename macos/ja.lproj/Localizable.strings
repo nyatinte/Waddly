@@ -1,7 +1,7 @@
 "motion.off" = "オフ";
 "motion.weak" = "弱";
 "motion.strong" = "強";
-"menu.pause" = "入力反応を一時停止";
+"menu.pause" = "入力反応";
 "share.menu" = "ペットをシェア";
 "share.title" = "ペットをシェア";
 "share.video" = "5秒の動画";
@@ -23,7 +23,6 @@
 "share.loading" = "共有素材を作成中…";
 "share.error" = "共有素材を作成できませんでした。";
 "share.retry" = "再試行";
-"menu.resume" = "入力反応を再開";
 "menu.displaySize" = "表示サイズ";
 "size.small" = "小";
 "size.medium" = "中";
