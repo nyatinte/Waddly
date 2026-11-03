@@ -4,7 +4,7 @@ import AppKit
 ///
 /// Waddly's own commands live in the status item menu and in the pet's context menu, so this bar only
 /// carries the standard commands: About (which reports the bundle version), Services, Hide, Quit,
-/// Edit — so ⌘C and ⌘V reach text fields — and Window. Every item is the plain system action, so
+/// File → Close, Edit — so ⌘C and ⌘V reach text fields — and Window. Every item is the plain system action, so
 /// AppKit's responder chain and automatic enabling decide when each one applies.
 @MainActor
 enum AppMainMenu {

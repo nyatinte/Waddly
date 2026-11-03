@@ -4,7 +4,7 @@ import Testing
 @testable import WaddlyApp
 
 /// The bar macOS users expect at the top of the screen: About (which is where the version lives),
-/// Hide and Quit on the application menu, the editing commands text fields need, and Window.
+/// Hide and Quit on the application menu, File → Close, the editing commands text fields need, and Window.
 @Suite(.serialized) @MainActor struct AppMainMenuTests {
     private func menus(language: AppLanguage = .english) throws -> AppMainMenu.Menus {
         let domain = "WaddlyTests.mainMenu.\(UUID().uuidString)"
