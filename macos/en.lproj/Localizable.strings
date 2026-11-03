@@ -103,7 +103,7 @@
 "setup.monitoringGrantedTitle" = "Reaction confirmed";
 "setup.monitoringGrantedBody" = "Your pet is reacting to your keyboard.";
 "setup.monitoringWaitingTitle" = "Try pressing a key";
-"setup.monitoringWaitingBody" = "Press a key to see your pet move on the right.";
+"setup.monitoringWaitingBody" = "Press a key to test your pet’s reaction.";
 "setup.monitoringStatusWaiting" = "Waiting for a key press";
 "setup.notWorking" = "If it does not work";
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
