@@ -58,6 +58,7 @@ private final class ManualAnimationScheduler: AnimationScheduling {
 private final class AnimationFixture {
     let scheduler = ManualAnimationScheduler()
     let view = NSImageView()
+    var breathingEnabled = false
     var images = PetImageSet(Dictionary(uniqueKeysWithValues: PetImageCategory.allCases.map {
         ($0, [NSImage(size: NSSize(width: 1, height: 1)), NSImage(size: NSSize(width: 2, height: 2))])
     }))
@@ -66,10 +67,30 @@ private final class AnimationFixture {
         petImages: { [weak self] in self?.images ?? PetImageSet() },
         hasCompletePetImageSet: { [weak self] in self?.images.isComplete ?? false },
         typingMotion: { .off },
-        isBreathingEnabled: { false },
+        isBreathingEnabled: { [weak self] in self?.breathingEnabled ?? false },
         scheduler: scheduler,
         blinkDelay: { 4 }
     )
+}
+
+@Test @MainActor func idleBreathingRunsAndIsRestoredAfterImageReplacement() {
+    let fixture = AnimationFixture()
+    fixture.view.wantsLayer = true
+    fixture.controller.start()
+    #expect(fixture.controller.currentPhase == .idle)
+    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") == nil)
+
+    fixture.breathingEnabled = true
+    fixture.controller.breathingPreferenceDidChange()
+    let enabledAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
+    #expect((enabledAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
+
+    fixture.view.layer?.removeAnimation(forKey: "idle-breathe")
+    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") == nil)
+    fixture.controller.imageSetDidChange()
+    let refreshedAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
+    #expect((refreshedAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
+    fixture.controller.shutdown()
 }
 
 @Test @MainActor func animationAdvancesThroughAllPhasesWithoutWaiting() {
