@@ -122,6 +122,11 @@ final class PermissionService {
         onUpdate?()
     }
 
+    /// Open settings for troubleshooting without changing the permission lifecycle or restarting a live tap.
+    func openSettingsForTroubleshooting() {
+        openSettings()
+    }
+
     func deferSetup() {
         phase = .deferred
         stopPolling()

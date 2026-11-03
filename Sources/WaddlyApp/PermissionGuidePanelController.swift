@@ -97,10 +97,10 @@ final class PermissionGuidePanelController: NSWindowController, NSWindowDelegate
         wizard.window?.close()
     }
 
-    private func openSettings() {
+    func openSettings() {
         guard let wizard else { return }
-        if wizard.permission.isGuiding {
-            SystemSettingsLauncher.openInputMonitoringSettings()
+        if wizard.permission.isGuiding || wizard.permission.isGranted {
+            wizard.permission.openSettingsForTroubleshooting()
         } else {
             wizard.permission.beginGuiding()
         }

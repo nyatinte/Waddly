@@ -21,6 +21,19 @@ import Testing
         #expect(!text.isEmpty)
     }
 
+    @Test func openingSettingsForAConfirmedReactionDoesNotRestartMonitoring() throws {
+        let state = SetupWizardFixture.State()
+        let wizard = try SetupWizardFixture.makeWizard(state: state, granted: true, isMonitoringSettings: true)
+        let controller = PermissionGuidePanelController(wizard: wizard)
+        defer { controller.stop(); wizard.close() }
+        controller.openSettings()
+        wizard.permission.tick()
+        #expect(state.settingsOpened == 1)
+        #expect(state.tapRestarted == 0)
+        #expect(wizard.monitoringReadiness == .reactionObserved)
+        #expect(!wizard.permission.isGuiding)
+    }
+
     @Test(arguments: [NSEvent.ModifierFlags.command, [.command, .capsLock]])
     func guideAcceptsFocusAndCommandWClosesThroughTheWindowDelegate(modifiers: NSEvent.ModifierFlags) throws {
         let state = SetupWizardFixture.State()
