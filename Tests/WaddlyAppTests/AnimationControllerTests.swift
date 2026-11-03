@@ -85,6 +85,8 @@ private final class AnimationFixture {
     let enabledAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
     #expect((enabledAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
 
+    fixture.view.layer?.removeAnimation(forKey: "idle-breathe")
+    #expect(fixture.view.layer?.animation(forKey: "idle-breathe") == nil)
     fixture.controller.imageSetDidChange()
     let refreshedAnimation = fixture.view.layer?.animation(forKey: "idle-breathe") as? CABasicAnimation
     #expect((refreshedAnimation?.toValue as? NSNumber)?.doubleValue == 1.03)
