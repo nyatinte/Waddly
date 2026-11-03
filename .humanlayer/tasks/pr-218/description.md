@@ -4,7 +4,10 @@ The regular idle breathing looked too pronounced, so this reduces its scale chan
 
 ## Special things to note
 
+- [x] User-visible UI change
 - Only regular idle breathing is reduced; sleep breathing, timing, and the breathing preference remain unchanged.
+
+![Idle breathing at 1.015×](./idle-breathing-1.015.gif)
 
 ## Change outline
 
