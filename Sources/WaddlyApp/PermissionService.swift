@@ -122,11 +122,6 @@ final class PermissionService {
         onUpdate?()
     }
 
-    /// Open settings for troubleshooting without changing the permission lifecycle or restarting a live tap.
-    func openSettingsForTroubleshooting() {
-        openSettings()
-    }
-
     func deferSetup() {
         phase = .deferred
         stopPolling()
@@ -190,6 +185,11 @@ final class PermissionService {
     private func stopPolling() {
         pollTimer?.invalidate()
         pollTimer = nil
+    }
+
+    /// Open settings for troubleshooting without changing the permission lifecycle or restarting a live tap.
+    func openSettingsForTroubleshooting() {
+        openSettings()
     }
 
     /// Opens the system-owned Input Monitoring pane without requesting Accessibility access.
