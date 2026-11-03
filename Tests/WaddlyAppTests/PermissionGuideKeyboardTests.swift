@@ -11,6 +11,16 @@ import Testing
         ))
     }
 
+    @Test(arguments: [AppLanguage.english, .japanese])
+    func waitingInstructionsDoNotAssumeAPreviewBesideTheGuide(language: AppLanguage) throws {
+        let wizard = try SetupWizardFixture.makeWizard(language: language, isMonitoringSettings: true)
+        defer { wizard.close() }
+        let text = wizard.localizedString(.setupMonitoringWaitingBody)
+        #expect(!text.contains("right"))
+        #expect(!text.contains("右"))
+        #expect(!text.isEmpty)
+    }
+
     @Test(arguments: [NSEvent.ModifierFlags.command, [.command, .capsLock]])
     func guideAcceptsFocusAndCommandWClosesThroughTheWindowDelegate(modifiers: NSEvent.ModifierFlags) throws {
         let state = SetupWizardFixture.State()

@@ -103,7 +103,7 @@
 "setup.monitoringGrantedTitle" = "反応を確認できました";
 "setup.monitoringGrantedBody" = "ペットがキー入力に反応しています。";
 "setup.monitoringWaitingTitle" = "キーを押してみよう";
-"setup.monitoringWaitingBody" = "キーボードを押すと、右のペットが動きます。";
+"setup.monitoringWaitingBody" = "キーを押して、ペットの反応を確認しましょう。";
 "setup.monitoringStatusWaiting" = "キー入力を待っています";
 "setup.notWorking" = "動作しない場合";
 "setup.previewMonitoringOff" = "実際のキー入力にはまだ反応しません";

@@ -262,8 +262,23 @@ private struct PermissionGuidePanelView: View {
                 Button(wizard.localizedString(.setupRestartNow), action: onRestart)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
+                Button(wizard.localizedString(.setupOpenSystemSettings), action: onOpenSettings)
+                    .buttonStyle(.bordered)
             case .awaitingReaction, .reactionObserved:
-                EmptyView()
+                Button(wizard.localizedString(.setupNotWorking)) {
+                    wizard.toggleTroubleshooting()
+                }
+                .buttonStyle(.bordered)
+                if wizard.isShowingTroubleshooting {
+                    Text(wizard.localizedString(.setupTroubleshootingBody))
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button(wizard.localizedString(.setupRestartNow), action: onRestart)
+                        .buttonStyle(.bordered)
+                    Button(wizard.localizedString(.setupOpenSystemSettings), action: onOpenSettings)
+                        .buttonStyle(.bordered)
+                }
             }
 
             HStack {
@@ -287,6 +302,7 @@ private struct PermissionGuidePanelView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onExitCommand(perform: onClose)
         .onChange(of: wizard.monitoringReadiness) { _, _ in onReadinessChanged() }
+        .onChange(of: wizard.isShowingTroubleshooting) { _, _ in onReadinessChanged() }
     }
 
     private var title: String {
