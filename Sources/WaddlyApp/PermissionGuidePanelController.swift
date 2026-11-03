@@ -7,7 +7,7 @@ import SwiftUI
 final class PermissionGuidePanel: NSPanel {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         let isClose = event.type == .keyDown
-            && event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command
+            && event.modifierFlags.intersection([.command, .shift, .option, .control]) == .command
             && event.charactersIgnoringModifiers?.lowercased() == "w"
         guard isClose else { return super.performKeyEquivalent(with: event) }
         performClose(nil)

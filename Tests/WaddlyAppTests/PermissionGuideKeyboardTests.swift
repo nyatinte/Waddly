@@ -11,7 +11,8 @@ import Testing
         ))
     }
 
-    @Test func guideAcceptsFocusAndCommandWClosesThroughTheWindowDelegate() throws {
+    @Test(arguments: [NSEvent.ModifierFlags.command, [.command, .capsLock]])
+    func guideAcceptsFocusAndCommandWClosesThroughTheWindowDelegate(modifiers: NSEvent.ModifierFlags) throws {
         let state = SetupWizardFixture.State()
         let wizard = try SetupWizardFixture.makeWizard(state: state, isMonitoringSettings: true)
         let controller = PermissionGuidePanelController(wizard: wizard)
@@ -20,7 +21,7 @@ import Testing
         #expect(!panel.becomesKeyOnlyIfNeeded)
         #expect(try !panel.performKeyEquivalent(with: key("w", modifiers: [.command, .shift])))
         #expect(!state.closed)
-        #expect(try panel.performKeyEquivalent(with: key("w", modifiers: .command)))
+        #expect(try panel.performKeyEquivalent(with: key("w", modifiers: modifiers)))
         #expect(state.closed)
     }
 }
