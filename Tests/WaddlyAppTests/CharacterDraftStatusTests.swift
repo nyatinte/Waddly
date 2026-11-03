@@ -13,10 +13,24 @@ import WaddlyCore
         var view = try makeView(model: model, requiresChange: false)
         view.sampleImages = sample
         #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleUnselected))
+        #expect(!view.isPrimaryActionEnabled)
         model.stageSample(sample, name: "Sample")
         #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleSelected))
+        #expect(view.draftStatus == .sampleSelected)
+        #expect(view.draftStatus.symbol == "checkmark.circle.fill")
+        #expect(view.isPrimaryActionEnabled)
         model.discard()
         #expect(view.previewStageLabel == view.localization.string(for: .characterPreviewSampleUnselected))
+    }
+
+    @Test func failedSampleCommitDoesNotClaimTheSampleWasSaved() async throws {
+        let sample = try SetupWizardFixture.sheetImages()
+        let model = makeModel(current: PetImageSet(), outcome: .failed)
+        let view = try makeView(model: model, requiresChange: false)
+        model.stageSample(sample, name: "Sample")
+        #expect(await !model.apply())
+        #expect(view.draftStatus == .notSaved)
+        #expect(view.isPrimaryActionEnabled)
     }
 
     @Test func aSavedPetIsCurrentInUseAndOnlyChangeCharacterDisablesApply() throws {

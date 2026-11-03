@@ -153,6 +153,32 @@ import WaddlyCore
         #expect(!pane.isPlayingPreview)
     }
 
+    @Test func cellsModeKeepsStageLabelClearOfBackgroundSelector() throws {
+        let wizard = try Fixture.makeWizard()
+        defer { wizard.close() }
+        let pane = wizard.previewPane
+        try pane.showPet(Fixture.sheetImages(), caption: "ready")
+        pane.setStageLabel("Selected sample")
+        let label = try #require(pane.subviews.compactMap { $0 as? NSTextField }
+            .first { $0.stringValue == "Selected sample" })
+        #expect(!label.isHidden)
+
+        pane.modeControl.selectedSegment = 1
+        _ = pane.modeControl.sendAction(pane.modeControl.action, to: pane.modeControl.target)
+        #expect(!pane.backgroundControl.isHidden)
+        #expect(label.isHidden)
+
+        pane.setStageLabel("Updated sample")
+        #expect(label.isHidden)
+        pane.modeControl.selectedSegment = 0
+        _ = pane.modeControl.sendAction(pane.modeControl.action, to: pane.modeControl.target)
+        #expect(!label.isHidden)
+        #expect(label.stringValue == "Updated sample")
+
+        pane.showPlaceholder(symbol: "photo", message: "", caption: "")
+        #expect(label.isHidden)
+    }
+
     @Test func previewLoopsEveryCategoryOfTheImportedSheet() throws {
         let shots = try PetPreviewPlayer.demoShots(for: Fixture.sheetImages())
         #expect(shots.count == 9)
@@ -176,10 +202,17 @@ import WaddlyCore
         pane.viewDidChangeEffectiveAppearance()
         let lightBackdrop = pane.layer?.backgroundColor
 
-        // A single init-time resolution would leave both equal; the backdrop must re-resolve.
-        #expect(darkBackdrop != lightBackdrop)
-        #expect(darkBackdrop == resolvedControlBackground(dark))
-        #expect(lightBackdrop == resolvedControlBackground(light))
+        if #available(macOS 26.0, *) {
+            // The preview is content, not another dark card. The drop highlight still draws a border.
+            #expect(darkBackdrop == NSColor.clear.cgColor)
+            #expect(lightBackdrop == NSColor.clear.cgColor)
+            #expect(pane.idleBorderWidth == 0)
+        } else {
+            // A single init-time resolution would leave both equal; the backdrop must re-resolve.
+            #expect(darkBackdrop != lightBackdrop)
+            #expect(darkBackdrop == resolvedControlBackground(dark))
+            #expect(lightBackdrop == resolvedControlBackground(light))
+        }
     }
 
     @Test func appearanceChangePreservesTheActiveDropHighlight() throws {

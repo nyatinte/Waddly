@@ -115,6 +115,7 @@
 "setup.revealInFinder" = "Show Waddly in Finder";
 "setup.dragAppIcon" = "Waddly app icon. Drag it into the Input Monitoring list.";
 "setup.completeTitle" = "Setup complete";
+"setup.petReadyTitle" = "Your pet is ready";
 "setup.completeBody" = "Your pet is ready to appear on your desktop.";
 "setup.checkPet" = "Pet image added";
 "setup.checkMonitoring" = "Input Monitoring set up";
@@ -166,11 +167,12 @@
 "character.pasteHelp" = "Paste a copied image or PNG file.";
 "character.emptyPreview" = "The imported pet preview appears here.";
 "character.previewSampleUnselected" = "Example animation (not selected)";
-"character.previewSampleSelected" = "Sample selected (not saved)";
+"character.previewSampleSelected" = "Selected sample preview";
 "character.previewBeforeReplacement" = "Image before replacement";
 "character.metadataPlaceholder" = "Import a PNG to start editing.";
 "character.status.currentInUse" = "Currently in use";
 "character.status.notSaved" = "Changes not saved";
+"character.status.sampleSelected" = "Selected · save with Next";
 "character.currentCharacter" = "Current character";
 "character.replace" = "Replace image…";
 "character.keepImage" = "Cancel replacement";

@@ -278,7 +278,7 @@ private struct PermissionGuidePanelView: View {
                     systemImage: "gearshape",
                     action: onOpenSettings
                 )
-                .buttonStyle(.borderedProminent)
+                .windowActionStyle(prominent: true)
                 .controlSize(.large)
                 Text(wizard.localizedString(.setupGuideDragFallback))
                     .font(DesignTokens.Typography.caption)
@@ -286,7 +286,7 @@ private struct PermissionGuidePanelView: View {
                     .multilineTextAlignment(.center)
             case .tapUnavailable:
                 Button(wizard.localizedString(.setupRestartNow), action: onRestart)
-                    .buttonStyle(.borderedProminent)
+                    .windowActionStyle(prominent: true)
                     .controlSize(.large)
                 Button(wizard.localizedString(.setupOpenSystemSettings), action: onOpenSettings)
                     .buttonStyle(.bordered)
@@ -310,22 +310,22 @@ private struct PermissionGuidePanelView: View {
             HStack {
                 if !wizard.isMonitoringSettings {
                     Button(wizard.localizedString(.setupBack), action: onBack)
-                        .buttonStyle(.bordered)
+                        .windowActionStyle(prominent: false)
                 }
                 Spacer()
                 if wizard.monitoringReadiness == .reactionObserved {
                     Button(wizard.localizedString(.setupNext), action: onNext)
-                        .buttonStyle(.borderedProminent)
+                        .windowActionStyle(prominent: true)
                         .keyboardShortcut(.defaultAction)
                 } else {
                     Button(wizard.localizedString(.setupLater), action: onLater)
-                        .buttonStyle(.bordered)
+                        .windowActionStyle(prominent: false)
                 }
             }
         }
         .padding(DesignTokens.Spacing.lg)
         .frame(width: SetupMetrics.permissionGuideSize.width)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .windowContentBackground()
         .onExitCommand(perform: onClose)
         .onChange(of: wizard.monitoringReadiness) { _, _ in onReadinessChanged() }
         .onChange(of: wizard.isShowingTroubleshooting) { _, _ in onReadinessChanged() }

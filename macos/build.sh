@@ -25,7 +25,10 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 mkdir -p "$APP/Contents/Resources/prompts"
 
-swift build --package-path "$ROOT" --configuration release --product Waddly
+# The native SwiftPM linker records the actual SDK version in LC_BUILD_VERSION. The default
+# build system can incorrectly record the deployment target as the SDK, which makes AppKit use
+# legacy appearances even when compiling against a current SDK.
+swift build --build-system native --package-path "$ROOT" --configuration release --product Waddly
 cp "$ROOT/.build/release/Waddly" "$APP/Contents/MacOS/Waddly"
 
 cp "$ROOT/macos/Info.plist" "$APP/Contents/Info.plist"

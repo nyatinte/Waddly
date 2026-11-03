@@ -2,25 +2,28 @@ import SwiftUI
 
 enum CharacterDraftStatus: Equatable {
     case currentInUse
+    case sampleSelected
     case notSaved
 
     var messageKey: LocalizationKey {
         switch self {
         case .currentInUse: .characterStatusCurrentInUse
+        case .sampleSelected: .characterStatusSampleSelected
         case .notSaved: .characterStatusNotSaved
         }
     }
 
     var symbol: String {
         switch self {
-        case .currentInUse: "checkmark.circle.fill"
-        case .notSaved: "circle"
+        case .currentInUse, .sampleSelected: "checkmark.circle.fill"
+        case .notSaved: "pencil.circle"
         }
     }
 
     var color: Color {
         switch self {
         case .currentInUse: DesignTokens.Status.positive
+        case .sampleSelected: .accentColor
         case .notSaved: .secondary
         }
     }
@@ -43,11 +46,15 @@ extension CharacterImportView {
 
     var footer: some View {
         HStack(spacing: LayoutMetrics.actionGap) {
+            if onCancel == nil {
+                Spacer(minLength: 0)
+            }
             if let onCancel {
                 Button(action: onCancel) {
                     Text(localization.string(for: .characterCancel))
                         .actionLabel()
                 }
+                .windowActionStyle(prominent: false)
                 .controlSize(.large)
                 .keyboardShortcut(.cancelAction)
                 .disabled(model.isApplying)
@@ -58,17 +65,20 @@ extension CharacterImportView {
                 } label: {
                     Text(localization.string(for: .setupTrySample)).actionLabel()
                 }
+                .windowActionStyle(prominent: false)
                 .controlSize(.large)
                 .disabled(model.isReading || model.isApplying)
                 .accessibilityIdentifier("trySamplePet")
             }
-            Spacer(minLength: 0)
+            if onCancel != nil {
+                Spacer(minLength: 0)
+            }
             Button(action: onPrimary) {
                 Text(localization.string(for: primaryKey))
                     .actionLabel()
             }
+            .windowActionStyle(prominent: true)
             .controlSize(.large)
-            .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
             .disabled(!isPrimaryActionEnabled || isReplacing)
             .accessibilityIdentifier("characterPrimary")
@@ -76,7 +86,10 @@ extension CharacterImportView {
     }
 
     var draftStatus: CharacterDraftStatus {
-        model.hasUnsavedChanges ? .notSaved : .currentInUse
+        if model.isSampleCandidate, model.hasUnsavedChanges, !model.commitFailed, !model.commitRejected {
+            return .sampleSelected
+        }
+        return model.hasUnsavedChanges ? .notSaved : .currentInUse
     }
 
     var isPrimaryActionEnabled: Bool {

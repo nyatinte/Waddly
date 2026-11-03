@@ -15,7 +15,7 @@
 
 ## What Waddly does
 
-- Add your own pet images.
+- Add your own pet images. In setup, the sample is selected immediately and saved when you choose Next. If Input Monitoring is deferred, the final screen says the pet is ready and explains that keyboard reactions still need setup. On macOS 26 and later, setup, character import, frame editing, the permission guide, and sharing use an adaptive system window background; key actions use system Liquid Glass styles.
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.

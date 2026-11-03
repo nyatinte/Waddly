@@ -45,10 +45,14 @@ final class SetupPreviewPane: PetImageDropView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         layer?.cornerRadius = SetupMetrics.previewCornerRadius
-        layer?.borderWidth = 1
         idleBorderColor = .separatorColor
-        idleBorderWidth = 1
-        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        if #available(macOS 26.0, *) {
+            idleBorderWidth = 0
+            layer?.backgroundColor = NSColor.clear.cgColor
+        } else {
+            idleBorderWidth = 1
+            layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        }
         translatesAutoresizingMaskIntoConstraints = false
         build()
         applyMode()
@@ -60,7 +64,11 @@ final class SetupPreviewPane: PetImageDropView {
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         effectiveAppearance.performAsCurrentDrawingAppearance {
-            layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            if #available(macOS 26.0, *) {
+                layer?.backgroundColor = NSColor.clear.cgColor
+            } else {
+                layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            }
         }
     }
 
@@ -111,7 +119,7 @@ final class SetupPreviewPane: PetImageDropView {
         if framesChanged {
             self.images = images
             player.setImages(images)
-            stageLabel.isHidden = true
+            stageLabel.stringValue = ""
             placeholderStack.isHidden = true
             petView.isHidden = false
             gridView.setFrames(images.sheetOrderedFrames)
@@ -141,7 +149,7 @@ final class SetupPreviewPane: PetImageDropView {
     /// The shared import screen labels a preview according to its draft state.
     func setStageLabel(_ label: String?) {
         stageLabel.stringValue = label ?? ""
-        stageLabel.isHidden = label == nil
+        updateStageLabelVisibility()
     }
 
     func showDemo(_ images: PetImageSet) {
@@ -149,7 +157,6 @@ final class SetupPreviewPane: PetImageDropView {
         player.setImages(images)
         isSleeping = false
         stageLabel.stringValue = localization?.string(for: .setupDemoLabel) ?? ""
-        stageLabel.isHidden = false
         placeholderStack.isHidden = true
         petView.isHidden = false
         gridView.setFrames(images.sheetOrderedFrames)
@@ -168,7 +175,7 @@ final class SetupPreviewPane: PetImageDropView {
         petView.image = nil
         petView.isHidden = true
         gridView.setFrames([])
-        stageLabel.isHidden = true
+        stageLabel.stringValue = ""
         placeholderStack.isHidden = false
         setPlaceholderSymbol(symbol, message: message)
         captionLabel.stringValue = caption
@@ -250,8 +257,8 @@ final class SetupPreviewPane: PetImageDropView {
             backgroundControl.centerXAnchor.constraint(equalTo: centerXAnchor),
             backgroundControl.widthAnchor.constraint(equalToConstant: 150),
 
-            stageLabel.topAnchor.constraint(equalTo: modeControl.bottomAnchor, constant: 12),
-            stageLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            stageLabel.topAnchor.constraint(equalTo: modeControl.bottomAnchor, constant: DesignTokens.Spacing.md),
+            stageLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
 
             placeholderStack.centerXAnchor.constraint(equalTo: centerXAnchor),
             placeholderStack.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -10),
@@ -293,8 +300,6 @@ final class SetupPreviewPane: PetImageDropView {
 // MARK: - Preview controls
 
 extension SetupPreviewPane {
-    // MARK: - Controls
-
     @objc private func changePreviewMode() {
         applyMode()
     }
@@ -330,11 +335,16 @@ extension SetupPreviewPane {
         gridView.isHidden = !isCells || !hasFrames
         categoryRow.isHidden = isCells || !showsControls || isReactionTest || !hasFrames
         backgroundControl.isHidden = !isCells || !showsControls || isReactionTest
+        updateStageLabelVisibility()
         if isCells {
             player.stop()
         } else if hasFrames, !player.isPlaying {
             startPlayer()
         }
+    }
+
+    private func updateStageLabelVisibility() {
+        stageLabel.isHidden = stageLabel.stringValue.isEmpty || modeControl.selectedSegment == Mode.cells.rawValue
     }
 
     private func startPlayer() {
@@ -379,7 +389,7 @@ extension SetupPreviewPane {
         for (index, category) in Self.animationOrder.enumerated() {
             let action = #selector(playCategory(_:))
             let button = NSButton(title: categoryTitle(for: category), target: self, action: action)
-            button.bezelStyle = .rounded
+            button.applyPreviewActionStyle()
             button.controlSize = .small
             button.font = .systemFont(ofSize: 11)
             button.tag = index

@@ -3,6 +3,15 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WaddlyCore
 
+/// Owns the background for the standalone window, not the shared import screen.
+struct CharacterImportWindowContent: View {
+    let content: CharacterImportView
+
+    var body: some View {
+        content.windowContentBackground()
+    }
+}
+
 /// Post-setup character management: the shared import screen in its own window.
 ///
 /// Import is not apply. The staged draft lives in the window until Apply succeeds; Cancel or close
@@ -92,7 +101,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
         root.onDrop = { [weak self] urls in
             Task { await self?.model.stageFiles(at: urls) }
         }
-        let host = NSHostingView(rootView: CharacterImportView(
+        let host = NSHostingView(rootView: CharacterImportWindowContent(content: CharacterImportView(
             model: model,
             localization: localization,
             titleKey: .characterChangeTitle,
@@ -107,7 +116,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             // Change Character only writes when the draft would actually change the saved pet.
             primaryRequiresChange: true,
             promptResourcesURL: promptResourcesURL
-        ))
+        )))
         host.translatesAutoresizingMaskIntoConstraints = true
         host.autoresizingMask = [.width, .height]
         host.frame = root.bounds
