@@ -14,7 +14,7 @@
 
 <p align="center">
 
-  <img src="assets/waddly-demo.gif" alt="Waddlyがキー入力に反応して動く様子" width="900">
+  <img src="assets/waddly-demo.gif" alt="ペットのアニメーションプレビューを表示したWaddlyのセットアップ画面" width="900">
 
 </p>
 

@@ -10,7 +10,7 @@
 <p align="center"><a href="README.ja.md">日本語README</a></p>
 
 <p align="center">
-  <img src="assets/waddly-demo.gif" alt="Waddly reacting to keyboard input" width="900">
+  <img src="assets/waddly-demo.gif" alt="Waddly setup screen with a pet animation preview" width="900">
 </p>
 
 ## What Waddly does
