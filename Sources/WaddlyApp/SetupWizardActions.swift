@@ -142,7 +142,7 @@ extension SetupWizardController {
               let window,
               let settings = PermissionGuidePlacement.systemSettingsWindowFrame(),
               let visible = (NSScreen.screens.first { $0.frame.intersects(settings) } ?? NSScreen.main)?
-              .visibleFrame
+                  .visibleFrame
         else { return }
         let ownWindows = NSApp.windows
             .filter { $0 !== window && $0.isVisible }
@@ -199,8 +199,7 @@ extension SetupWizardController {
             close()
             return
         }
-        guard currentStep != .pet || hasImage else { return }
-        guard currentStep != .monitoring || isMonitoringReady else { return }
+        guard currentStep != .pet || hasImage, currentStep != .monitoring || isMonitoringReady else { return }
         guard let next = Step(rawValue: currentStep.rawValue + 1) else {
             if isMonitoringReady {
                 previewPane.celebrate()
