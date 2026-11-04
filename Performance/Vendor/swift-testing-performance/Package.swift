@@ -24,7 +24,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.1.1"),
         .package(
             url: "https://github.com/swift-molecules/swift-memory-allocation",
             revision: "afe7e86f16981007b841470d5ea79f0026868bc3"
