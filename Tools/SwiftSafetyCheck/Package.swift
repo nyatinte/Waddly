@@ -5,7 +5,7 @@ let package = Package(
     name: "SwiftSafetyCheck",
     platforms: [.macOS(.v14)],
     dependencies: [
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", exact: "600.0.1")
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", exact: "604.0.0")
     ],
     targets: [
         .executableTarget(
