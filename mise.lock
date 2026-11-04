@@ -23,14 +23,21 @@ url = "https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swif
 url_api = "https://api.github.com/repos/realm/SwiftLint/releases/assets/524187565"
 
 [[tools."github:moznion/cccc"]]
-version = "1.8.0"
+version = "1.8.6"
 backend = "github:moznion/cccc"
-specifiers = ["1.8.0"]
+specifiers = ["v1.8.6"]
+
+[tools."github:moznion/cccc"."platforms.linux-x64"]
+checksum = "sha256:7f31cf0aba7694baa05b7a2e5f4a50af3308d02a3df0dc9778e828b7116aa968"
+url = "https://github.com/moznion/cccc/releases/download/v1.8.6/cccc-v1.8.6-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/705743380"
+provenance = "github-attestations"
 
 [tools."github:moznion/cccc"."platforms.macos-arm64"]
-checksum = "sha256:a238b8f121291f81df68359c111a9ba49cf48106fbedda63f4a48f1adc092408"
-url = "https://github.com/moznion/cccc/releases/download/v1.8.0/cccc-v1.8.0-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/621862674"
+checksum = "sha256:e34d6bc3e41cb945927dadd09a7573b00c61707ed9c180a5a7b31e2ee127b296"
+url = "https://github.com/moznion/cccc/releases/download/v1.8.6/cccc-v1.8.6-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/705743341"
+provenance = "github-attestations"
 
 [[tools."github:nicklockwood/SwiftFormat"]]
 version = "0.63.1"
