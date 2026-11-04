@@ -34,7 +34,7 @@ final class PetShareDialogView: NSView {
         self.localization = localization
         loadingLabel = NSTextField(labelWithString: localization.string(for: .shareLoading))
         postButton = ShareActionButton.primaryAction(title: localization.string(for: .shareXCreate))
-        postStatusLabel = NSTextField(labelWithString: "")
+        postStatusLabel = NSTextField(wrappingLabelWithString: "")
         failureLabel = NSTextField(wrappingLabelWithString: localization.string(for: .shareError))
         retryButton = ShareActionButton.secondaryAction(title: localization.string(for: .shareRetry))
         videoCard = PetShareCardView(

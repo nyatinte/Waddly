@@ -35,6 +35,10 @@ import WaddlyCore
         let data = try captureShareDialog(state: state, language: .english, appearance: .aqua)
         try data.write(to: output.appendingPathComponent("state-\(name)-en-light.png"))
     }
+    for (language, name) in [(AppLanguage.english, "en"), (.japanese, "ja")] {
+        let data = try captureShareDialog(state: .recovery, language: language, appearance: .darkAqua)
+        try data.write(to: output.appendingPathComponent("state-recovery-\(name)-dark.png"))
+    }
     let japaneseFailure = try captureShareDialog(state: .failed, language: .japanese, appearance: .darkAqua)
     try japaneseFailure.write(to: output.appendingPathComponent("state-failed-ja-dark.png"))
 }
@@ -48,6 +52,7 @@ private enum ShareSnapshotState: Equatable {
     case copied
     case copyFailed
     case composerFailed
+    case recovery
 }
 
 /// One dialog with generated assets, ready to be put into a state and drawn.
@@ -136,7 +141,7 @@ private struct ShareSnapshotFixture {
                 .first { $0.identifier?.rawValue == "share.retry" })
             retry.setHovered(true)
         }
-    case .ready, .hover, .copied, .copyFailed, .composerFailed:
+    case .ready, .hover, .copied, .copyFailed, .composerFailed, .recovery:
         view.showAssets(spriteURL: assets.spriteURL, movieURL: assets.movieURL, moviePoster: poster)
         try applyOutcome(state, to: view, localization: localization)
     }
@@ -158,7 +163,12 @@ private struct ShareSnapshotFixture {
     if state == .copyFailed {
         view.showCopyResult(localization.string(for: .shareCopyFailed), failed: true, for: .image)
     }
-    if state == .composerFailed {
+    if state == .recovery {
+        let copyFailure = localization.string(for: .shareCopyFailed)
+        view.showCopyResult(copyFailure, failed: true, for: .video)
+        view.showCopyResult(copyFailure, failed: true, for: .image)
+    }
+    if state == .composerFailed || state == .recovery {
         view.showXOpenFailure(localization.string(for: .shareOpenXFailed))
     }
 }
