@@ -14,7 +14,7 @@
       "Sources/WaddlyApp/PetShareWindowController.swift:29",
       "Sources/WaddlyApp/PetShareWindowController.swift:36",
       "Sources/WaddlyApp/PetShareWindowController.swift:37",
-      "Sources/WaddlyCore/PetImageCore.swift:322",
+      "Sources/WaddlyCore/PetImageCore.swift:312",
       "Sources/WaddlyCore/PetImageStorage.swift:174",
       "Sources/WaddlyCore/PetImageStorage.swift:183",
       "Sources/WaddlyCore/PetImageStore.swift:263",
@@ -54,7 +54,7 @@
     ],
     "switch-default": [
       "Sources/WaddlyApp/AppDelegateWindow.swift:9",
-      "Sources/WaddlyCore/PetImageCore.swift:336"
+      "Sources/WaddlyCore/PetImageCore.swift:326"
     ],
     "unchecked-sendable": [
       "Sources/WaddlyApp/AppSettings.swift:6",
@@ -64,7 +64,7 @@
       "Sources/WaddlyApp/Waddly.swift:81",
       "Sources/WaddlyApp/Waddly.swift:126",
       "Sources/WaddlyApp/Waddly.swift:127",
-      "Sources/WaddlyApp/Waddly.swift:144"
+      "Sources/WaddlyApp/Waddly.swift:142"
     ]
   }
 }
