@@ -16,22 +16,22 @@ concurrency:
 jobs:
   verify:
     name: Build, lint, and self-test
-    needs: [tests, safety, build]
+    needs: [validate]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Require all validation jobs to pass
         env:
-          RESULTS: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
-        run: test "$RESULTS" = false
+          RESULT: ${{ needs.validate.result }}
+        run: test "$RESULT" = success
 
-  tests:
-    name: Lint and self-test
+  validate:
+    name: Lint, safety, test, and build
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out source
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -65,27 +65,12 @@ jobs:
           gh extension install github/gh-actions-lock --pin v0.4.0
           gh actions-lock --verify
 
-  safety:
-    name: Swift safety checks
-    runs-on: macos-26
-    timeout-minutes: 30
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: Install locked development tools
-        uses: jdx/mise-action@v4.3.0
-        with:
-          version: 2026.9.11
-
       - name: Identify Swift toolchain
         id: swift-toolchain
         run: echo "key=$({ swift --version; xcodebuild -version; xcrun --sdk macosx --show-sdk-build-version; sw_vers -productVersion; } | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Swift safety checker build
-        uses: actions/cache@v4.3.0
+        uses: actions/cache@v6.1.0
         with:
           path: Tools/SwiftSafetyCheck/.build
           key: swift-safety-${{ runner.os }}-${{ runner.arch }}-${{ steps.swift-toolchain.outputs.key }}-${{ hashFiles('Tools/SwiftSafetyCheck/Package.swift', 'Tools/SwiftSafetyCheck/Package.resolved', 'Tools/SwiftSafetyCheck/Sources/**/*.swift') }}
@@ -94,21 +79,6 @@ jobs:
         run: |
           mise run safety
           mise run safety:test
-
-  build:
-    name: Release build
-    runs-on: macos-26
-    timeout-minutes: 30
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: Install locked development tools
-        uses: jdx/mise-action@v4.3.0
-        with:
-          version: 2026.9.11
 
       - name: Build the app
         run: mise run build
@@ -119,7 +89,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out source
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
