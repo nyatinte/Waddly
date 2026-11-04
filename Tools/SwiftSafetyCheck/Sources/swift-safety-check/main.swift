@@ -185,8 +185,9 @@ final class SafetyVisitor: SyntaxVisitor {
     }
 
     private func singleElementTuple(_ expression: ExprSyntax) -> ExprSyntax? {
-        guard let tuple = expression.as(TupleExprSyntax.self) else { return nil }
-        guard tuple.elements.count == 1, let element = tuple.elements.first else { return nil }
+        guard let tuple = expression.as(TupleExprSyntax.self),
+              tuple.elements.count == 1,
+              let element = tuple.elements.first else { return nil }
         return element.expression
     }
 

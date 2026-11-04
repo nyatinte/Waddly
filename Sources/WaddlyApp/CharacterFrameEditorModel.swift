@@ -100,14 +100,12 @@ final class CharacterFrameEditorModel: ObservableObject {
     func prepare() async {
         guard isLoading, !isReleased else { return }
         let frames = sourceFrames
-        if let source = frames.editingSource, let data = source.sheetPNGData {
-            if let decoded = await sheetDecoder(data) {
-                // The sheet can be dismissed while the decode is suspended; do not resurrect the
-                // resources that releaseResources() already dropped.
-                guard !isReleased, !Task.isCancelled else { return }
-                completePreparation(editing: source.editing, sheet: decoded, data: data)
-                return
-            }
+        if let source = frames.editingSource, let data = source.sheetPNGData, let decoded = await sheetDecoder(data) {
+            // The sheet can be dismissed while the decode is suspended; do not resurrect the
+            // resources that releaseResources() already dropped.
+            guard !isReleased, !Task.isCancelled else { return }
+            completePreparation(editing: source.editing, sheet: decoded, data: data)
+            return
         }
         guard !isReleased, !Task.isCancelled else { return }
         completeIndividualPreparation(frames: frames)
