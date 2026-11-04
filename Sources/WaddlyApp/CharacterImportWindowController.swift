@@ -131,8 +131,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     @discardableResult
     func applyAndClose() -> Task<Void, Never> {
         Task { [weak self] in
-            guard let self else { return }
-            guard await model.apply() else { return }
+            guard let self, await model.apply() else { return }
             close()
         }
     }

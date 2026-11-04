@@ -135,10 +135,8 @@ final class KeyboardMonitor {
                 // the fact of delivery is kept.
                 monitor.hasObservedKeyEvent = true
                 monitor.onKeyDown?(isEnter)
-            } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                if let tap = monitor.tap {
-                    CGEvent.tapEnable(tap: tap, enable: true)
-                }
+            } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput, let tap = monitor.tap {
+                CGEvent.tapEnable(tap: tap, enable: true)
             }
         }
         return Unmanaged.passUnretained(event)
