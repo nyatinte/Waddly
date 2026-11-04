@@ -3,6 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "prConcurrentLimit": 2,
+  "prHourlyLimit": 1,
+  "rebaseWhen": "conflicted",
   "packageRules": [
     {
       "description": "Wait 7 days before updating GitHub Actions",
