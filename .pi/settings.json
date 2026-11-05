@@ -1,0 +1,4 @@
+{
+  "$schema": "https://pi.dev/schemas/settings.schema.json",
+  "shellCommandPrefix": "eval \"$(mise env --locked -s bash)\""
+}
