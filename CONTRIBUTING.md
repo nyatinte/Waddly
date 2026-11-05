@@ -50,7 +50,7 @@ The commit hook runs through [hk](https://hk.jdx.dev), which is pinned in `mise.
 
 ```sh
 mise install hk
-mise exec -- hk install
+mise exec -- hk install --mise
 ```
 
 hk 2.4.0 currently publishes a macOS arm64 binary only, so this hook setup is available on Apple Silicon. `hk.pkl` runs the pinned SwiftFormat check, the localization accessor check, strict SwiftLint, and the complexity gate when Swift sources or tests change. The complexity limits match CI: no function may exceed cognitive complexity 15 or cyclomatic complexity 10. Run checks without committing with `mise exec -- hk check`, apply available fixes with `mise exec -- hk fix`, and remove the hooks with `mise exec -- hk uninstall`.
