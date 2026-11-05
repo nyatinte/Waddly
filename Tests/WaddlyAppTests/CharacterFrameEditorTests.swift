@@ -18,7 +18,7 @@ import WaddlyCore
         try await app.persistPetImages(fixture.exampleImages())
         app.showChangeCharacter()
         let window = try #require(app.characterImportWindowController?.window)
-        #expect(window.contentView?.subviews.contains { $0 is NSHostingView<CharacterImportView> } == true)
+        #expect(window.contentView?.subviews.contains { $0 is NSHostingView<CharacterImportWindowContent> } == true)
         let first = try #require(app.characterImportWindowController)
 
         window.close()

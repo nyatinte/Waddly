@@ -82,13 +82,12 @@ struct CharacterImportView: View {
                 .padding(.horizontal, LayoutMetrics.contentInset)
                 .padding(.bottom, LayoutMetrics.sectionGap)
                 .frame(maxHeight: .infinity)
-            Divider()
+            legacyActionDivider()
             footer
                 .padding(.horizontal, LayoutMetrics.contentInset)
                 .padding(.vertical, LayoutMetrics.footerInset)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { model.refreshClipboardAvailability(from: pasteboard) }
         .onDisappear(perform: onPreviewHostDisappear)
         .onChange(of: model.acquisitionRevision) { _, _ in
@@ -219,9 +218,7 @@ extension CharacterImportView {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(model.isDropTargeted
-                    ? Color.accentColor.opacity(0.12)
-                    : Color(nsColor: .controlBackgroundColor))
+                .fill(dropSurfaceColor)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -307,9 +304,7 @@ extension CharacterImportView {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(model.isDropTargeted
-                    ? Color.accentColor.opacity(0.12)
-                    : Color(nsColor: .controlBackgroundColor))
+                .fill(dropSurfaceColor)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -324,6 +319,16 @@ extension CharacterImportView {
         } isTargeted: { targeted in
             model.setDropTargeted(targeted)
         }
+    }
+
+    private var dropSurfaceColor: Color {
+        if model.isDropTargeted {
+            return Color.accentColor.opacity(0.12)
+        }
+        if #available(macOS 26.0, *) {
+            return .clear
+        }
+        return Color(nsColor: .controlBackgroundColor)
     }
 
     /// The clipboard import is the second way into the same zone, not a third button elsewhere.
