@@ -143,12 +143,8 @@ public enum PetSpriteSheetImporter {
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,
               width > 0, height > 0, width <= 4096, height <= 4096,
-              let cgImage = image(from: source, maxDimension: maximumImageDimension)
-        else {
-            return nil
-        }
-
-        guard hasAlpha(cgImage) else { return nil }
+              let cgImage = image(from: source, maxDimension: maximumImageDimension),
+              hasAlpha(cgImage) else { return nil }
         let wasDownsampled = max(width, height) > maximumImageDimension
         guard let pngData = wasDownsampled ? pngData(from: cgImage) : data,
               pngData.count <= maximumFileSize else { return nil }
@@ -243,10 +239,7 @@ public enum PetSpriteSheetImporter {
         }
         guard hasAlpha(image) else { return .failure(.noTransparency) }
         let cellSize = image.width / 3
-        guard let nineCells = nineCells(from: image, cellSize: cellSize) else {
-            return .failure(.frameExtractionFailed)
-        }
-        guard let sheetPNGData = workingSheetPNGData(
+        guard let nineCells = nineCells(from: image, cellSize: cellSize), let sheetPNGData = workingSheetPNGData(
             image: image,
             originalData: originalData,
             sourceDimension: sourceDimension
@@ -313,11 +306,8 @@ public enum PetSpriteSheetImporter {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let fileSize = attributes[.size] as? NSNumber,
               fileSize.intValue <= maximumFileSize,
-              let data = try? Data(contentsOf: url)
-        else {
-            return nil
-        }
-        guard let optimized = optimizedImage(from: data) else { return nil }
+              let data = try? Data(contentsOf: url),
+              let optimized = optimizedImage(from: data) else { return nil }
         if optimized.wasDownsampled {
             try? optimized.pngData.write(to: url, options: .atomic)
         }
