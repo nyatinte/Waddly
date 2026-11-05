@@ -349,7 +349,7 @@ A pinned footer is the default action area for setup-class windows:
 - Character Import says which side a complete frame set is on: **Currently in use** with the positive check while it is the saved pet, and **Changes not saved** with the pending circle while it is a draft or its last save failed. Change Character's Apply is disabled until there is a difference; Setup's Continue still commits an unchanged, valid pet so the step can advance.
 - Recoverable failures stay **inline** in the current step: caption size, critical color, one native accessibility announcement, previous state preserved.
 - Use a native `NSAlert` only for destructive or blocking decisions (discard a draft, save failed, login item). Do not use a modal for a recoverable import/copy/browser failure.
-- Never truncate instructions. The Share recovery text (#154) is the known counterexample and must be fixed by wrapping/reflow, not by ellipsis.
+- Never truncate instructions. Share recovery text wraps or uses the card's detail row rather than an ellipsis.
 
 ### Menus, alerts, and standard chrome
 
@@ -452,7 +452,7 @@ Apple's macOS baselines and Waddly's stricter values:
 | Setup Guide (Pet / Keyboard reactions / Ready) | SwiftUI in AppKit window | 820 × 520 fixed | `LayoutMetrics` 24/16/20/8/36/12 | display 25, body 13, caption 11 | 36 pt | ✅ layout/actions; 🟡 type literals |
 | Character Import / Change Character | SwiftUI + AppKit preview | 1040 × 640 min | `LayoutMetrics` | title 15, body 13, caption 11 | 36 pt | ✅ |
 | Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | `LayoutMetrics` + `DesignTokens`; geometry-only constants | 11/13/15 | 28 auxiliary, 36 actions | ✅ dense workspace variant |
-| Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions; 🟡 #154 recovery text |
+| Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions and recovery text |
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
 | Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception; ✅ floating level, collectionBehavior, re-ordering, and accessibility identity pinned by tests |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
