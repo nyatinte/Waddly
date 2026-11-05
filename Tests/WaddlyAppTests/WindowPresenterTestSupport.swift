@@ -3,15 +3,16 @@ import Testing
 @testable import WaddlyApp
 
 extension WindowPresenter {
-    /// The presenter every test runs with: the same AppKit behaviour as `live`, with windows that
-    /// are fully transparent.
+    /// The presenter tests run with: windows are transparent and the app is not activated.
     ///
     /// Tests run in a real AppKit process, so a suite that opens the pet, the setup wizard, or a
     /// settings window would paint them over whatever the user is doing while `mise run test` runs.
     /// A transparent window still shows, still becomes key, and still hosts sheets, so the app's own
-    /// state machine is exercised for real; the compositor simply draws nothing.
+    /// state machine is exercised for real; the compositor simply draws nothing. Skipping app
+    /// activation also prevents tests from stealing focus from the user's current application.
     static let invisible: WindowPresenter = {
         var presenter = WindowPresenter.live
+        presenter.activate = {}
         presenter.reveal = { window in
             window.alphaValue = 0
             window.orderFrontRegardless()
@@ -24,6 +25,7 @@ extension WindowPresenter {
             window.alphaValue = 0
             window.orderFrontRegardless()
         }
+        presenter.allowsFloatingPermissionGuide = false
         presenter.presentAlert = { alert, parent, then in
             // Attaching a sheet orders its parent front too, so both have to stay transparent.
             parent.alphaValue = 0

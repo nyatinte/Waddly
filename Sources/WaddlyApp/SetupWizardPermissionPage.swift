@@ -4,9 +4,9 @@ import SwiftUI
 /// The Keyboard reactions step, which is also the Input Monitoring settings screen.
 ///
 /// It lives apart from the character pages because it changes most often: one state per permission
-/// readiness, one instruction card per route, and one primary action on each. The shared pieces —
-/// `pageHeader`, `cardContainer`, `numberedStep` — come from
-/// `SetupWizardSwiftUIComponents.swift`, so a new state is a stack of existing parts.
+/// readiness, and one primary action. While guiding, the drag source is the hero: the icon, a
+/// direction cue, and a picture of Input Monitoring. Shared pieces come from
+/// `SetupWizardSwiftUIComponents.swift`.
 @MainActor
 extension SetupWizardScreen {
     var monitoringPage: some View {
@@ -94,89 +94,48 @@ extension SetupWizardScreen {
     }
 
     private var missingPermissionContent: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
-            if controller.isShowingGuide {
-                pageHeader(.setupMonitoringTitle, statusKey: .setupMonitoringStatusOff, positive: false)
-                permissionActionContent
-            } else {
-                title(.setupMonitoringTitle)
-                cardContainer {
-                    status(.setupMonitoringStatusOff, positive: false)
-                    bodyText(.setupMonitoringBody)
-                    permissionActionContent
-                    caption(.setupMonitoringActionHint)
-                }
-            }
-            privacyFootnote
-        }
-    }
-
-    @ViewBuilder private var permissionActionContent: some View {
-        if controller.isShowingGuide {
-            cardContainer {
-                dragStep
-                numberedStep(2, .setupManualStep3)
-                numberedStep(3, .setupRestartPromptStep)
-                primaryActionButton(
-                    controller.localizedString(.setupOpenSystemSettings),
-                    identifier: "reopenSettings"
-                ) { controller.openInputMonitoringSettings() }
-            }
-        } else {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            Spacer(minLength: 0)
+            AppIconDragSource(localization: controller.localization)
+                .frame(width: 112, height: 112)
+                .accessibilityLabel(controller.localizedString(.setupDragAppIcon))
+            title(.setupGuideTitle)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+            bodyText(.setupGuideIntro)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
             primaryActionButton(
-                controller.localizedString(.setupEnableMonitoring),
-                identifier: "enableMonitoring"
-            ) { controller.enableMonitoring() }
+                controller.localizedString(.setupOpenSystemSettings),
+                identifier: "enableMonitoring",
+                systemImage: "gearshape"
+            ) { controller.showPermissionGuide() }
+            caption(.setupGuideDragFallback)
+                .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
         }
-    }
-
-    private var dragStep: some View {
-        HStack(alignment: .top, spacing: LayoutMetrics.actionGap) {
-            stepBadge(1)
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                Text(controller.localizedString(.setupDropGuideBody))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel(stepAccessibilityLabel(1, .setupDropGuideBody))
-                caption(.setupDragAlternative)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                AppIconDragSource(localization: controller.localization)
-                    .frame(width: DesignTokens.Control.dragIconSize, height: DesignTokens.Control.dragIconSize)
-                Image(systemName: "arrow.right")
-                    .font(DesignTokens.Typography.heading)
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-            }
-        }
-    }
-
-    private var privacyFootnote: some View {
-        HStack(alignment: .top, spacing: LayoutMetrics.actionGap) {
-            Image(systemName: "lock.shield").font(DesignTokens.Typography.callout)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                Text(controller.localizedString(.setupPrivacyTitle)).font(DesignTokens.Typography.heading)
-                Text(controller.localizedString(.setupPrivacyNote)).font(DesignTokens.Typography.callout)
-            }
-        }
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-        .accessibilityElement(children: .combine)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, DesignTokens.Spacing.xl)
     }
 }
 
 /// The draggable Waddly icon, in the page column. Reuses the AppKit drag source so the pasteboard
 /// item keeps the file-URL flavours System Settings accepts.
 @MainActor
-private struct AppIconDragSource: NSViewRepresentable {
+struct AppIconDragSource: NSViewRepresentable {
     let localization: LocalizationController
+    var onViewCreated: (DraggableAppIconView) -> Void = { _ in }
+    var onDragStarted: () -> Void = {}
 
     func makeNSView(context: Context) -> DraggableAppIconView {
-        DraggableAppIconView(localization: localization)
+        let view = DraggableAppIconView(localization: localization)
+        onViewCreated(view)
+        view.onDragStarted = onDragStarted
+        return view
     }
 
     func updateNSView(_ nsView: DraggableAppIconView, context: Context) {
         nsView.updateLocalization(localization)
+        nsView.onDragStarted = onDragStarted
     }
 }

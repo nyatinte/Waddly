@@ -21,6 +21,7 @@ struct WindowPresenter {
     var revealFadingIn: (NSWindow, TimeInterval) -> Void
     /// Shows a modal alert as a sheet on `parent` and reports how it was dismissed.
     var presentAlert: (NSAlert, NSWindow, @escaping (NSApplication.ModalResponse) -> Void) -> Void
+    var allowsFloatingPermissionGuide = true
 
     static let live = WindowPresenter(
         activate: { NSApp.activate(ignoringOtherApps: true) },

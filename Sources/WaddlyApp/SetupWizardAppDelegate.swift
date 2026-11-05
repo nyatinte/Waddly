@@ -60,6 +60,11 @@ extension AppDelegate {
         // would be reported as "restart required" when the tap simply had not been started yet.
         startMonitoringIfPossible()
         guard let controller = setupWizardController, let window = controller.window else { return }
+        if controller.currentStep == .monitoring, presenter.allowsFloatingPermissionGuide {
+            controller.renderCurrentStep()
+            controller.showPermissionGuide()
+            return
+        }
         // The status shown on step 2 depends on the tap above, and showWindow does not redraw.
         controller.renderCurrentStep()
         let wasVisible = window.isVisible
@@ -81,7 +86,8 @@ extension AppDelegate {
     /// before the images, which load asynchronously at launch.
     func restoreSetupGuideOnActivation() {
         guard !settings.setupWizardSeen || settings.setupStep != nil,
-              setupWizardController?.window?.isVisible != true else { return }
+              setupWizardController?.window?.isVisible != true,
+              setupWizardController?.permissionGuidePanelController?.window?.isVisible != true else { return }
         showSetupWizard()
     }
 

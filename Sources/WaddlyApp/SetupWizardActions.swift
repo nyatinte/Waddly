@@ -55,6 +55,21 @@ extension SetupWizardController {
         embeddedCharacterPreviewPane = nil
     }
 
+    /// Enters the companion guide. Missing permission opens the real System Settings pane immediately.
+    func showPermissionGuide() {
+        guard currentStep == .monitoring else { return }
+        guard presenter.allowsFloatingPermissionGuide else {
+            if !permission.isGranted, !permission.isGuiding {
+                permission.beginGuiding()
+            }
+            return
+        }
+        if permissionGuidePanelController == nil {
+            permissionGuidePanelController = PermissionGuidePanelController(wizard: self)
+        }
+        permissionGuidePanelController?.show()
+    }
+
     /// First attempt: ask macOS, then turn the wizard into the drag guide.
     @objc func enableMonitoring() {
         permission.request()
@@ -91,15 +106,16 @@ extension SetupWizardController {
             refreshGuideFollowing()
             renderCurrentStep()
         }
-        permission.onTick = { [weak self] in
-            self?.parkBesideSystemSettings()
-        }
     }
 
     /// The guide floats and follows System Settings on the one page it belongs to. Entering that page
     /// shrinks the window to the compact guide and parks it; leaving it restores the designed window
     /// and centres it again, so a later page is never left in the narrow frame.
     func updateGuidePresentation() {
+        if presenter.allowsFloatingPermissionGuide {
+            window?.level = .normal
+            return
+        }
         window?.level = isShowingGuide ? .floating : .normal
         let compact = isCompactGuide
         // Only a real transition touches the frame: the polling tick owns keeping the parked window
@@ -120,12 +136,13 @@ extension SetupWizardController {
 
     /// Called by the service's ticks, and once when the guide opens.
     func parkBesideSystemSettings() {
-        guard isFollowingSystemSettings,
+        guard !presenter.allowsFloatingPermissionGuide,
+              isFollowingSystemSettings,
               isShowingGuide,
               let window,
               let settings = PermissionGuidePlacement.systemSettingsWindowFrame(),
               let visible = (NSScreen.screens.first { $0.frame.intersects(settings) } ?? NSScreen.main)?
-              .visibleFrame
+                  .visibleFrame
         else { return }
         let ownWindows = NSApp.windows
             .filter { $0 !== window && $0.isVisible }
@@ -148,7 +165,7 @@ extension SetupWizardController {
     }
 
     @objc func openInputMonitoringSettings() {
-        PermissionGuidePlacement.openInputMonitoringSettings()
+        SystemSettingsLauncher.openInputMonitoringSettings()
     }
 
     @objc func deferMonitoring() {
@@ -182,8 +199,7 @@ extension SetupWizardController {
             close()
             return
         }
-        guard currentStep != .pet || hasImage else { return }
-        guard currentStep != .monitoring || isMonitoringReady else { return }
+        guard currentStep != .pet || hasImage, currentStep != .monitoring || isMonitoringReady else { return }
         guard let next = Step(rawValue: currentStep.rawValue + 1) else {
             if isMonitoringReady {
                 previewPane.celebrate()

@@ -1,20 +1,12 @@
 import AppKit
 
-/// Edit adapters for `PetImageStore`: decode work, the confirmation wait, and the identity-based
+/// Edit adapters for `PetImageStore`: decode work and the identity-based
 /// remove/reorder transactions. Each public entry point runs inside the store's queue, so the whole
-/// operation — including a suspended confirmation — is serialized with every other edit.
+/// operation is serialized with every other edit.
 public extension PetImageStore {
     /// Decode and append `urls` one at a time, committing each addition before moving on.
     func addImages(_ urls: [URL], to category: PetImageCategory) async -> PetImageAddOutcome {
         await perform { await self.addImagesInOrder(urls, to: category) } ?? .aborted
-    }
-
-    /// Decode a sheet and commit it after `confirm` accepts the preview.
-    func importPetImage(
-        from url: URL,
-        confirm: @escaping @MainActor (NSImage, Int) async -> Bool
-    ) async -> PetImageImportOutcome {
-        await perform { await self.importPetImageInOrder(from: url, confirm: confirm) } ?? .aborted
     }
 
     /// Commit a frame set the user already reviewed.
@@ -106,30 +98,6 @@ public extension PetImageStore {
         return .added(skipped: skippedCount)
     }
 
-    private func importPetImageInOrder(
-        from url: URL,
-        confirm: @escaping @MainActor (NSImage, Int) async -> Bool
-    ) async -> PetImageImportOutcome {
-        let prepared = await Task.detached(priority: .userInitiated) {
-            autoreleasepool { () -> (PetImageSet, NSImage)? in
-                guard let data = PetSpriteSheetImporter.readPNG(from: url),
-                      let images = PetSpriteSheetImporter.frames(from: data),
-                      let preview = PetSpriteSheetImporter.preview(from: data) else { return nil }
-                return (images, preview)
-            }
-        }.value
-        guard !isShuttingDown else { return .aborted }
-        guard let (newImages, preview) = prepared else { return .invalid }
-        guard await confirm(preview, Int(newImages[.idle][0].size.width)) else { return .cancelled }
-        do {
-            try await persist(newImages, resetActivity: true)
-        } catch {
-            return .failed(error)
-        }
-        clearLoadFailure()
-        return .imported
-    }
-
     private func confirmPetImageInOrder(
         _ images: PetImageSet,
         accepting: @escaping @MainActor () -> Bool
@@ -178,17 +146,6 @@ public enum PetImageAddOutcome: Sendable {
     /// No URL could be decoded, so nothing changed.
     case skippedAll
     /// Shutdown rejected the edit or interrupted it between frames.
-    case aborted
-}
-
-/// What a sheet import did, so the app can choose which alert to show.
-public enum PetImageImportOutcome: Sendable {
-    case imported
-    /// The user declined the preview.
-    case cancelled
-    /// The file was not an acceptable transparent PNG sprite sheet.
-    case invalid
-    case failed(Error)
     case aborted
 }
 

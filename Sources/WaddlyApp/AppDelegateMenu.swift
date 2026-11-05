@@ -72,10 +72,6 @@ func canToggleMenuBar(showInDock: Bool, showInMenuBar: Bool) -> Bool {
     showInDock || !showInMenuBar
 }
 
-func pauseMenuTitleKey(isPaused: Bool) -> LocalizationKey {
-    isPaused ? .menuResume : .menuPause
-}
-
 extension AppDelegate {
     private func makeSizeMenuItem() -> NSMenuItem {
         let menuItem = NSMenuItem(title: localizedString(.menuDisplaySize), action: nil, keyEquivalent: "")
@@ -101,7 +97,8 @@ extension AppDelegate {
         breathingItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         dockVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-        pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
+        pauseItem.title = localizedString(.menuPause)
+        pauseItem.state = isPaused ? .off : .on
         pauseItem.action = #selector(togglePause)
         pauseItem.target = self
         statusMenu.addItem(pauseItem)
@@ -227,7 +224,7 @@ extension AppDelegate {
     }
 
     func startMonitoring() {
-        pauseItem.title = localizedString(isPaused ? .menuResume : .menuPause)
+        pauseItem.state = isPaused ? .off : .on
         guard shouldRunMonitoring else {
             updateMenuStatus()
             return
@@ -266,7 +263,7 @@ extension AppDelegate {
     }
 
     func updateMenuStatus() {
-        pauseItem.title = localizedString(pauseMenuTitleKey(isPaused: isPaused))
+        pauseItem.state = isPaused ? .off : .on
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         let statusKey: LocalizationKey = isPaused
             ? .tooltipPaused
@@ -325,7 +322,7 @@ extension AppDelegate {
         if pendingLocalizationRefresh {
             pendingLocalizationRefresh = false
             buildMenu()
-            petView.toolTip = localizedString(.petDropTooltip)
+            applyPetAccessibility()
             setupWizardController?.refreshLocalization()
             characterImportWindowController?.refreshLocalization()
             shareWindowController?.refreshLocalization()

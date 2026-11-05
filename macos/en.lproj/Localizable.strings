@@ -1,7 +1,7 @@
 "motion.off" = "Off";
 "motion.weak" = "Low";
 "motion.strong" = "High";
-"menu.pause" = "Pause reactions";
+"menu.pause" = "Typing reactions";
 "share.menu" = "Share Pet";
 "share.title" = "Share Pet";
 "share.video" = "5-second video";
@@ -23,7 +23,6 @@
 "share.loading" = "Preparing share assets…";
 "share.error" = "Could not create the share assets.";
 "share.retry" = "Try Again";
-"menu.resume" = "Resume reactions";
 "menu.displaySize" = "Display size";
 "size.small" = "Small";
 "size.medium" = "Medium";
@@ -47,9 +46,6 @@
 "language.system" = "Follow System Settings";
 "language.japanese" = "日本語";
 "language.english" = "English";
-"pet.dropTooltip" = "Drop a transparent 3×3 PNG on the pet to change it";
-"pet.importErrorTitle" = "Could not import the pet image";
-"pet.importErrorMessage" = "Choose a square transparent PNG no larger than 20 MB, with sides no longer than 4096 px and a 3×3 grid.";
 "images.category.idle" = "Idle";
 "images.category.typing" = "Typing";
 "images.category.sleep" = "Sleep";
@@ -59,17 +55,11 @@
 "images.saveErrorMessage" = "An image exceeds the storage limit, or disk space is low. Check the files and try again.";
 "images.readErrorTitle" = "Could not load the saved pet images";
 "images.readErrorMessage" = "Waddly could not read the saved image list, or one of its frames is missing. Import your images again to start over; nothing has been deleted.";
-"pet.previewTitle" = "Import this pet image?";
-"pet.previewPrompt" = "Check all nine cells on both backgrounds before importing.";
-"pet.previewBackground" = "Check on a dark background";
-"pet.previewCheckTitle" = "What to look for";
-"pet.previewCheckEdges" = "No fragments of a neighbouring pose along the cell edges";
-"pet.previewCheckEffects" = "Keep intentional motion marks and sleep symbols";
-"pet.previewTechSummary" = "%1$d × %1$d px · cell %2$d × %2$d px · shown %3$d px";
-"pet.previewPosition" = "Its current desktop position is kept.";
-"pet.importConfirm" = "Import image";
 "common.cancel" = "Cancel";
 "a11y.spritePreview" = "3×3 pet sprite sheet preview";
+"a11y.petWindow" = "Waddly pet window";
+"a11y.pet" = "Waddly pet";
+"a11y.petHelp" = "Drag to move the pet. Right-click for the menu.";
 "tooltip.paused" = "Waddly: reactions paused";
 "tooltip.active" = "Waddly: reacting to keyboard input";
 "tooltip.permission" = "Waddly: Input Monitoring permission required";
@@ -105,8 +95,7 @@
 "setup.monitoringTitle" = "Let your pet react to typing";
 "setup.monitoringBody" = "Your pet moves when you type. This feature needs macOS Input Monitoring permission.";
 "setup.monitoringActionHint" = "A macOS permission prompt or System Settings will open.";
-"setup.privacyTitle" = "Your typing is never saved or sent";
-"setup.privacyNote" = "Waddly only checks that a key was pressed and whether it was Enter.";
+"setup.privacySummary" = "Your typing is never saved or sent. Waddly only checks that a key was pressed and whether it was Enter.";
 "setup.monitoringStatusGranted" = "Input Monitoring: allowed";
 "setup.monitoringStatusOff" = "Input Monitoring: not allowed";
 "setup.enableMonitoring" = "Start setup";
@@ -114,14 +103,14 @@
 "setup.monitoringGrantedTitle" = "Reaction confirmed";
 "setup.monitoringGrantedBody" = "Your pet is reacting to your keyboard.";
 "setup.monitoringWaitingTitle" = "Try pressing a key";
-"setup.monitoringWaitingBody" = "Press a key to see your pet move on the right.";
+"setup.monitoringWaitingBody" = "Press a key to test your pet’s reaction.";
 "setup.monitoringStatusWaiting" = "Waiting for a key press";
 "setup.notWorking" = "If it does not work";
 "setup.previewMonitoringOff" = "Not yet reacting to keyboard input";
 "setup.previewMonitoringWaiting" = "Press a key to see it react";
-"setup.guideStepAccessibility" = "Step %1$ld: %2$@";
-"setup.manualStep3" = "Turn Waddly on.";
-"setup.restartPromptStep" = "If prompted, choose “Quit & Reopen”.";
+"setup.guideTitle" = "Allow Input Monitoring";
+"setup.guideIntro" = "If Waddly isn't listed, drag it into the list on the right. Then turn its switch on.";
+"setup.guideDragFallback" = "Can't drag? Add Waddly with + in Settings.";
 "setup.openSystemSettings" = "Open System Settings";
 "setup.revealInFinder" = "Show Waddly in Finder";
 "setup.dragAppIcon" = "Waddly app icon. Drag it into the Input Monitoring list.";
@@ -156,8 +145,6 @@
 "setup.checkMonitoringWaiting" = "Keyboard reactions: waiting for a key press";
 "setup.troubleshootingBody" = "Restart Waddly, then try typing again.";
 "setup.imageDetails" = "%1$d × %1$d px · cell %2$d × %2$d px";
-"setup.dropGuideBody" = "If Waddly is not listed, drag the icon into the list.";
-"setup.dragAlternative" = "If you cannot drag, add Waddly using +.";
 
 "images.memoryLimit" = "This image set exceeds the 40 MiB image memory budget. Remove images or choose smaller PNGs. Saved images are kept if loading fails.";
 
@@ -284,6 +271,8 @@
 "mainMenu.hideOthers" = "Hide Others";
 "mainMenu.showAll" = "Show All";
 "mainMenu.quit" = "Quit Waddly";
+"mainMenu.file" = "File";
+"mainMenu.close" = "Close";
 "mainMenu.edit" = "Edit";
 "mainMenu.undo" = "Undo";
 "mainMenu.redo" = "Redo";

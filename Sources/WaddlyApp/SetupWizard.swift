@@ -46,6 +46,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     /// The confirmation the step last repainted, so a delivered key repaints the page once.
     var didRenderConfirmedReaction = false
     @Published var isShowingTroubleshooting = false
+    @Published var isMonitoringDragDemoStopped = false
+    var permissionGuidePanelController: PermissionGuidePanelController?
     var isComposingCharacter: Bool {
         !isMonitoringSettings && currentStep == .pet
     }
@@ -248,6 +250,8 @@ final class SetupWizardController: NSWindowController, NSWindowDelegate, Observa
     }
 
     func windowWillClose(_ notification: Notification) {
+        permissionGuidePanelController?.stop()
+        permissionGuidePanelController = nil
         permission.stop()
         window?.level = .normal
         previewPane.stopPlayback()

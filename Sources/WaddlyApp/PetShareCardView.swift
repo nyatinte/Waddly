@@ -23,7 +23,7 @@ final class PetShareCardView: NSView {
     ) {
         titleLabel = NSTextField(labelWithString: title)
         detailLabel = NSTextField(labelWithString: detail)
-        statusLabel = NSTextField(labelWithString: "")
+        statusLabel = NSTextField(wrappingLabelWithString: "")
         copyButton = ShareActionButton.secondaryAction(title: copyTitle)
         super.init(frame: .zero)
         statusLabel.identifier = NSUserInterfaceItemIdentifier(rawValue: statusIdentifier)
@@ -42,8 +42,8 @@ final class PetShareCardView: NSView {
         detailLabel.font = .systemFont(ofSize: 11)
         detailLabel.textColor = .secondaryLabelColor
         statusLabel.font = .systemFont(ofSize: 11)
-        statusLabel.lineBreakMode = .byTruncatingTail
-        statusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        statusLabel.maximumNumberOfLines = 2
+        statusLabel.isHidden = true
         copyButton.setAccessibilityHelp(copyHelp)
         surface.wantsLayer = true
         surface.layer?.cornerRadius = 7
@@ -73,9 +73,10 @@ final class PetShareCardView: NSView {
             detailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             detailLabel.topAnchor.constraint(equalTo: surface.bottomAnchor, constant: 7),
             detailLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            statusLabel.leadingAnchor.constraint(greaterThanOrEqualTo: detailLabel.trailingAnchor, constant: 6),
+            statusLabel.leadingAnchor.constraint(equalTo: detailLabel.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            statusLabel.centerYAnchor.constraint(equalTo: detailLabel.centerYAnchor)
+            statusLabel.topAnchor.constraint(equalTo: surface.bottomAnchor, constant: 7),
+            statusLabel.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -8)
         ])
     }
 
@@ -102,8 +103,10 @@ final class PetShareCardView: NSView {
         detailLabel.stringValue = text
     }
 
-    /// Shows what one copy actually did, next to the file it copied.
+    /// Replaces the detail with the outcome so recovery instructions have the full card width.
     func setStatus(_ text: String, failed: Bool) {
+        detailLabel.isHidden = !text.isEmpty
+        statusLabel.isHidden = text.isEmpty
         statusLabel.stringValue = text
         statusLabel.textColor = failed ? .systemRed : .secondaryLabelColor
     }

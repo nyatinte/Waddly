@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing or new version tag to publish (for example, v1.9.0)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,20 +27,20 @@ jobs:
       contents: write
     steps:
       - name: Check out source
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Install locked development tools
-        uses: jdx/mise-action@v4.3.0
+        uses: jdx/mise-action@v5.2.4
         with:
-          version: 2026.9.11
+          version: 2026.10.22
 
       - name: Verify tag and Homebrew tap credentials
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           set -euo pipefail
@@ -63,7 +69,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           if [ "$(uname -m)" != "arm64" ]; then
@@ -123,7 +129,7 @@ jobs:
 
       - name: Generate release notes
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           TAG_PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+$'
@@ -141,7 +147,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
           RELEASE_EXISTS: ${{ steps.package.outputs.release_exists }}
           UPLOAD_DMG: ${{ steps.package.outputs.upload_dmg }}
           UPLOAD_CHECKSUM: ${{ steps.package.outputs.upload_checksum }}
@@ -169,7 +175,7 @@ jobs:
       - name: Update Homebrew tap
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#v}"
@@ -230,6 +236,7 @@ jobs:
           VALIDATION_CASK="$(brew --repository)/Library/Taps/local/homebrew-waddly-validation/Casks/waddly.rb"
           mkdir -p "$(dirname "$VALIDATION_CASK")"
           cp "$TAP_DIR/Casks/waddly.rb" "$VALIDATION_CASK"
+          brew trust --cask "$VALIDATION_TAP/waddly"
           if ! brew audit --cask --strict "$VALIDATION_TAP/waddly"; then
             printf '::error::Homebrew strict cask audit failed (including any tap or network errors).\n' >&2
             exit 1

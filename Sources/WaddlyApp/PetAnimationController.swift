@@ -122,7 +122,7 @@ final class PetAnimationController {
         guard let currentPhase else {
             currentPhase = .idle
             show(petImages()[.idle][0])
-            breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+            breathe(key: "idle-breathe", breathScale: 1.015, duration: 3.2)
             scheduleIdleBlink()
             schedulePhaseChange()
             return
@@ -138,6 +138,7 @@ final class PetAnimationController {
             show(petImages()[.typing][0])
         case .idle:
             show(petImages()[.idle][0])
+            breathe(key: "idle-breathe", breathScale: 1.015, duration: 3.2)
             scheduleIdleBlink()
         case .sleeping:
             sleepFrameIndex = 0
@@ -155,7 +156,7 @@ final class PetAnimationController {
         petView.layer?.removeAnimation(forKey: "sleep-breathe")
         guard isBreathingEnabled(), !isPaused else { return }
         switch currentPhase {
-        case .idle: breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+        case .idle: breathe(key: "idle-breathe", breathScale: 1.015, duration: 3.2)
         case .sleeping: breathe()
         case .typing, .frozen, nil: break
         }
@@ -210,7 +211,7 @@ private extension PetAnimationController {
             petView.layer?.removeAllAnimations()
             idleFrameIndex = 1
             show(petImages()[.idle][0])
-            breathe(key: "idle-breathe", breathScale: 1.01, duration: 3.2)
+            breathe(key: "idle-breathe", breathScale: 1.015, duration: 3.2)
             scheduleIdleBlink()
         case .sleeping:
             stopIdleBlink()

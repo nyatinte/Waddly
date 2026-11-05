@@ -42,6 +42,14 @@ extension SetupWizardController {
         } else {
             stopEmbeddedCharacterPreview()
             renderCurrentStep()
+            if currentStep == .monitoring {
+                showPermissionGuide()
+            } else {
+                permissionGuidePanelController?.stop()
+                permissionGuidePanelController = nil
+                window?.setContentSize(SetupMetrics.contentSize)
+                appliedCompactGuide = false
+            }
         }
     }
 }
