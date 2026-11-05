@@ -238,47 +238,4 @@ import Testing
         startSignal.finish()
         try await save.value
     }
-
-    /// The confirmation wait of an import is inside the queue, so another edit cannot run while the
-    /// sheet the user is deciding on is still open.
-    @Test func importConfirmationHoldsTheQueueUntilItResolves() async throws {
-        let store = makeImageStore()
-        defer { closeImageStore(store) }
-        let source = try storeExampleSheetURL()
-        let (started, startSignal) = AsyncStream<Void>.makeStream()
-        let (release, releaseSignal) = AsyncStream<Void>.makeStream()
-        let importing = Task {
-            await store.importPetImage(from: source) { _, _ in
-                startSignal.yield()
-                for await _ in release {
-                    break
-                }
-                return true
-            }
-        }
-        var iterator = started.makeAsyncIterator()
-        _ = await iterator.next()
-
-        var ranWhileConfirming = false
-        let queued = Task {
-            await store.queue {
-                ranWhileConfirming = true
-                return true
-            }
-        }
-        await Task.yield()
-        #expect(!ranWhileConfirming)
-
-        releaseSignal.yield()
-        releaseSignal.finish()
-        startSignal.finish()
-        let outcome = await importing.value
-        guard case .imported = outcome else {
-            Issue.record("expected the confirmed import to commit, got \(outcome)")
-            return
-        }
-        #expect(await queued.value)
-        #expect(ranWhileConfirming)
-        #expect(store.hasCompleteImageSet)
-    }
 }

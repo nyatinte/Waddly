@@ -11,14 +11,18 @@ extension SetupWizardScreen {
             titleKey: .characterSetupTitle,
             primaryKey: .setupNext,
             onPrimary: { _ = controller.commitCharacterImportAndContinue() },
-            onCancel: controller.cancelCharacterImport,
+            onCancel: nil,
             onPreviewPaneCreated: { [weak controller] pane in controller?.embeddedCharacterPreviewPane = pane },
             isPreviewActive: { controller.isComposingCharacter },
             onPreviewHostDisappear: { [weak controller] in controller?.stopEmbeddedCharacterPreview() },
             pickFile: controller.chooseCharacterFile,
             pasteboard: controller.pasteboard,
             // Setup's Continue advances the wizard, so an already valid pet may be committed as is.
-            primaryRequiresChange: false
+            primaryRequiresChange: false,
+            sampleImages: controller.canTrySample ? controller.demoImages : nil,
+            promptResourcesURL: controller.promptResourcesURL,
+            openBrowser: controller.openBrowser,
+            announce: controller.announce
         )
     }
 }

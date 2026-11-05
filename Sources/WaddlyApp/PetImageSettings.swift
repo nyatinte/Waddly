@@ -10,57 +10,12 @@ extension AppDelegate {
     func loadSavedPetImage() async {
         do {
             try await imageStore.restore()
+            if let wizard = setupWizardController, wizard.isComposingCharacter {
+                wizard.characterImportModel.refreshRestoredImagesIfUntouched()
+                wizard.renderCurrentStep()
+            }
         } catch {
             await showImageSaveError(error)
-        }
-    }
-
-    func importPetImage(from url: URL) async -> Bool {
-        let outcome = await imageStore.importPetImage(from: url) { [weak self] preview, cellSize in
-            await self?.confirmPetImageImport(preview, cellSize: cellSize) ?? false
-        }
-        switch outcome {
-        case .imported:
-            return true
-        case .invalid:
-            await showPetImageImportError()
-            return false
-        case let .failed(error):
-            await showImageSaveError(error)
-            return false
-        case .cancelled, .aborted:
-            return false
-        }
-    }
-
-    /// Reads a sheet without writing. The wizard calls `confirmPetImage` immediately on success;
-    /// a failed read returns `nil` and leaves the saved set untouched. A read failure returns
-    /// `nil`; the wizard explains it in place instead of raising a separate alert.
-    func previewPetImage(from url: URL) async -> PetImageSet? {
-        let images = await Task.detached(priority: .userInitiated) {
-            autoreleasepool { () -> PetImageSet? in
-                guard let data = PetSpriteSheetImporter.readPNG(from: url) else { return nil }
-                return PetSpriteSheetImporter.frames(from: data)
-            }
-        }.value
-        guard !isShuttingDown else { return nil }
-        return images
-    }
-
-    /// Commits the decoded set on the store's queue. The sample refusal rule runs inside that same
-    /// queue so a reopened guide cannot overwrite a user import queued by the previous guide.
-    func confirmPetImage(_ images: PetImageSet, source: PetImageCommitSource = .userFile) async -> Bool {
-        let outcome = await imageStore.confirmPetImage(images) {
-            Self.shouldCommitPetImages(source: source, petIsStored: self.hasCompletePetImageSet)
-        }
-        switch outcome {
-        case .confirmed:
-            return true
-        case let .failed(error):
-            await showImageSaveError(error)
-            return false
-        case .aborted:
-            return false
         }
     }
 
@@ -75,12 +30,8 @@ extension AppDelegate {
             animationController.imageSetDidChange(resetActivity: resetActivity)
             return
         }
-        presenter.reveal(panel)
+        revealPet()
         animationController.imageSetDidChange(resetActivity: resetActivity)
-    }
-
-    private func showPetImageImportError() async {
-        await showAlert(.petImportErrorTitle, .petImportErrorMessage)
     }
 
     func showImageSaveError(_ error: Error) async {
@@ -100,24 +51,6 @@ extension AppDelegate {
         alert.informativeText = localizedString(messageKey)
         alert.alertStyle = .warning
         _ = await presentImageAlertWithDefaultParent(alert)
-    }
-
-    private func confirmPetImageImport(_ preview: NSImage, cellSize: Int) async -> Bool {
-        guard let parent = imageAlertParent() else { return false }
-        let alert = NSAlert()
-        alert.messageText = localizedString(.petPreviewTitle)
-        alert.informativeText = localizedString(.petPreviewPrompt)
-        alert.alertStyle = .informational
-        alert.accessoryView = SpriteSheetPreviewAccessory(
-            preview: preview,
-            cellSize: cellSize,
-            displaySize: displaySize,
-            localization: localization,
-            prefersDarkBackground: parent.isUsingDarkAppearance
-        )
-        alert.addButton(withTitle: localizedString(.petImportConfirm))
-        alert.addButton(withTitle: localizedString(.commonCancel))
-        return await presentImageAlert(alert, in: parent) == .alertFirstButtonReturn
     }
 
     private func imageAlertParent() -> NSWindow? {

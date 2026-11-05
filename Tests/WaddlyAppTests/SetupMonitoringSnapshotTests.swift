@@ -8,7 +8,7 @@ import WaddlyCore
 ///
 /// The four states are captured in one place because the layout is shared: the page header, the
 /// instruction card, and the actions must read the same whether the permission is missing, guiding,
-/// manual, or waiting for a first key.
+/// or waiting for a first key.
 @Suite(.serialized) @MainActor struct SetupMonitoringSnapshotTests {
     @Test func capturesMonitoringStepSurfaces() async throws {
         guard CaptureHarness.isEnabled else { return }
@@ -32,8 +32,6 @@ private extension SetupMonitoringSnapshotTests {
         try await capture(content, dark: dark, named: "monitoring-off-\(tag)")
         missing.enableMonitoring()
         try await capture(content, dark: dark, named: "monitoring-guide-\(tag)")
-        missing.toggleManualSteps()
-        try await capture(content, dark: dark, named: "monitoring-manual-\(tag)")
 
         let waiting = try makeWizard(language: language, granted: true, observedReaction: false)
         defer { waiting.close() }

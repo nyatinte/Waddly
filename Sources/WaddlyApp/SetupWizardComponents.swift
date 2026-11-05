@@ -2,12 +2,47 @@ import AppKit
 
 @MainActor
 final class DraggableAppIconView: NSImageView, NSDraggingSource {
+    var onDragStarted: (() -> Void)?
+
     init(localization: LocalizationController) {
         super.init(frame: .zero)
         image = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
         imageScaling = .scaleProportionallyUpOrDown
         translatesAutoresizingMaskIntoConstraints = false
+        wantsLayer = true
         updateLocalization(localization)
+    }
+
+    private var isHovering = false
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+            owner: self
+        ))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovering = true
+        applyHover()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovering = false
+        applyHover()
+    }
+
+    /// A light accent ring. Instant, so Reduce Motion has nothing to remove.
+    private func applyHover() {
+        layer?.cornerRadius = DesignTokens.Radius.card
+        layer?.borderWidth = isHovering ? 1 : 0
+        layer?.borderColor = NSColor.controlAccentColor.cgColor
+        layer?.backgroundColor = isHovering
+            ? NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
+            : nil
     }
 
     required init?(coder: NSCoder) {
@@ -22,6 +57,7 @@ final class DraggableAppIconView: NSImageView, NSDraggingSource {
     }
 
     override func mouseDragged(with event: NSEvent) {
+        onDragStarted?()
         let item = NSDraggingItem(pasteboardWriter: Self.pasteboardItem(for: Bundle.main.bundleURL))
         item.setDraggingFrame(bounds, contents: image)
         let session = beginDraggingSession(with: [item], event: event, source: self)

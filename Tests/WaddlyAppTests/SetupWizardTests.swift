@@ -59,7 +59,7 @@ typealias Fixture = SetupWizardFixture
         #expect(!wizard.hasImage)
     }
 
-    @Test func permissionActionEntersTheGuideAndManualFallback() throws {
+    @Test func permissionActionEntersTheGuide() throws {
         let state = Fixture.State()
         state.images = try Fixture.sheetImages()
         let wizard = try Fixture.makeWizard(state: state, requestPermission: { false })
@@ -67,40 +67,6 @@ typealias Fixture = SetupWizardFixture
         wizard.goNext()
         wizard.enableMonitoring()
         #expect(wizard.isShowingGuide)
-        wizard.toggleManualSteps()
-        #expect(wizard.isShowingManualSteps)
-        #expect(wizard.isShowingGuide)
-        wizard.toggleManualSteps()
-        #expect(!wizard.isShowingManualSteps)
-    }
-
-    @Test func importUpdatesTheSwiftUIObservedStateWithoutChangingTheStep() async throws {
-        let state = Fixture.State()
-        let wizard = try Fixture.makeWizard(
-            state: state,
-            previewResult: Fixture.sheetImages(),
-            confirmResult: true
-        )
-        defer { wizard.close() }
-        let sheetURL = try Fixture.sheetURL()
-        await wizard.importImage(from: sheetURL).value
-        #expect(wizard.currentStep == .pet)
-        #expect(wizard.didRegisterPet)
-        #expect(wizard.importedFileName == sheetURL.lastPathComponent)
-        #expect(wizard.previewPane.hasPet)
-    }
-
-    @Test func savedStepAndChatGPTGuideCanBeRestoredAndDismissed() throws {
-        let wizard = try Fixture.makeWizard(savedStep: SetupWizardController.Step.monitoring.rawValue)
-        defer { wizard.close() }
-        #expect(wizard.currentStep == .monitoring)
-
-        wizard.goBack()
-        wizard.showChatGPTGuide()
-        #expect(wizard.currentStep == .pet)
-        #expect(wizard.isShowingChatGPTGuide)
-        wizard.changeMethod()
-        #expect(!wizard.isShowingChatGPTGuide)
     }
 
     @Test func troubleshootingStaysInTheWizard() throws {
@@ -134,76 +100,27 @@ typealias Fixture = SetupWizardFixture
         #expect(reopened.previewPane.isPlayingPreview)
     }
 
-    @Test func copyingThePromptReportsCopyAndBrowserOpenResults() throws {
-        let chatGPT = try #require(URL(string: "https://chatgpt.com/"))
-        let failingState = Fixture.State()
-        var opened: [URL] = []
-        let failingOpen = try Fixture.makeWizard(state: failingState, openBrowser: { url in
-            opened.append(url)
-            return false
-        })
-        defer { failingOpen.close() }
-        failingOpen.showChatGPTGuide()
-        failingOpen.copyPromptAndOpenChatGPT()
-        #expect(opened == [chatGPT])
-        #expect(failingOpen.promptFeedback == .openFailed)
-        #expect(failingOpen.promptFeedbackKey == .setupOpenFailed)
-        #expect(failingOpen.promptFeedbackIsError)
-        #expect(failingState.announcements == [failingOpen.localizedString(.setupOpenFailed)])
+    @Test(arguments: [true, false])
+    func closingCompanionOrWizardReleasesBoth(closeCompanion: Bool) throws {
+        weak var weakWizard: SetupWizardController?
+        weak var weakGuide: PermissionGuidePanelController?
+        try autoreleasepool {
+            let wizard = try Fixture.makeWizard()
+            let guide = PermissionGuidePanelController(wizard: wizard)
+            weakWizard = wizard
+            weakGuide = guide
+            wizard.permissionGuidePanelController = guide
 
-        let succeedingState = Fixture.State()
-        var didOpen = false
-        let succeedingOpen = try Fixture.makeWizard(state: succeedingState, openBrowser: { _ in
-            didOpen = true
-            return true
-        })
-        defer { succeedingOpen.close() }
-        succeedingOpen.showChatGPTGuide()
-        succeedingOpen.copyPromptAndOpenChatGPT()
-        #expect(didOpen)
-        #expect(succeedingOpen.promptFeedback == .copied)
-        #expect(succeedingOpen.promptFeedbackKey == .setupPromptCopied)
-        #expect(!succeedingOpen.promptFeedbackIsError)
-        // Only a failure is announced.
-        #expect(succeedingState.announcements.isEmpty)
-    }
-
-    @Test func failedImportExplainsTheProblemInlineAndKeepsThePreviousSet() async throws {
-        let state = Fixture.State()
-        let previous = try Fixture.sheetImages()
-        state.images = previous
-        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
-        defer { wizard.close() }
-        try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(wizard.didFailImport)
-        #expect(wizard.currentStep == .pet)
-        // The failed read writes nothing, so the seeded set and its preview survive untouched.
-        #expect(wizard.hasImage)
-        #expect(wizard.currentPetImages()[.idle].first === previous[.idle].first)
-        #expect(wizard.previewPane.hasPet)
-        #expect(!wizard.didRegisterPet)
-        #expect(state.announcements == [wizard.localizedString(.petImportErrorMessage)])
-
-        // Choosing a method again clears the stale message.
-        wizard.showChatGPTGuide()
-        #expect(!wizard.didFailImport)
-    }
-
-    @Test func importFailureStaysOnItsStepAndClearsWhenTheStepChanges() async throws {
-        let state = Fixture.State()
-        state.images = try Fixture.sheetImages()
-        let wizard = try Fixture.makeWizard(state: state, previewResult: nil)
-        defer { wizard.close() }
-        // The drop target is window-wide, so a failure on a later step must stay visible there.
-        wizard.setStep(.monitoring)
-        try await wizard.importImage(from: Fixture.sheetURL()).value
-        #expect(wizard.currentStep == .monitoring)
-        #expect(wizard.didFailImport)
-        #expect(wizard.hasImage)
-
-        wizard.goBack()
-        #expect(wizard.currentStep == .pet)
-        #expect(!wizard.didFailImport)
+            if closeCompanion {
+                try #require(guide.window).close()
+            } else {
+                try #require(wizard.window).close()
+            }
+            #expect(wizard.permissionGuidePanelController == nil)
+            #expect(guide.window?.contentView == nil)
+        }
+        #expect(weakGuide == nil)
+        #expect(weakWizard == nil)
     }
 
     @Test func permissionGrantedAndReadyStayDistinctStates() throws {

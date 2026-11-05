@@ -7,7 +7,7 @@ struct PermissionGuidePlacementTests {
     private let visible = NSRect(x: 0, y: 0, width: 1710, height: 1010)
     private let panel = NSSize(width: 300, height: 236)
 
-    @Test func sitsBelowTheSettingsWindowWhenThereIsRoom() {
+    @Test func sitsToTheLeftOfSettingsWhenThereIsRoom() {
         let settings = CGRect(x: 500, y: 400, width: 700, height: 500)
         let origin = PermissionGuidePlacement.origin(
             windowSize: panel,
@@ -15,7 +15,7 @@ struct PermissionGuidePlacementTests {
             visible: visible,
             ownWindows: []
         )
-        #expect(origin == NSPoint(x: 730, y: 154))
+        #expect(origin == NSPoint(x: 190, y: 616))
         #expect(!PermissionGuidePlacement.overlaps(origin, size: panel, [settings]))
     }
 

@@ -60,6 +60,11 @@ extension AppDelegate {
         // would be reported as "restart required" when the tap simply had not been started yet.
         startMonitoringIfPossible()
         guard let controller = setupWizardController, let window = controller.window else { return }
+        if controller.currentStep == .monitoring, presenter.allowsFloatingPermissionGuide {
+            controller.renderCurrentStep()
+            controller.showPermissionGuide()
+            return
+        }
         // The status shown on step 2 depends on the tap above, and showWindow does not redraw.
         controller.renderCurrentStep()
         let wasVisible = window.isVisible
@@ -77,18 +82,21 @@ extension AppDelegate {
         }
     }
 
+    /// Cmd+Tab sends only `didBecomeActive`, so a closed guide is reopened here. The saved step answers
+    /// before the images, which load asynchronously at launch.
+    func restoreSetupGuideOnActivation() {
+        guard !settings.setupWizardSeen || settings.setupStep != nil,
+              setupWizardController?.window?.isVisible != true,
+              setupWizardController?.permissionGuidePanelController?.window?.isVisible != true else { return }
+        showSetupWizard()
+    }
+
     private func makeSetupWizardController() -> SetupWizardController {
         let monitoringSettings = isSetupComplete
         return SetupWizardController(
             localization: localization,
-            onPreviewImage: { [weak self] in await self?.previewPetImage(from: $0) },
-            onConfirmImage: { [weak self] images, source in
-                await self?.confirmPetImage(images, source: source) ?? false
-            },
-            // The shared screen reports persistence failures inline and keeps the draft for retry, so
-            // this path never raises the legacy save alert.
-            onCommitCharacter: { [weak self] images in
-                await self?.commitCharacterImages(images) ?? .rejected
+            onCommitCharacter: { [weak self] images, source in
+                await self?.commitCharacterImages(images, source: source) ?? .rejected
             },
             currentPetImages: { [weak self] in self?.petImages ?? PetImageSet() },
             permission: permissionService,

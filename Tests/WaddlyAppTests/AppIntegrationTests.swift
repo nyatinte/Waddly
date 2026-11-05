@@ -15,6 +15,7 @@ import WaddlyCore
         let data = try fixture.frameData()
         #expect(app.hasCompletePetImageSet)
         #expect(app.panel.isVisible)
+        #expect(app.panel.alphaValue == 0)
         await app.moveImage(from: 0, to: 1, in: .idle)?.value
         #expect(app.settings.petImageFiles["idle"] == original["idle"]?.reversed().map(\.self))
         // A reorder rewrites only the manifest; the frame files themselves stay untouched.
@@ -37,30 +38,6 @@ import WaddlyCore
         #expect(try fixture.frameData().count == 8)
     }
 
-    @Test func cancelingReplacementAndInvalidImportsPreserveSavedImages() async throws {
-        let fixture = try AppIntegrationFixture()
-        defer { fixture.close() }
-        let app = fixture.app
-        try await app.persistPetImages(fixture.exampleImages())
-        let manifest = app.settings.petImageFiles
-        let data = try fixture.savedData()
-        app.showSetupWizard()
-        let replacement = Task { await app.importPetImage(from: fixture.exampleURL) }
-        let sheet = try await waitForSheet(app)
-        sheet.sheetParent?.endSheet(sheet, returnCode: .alertSecondButtonReturn)
-        #expect(await !replacement.value)
-        #expect(app.settings.petImageFiles == manifest)
-        #expect(try fixture.savedData() == data)
-        let invalidURL = fixture.directory.appendingPathComponent("invalid.png")
-        try Data("not a PNG".utf8).write(to: invalidURL)
-        let invalid = Task { await app.importPetImage(from: invalidURL) }
-        let errorSheet = try await waitForSheet(app)
-        errorSheet.sheetParent?.endSheet(errorSheet, returnCode: .alertFirstButtonReturn)
-        #expect(await !invalid.value)
-        #expect(app.settings.petImageFiles == manifest)
-        #expect(app.hasCompletePetImageSet)
-    }
-
     @Test func setupReplacementClearsCorruptManifestFailureAndRestoresEditing() async throws {
         let fixture = try AppIntegrationFixture()
         defer { fixture.close() }
@@ -73,13 +50,15 @@ import WaddlyCore
         app.showSetupWizard()
         let restore = Task { await app.loadSavedPetImage() }
         let alert = try await waitForSheet(app)
+        #expect(alert.alphaValue == 0)
+        #expect(alert.sheetParent?.alphaValue == 0)
         alert.sheetParent?.endSheet(alert, returnCode: .alertFirstButtonReturn)
         await restore.value
         #expect(app.imageLoadFailed)
         #expect(app.imageLoadError != nil)
 
         // A rejected sample must not repair a corrupt restore; only an accepted commit can.
-        #expect(await !app.confirmPetImage(original, source: .sample))
+        #expect(await app.commitCharacterImages(original, source: .sample) == .rejected)
         #expect(app.imageLoadFailed)
         #expect(app.imageLoadError != nil)
 
@@ -87,10 +66,7 @@ import WaddlyCore
         try #require(!FileManager.default.fileExists(atPath: blockedDirectory.path))
         try Data("block directory creation".utf8).write(to: blockedDirectory)
         app.petImagesDirectoryURL = blockedDirectory
-        let failedReplacement = Task { await app.confirmPetImage(original, source: .userFile) }
-        let saveAlert = try await waitForSheet(app)
-        saveAlert.sheetParent?.endSheet(saveAlert, returnCode: .alertFirstButtonReturn)
-        #expect(await !failedReplacement.value)
+        #expect(await app.commitCharacterImages(original) == .failed)
         #expect(app.imageLoadFailed)
         #expect(app.imageLoadError != nil)
         app.petImagesDirectoryURL = fixture.directory
@@ -207,10 +183,13 @@ import WaddlyCore
         try await app.persistPetImages(fixture.exampleImages())
         app.settings.setupWizardSeen = true
         app.settings.setupStep = SetupWizardController.Step.monitoring.rawValue
+        app.permissionServiceStorage = PermissionService(
+            hasPermission: { false }, isReceivingKeys: { false }, hasObservedReaction: { false },
+            requestAccess: { false }, restartTap: {}, openSettings: {}
+        )
         app.showSetupWizard()
         let wizard = try #require(app.setupWizardController)
-        // The manual fallback is the same guiding phase without opening System Settings in tests.
-        app.permissionService.toggleManualSteps()
+        app.permissionService.beginGuiding()
         #expect(wizard.isShowingGuide)
 
         let parked = NSPoint(x: 120, y: 80)

@@ -258,7 +258,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 
 **HIG constraints**
 
-- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area).
+- macOS default control size is **28 × 28 pt**; the minimum is **20 × 20 pt**. Waddly uses 28 pt for auxiliary controls and 36 pt for actions; no clickable control may be smaller than 20 × 20 pt even when its visual is smaller (enlarge the hit area). The permission guide's draggable app icon uses `dragIconSize` (112 pt); its click-through demo ghost uses `dragGhostSize` (64 pt).
 - Leave about 12 pt around bezeled controls and about 24 pt around bezel-less elements' visible edges. Use `action-gap` between actions and `section-gap` between groups.
 - Prefer one primary action. Place it at the trailing edge of a pinned footer; secondary actions go to the leading edge. The share action is centered because it is the single action in that footer (see Components).
 
@@ -270,13 +270,13 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 | Character Import / Change Character | 1040 × 640 | Resizable above the minimum; pinned footer |
 | Frame Editor | 1320 × 800 preferred, 1040 × 700 minimum | Resizable; compact layout below 1160 pt |
 | Share | 700 × 380 | Fixed; two equal cards; pinned footer |
-| Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome |
-| Permission guide | 480 × 460 compact, 820 × 520 before the guide opens | Floats beside System Settings; drops the preview column so the settings app list stays visible; manual steps fallback |
+| Pet panel | 180 / 240 / 320 square | Borderless, draggable, no window chrome; always floats above ordinary app windows and is re-ordered above other apps' floating panels when the front app or Space changes |
+| Permission guide | 380 × 400 floating companion panel; 820 × 520 setup shell remains hidden | Non-activating panel stays visible beside System Settings. Shows the real draggable app icon; a click-through screen overlay demonstrates a drag into the actual settings window. Has a + fallback; no settings mockup |
 
 - Fixed windows must not be restorable to a stale frame; set `isRestorable = false` and re-assert the content size when shown.
 - Resizable windows define a minimum that keeps the footer and every column visible. Do not let a resizable window reflow into a broken compact state; switch to the explicit compact layout instead (Frame Editor below 1160 pt).
 - Every window centers on first show and remembers a user move only where the surface supports it (the pet panel and the permission guide).
-- The permission guide is the one window that changes size: while it waits for the grant it is the 480 × 460 compact guide (page column only, no preview), which is narrow enough to park beside System Settings without covering the app list the user drags onto. Every other state and page uses the designed size.
+- Entering Input Monitoring opens Apple's real Input Monitoring pane and hides the setup shell behind a 380 × 400 non-activating companion panel. The panel prefers the left side of System Settings so its app list remains clear, and stays visible while Settings is active. A transparent, click-through overlay follows a short repeated path from the real icon to a point inside the detected Settings window; it is illustrative only, never starts an OS drag, and stops on a real drag or under Reduce Motion. The actual icon remains a user-initiated AppKit drag source. The manual + route remains available if the deep link or window detection fails.
 
 **Dense workspace variant.** The Frame Editor is denser than the setup-class windows, but it uses the same tokens: `lg` 16 for the title bar and panel padding (the workspace is edge-to-edge and does not add a 24 pt window margin), `section-gap` between groups, `action-height` for Done and Reset, `control-height` for zoom/stepper/segmented controls, and the type/radius scales. `FrameEditorMetrics` keeps only geometry that is specific to the canvas (sidebar 306, inspector 300/268, compact rail 58, breakpoint 1160, canvas reserves); it does not introduce spacing, type, control, or radius values. The title bar and panels use `lg`; metadata is 11 pt; controls use `sm`; cards use `lg`.
 
@@ -284,7 +284,7 @@ The layout uses a **4 pt base grid** and an **8 pt rhythm**, matching the macOS 
 
 Depth is native and quiet.
 
-- Windows sit in the normal window-server order. The pet panel and the permission guide may float because their function requires it; they do not use decorative shadows.
+- Windows sit in the normal window-server order; the permission guide may float because its function requires it, and the pet panel always floats at `.floating` level, above ordinary app windows. Neither uses decorative shadows. The pet keeps `.canJoinAllSpaces`, `.stationary`, and `.ignoresCycle`, and it deliberately never carries `.fullScreenAuxiliary`, so a fullscreen app covers the pet. Another app's floating panel can order itself in front while that app is active, so the pet re-orders itself without activating whenever another app activates or the active Space changes. macOS system UI (menu bar, Spotlight, alerts) stays above the pet, and a `.statusBar`-or-higher utility window can still cover it.
 - Cards are **tonal surfaces** (`controlBackgroundColor`) with a 1 px `separatorColor` border. They do not use drop shadows.
 - The frame editor's canvas uses a dimmed surround (`controlBackgroundColor` at 0.7) and a 1 px border to separate the sheet from the workspace. Guides are 1–2 px lines; they are not UI chrome and do not need the radius scale.
 - Native alerts and sheets provide their own elevation. Do not build a custom modal layer.
@@ -331,6 +331,7 @@ A pinned footer is the default action area for setup-class windows:
 - Full-width 1 px separator, `footer-inset` 12 above and below, a 36 pt row, content inset 24.
 - Primary action at the trailing edge, secondary at the leading edge, 8 pt gap.
 - The footer belongs to the window, not to the scrollable content. The content above must never hide it.
+- Setup and Change Character share the generation/import screen. Its acquisition column scrolls when needed; setup keeps the sample action visible in the footer. A selected sample or image stays a draft until Next or Apply.
 - Share uses the same footer geometry but centers its single brand action; the composer-failure status sits on the left and wraps to two lines.
 
 ### Cards and option cards
@@ -348,7 +349,7 @@ A pinned footer is the default action area for setup-class windows:
 - Character Import says which side a complete frame set is on: **Currently in use** with the positive check while it is the saved pet, and **Changes not saved** with the pending circle while it is a draft or its last save failed. Change Character's Apply is disabled until there is a difference; Setup's Continue still commits an unchanged, valid pet so the step can advance.
 - Recoverable failures stay **inline** in the current step: caption size, critical color, one native accessibility announcement, previous state preserved.
 - Use a native `NSAlert` only for destructive or blocking decisions (discard a draft, save failed, login item). Do not use a modal for a recoverable import/copy/browser failure.
-- Never truncate instructions. The Share recovery text (#154) is the known counterexample and must be fixed by wrapping/reflow, not by ellipsis.
+- Never truncate instructions. Share recovery text wraps or uses the card's detail row rather than an ellipsis.
 
 ### Menus, alerts, and standard chrome
 
@@ -439,6 +440,7 @@ Apple's macOS baselines and Waddly's stricter values:
 - One announcement per status transition or inline error; re-rendering must not repeat it.
 - Reduce Motion: no scale/zoom/slide for essential feedback; use fades or immediate state changes.
 - VoiceOver reading order matches the visual order; decorative images and icons are hidden.
+- The pet panel is the one untitled, borderless surface: it supplies its own accessibility identity (a localized window title and `.floatingWindow` subrole) and exposes the pet as an image with a localized label and hint, so VoiceOver can name it even though the panel never becomes key.
 - Test at larger text, Increase Contrast, Light/Dark, and both languages.
 
 **Known gaps (track in the audit below):** fixed window sizes and fixed fonts vs. larger text; live VoiceOver and physical keyboard acceptance; #154 Japanese recovery-text truncation.
@@ -450,11 +452,11 @@ Apple's macOS baselines and Waddly's stricter values:
 | Setup Guide (Pet / Keyboard reactions / Ready) | SwiftUI in AppKit window | 820 × 520 fixed | `LayoutMetrics` 24/16/20/8/36/12 | display 25, body 13, caption 11 | 36 pt | ✅ layout/actions; 🟡 type literals |
 | Character Import / Change Character | SwiftUI + AppKit preview | 1040 × 640 min | `LayoutMetrics` | title 15, body 13, caption 11 | 36 pt | ✅ |
 | Frame Editor | SwiftUI + AppKit canvas | 1320 × 800 preferred, 1040 × 700 min | `LayoutMetrics` + `DesignTokens`; geometry-only constants | 11/13/15 | 28 auxiliary, 36 actions | ✅ dense workspace variant |
-| Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions; 🟡 #154 recovery text |
+| Share | AppKit | 700 × 380 fixed | `LayoutMetrics` 24/36/8/12 | 13/11 | 36 pt + X brand pill | ✅ layout/actions and recovery text |
 | Status menu / pet context menu / main menu | AppKit native | — | Native | Native | Native | ✅ |
-| Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception |
+| Pet panel | Borderless NSPanel | 180/240/320 square | Product-specific | — | Context menu | ⚪ deliberate no-chrome exception; ✅ floating level, collectionBehavior, re-ordering, and accessibility identity pinned by tests |
 | Alerts and sheets | AppKit native | — | Native | Native | Native | ✅ |
-| Permission guide | Setup shell beside System Settings | 820 × 520; 480 × 460 compact while guiding | Setup tokens; one instruction card, one primary action, status under the title | Setup tokens | 36 pt | ✅; live QA pending |
+| Permission guide | Non-activating NSPanel beside System Settings | 380 × 400 | Setup tokens; state-specific guidance and click-through cross-window demo | Setup tokens | 36 pt | 🟡; live OS drag/permission QA pending |
 
 Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row names the conforming part and the gap); ⚪ intentional product exception. The Frame Editor is **not** an exception: it uses the dense workspace variant.
 
@@ -470,6 +472,8 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 - Character Import states the saved pet or an unsaved draft with `DesignTokens.Status`; Change Character disables Apply when there is nothing to save, while Setup's Continue still advances with an unchanged pet. `CharacterDraftStatusTests` covers both hosts.
 - Localization keys are checked by the generator; `mise run check` runs format, lint, complexity, safety, tests, and the signed build.
 - Native menus, alerts, and windows inherit AppKit's HIG behavior.
+- The pet panel's floating level and `collectionBehavior` are applied in one place (`applyPetWindowLevel()`) on launch, on every reveal, and before every re-order, so the window server and the app cannot drift apart. `startKeepingPetInFront()` observes app activation and Space changes and puts the pet back on top without activating the app. `PetAlwaysOnTopTests` pins the level, the collection behavior, every reveal path, and the activation/Space re-ordering.
+- The pet panel carries a localized accessibility title and floating subrole, and the pet image carries a localized label and hint, so VoiceOver and accessibility tooling can name the app's only always-visible surface. `PetAccessibilityTests` pins both languages and the language refresh.
 - Reduce Motion is honored in setup transitions, pet reveal, and celebration.
 - Share's X glyph, clear space, and disabled contrast have regression tests.
 
@@ -483,6 +487,7 @@ Legend: ✅ conforms and is covered by code/tests; 🟡 known migration (the row
 | Large text / VoiceOver / Increase Contrast not automatically tested | Fixed layouts may clip; speech untested | Add a large-text layout test; manual VoiceOver/contrast pass |
 | #154 Japanese recovery text truncates | Instructions become incomplete | Wrap/reflow; test at the default width |
 | No `DESIGN.md` lint in CI | Token drift is possible | Optional `npx @google/design.md lint DESIGN.md`; do not add a Node dependency without a decision |
+| Always-on-top stacking against other processes is not covered by automated tests | Unit tests pin the level and that app activation re-orders the pet; a manual pass confirmed an app switch re-orders the pet above another process's `.floating` panel, but Mission Control, fullscreen, and system-level windows could differ | Manual pass for Mission Control, a fullscreen app, and system UI (menu bar, Spotlight); also reproduce or explain the menu-bar-sized accessory windows listed in issue #201 |
 
 **Implementation contract**
 

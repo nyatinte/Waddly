@@ -17,16 +17,11 @@ final class PetWindow: NSPanel {
 @MainActor
 final class DraggableImageView: PixelImageView {
     var contextMenuProvider: (() -> NSMenu?)?
-    var onFileDrop: ((URL) -> Void)?
 
     override func draw(_ dirtyRect: NSRect) {
         // Pixel art: never smooth the pet's outlines when it is scaled to the display size.
         NSGraphicsContext.current?.imageInterpolation = .none
         super.draw(dirtyRect)
-    }
-
-    func acceptPNGFileDrops() {
-        registerForDraggedTypes([.fileURL])
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -36,29 +31,6 @@ final class DraggableImageView: PixelImageView {
     override func rightMouseDown(with event: NSEvent) {
         guard let contextMenu = contextMenuProvider?() else { return }
         NSMenu.popUpContextMenu(contextMenu, with: event, for: self)
-    }
-
-    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        fileURL(from: sender) == nil ? [] : .copy
-    }
-
-    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        guard let url = fileURL(from: sender) else { return false }
-        onFileDrop?(url)
-        return true
-    }
-
-    private func fileURL(from sender: NSDraggingInfo) -> URL? {
-        guard let urls = sender.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self],
-            options: [.urlReadingFileURLsOnly: true]
-        ) as? [URL],
-            let url = urls.first,
-            url.pathExtension.lowercased() == "png"
-        else {
-            return nil
-        }
-        return url
     }
 }
 
@@ -163,10 +135,8 @@ final class KeyboardMonitor {
                 // the fact of delivery is kept.
                 monitor.hasObservedKeyEvent = true
                 monitor.onKeyDown?(isEnter)
-            } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                if let tap = monitor.tap {
-                    CGEvent.tapEnable(tap: tap, enable: true)
-                }
+            } else if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput, let tap = monitor.tap {
+                CGEvent.tapEnable(tap: tap, enable: true)
             }
         }
         return Unmanaged.passUnretained(event)
@@ -257,6 +227,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     var menuBarVisibilityItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     var pendingMenuError = false
     var pendingLocalizationRefresh = false
+    /// Whether the workspace observers that keep the pet in front of other apps are installed.
+    var isKeepingPetInFront = false
+    /// The second re-order that runs once an activating app has finished ordering its own panels.
+    var keepInFrontWorkItem: DispatchWorkItem?
     var setupWizardController: SetupWizardController?
     var permissionServiceStorage: PermissionService?
     var characterImportWindowController: CharacterImportWindowController?
@@ -283,10 +257,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         .first
         .map { PetImageLocation.directoryURL(for: Bundle.main.bundleIdentifier, applicationSupport: $0) }
 
-    init(settings: AppSettings = .standard, presenter: WindowPresenter = .live) {
+    init(
+        settings: AppSettings = .standard,
+        presenter: WindowPresenter = .live,
+        localization: LocalizationController? = nil
+    ) {
         self.settings = settings
         self.presenter = presenter
-        localization = LocalizationController(settings: settings)
+        self.localization = localization ?? LocalizationController(settings: settings)
         super.init()
     }
 
@@ -308,17 +286,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+        // Another app's floating panel can be ordered in front of the pet while that app is active.
+        // These observers put the pet back on top whenever the front app or Space changes, without
+        // ever taking focus. Registered here so fixtures that only build the panel stay observer-free.
+        startKeepingPetInFront()
         updatePresenceOptions()
-        petView.onFileDrop = { [weak self] url in
-            Task { _ = await self?.importPetImage(from: url) }
-        }
-        petView.acceptPNGFileDrops()
-        petView.toolTip = localizedString(.petDropTooltip)
         monitor.onKeyDown = { [weak self] isEnter in
             guard let self else { return }
             animationController.handleKeyDown(isEnter: isEnter)
             // A delivered key is what actually confirms reactions; let an open guide repaint once.
-            setupWizardController?.monitoringDidObserveReaction()
+            setupWizardController?.monitoringDidObserveReaction(isEnter: isEnter)
         }
         Task {
             _ = await queueImageUpdate {
@@ -339,6 +316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
+        restoreSetupGuideOnActivation()
         setupWizardController?.refreshPermissionStatus()
         guard shouldRunMonitoring, !isPaused, monitor.permissionGranted else { return }
         startMonitoring()
@@ -358,7 +336,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     /// A Dock click after setup just puts the pet back in view.
     func bringPetToFront() {
         guard hasCompletePetImageSet else { return }
-        presenter.reveal(panel)
+        revealPet()
     }
 
     /// Setup opens on launch until it is finished. `setupStep` is the resume signal, so a relaunch
@@ -375,6 +353,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        stopKeepingPetInFront()
         imageStore.beginShutdown()
         animationController.shutdown()
         monitor.stop()

@@ -5,6 +5,8 @@
 
 <p align="center">Put your pet on your Mac desktop and let it react to keyboard input.</p>
 
+<p align="center"><a href="https://github.com/nyatinte/Waddly/releases/latest">Download DMG</a> · <a href="#install-with-homebrew">Homebrew</a> · macOS 14+ / Apple Silicon</p>
+
 <p align="center"><a href="README.ja.md">日本語README</a></p>
 
 <p align="center">
@@ -17,60 +19,41 @@
 - Your pet reacts to keyboard input. Typed text and key codes are not stored.
 - While idle, it breathes and blinks, then falls asleep after a while.
 - Drag your pet anywhere on the desktop.
-- The pet joins every desktop Space. It does not appear above a fullscreen app.
-- Right-click the pet and choose “Share Pet” to generate a five-second MP4 (384 × 384) and a 3×3 PNG sprite sheet (nine frames) locally. You can copy the video or the image, and “Post on X” opens the composer with only `#ShareMyWaddly`, so you write the post and attach the file yourself. Waddly has no share save-to-file action.
+- The pet joins every desktop Space and stays above ordinary app windows. It returns to the front whenever you switch apps or Spaces, so another app's floating panel cannot keep covering it. It does not appear above a fullscreen app, and the menu bar and Spotlight stay in front of it.
+- Right-click the pet and choose “Share Pet” to copy a video or image of your pet and paste it into X or chat apps.
+
+## Install
+
+### Install with Homebrew
+
+```sh
+brew tap nyatinte/waddly
+brew install --cask nyatinte/waddly/waddly
+```
+
+Update with `brew upgrade --cask waddly`.
+
+### Install from GitHub Releases
+
+Download `Waddly-<version>-macos-arm64.dmg` from the [latest release](https://github.com/nyatinte/Waddly/releases/latest), open it, and drag Waddly into your Applications folder. Verify the download with the `.sha256` file in the same release.
+
+The app is ad-hoc signed and not notarized, so Gatekeeper may block the first launch. If macOS blocks the first launch, open System Settings → Privacy & Security, scroll to Security, and click Open Anyway. On macOS 15 or later, Control-click → Open no longer clears the warning.
+
+To try Waddly from source, follow the developer [build instructions](CONTRIBUTING.md).
+
+### Turning on keyboard reactions
+
+Choose **Start setup**. Waddly opens **System Settings → Privacy & Security → Input Monitoring** and keeps a small guide beside it. If Waddly is not listed, drag its real app icon into the list, or use **+** if drag-and-drop is unavailable. Turn on Waddly’s switch in the list. The guide’s animated example is visual only; it does not grant permission or perform a system drag. If macOS asks, choose **Quit & Reopen**.
+
+You can move the guide out of the way, or click it and press ⌘W to close it.
+
+![Dragging Waddly into the Input Monitoring list](assets/examples/input-monitoring-guide.gif)
 
 ## Use your own pet
 
 ### Prepare a sprite sheet
 
-Send the [sprite sheet prompt](prompts/en.md) to [ChatGPT](https://chatgpt.com/) or another image generator to create a 3×3 sprite sheet.
-
-<details>
-<summary>Show the sprite sheet prompt</summary>
-
-```text
-Character to draw: <replace this line>
-
-If that line is empty or still reads “<replace this line>”, ask the user what pet or character they want before creating anything.
-
-Using that character, create a 3×3 animated sprite sheet for Waddly. If a reference image is attached, depict the individual in that image.
-
-[Character]
-- Keep the individual's features (species, colors, patterns, body shape) in every cell.
-- Keep the same size, facing direction, and camera position in all nine cells. Line up the top of the head, the bottom of the body, and the left-right centre at the same position in every cell, and do not change them between poses.
-
-[Sheet and placement]
-- Output one transparent PNG. Nine cells in a 3×3 grid. Make all cells equally sized squares, and make the side length divisible by 3.
-- Use real transparency, with alpha 0 outside the character's silhouette. Do not draw a checkerboard, white, grey, a colored backdrop, a gradient, a floor, or shadows.
-- Fit the whole character inside the central 50% of each cell (a 25% margin on every side). Keep ears, tails, wings, the keyboard, and effects inside that area too.
-- A cell that touches its own boundary or a neighboring cell by even one pixel is an invalid output.
-- If it does not fit, moderate the pose or the effects instead of shrinking the character.
-- Do not draw divider lines, frames, numbers, captions, logos, or watermarks. No text except the optional Enter-key symbol.
-
-[The nine cells: left to right, then top to bottom]
-1. Sitting relaxed
-2. The same pose as cell 1, but blinking
-3. Focused, facing the keyboard
-4. Typing slowly
-5. Typing in a pose slightly different from cell 4
-6. Leaning forward and typing quickly
-7. The instant it presses a large Enter key forcefully. If a reference image is attached, take that energy from it
-8. Drowsy, with heavy eyelids
-9. Curled up and sleeping peacefully
-
-[Keyboard and effects]
-- Draw the keyboard only in cells 3–7, the same shape and size in all nine cells. Keep it narrower than 40% of the cell width.
-- In cell 7, draw the Enter key larger than the other keys, and within 30% of the cell width. It may carry a “↵” symbol; do not write the word “Enter”.
-- In cell 7, place the star-shaped spark and the impact lines right next to the body. Use at most two short strokes, and do not let them reach more than 5% of the cell width beyond the body. Keep their tips at least 30% inside the cell's right and bottom edges.
-
-Output only the sprite sheet image that meets these requirements.
-```
-
-</details>
-
-- If you have an image of a pet or character you want to use, attach it along with the prompt.
-- If you don't have an image, describe the character in words, such as “a small penguin with a round body.” No image attachment is needed.
+Prepare a photo of your pet and choose **Open in ChatGPT** in Waddly. Attach the photo in ChatGPT, then return to Waddly and import the generated PNG. To use another image generator, choose **Copy prompt**. You can also view the [prompt and image-checking tips](prompts/en.md).
 
 You can also create the sprite sheet by hand.
 
@@ -78,39 +61,36 @@ You can also create the sprite sheet by hand.
 | --- | --- |
 | ![nyatinte-bot reference image](assets/examples/nyatinte-bot.png) | ![nyatinte-bot 3×3 transparent sprite sheet](assets/examples/nyatinte-bot-3x3.png) |
 
-### Image requirements
+### Tips and local storage
 
-- Transparent PNG with a square canvas
-- Both dimensions divisible by 3
-- Maximum file size: 20 MB; maximum side length: 4096 px
-
-An AI-generated sheet can drift slightly in pitch, shifting the character's vertical position between cells even when the prompt asks for a fixed anchor. After importing a 3×3 sheet, **Adjust frames…** opens a crop and alignment editor over the staged draft. It exposes exactly nine fixed cells (2 Idle, 4 Typing, 1 Enter, 2 Sleep); resizing the 1:1 crop only narrows the visible frame, while the Align tool moves the character itself. Pan and zoom the canvas with the trackpad or ⌘+/⌘−/⌘0, and check Before/After with the center crosshair.
-
-Sheets larger than 3072 px on a side are reduced during import, and individual images are capped at 1024 px. The shared character screen accepts a chosen PNG, a window-wide PNG drop, or **Paste from Clipboard** (⌘V). Changes stay a draft until you press Continue or Apply.
-
-Right-click the pet to change its size and behavior, language, visibility, and launch-at-login setting. Disabled commands explain what they need in native menu help, and at least one of Dock or menu bar access must remain on.
-
-When Waddly is the frontmost app, the menu bar also carries the standard menus: **Waddly** (**About Waddly** shows the version and build, plus Hide and Quit), **Edit** (⌘C/⌘V in text fields), and **Window**.
-
-After setup, use **Set Up Input Monitoring…** for permission, status, and recovery guidance, and **Change Character…** to replace or edit images. Initial or unfinished setup opens **Setup Guide…** instead. The Setup Guide and **Change Character…** share one character screen, and a chosen image stays a draft until you press Continue or Apply. A failed save keeps the draft for another try, and closing with a changed draft asks before discarding it. The shared screen says “Currently in use” while it shows the saved pet and “Changes not saved” while a draft would replace it; **Apply** stays unavailable until the draft differs from the saved pet, while the Setup Guide’s **Continue** still advances with an unchanged pet. If macOS requires a restart after you allow Input Monitoring, **Restart Waddly** relaunches the app and returns you to the same setup step.
-
-To create another character after registration, open **Change Character…** from the menu bar or the pet’s right-click menu. The **Create another character** card stays available with a saved pet or a staged image: **Copy prompt** copies the current app language’s generation prompt without opening a browser; **Copy the prompt and open ChatGPT** also opens ChatGPT. Paste the prompt into your chosen image generator and import the resulting PNG here. Your current pet and any staged image are unchanged by copying; only Apply saves a replacement. Waddly does not upload images to the generator.
-
-If you have no image yet, **Try the sample pet first** shows the bundled sample immediately; it is stored locally like any pet and you can replace it with **Change image**.
-
-Images are stored on your Mac as individual PNG frames, plus the optional original 3×3 sheet and its crop/alignment metadata when the frame editor was used. Source files are not modified and images are never uploaded. Older prompts may use a different cell order, so use the current prompt.
+- If the pet does not react, choose **If it does not work** in the guide to restart Waddly or check Input Monitoring in System Settings.
+- When creating a new character, choose **Change Character…** to open the generation prompt in ChatGPT in the current app language, copy it for another image generator, or import a finished PNG at any time in that window. Opening ChatGPT puts the prompt in the page URL, so it is also recorded in your browser history; **Copy prompt** leaves no trace there.
+- Right-click the pet or use the menu bar icon to change pet size, behavior, language, visibility, launch at login, or Input Monitoring settings.
+- Imported images and alignment edits are saved on your Mac, leaving your original files untouched. Waddly uploads nothing by itself.
 
 ## Privacy
 
-Keyboard events are used only to control animation. Waddly does not store, log, or transmit typed text or key codes. Images are stored locally on your Mac. Share assets are generated locally when the dialog opens and are not uploaded by Waddly. Copying and posting are user actions. The X logo or text only opens a post composer (carrying `#ShareMyWaddly` and no post text); attach the asset and write your own post.
-
-## Measured memory
-
-The app targets a physical memory footprint below 100 MB in typical use. Importing a very large sheet (for example 3072 × 3072 with nine frames) can exceed that target (a known exception in 1.0). See [CONTRIBUTING.md](CONTRIBUTING.md) for the profiling workflow and the allocator regression suite. The frame editor reuses one Before and one After preview when their image inputs are unchanged, rather than regenerating them for zoom or guide changes. Editor cleanup drops its decoded-sheet and preview references; closing a sheet does not guarantee that process memory immediately returns to its previous level.
+Keystrokes are used only to animate the pet and are never stored, logged, or sent. Images and share videos or images stay on your Mac and are never uploaded automatically. “Post on X” only opens a compose window with `#ShareMyWaddly`, and only “Open in ChatGPT” sends the bundled prompt to ChatGPT.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution instructions.
+
+## Uninstall
+
+If you installed with Homebrew:
+
+```sh
+brew uninstall --cask waddly
+```
+
+Also remove Waddly from System Settings → Privacy & Security → Input Monitoring.
+
+If you installed from the DMG, quit Waddly and move /Applications/Waddly.app to the Trash.
+
+## Share and feedback
+
+Share your pet with [#ShareMyWaddly](https://x.com/hashtag/ShareMyWaddly) on X. Report bugs or request features via [GitHub Issues](https://github.com/nyatinte/Waddly/issues). If you enjoy Waddly, a star on the repo helps a lot.
 
 ## License
 

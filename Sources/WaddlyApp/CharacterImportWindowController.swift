@@ -106,7 +106,6 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
             pasteboard: pasteboard,
             // Change Character only writes when the draft would actually change the saved pet.
             primaryRequiresChange: true,
-            showsPrompt: true,
             promptResourcesURL: promptResourcesURL
         ))
         host.translatesAutoresizingMaskIntoConstraints = true
@@ -132,8 +131,7 @@ final class CharacterImportWindowController: NSWindowController, NSWindowDelegat
     @discardableResult
     func applyAndClose() -> Task<Void, Never> {
         Task { [weak self] in
-            guard let self else { return }
-            guard await model.apply() else { return }
+            guard let self, await model.apply() else { return }
             close()
         }
     }

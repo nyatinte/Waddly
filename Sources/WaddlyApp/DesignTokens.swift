@@ -42,6 +42,8 @@ enum DesignTokens {
     enum Control {
         static let auxiliaryHeight: CGFloat = 28
         static let hitTargetMin: CGFloat = 20
+        static let dragIconSize: CGFloat = 112
+        static let dragGhostSize: CGFloat = 64
     }
 
     enum Status {

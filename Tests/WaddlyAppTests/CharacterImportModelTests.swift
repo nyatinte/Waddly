@@ -26,9 +26,11 @@ import WaddlyCore
         let model = makeModel(current: PetImageSet(), commit: { _ in .committed })
         await model.stageFiles(at: [sheetURL])
         let staged = try #require(model.stagedFrames)
+        let revision = model.acquisitionRevision
 
         await model.stageFiles(at: [URL(fileURLWithPath: "/tmp/waddly-missing-sheet.png")])
 
+        #expect(model.acquisitionRevision == revision)
         #expect(model.failure == .sheet(.unreadable))
         #expect(model.stagedFrames?[.idle].first === staged[.idle].first)
     }
@@ -77,7 +79,7 @@ import WaddlyCore
         let pendingRead = Task { await model.stageFiles(at: [pendingURL]) }
         #expect(await gate.waitUntilStarted())
         #expect(!model.canApply)
-        await model.stageDroppedFiles(at: [sheetURL, sheetURL])
+        await model.stageFiles(at: [sheetURL, sheetURL])
         #expect(model.canApply)
         #expect(model.failure == .multipleFiles)
         #expect(!model.isReading)
@@ -96,10 +98,10 @@ import WaddlyCore
         let jpg = URL(fileURLWithPath: "/tmp/waddly-unsupported.jpg")
         let png = try SetupWizardFixture.sheetURL()
 
-        await model.stageDroppedFiles(at: [jpg])
+        await model.stageFiles(at: [jpg])
         #expect(model.failure == .sheet(.notPNG))
 
-        await model.stageDroppedFiles(at: [png, jpg])
+        await model.stageFiles(at: [png, jpg])
         #expect(model.failure == .multipleFiles)
         #expect(!model.isReading)
     }

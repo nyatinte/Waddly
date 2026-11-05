@@ -30,7 +30,6 @@ import Testing
             wizard.showMonitoringStep()
             wizard.handleWindowDrop([fixture.exampleURL])
             #expect(wizard.currentStep == .monitoring)
-            #expect(wizard.pendingImportCount == 0)
             #expect(!wizard.isComposingCharacter)
             #expect(app.settings.setupStep == nil)
             wizard.goNext() // Close is available regardless of permission/readiness.
@@ -112,8 +111,6 @@ import Testing
             wizard.enableMonitoring()
             #expect(wizard.isShowingGuide)
             #expect(state.settingsOpened == 1)
-            wizard.toggleManualSteps()
-            #expect(wizard.isShowingManualSteps)
         } else {
             wizard.retryMonitoring()
             #expect(state.tapRestarted == 1)
@@ -171,11 +168,6 @@ import Testing
 
         wizard.enableMonitoring()
         #expect(wizard.isShowingGuide)
-        #expect(wizard.isCompactGuide)
-        #expect(window.contentView?.bounds.size == SetupMetrics.compactGuideSize)
-
-        // The manual fallback is the same guide presentation.
-        wizard.toggleManualSteps()
         #expect(wizard.isCompactGuide)
         #expect(window.contentView?.bounds.size == SetupMetrics.compactGuideSize)
 

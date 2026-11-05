@@ -9,20 +9,25 @@ enum SpriteSheetPrompt {
     enum Feedback: Equatable {
         case copied
         case copyFailed
-        case openFailed
+        case opened
+        case copiedAfterOpenFailed
         case unavailable
 
         var messageKey: LocalizationKey {
             switch self {
             case .copied: .setupPromptCopied
             case .copyFailed: .setupCopyFailed
-            case .openFailed: .setupOpenFailed
+            case .opened: .setupChatGPTOpened
+            case .copiedAfterOpenFailed: .setupOpenFailed
             case .unavailable: .characterPromptUnavailable
             }
         }
 
         var isError: Bool {
-            self != .copied
+            switch self {
+            case .copied, .opened: false
+            case .copyFailed, .copiedAfterOpenFailed, .unavailable: true
+            }
         }
     }
 
@@ -65,18 +70,33 @@ enum SpriteSheetPrompt {
         return body.isEmpty ? nil : body
     }
 
-    /// A missing prompt must not erase the user's clipboard or open a browser with nothing to paste.
+    static func chatGPTURL(for prompt: String) -> URL? {
+        guard var components = URLComponents(string: "https://chatgpt.com/") else { return nil }
+        components.queryItems = [URLQueryItem(name: "q", value: prompt)]
+        return components.url
+    }
+
+    /// ChatGPT copies the prompt from its URL query; if the browser cannot open, leave a copy instead.
     @MainActor
-    static func copy(
+    static func open(
         _ prompt: String,
         to pasteboard: NSPasteboard,
-        openBrowser: (@MainActor (URL) -> Bool)? = nil
+        openBrowser: @MainActor (URL) -> Bool
     ) -> Feedback {
         guard !prompt.isEmpty else { return .unavailable }
+        guard let url = chatGPTURL(for: prompt) else { return .copyFailed }
+        guard openBrowser(url) else {
+            return copy(prompt, to: pasteboard) == .copied ? .copiedAfterOpenFailed : .copyFailed
+        }
+        return .opened
+    }
+
+    /// A missing prompt must not erase the user's clipboard or open a browser with nothing to paste.
+    @MainActor
+    static func copy(_ prompt: String, to pasteboard: NSPasteboard) -> Feedback {
+        guard !prompt.isEmpty else { return .unavailable }
         pasteboard.clearContents()
-        guard pasteboard.setString(prompt, forType: .string) else { return .copyFailed }
-        guard let openBrowser, let url = URL(string: "https://chatgpt.com/") else { return .copied }
-        return openBrowser(url) ? .copied : .openFailed
+        return pasteboard.setString(prompt, forType: .string) ? .copied : .copyFailed
     }
 }
 

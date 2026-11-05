@@ -82,7 +82,7 @@ import Testing
         #expect(!embeddedPane.isPlayingPreview)
     }
 
-    @Test func setupDropAdaptersPreserveLegacyFilteringButValidateSharedDrops() async throws {
+    @Test func setupDropAdapterValidatesSharedDrops() async throws {
         let wizard = try SetupWizardFixture.makeWizard()
         defer {
             wizard.characterImportModel.discard()
@@ -90,10 +90,7 @@ import Testing
         }
         let root = try #require(wizard.window?.contentView as? PetImageDropView)
         let jpg = URL(fileURLWithPath: "/tmp/native-setup.jpg")
-        #expect(try !root.performFileURLDrop(from: fileDropPasteboard([jpg])))
-        #expect(!wizard.isComposingCharacter)
-
-        wizard.beginCharacterImport()
+        #expect(wizard.isComposingCharacter)
         let png = try SetupWizardFixture.sheetURL()
         await wizard.characterImportModel.stageFiles(at: [png])
         let staged = try #require(wizard.characterImportModel.stagedFrames)
@@ -103,7 +100,7 @@ import Testing
             #require(wizard.characterImportModel.stagedFrames), staged
         ))
 
-        #expect(try wizard.previewPane.performFileURLDrop(from: fileDropPasteboard([jpg])))
+        #expect(try root.performFileURLDrop(from: fileDropPasteboard([jpg])))
         #expect(await waitUntil { wizard.characterImportModel.failure == .sheet(.notPNG) })
     }
 }

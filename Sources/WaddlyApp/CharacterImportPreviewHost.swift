@@ -7,6 +7,8 @@ import WaddlyCore
 struct CharacterPreviewHost: NSViewRepresentable {
     let localization: LocalizationController
     let frames: PetImageSet?
+    var demoFrames: PetImageSet?
+    var stageLabel: String?
     let placeholder: String
     let onDrop: ([URL]) -> Void
     let isActive: () -> Bool
@@ -29,9 +31,12 @@ struct CharacterPreviewHost: NSViewRepresentable {
         pane.onDrop = onDrop
         if let frames, frames.isComplete {
             pane.showPet(frames, caption: "", sleeping: false)
+        } else if let demoFrames, demoFrames.isComplete {
+            pane.showDemo(demoFrames)
         } else {
             pane.showPlaceholder(symbol: "pawprint", message: placeholder, caption: "")
         }
+        pane.setStageLabel(stageLabel)
     }
 
     static func dismantleNSView(_ pane: SetupPreviewPane, coordinator: ()) {

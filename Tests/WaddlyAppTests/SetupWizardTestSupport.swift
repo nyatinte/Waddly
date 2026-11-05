@@ -37,10 +37,7 @@ enum SetupWizardFixture {
         granted: Bool = false,
         receiving: Bool = true,
         observedReaction: Bool = true,
-        previewResult: PetImageSet? = nil,
-        preview: (@MainActor (URL) async -> PetImageSet?)? = nil,
         confirmResult: Bool = false,
-        confirm: (@MainActor (PetImageSet, PetImageCommitSource) async -> Bool)? = nil,
         commitCharacterOutcome: CharacterCommitOutcome? = nil,
         commitCharacter: (@MainActor (PetImageSet) async -> CharacterCommitOutcome)? = nil,
         requestPermission: @escaping @MainActor () -> Bool = { false },
@@ -57,7 +54,6 @@ enum SetupWizardFixture {
         let defaults = try #require(UserDefaults(suiteName: name))
         let settings = AppSettings(defaults: defaults)
         settings.appLanguage = language
-        state.previewResult = previewResult
         state.confirmResult = confirmResult
         state.granted = granted
         state.receiving = receiving
@@ -71,23 +67,19 @@ enum SetupWizardFixture {
             localization: LocalizationController(settings: settings, resources: resources),
             promptResourcesURL: root(),
             demoPetURL: demoURL,
-            onPreviewImage: makePreviewImage(state: state, preview: preview),
-            onConfirmImage: { images, source in
-                if let confirm {
-                    return await confirm(images, source)
-                }
-                // Mirrors the app: a sample is refused once a pet is stored, and committing is what
-                // updates the stored set.
+            onCommitCharacter: { images, source in
                 guard AppDelegate.shouldCommitPetImages(source: source, petIsStored: state.images.isComplete) else {
-                    return false
+                    return .rejected
                 }
-                state.confirmCount += 1
-                if state.confirmResult {
+                if source == .sample {
+                    state.confirmCount += 1
+                    guard state.confirmResult else { return .rejected }
                     state.images = images
+                    return .committed
                 }
-                return state.confirmResult
+                let commit = commitCharacter ?? makeCommitCharacter(state: state, outcome: commitCharacterOutcome)
+                return await commit(images)
             },
-            onCommitCharacter: commitCharacter ?? makeCommitCharacter(state: state, outcome: commitCharacterOutcome),
             currentPetImages: { state.images },
             permission: permission,
             presenter: presenter,
@@ -104,21 +96,6 @@ enum SetupWizardFixture {
                 state.closed = true
             }
         )
-    }
-
-    /// The shared screen's commit: records the call and, when it succeeds, the stored set. A fixed
-    /// `outcome` lets a test pin a persistence failure without a real store.
-    @MainActor
-    private static func makePreviewImage(
-        state: State,
-        preview: (@MainActor (URL) async -> PetImageSet?)?
-    ) -> @MainActor (URL) async -> PetImageSet? {
-        { url in
-            if let preview {
-                return await preview(url)
-            }
-            return state.previewResult
-        }
     }
 
     @MainActor
@@ -170,8 +147,6 @@ enum SetupWizardFixture {
     final class State {
         var images = PetImageSet()
         var closed = false
-        /// What `onPreviewImage` returns; `nil` models an unreadable file.
-        var previewResult: PetImageSet?
         var confirmResult = false
         var granted = false
         /// Whether the granted app is actually receiving keys; `false` is the restart-required state.

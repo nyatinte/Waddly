@@ -23,34 +23,53 @@ url = "https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swif
 url_api = "https://api.github.com/repos/realm/SwiftLint/releases/assets/524187565"
 
 [[tools."github:moznion/cccc"]]
-version = "1.8.0"
+version = "1.8.6"
 backend = "github:moznion/cccc"
-specifiers = ["1.8.0"]
+specifiers = ["v1.8.6"]
+
+[tools."github:moznion/cccc"."platforms.linux-x64"]
+checksum = "sha256:7f31cf0aba7694baa05b7a2e5f4a50af3308d02a3df0dc9778e828b7116aa968"
+url = "https://github.com/moznion/cccc/releases/download/v1.8.6/cccc-v1.8.6-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/705743380"
+provenance = "github-attestations"
 
 [tools."github:moznion/cccc"."platforms.macos-arm64"]
-checksum = "sha256:a238b8f121291f81df68359c111a9ba49cf48106fbedda63f4a48f1adc092408"
-url = "https://github.com/moznion/cccc/releases/download/v1.8.0/cccc-v1.8.0-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/621862674"
+checksum = "sha256:e34d6bc3e41cb945927dadd09a7573b00c61707ed9c180a5a7b31e2ee127b296"
+url = "https://github.com/moznion/cccc/releases/download/v1.8.6/cccc-v1.8.6-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/moznion/cccc/releases/assets/705743341"
+provenance = "github-attestations"
 
 [[tools."github:nicklockwood/SwiftFormat"]]
-version = "0.63.1"
+version = "0.64.5"
 backend = "github:nicklockwood/SwiftFormat"
-specifiers = ["0.63.1"]
+specifiers = ["0.64.5"]
 
 [tools."github:nicklockwood/SwiftFormat".options]
 no_app = "true"
 
+[tools."github:nicklockwood/SwiftFormat"."platforms.linux-x64"]
+checksum = "sha256:56c50d955903cfedbe28996a70e7551a873cdb6dfa5e416d9332925c455ab365"
+checksum_source = "mise-versions"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.64.5/swiftformat_linux.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/695931756"
+
 [tools."github:nicklockwood/SwiftFormat"."platforms.macos-arm64"]
-checksum = "sha256:385ef1a263ba28685157b98c5536b9c9105e124518f28b7ef8a2bee4b167eaeb"
-url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.1/swiftformat.zip"
-url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/600286051"
+checksum = "sha256:ec017c91fdd46233e5a22dc43ff9564a3cc4b37023d3b4681b6c7d7b781de113"
+checksum_source = "mise-versions"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.64.5/swiftformat.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/695931753"
 
 [[tools.hk]]
-version = "2.4.0"
+version = "2.11.1"
 backend = "packslip:github.com/jdx/hk"
-specifiers = ["2.4.0"]
+specifiers = ["2.11.1"]
+
+[tools.hk."platforms.linux-x64"]
+checksum = "sha256:b9330bd4b9326c3e1aefd757ff923fdf6d1b060074bcb4e54e16ec0a81fde7ec"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
 
 [tools.hk."platforms.macos-arm64"]
-checksum = "sha256:6e1c970b9de7ab4ee52c85869b2ea9cfe8769d25a0fe9536062e0ba62366ec59"
-url = "https://github.com/jdx/hk/releases/download/v2.4.0/hk-aarch64-apple-darwin.tar.gz"
+checksum = "sha256:95f89e6eef60e0c690b0d439b30e3b8558f47235a1a45cbff7b5351d294e4322"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-aarch64-apple-darwin.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
