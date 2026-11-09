@@ -35,7 +35,7 @@ jobs:
       - name: Install locked development tools
         uses: jdx/mise-action@v5.2.4
         with:
-          version: 2026.10.22
+          version: 2026.10.25
 
       - name: Verify tag and Homebrew tap credentials
         shell: bash
