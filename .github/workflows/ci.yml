@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
 
       - name: Install locked development tools
-        uses: jdx/mise-action@v5.2.4
+        uses: jdx/mise-action@v5.2.6
         with:
           version: 2026.10.25
 
@@ -94,7 +94,7 @@ jobs:
           persist-credentials: false
 
       - name: Install locked development tools
-        uses: jdx/mise-action@v5.2.4
+        uses: jdx/mise-action@v5.2.6
         with:
           version: 2026.10.25
 
