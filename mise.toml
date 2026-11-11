@@ -7,7 +7,7 @@ hk = "2.12.0"
 "aqua:orhun/git-cliff" = "2.14.2"
 "aqua:realm/SwiftLint" = "0.65.1"
 "github:nicklockwood/SwiftFormat" = { version = "0.64.6", no_app = true }
-"github:moznion/cccc" = "v1.8.6"
+"github:moznion/cccc" = "v1.9.1"
 
 [tasks.format]
 description = "Format Swift sources"
