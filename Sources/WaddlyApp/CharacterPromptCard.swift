@@ -39,15 +39,10 @@ struct CharacterPromptCard: View {
             }
         }
         .font(DesignTokens.Typography.action)
-        .buttonStyle(.bordered)
         .controlSize(.large)
         .padding(DesignTokens.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color(nsColor: .controlBackgroundColor),
-            in: RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-        )
-        .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.card).stroke(Color(nsColor: .separatorColor)))
+        .promptCardSurface()
         .accessibilityIdentifier("characterPromptCard")
     }
 
@@ -56,10 +51,12 @@ struct CharacterPromptCard: View {
             Label(localization.string(for: .characterOpenChatGPT), systemImage: "arrow.up.right.square")
                 .actionLabel()
         }
+        .buttonStyle(.bordered)
         .accessibilityIdentifier("characterOpenChatGPT")
         Button(action: copyPrompt) {
             Text(localization.string(for: .characterCopyPrompt)).actionLabel()
         }
+        .windowActionStyle(prominent: false)
         .accessibilityIdentifier("characterCopyPrompt")
     }
 

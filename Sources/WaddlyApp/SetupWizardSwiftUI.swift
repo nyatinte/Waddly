@@ -16,7 +16,7 @@ struct SetupWizardScreen: View {
                     Spacer()
                 }
                 .padding(.horizontal, LayoutMetrics.contentInset)
-                .padding(.top, 22)
+                .padding(.top, DesignTokens.Spacing.xl)
             }
 
             if !controller.isMonitoringSettings, controller.currentStep == .pet {
@@ -42,14 +42,14 @@ struct SetupWizardScreen: View {
                 .padding(.bottom, LayoutMetrics.sectionGap)
                 .frame(maxHeight: .infinity)
 
-                Divider()
+                legacyActionDivider()
                 footer
                     .padding(.horizontal, LayoutMetrics.contentInset)
                     .padding(.vertical, LayoutMetrics.footerInset)
             }
         }
         .frame(width: controller.contentSize.width, height: controller.contentSize.height)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .windowContentBackground()
         .animation(MotionPreference.isReduced ? nil : .easeInOut(duration: 0.18), value: controller.currentStep)
     }
 

@@ -204,6 +204,8 @@ Waddly uses macOS semantic colors for chrome and text, and a small set of explic
 
 **X brand exception.** The share action is X's brand, not Waddly's accent. Use the official X glyph as a template, black with white content in the Light appearance and white with black content in Dark. The disabled pairs are the contract values: Dark `#424242` fill / `#B6B6B6` content (≈5.0:1), Light `#EBEBEB` fill / `#656565` content (≈4.8:1). The Share implementation uses these exact sRGB tokens and asserts the contrast in both appearances. Do not use `controlAccentColor` for this button, and do not alter the glyph shape.
 
+On macOS 26 and later, Setup, Character Import, the permission guide, Frame Editor, and Share use the system under-window background material, distinct from Liquid Glass controls; it adapts to the active window and accessibility settings. The setup/character preview uses a clear backdrop and no idle border so the pet reads as content rather than a separate card. Its drop-target highlight remains visible. The prompt section similarly drops its card fill and border; older systems retain the existing card and preview surfaces.
+
 **Checkerboard.** The transparency checkerboard is content, not chrome: `0.22` / `0.30` neutral tiles in Dark and `0.88` / `0.97` in Light. It appears only behind transparent pet previews.
 
 **Do not:** hardcode white/black for text (the canvas crosshair and movie play overlay are the only intentional exceptions), use accent as a status color, or use a fixed RGB value where a semantic NSColor exists.
@@ -304,7 +306,7 @@ The shape language is **soft native**: 6 pt controls, 12 pt cards, 16 pt preview
 
 - Do not introduce 3, 4, 5, 7, 10, 11, or 18 pt radii. The Frame Editor uses 6 for controls and 12 for cards; the Share card uses 12 and its inner surface 8.
 - Brand X is the only pill-shaped action. The movie play overlay is the only circular control.
-- Native controls keep their system shape. Do not override a bezel's radius.
+- Native controls keep their system shape, including the system glass styles in the Frame Editor action bar. Do not override a bezel's radius.
 
 ## Components
 
@@ -320,7 +322,8 @@ The shape language is **soft native**: 6 pt controls, 12 pt cards, 16 pt preview
 | Auxiliary | 28 | `caption`/`body` | Native small control | Zoom, stepper, segmented, canvas tools |
 
 - Side padding is 12 pt; adjacent actions use `action-gap` 8. Apply the label padding via `actionLabel()` in Setup and Character Import, and via the same 36 pt intrinsic height in the Share button.
-- A footer action is right-aligned; a secondary is left-aligned. The share action is centered because it is alone.
+- On macOS 26 and later, the Setup, Character Import, Frame Editor, and permission guide action bars use system glass-prominent and glass button styles for primary and secondary actions. The primary uses the system accent. Keep the buttons separate rather than placing a large glass slab behind them. Older systems retain native bordered-prominent and bordered styles. Use `windowActionStyle(prominent:)` so the fallback stays consistent; Share's X brand action remains an exception.
+- A footer action is right-aligned; a secondary is left-aligned. In setup, the optional sample action sits beside Next so the two choices read as a group. The share action is centered because it is alone.
 - Disabled actions keep their height and a readable label. Never rely on system disabled dimming for a brand button; the X button draws its own disabled content (see `PetShareActionButton.swift`).
 - `.mini` and `.small` clickable controls are not allowed in new UI. The Frame Editor uses `control-height` 28 for auxiliary controls and 36 pt for Done and Reset.
 
@@ -329,7 +332,7 @@ The shape language is **soft native**: 6 pt controls, 12 pt cards, 16 pt preview
 A pinned footer is the default action area for setup-class windows:
 
 - Full-width 1 px separator, `footer-inset` 12 above and below, a 36 pt row, content inset 24.
-- Primary action at the trailing edge, secondary at the leading edge, 8 pt gap.
+- Primary action at the trailing edge; in setup, the sample action sits beside it with an 8 pt gap. Cancel stays at the leading edge in Change Character.
 - The footer belongs to the window, not to the scrollable content. The content above must never hide it.
 - Setup and Change Character share the generation/import screen. Its acquisition column scrolls when needed; setup keeps the sample action visible in the footer. A selected sample or image stays a draft until Next or Apply.
 - Share uses the same footer geometry but centers its single brand action; the composer-failure status sits on the left and wraps to two lines.
@@ -346,7 +349,7 @@ A pinned footer is the default action area for setup-class windows:
 - Status = icon + text. Positive: check + `positive`; pending: circle + secondary; critical: triangle + `critical`.
 - A set of results (the Setup completion page) is one card, not loose lines: `controlBackgroundColor`, 1 px separator, radius 12, rows `sm` apart on a shared left edge. The card is the group; it does not replace the status color or the spoken label.
 - The label states the state in words ("Input Monitoring: allowed"), not just a color.
-- Character Import says which side a complete frame set is on: **Currently in use** with the positive check while it is the saved pet, and **Changes not saved** with the pending circle while it is a draft or its last save failed. Change Character's Apply is disabled until there is a difference; Setup's Continue still commits an unchanged, valid pet so the step can advance.
+- Character Import says which side a complete frame set is on: **Currently in use** with the positive check while it is the saved pet; the setup sample shows a checked **Selected · save with Next** state until a save is attempted; other drafts or a failed save say **Changes not saved** with a pencil icon. Change Character's Apply is disabled until there is a difference; Setup's Continue still commits an unchanged, valid pet so the step can advance. The final screen says **Setup complete** only after keyboard reactions are confirmed; otherwise it says the pet is ready and explains the remaining monitoring step.
 - Recoverable failures stay **inline** in the current step: caption size, critical color, one native accessibility announcement, previous state preserved.
 - Use a native `NSAlert` only for destructive or blocking decisions (discard a draft, save failed, login item). Do not use a modal for a recoverable import/copy/browser failure.
 - Never truncate instructions. Share recovery text wraps or uses the card's detail row rather than an ellipsis.
@@ -366,7 +369,7 @@ A pinned footer is the default action area for setup-class windows:
 
 ### Frame editor controls
 
-- Done and Reset are 36 pt actions in the title bar or a pinned footer. Pick one pattern per window; do not mix a 22 pt title-bar button with a 36 pt footer action.
+- Done and Reset are 36 pt actions in the title bar or a pinned footer. Pick one pattern per window; do not mix a 22 pt title-bar button with a 36 pt footer action. The Frame Editor uses the shared window action styles described under Actions.
 - Zoom, numeric fields, steppers, and view toggles are 28 pt auxiliary controls with at least a 20 × 20 pt hit area.
 - Crop handles may be visually 8–10 pt, but their hit area must be at least 20 × 20 pt.
 - Canvas guides and the checkerboard are content: 1–2 px lines and the defined checkerboard values are allowed.
@@ -411,7 +414,7 @@ A pinned footer is the default action area for setup-class windows:
 ## Platform & Appearance
 
 - **Platform:** macOS 14+, Apple Silicon, Swift 6, AppKit + SwiftUI, no third-party dependencies.
-- **Appearance:** Light, Dark, and Increase Contrast. Use semantic colors; resolve `CGColor` per appearance. The pet art and the checkerboard are the only fixed-color surfaces.
+- **Appearance:** Light, Dark, Increase Contrast, and Reduce Transparency. Use semantic colors; resolve `CGColor` per appearance. The pet art and the checkerboard are the only fixed-color surfaces. Use Liquid Glass sparingly for functional controls, not for pet art, previews, or general card backgrounds.
 - **Accent:** `controlAccentColor` is user-configurable. Use it for system actions and selection, never for the X brand.
 - **Localization:** English and Japanese. Update `macos/en.lproj/Localizable.strings` and `macos/ja.lproj/Localizable.strings` together; run the localization generator.
 - **Windows:** native title bars for setup-class windows; borderless only for the pet panel. Fixed windows are non-restorable. The permission guide may float beside System Settings.
