@@ -10,7 +10,7 @@ workflows:
     '.github/workflows/pr-hygiene.yml': []
     '.github/workflows/pullfrog.yml':
         - 'actions/checkout@v7.0.1'
-        - 'pullfrog/pullfrog@v0.1.115'
+        - 'pullfrog/pullfrog@v0.1.121'
     '.github/workflows/release.yml':
         - 'actions/checkout@v7.0.1'
         - 'jdx/mise-action@v5.2.6'
@@ -30,8 +30,8 @@ dependencies:
         commit: 'sha1-f5be966e4a917d54244728e6a5fdcd1d93a35e6c'
         owner_id: 216188
         repo_id: 738284564
-    'pullfrog/pullfrog@v0.1.115':
-        ref: 'v0.1.115'
-        commit: 'sha1-31e8ce51583f5e108ace8fb0bbb302e85cf38e04'
+    'pullfrog/pullfrog@v0.1.121':
+        ref: 'v0.1.121'
+        commit: 'sha1-cb3bda7d56a8728500c37e1eda718271e7ec4616'
         owner_id: 223181266
         repo_id: 1032749534
