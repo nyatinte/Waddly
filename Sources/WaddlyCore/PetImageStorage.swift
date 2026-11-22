@@ -280,10 +280,9 @@ public extension PetImageStorage {
     }
 
     private func persistSourceSheet(for source: PetImageEditingSource) throws -> Bool {
-        if source.sheetPNGData?.isEmpty ?? true,
-           let sheetFileURL = source.sheetFileURL,
-           isSameSourceSheetURL(sheetFileURL)
-        {
+        let reuseOnDiskSheet = (source.sheetPNGData?.isEmpty ?? true)
+            && (source.sheetFileURL.map(isSameSourceSheetURL) ?? false)
+        if reuseOnDiskSheet {
             return source.editing.cellSize > 0
                 && Self.sheetPixelSide(at: sourceSheetURL) == source.editing.cellSize * 3
         }
