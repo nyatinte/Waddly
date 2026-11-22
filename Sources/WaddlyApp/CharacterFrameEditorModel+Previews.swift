@@ -134,8 +134,8 @@ extension CharacterFrameEditorModel {
     // MARK: - Sheet decoding
 
     func decodeSheet(for source: PetImageEditingSource) async -> CGImage? {
-        guard source.editing.mode == .sheet, source.editing.cellSize > 0 else { return nil }
-        guard let data = await Self.loadSheetPNGData(for: source),
+        guard source.editing.mode == .sheet, source.editing.cellSize > 0,
+              let data = await Self.loadSheetPNGData(for: source),
               !isReleased, !Task.isCancelled
         else { return nil }
         let expectedSide = source.editing.cellSize * 3
