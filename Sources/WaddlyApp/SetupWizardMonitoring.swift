@@ -1,6 +1,11 @@
 /// What the completion page says and offers for each monitoring readiness state. Kept out of the
 /// controller's main body so the step logic and the recovery copy stay separately readable.
 extension SetupWizardController {
+    /// Do not claim all setup is complete when keyboard reactions still need attention.
+    var completionTitleKey: LocalizationKey {
+        isMonitoringReady ? .setupCompleteTitle : .setupPetReadyTitle
+    }
+
     /// The completion page states the monitoring outcome truthfully for each readiness state.
     var monitoringCheckKey: LocalizationKey {
         switch monitoringReadiness {

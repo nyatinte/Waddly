@@ -88,6 +88,7 @@ import WaddlyCore
         defer { resumed.close() }
         #expect(resumed.currentStep == .completed)
         #expect(!resumed.isMonitoringReady)
+        #expect(resumed.completionTitleKey == .setupPetReadyTitle)
         resumed.showMonitoringStep()
         #expect(resumed.currentStep == .monitoring)
     }
@@ -113,6 +114,7 @@ import WaddlyCore
         #expect(wizard.monitoringReadiness == .tapUnavailable)
         #expect(!wizard.isMonitoringReady)
         #expect(wizard.monitoringRecovery == .restart)
+        #expect(wizard.completionTitleKey == .setupPetReadyTitle)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoringRestart)
         #expect(wizard.monitoringIncompleteWarningKey == .setupCompleteWarningRestart)
         #expect(wizard.monitoringIncompleteActionKey == .setupRestartNow)
@@ -167,6 +169,7 @@ import WaddlyCore
 
         #expect(wizard.currentStep == .completed)
         #expect(!wizard.isMonitoringReady)
+        #expect(wizard.completionTitleKey == .setupPetReadyTitle)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoringWaiting)
         #expect(wizard.monitoringIncompleteActionKey == .setupConfirmTyping)
         #expect(wizard.monitoringRecovery == .confirmTyping)
@@ -193,6 +196,7 @@ import WaddlyCore
 
         #expect(wizard.currentStep == .completed)
         #expect(wizard.isMonitoringReady)
+        #expect(wizard.completionTitleKey == .setupCompleteTitle)
         #expect(wizard.monitoringCheckKey == .setupCheckMonitoring)
         wizard.renderCurrentStep()
         #expect(wizard.isMonitoringReady)

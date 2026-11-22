@@ -208,6 +208,17 @@ final class PetShareDialogView: NSView {
     }
 
     private func installSubviews() {
+        if #available(macOS 26.0, *) {
+            let background = makeWindowContentMaterial()
+            background.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(background)
+            NSLayoutConstraint.activate([
+                background.leadingAnchor.constraint(equalTo: leadingAnchor),
+                background.trailingAnchor.constraint(equalTo: trailingAnchor),
+                background.topAnchor.constraint(equalTo: topAnchor),
+                background.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
         [cards, loading, failure, footerSeparator, xRow].forEach(addSubview)
         xRow.addSubview(postButton)
         xRow.addSubview(postStatusLabel)

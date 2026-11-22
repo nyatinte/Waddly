@@ -14,7 +14,7 @@ extension SetupWizardScreen {
     var completedPage: some View {
         VStack(spacing: DesignTokens.Spacing.lg) {
             VStack(spacing: DesignTokens.Spacing.sm) {
-                title(.setupCompleteTitle)
+                title(controller.completionTitleKey)
                 bodyText(.setupCompleteBody)
             }
             .multilineTextAlignment(.center)

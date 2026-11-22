@@ -111,13 +111,13 @@ import WaddlyCore
             controller.close()
         }
         let content = try #require(controller.window?.contentView)
-        let host = try #require(content.subviews.first as? NSHostingView<CharacterImportView>)
+        let host = try #require(content.subviews.first as? NSHostingView<CharacterImportWindowContent>)
         #expect(model.hasStagedCandidate)
         #expect(!model.isDirty)
         model.refreshClipboardAvailability(from: pasteboard)
         #expect(model.clipboardHasImage)
         // Exercise the action used by the actual card, including its parent callback.
-        var card = host.rootView.promptCard
+        var card = host.rootView.content.promptCard
         card.announce = { _ in }
         card.copyPrompt()
         let prompt = SpriteSheetPrompt.load(for: localization, resourcesAt: SetupWizardFixture.root())

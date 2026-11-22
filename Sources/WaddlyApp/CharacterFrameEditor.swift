@@ -104,7 +104,7 @@ private struct FrameEditorContent: View {
                 editorBody
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .windowContentBackground()
     }
 
     private var titleBar: some View {
@@ -128,6 +128,7 @@ private struct FrameEditorContent: View {
                 Text(localization.string(for: .frameEditorResetAll))
                     .actionLabel()
             }
+            .windowActionStyle(prominent: false)
             .controlSize(.large)
             .disabled(!model.hasEdits || model.isComposing)
             .accessibilityIdentifier("frameEditorResetAll")
@@ -137,8 +138,8 @@ private struct FrameEditorContent: View {
                 Text(localization.string(for: .frameEditorDone))
                     .actionLabel()
             }
+            .windowActionStyle(prominent: true)
             .controlSize(.large)
-            .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
             .disabled(model.isComposing)
             .accessibilityIdentifier("frameEditorDone")

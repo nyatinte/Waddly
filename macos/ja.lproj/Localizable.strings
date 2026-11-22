@@ -115,6 +115,7 @@
 "setup.revealInFinder" = "FinderでWaddlyを表示";
 "setup.dragAppIcon" = "Waddlyアプリのアイコン。入力監視の一覧へドラッグします。";
 "setup.completeTitle" = "セットアップ完了";
+"setup.petReadyTitle" = "ペットの準備ができました";
 "setup.completeBody" = "ペットをデスクトップに表示する準備ができました。";
 "setup.checkPet" = "ペット画像を登録しました";
 "setup.checkMonitoring" = "入力監視を設定しました";
@@ -166,11 +167,12 @@
 "character.pasteHelp" = "コピーした画像またはPNGファイルを貼り付けます。";
 "character.emptyPreview" = "取り込んだペットのプレビューがここに表示されます。";
 "character.previewSampleUnselected" = "動きの見本（未選択）";
-"character.previewSampleSelected" = "サンプルを選択中（未保存）";
+"character.previewSampleSelected" = "選択したサンプルの動き";
 "character.previewBeforeReplacement" = "差し替え前の画像";
 "character.metadataPlaceholder" = "PNGを取り込むと編集できます。";
 "character.status.currentInUse" = "現在使用中";
 "character.status.notSaved" = "変更はまだ保存されていません";
+"character.status.sampleSelected" = "選択中・「次へ」で保存";
 "character.currentCharacter" = "現在のキャラクター";
 "character.replace" = "画像を差し替え…";
 "character.keepImage" = "差し替えをキャンセル";

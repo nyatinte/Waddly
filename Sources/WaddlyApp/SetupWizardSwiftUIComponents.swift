@@ -146,6 +146,7 @@ extension SetupWizardScreen {
                     Text(verbatim: controller.localizedString(.setupBack))
                         .actionLabel()
                 }
+                .windowActionStyle(prominent: false)
                 .controlSize(.large)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(Text(verbatim: controller.localizedString(.setupBack)))
@@ -157,6 +158,7 @@ extension SetupWizardScreen {
                     Text(verbatim: controller.localizedString(.setupLater))
                         .actionLabel()
                 }
+                .windowActionStyle(prominent: false)
                 .controlSize(.large)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(Text(verbatim: controller.localizedString(.setupLater)))
@@ -168,7 +170,7 @@ extension SetupWizardScreen {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(Text(verbatim: controller.localizedString(nextButtonKey)))
-            .buttonStyle(.borderedProminent)
+            .windowActionStyle(prominent: true)
             .controlSize(.large)
             .disabled(
                 !controller.isMonitoringSettings && ((controller.currentStep == .pet && !controller.hasImage)
