@@ -168,15 +168,34 @@ public struct SpriteFrameEditing: Equatable, Sendable, Codable {
     }
 }
 
-/// The sheet PNG and per-slot edits a pet's frames were produced from.
+/// The sheet source and per-slot edits a pet's frames were produced from.
 public struct PetImageEditingSource: Sendable {
     public var editing: SpriteFrameEditing
-    /// The working sheet PNG (at most the importer's file limit), or `nil` for individual frames.
+    /// The in-memory working sheet PNG for unsaved drafts, or `nil` when disk-backed or individual.
     public var sheetPNGData: Data?
+    /// The persisted `source-sheet.png` URL when the sheet stays on disk instead of in memory.
+    public var sheetFileURL: URL?
 
-    public init(editing: SpriteFrameEditing, sheetPNGData: Data?) {
+    public init(
+        editing: SpriteFrameEditing,
+        sheetPNGData: Data?,
+        sheetFileURL: URL? = nil
+    ) {
         self.editing = editing
         self.sheetPNGData = sheetPNGData
+        self.sheetFileURL = sheetFileURL
+    }
+
+    /// Returns the working sheet PNG bytes, reading `sheetFileURL` on demand when not in memory.
+    public func loadSheetPNGData() -> Data? {
+        if let sheetPNGData, !sheetPNGData.isEmpty {
+            return sheetPNGData
+        }
+        guard let sheetFileURL,
+              let data = try? Data(contentsOf: sheetFileURL),
+              !data.isEmpty
+        else { return nil }
+        return data
     }
 
     /// Individual-frame editing for a legacy saved pet, or `nil` when a frame is missing or not square.

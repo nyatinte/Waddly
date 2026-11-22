@@ -215,6 +215,51 @@ import WaddlyCore
         standard.reload()
         #expect(standard.canAdjustFrames)
     }
+
+    /// A restored pet loads `source-sheet.png` from disk only when the editor prepares, releases it
+    /// on close, and falls back to individual-frame mode if the sidecar disappears before open.
+    @Test func restoredSheetLoadsOnDemandAndFallsBackWhenSidecarIsMissing() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WaddlyEditorSidecarTests-\(UUID().uuidString)", isDirectory: true)
+        defer { removeEditorTestDirectory(directory) }
+        let storage = PetImageStorage(directory: directory)
+        let candidate = try SetupWizardFixture.sheetCandidate()
+        let manifest = ["idle": ["frame.png"]]
+        try storage.writeFrameEditingSource(candidate.editingSource, manifest: manifest)
+        let diskSource = try #require(storage.readFrameEditingSource(manifest: manifest))
+        #expect(diskSource.sheetPNGData == nil)
+
+        var frames = try SetupWizardFixture.sheetImages()
+        frames.editingSource = diskSource
+        let importModel = CharacterImportModel(currentImages: { frames }, commit: { _ in .committed })
+        importModel.reload()
+        let editor = try CharacterFrameEditorModel(importModel: importModel, localization: makeLocalization())
+        await editor.prepare()
+        #expect(editor.isSheetMode)
+        weak var weakSheet: CGImage? = editor.sheet
+        #expect(weakSheet != nil)
+        editor.releaseResources()
+        #expect(editor.sheet == nil)
+        #expect(weakSheet == nil)
+        #expect(editor.isReleased)
+
+        try FileManager.default.removeItem(at: directory.appendingPathComponent("source-sheet.png"))
+        let fallback = try CharacterFrameEditorModel(importModel: importModel, localization: makeLocalization())
+        await fallback.prepare()
+        #expect(!fallback.isSheetMode)
+        #expect(fallback.editing?.mode == .individualFrames)
+        #expect(fallback.sheet == nil)
+        #expect(!fallback.composeFailed)
+    }
+
+    private func removeEditorTestDirectory(_ directory: URL) {
+        guard FileManager.default.fileExists(atPath: directory.path) else { return }
+        do {
+            try FileManager.default.removeItem(at: directory)
+        } catch {
+            Issue.record("Could not remove the temporary directory: \(error)")
+        }
+    }
 }
 
 /// Suspends the injected sheet decode so a test can release the editor while it is in flight.

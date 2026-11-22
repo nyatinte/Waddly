@@ -168,7 +168,7 @@ import WaddlyCore
         await app.loadSavedPetImage()
         #expect(app.petImages.editingSource?.editing.adjustment(for: .idle1) == expectedIdle)
         let restored = try #require(app.petImages.editingSource)
-        #expect(restored.sheetPNGData != nil)
+        #expect(restored.sheetPNGData == nil)
     }
 
     /// Done without changes must not replace the draft's frame objects, while Reset all after a

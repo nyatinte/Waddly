@@ -54,9 +54,10 @@ final class CharacterFrameEditorModel: ObservableObject {
     /// stepper clicks; a crop origin or another tool resets it.
     var cropSizeAnchor: CropSizeAnchor?
     private var sheetPNGData: Data?
+    private var sheetFileURL: URL?
     /// Decodes the retained sheet. Injectable so tests can suspend a decode and release the editor
     /// while it is in flight.
-    private let sheetDecoder: @Sendable (Data) async -> CGImage?
+    let sheetDecoder: @Sendable (Data) async -> CGImage?
     /// Only used to report the entry point's source details and to stage the reviewed draft.
     private(set) weak var importModel: CharacterImportModel?
 
@@ -85,6 +86,7 @@ final class CharacterFrameEditorModel: ObservableObject {
             self.editing = editing
             self.sheet = editing.mode == .sheet ? sheet : nil
             sheetPNGData = frames.editingSource?.sheetPNGData
+            sheetFileURL = frames.editingSource?.sheetFileURL
             isLoading = false
             baseThumbnails = renderBaseThumbnails()
             refreshRestoredAdjustedThumbnails()
@@ -100,28 +102,27 @@ final class CharacterFrameEditorModel: ObservableObject {
     func prepare() async {
         guard isLoading, !isReleased else { return }
         let frames = sourceFrames
-        if let source = frames.editingSource, let data = source.sheetPNGData, let decoded = await sheetDecoder(data) {
+        if let source = frames.editingSource, let decoded = await decodeSheet(for: source) {
             // The sheet can be dismissed while the decode is suspended; do not resurrect the
             // resources that releaseResources() already dropped.
             guard !isReleased, !Task.isCancelled else { return }
-            completePreparation(editing: source.editing, sheet: decoded, data: data)
+            completePreparation(editing: source.editing, sheet: decoded, source: source)
             return
         }
         guard !isReleased, !Task.isCancelled else { return }
         completeIndividualPreparation(frames: frames)
     }
 
-    nonisolated static func decodeSheet(_ data: Data) async -> CGImage? {
-        await Task.detached(priority: .userInitiated) {
-            PetFrameSourceDecoder.sheetImage(from: data)
-        }.value
-    }
-
-    private func completePreparation(editing: SpriteFrameEditing, sheet: CGImage, data: Data) {
+    private func completePreparation(
+        editing: SpriteFrameEditing,
+        sheet: CGImage,
+        source: PetImageEditingSource
+    ) {
         guard !isReleased else { return }
         self.editing = editing.normalized
         self.sheet = sheet
-        sheetPNGData = data
+        sheetPNGData = source.sheetPNGData
+        sheetFileURL = source.sheetFileURL
         baseThumbnails = renderBaseThumbnails()
         refreshRestoredAdjustedThumbnails()
         isLoading = false
@@ -137,6 +138,7 @@ final class CharacterFrameEditorModel: ObservableObject {
         self.editing = editing
         sheet = nil
         sheetPNGData = nil
+        sheetFileURL = nil
         baseThumbnails = renderBaseThumbnails()
         refreshRestoredAdjustedThumbnails()
         isLoading = false
@@ -144,7 +146,7 @@ final class CharacterFrameEditorModel: ObservableObject {
 
     private func prepareSynchronously(frames: PetImageSet, sheet: CGImage?) {
         if let source = frames.editingSource, let sheet {
-            completePreparation(editing: source.editing, sheet: sheet, data: source.sheetPNGData ?? Data())
+            completePreparation(editing: source.editing, sheet: sheet, source: source)
             return
         }
         completeIndividualPreparation(frames: frames)
@@ -161,6 +163,7 @@ final class CharacterFrameEditorModel: ObservableObject {
         isLoading = false
         sheet = nil
         sheetPNGData = nil
+        sheetFileURL = nil
         baseThumbnails.removeAll()
         adjustedThumbnails.removeAll()
         beforePreview = nil
@@ -337,7 +340,8 @@ final class CharacterFrameEditorModel: ObservableObject {
         if editing.mode == .sheet {
             result.editingSource = PetImageEditingSource(
                 editing: editing,
-                sheetPNGData: sheetPNGData
+                sheetPNGData: sheetPNGData,
+                sheetFileURL: sheetFileURL
             )
         }
         return result

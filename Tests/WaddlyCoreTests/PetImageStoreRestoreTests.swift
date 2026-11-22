@@ -161,4 +161,108 @@ import WaddlyCore
             return
         }
     }
+
+    @Test func restoreKeepsSheetEditingMetadataWithoutResidentPNGData() async throws {
+        let store = makeImageStore()
+        defer { closeImageStore(store) }
+        let directory = try #require(store.directory)
+        let candidate = try restoredSheetCandidate()
+        try await store.persist(candidate.images)
+
+        store.importedImages = nil
+        try await store.restore()
+
+        let editingSource = try #require(store.images.editingSource)
+        #expect(editingSource.editing == candidate.editingSource.editing)
+        #expect(editingSource.sheetPNGData == nil)
+        #expect(editingSource.sheetFileURL == directory.appendingPathComponent("source-sheet.png"))
+        #expect(editingSource.loadSheetPNGData() == candidate.sheetPNGData)
+    }
+
+    @Test func confirmFromRestoredSheetPreservesSidecarWithoutResidentBytes() async throws {
+        let mirror = StoreLegacyMirror()
+        let store = makeImageStore(mirror: mirror)
+        defer { closeImageStore(store) }
+        let directory = try #require(store.directory)
+        let candidate = try restoredSheetCandidate()
+        try await store.persist(candidate.images)
+
+        let reopened = PetImageStore(
+            directory: directory,
+            legacyFiles: { mirror.files },
+            writeLegacyFiles: { mirror.files = $0 },
+            imagesDidChange: { _ in }
+        )
+        try await reopened.restore()
+        var updated = reopened.images
+        let adjustment = FrameAdjustment(
+            crop: SquareCrop(x: 8, y: 12, size: candidate.cellSize - 16),
+            offsetX: 3,
+            offsetY: -2
+        )
+        updated.editingSource?.editing.setAdjustment(adjustment, for: .idle1)
+
+        let outcome = await reopened.confirmPetImage(updated)
+        guard case .confirmed = outcome else {
+            Issue.record("expected confirm to succeed, got \(outcome)")
+            return
+        }
+        #expect(reopened.images.editingSource?.sheetPNGData == nil)
+        let sheetURL = directory.appendingPathComponent("source-sheet.png")
+        #expect(try Data(contentsOf: sheetURL) == candidate.sheetPNGData)
+
+        reopened.importedImages = nil
+        try await reopened.restore()
+        let restoredSource = try #require(reopened.images.editingSource)
+        #expect(restoredSource.editing.adjustment(for: .idle1) == adjustment)
+        #expect(restoredSource.sheetPNGData == nil)
+        #expect(restoredSource.loadSheetPNGData() == candidate.sheetPNGData)
+    }
+
+    @Test func persistFromRestoredSheetRemovesSidecarsWhenSheetFileWasDeleted() async throws {
+        let store = makeImageStore()
+        defer { closeImageStore(store) }
+        let directory = try #require(store.directory)
+        let candidate = try restoredSheetCandidate()
+        try await store.persist(candidate.images)
+
+        store.importedImages = nil
+        try await store.restore()
+        let sheetURL = directory.appendingPathComponent("source-sheet.png")
+        let editsURL = directory.appendingPathComponent("frame-edits.json")
+        try FileManager.default.removeItem(at: sheetURL)
+
+        try await store.persist(store.images)
+
+        #expect(store.images.editingSource == nil)
+        #expect(!FileManager.default.fileExists(atPath: sheetURL.path))
+        #expect(!FileManager.default.fileExists(atPath: editsURL.path))
+    }
+
+    @Test func persistFromRestoredSheetCopiesSheetIntoAnotherDirectory() async throws {
+        let sourceStore = makeImageStore()
+        defer { closeImageStore(sourceStore) }
+        let destinationStore = makeImageStore()
+        defer { closeImageStore(destinationStore) }
+        let destinationDirectory = try #require(destinationStore.directory)
+        let candidate = try restoredSheetCandidate()
+        try await sourceStore.persist(candidate.images)
+
+        sourceStore.importedImages = nil
+        try await sourceStore.restore()
+
+        try await destinationStore.persist(sourceStore.images)
+
+        let destinationSheetURL = destinationDirectory.appendingPathComponent("source-sheet.png")
+        #expect(try Data(contentsOf: destinationSheetURL) == candidate.sheetPNGData)
+        let copiedSource = try #require(destinationStore.images.editingSource)
+        #expect(copiedSource.sheetPNGData == nil)
+        #expect(copiedSource.sheetFileURL == destinationSheetURL)
+        #expect(copiedSource.loadSheetPNGData() == candidate.sheetPNGData)
+    }
+
+    private func restoredSheetCandidate() throws -> PetSheetCandidate {
+        let data = try Data(contentsOf: storeExampleSheetURL())
+        return try PetSpriteSheetImporter.inspect(data).get()
+    }
 }
