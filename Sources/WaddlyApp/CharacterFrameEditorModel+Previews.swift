@@ -130,4 +130,35 @@ extension CharacterFrameEditorModel {
         }
         adjustedThumbnails[slot] = image
     }
+
+    // MARK: - Sheet decoding
+
+    func decodeSheet(for source: PetImageEditingSource) async -> CGImage? {
+        guard source.editing.mode == .sheet, source.editing.cellSize > 0 else { return nil }
+        guard let data = await Self.loadSheetPNGData(for: source),
+              !isReleased, !Task.isCancelled
+        else { return nil }
+        let expectedSide = source.editing.cellSize * 3
+        guard let decoded = await sheetDecoder(data),
+              decoded.width == expectedSide,
+              decoded.height == expectedSide
+        else { return nil }
+        return decoded
+    }
+
+    nonisolated static func loadSheetPNGData(for source: PetImageEditingSource) async -> Data? {
+        if let data = source.sheetPNGData, !data.isEmpty {
+            return data
+        }
+        guard source.sheetFileURL != nil else { return nil }
+        return await Task.detached(priority: .userInitiated) {
+            source.loadSheetPNGData()
+        }.value
+    }
+
+    nonisolated static func decodeSheet(_ data: Data) async -> CGImage? {
+        await Task.detached(priority: .userInitiated) {
+            PetFrameSourceDecoder.sheetImage(from: data)
+        }.value
+    }
 }

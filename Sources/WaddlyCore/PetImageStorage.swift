@@ -1,5 +1,6 @@
 import AppKit
 import ImageIO
+import UniformTypeIdentifiers
 
 /// File work runs on a worker task. Image values are treated as immutable snapshots.
 ///
@@ -221,46 +222,53 @@ public enum PetImageCleanupError: Error, Equatable {
 /// frames it does not describe. Only sheet mode is persisted: individual-frame editing is derived
 /// from the frames themselves at restore time.
 public extension PetImageStorage {
-    /// Reads the persisted sheet and edits, or `nil` when they do not describe `manifest`.
+    /// Reads the persisted edits and validates the on-disk sheet header without loading PNG bytes.
     ///
     /// The sheet's pixel dimensions are read from the PNG header and must match the stored cell size;
     /// a sheet that does not describe those edits is ignored rather than applied.
     func readFrameEditingSource(manifest: [String: [String]]) -> PetImageEditingSource? {
-        guard let data = sidecarData(Self.frameEditsFilename),
+        guard let data = try? Data(contentsOf: frameEditsURL),
               let stored = decodeFrameEdits(data),
               stored.frameFiles == manifest,
               stored.editing.mode == .sheet,
               stored.editing.cellSize > 0,
-              let sheetPNGData = sidecarData(Self.sourceSheetFilename),
-              Self.hasPNGSignature(sheetPNGData),
-              Self.sheetPixelSide(sheetPNGData) == stored.editing.cellSize * 3
+              Self.sheetPixelSide(at: sourceSheetURL) == stored.editing.cellSize * 3
         else { return nil }
         return PetImageEditingSource(
             editing: stored.editing.normalized,
-            sheetPNGData: sheetPNGData
+            sheetPNGData: nil,
+            sheetFileURL: sourceSheetURL
         )
     }
 
     /// Writes the sheet and edits, or removes both sidecars when there is nothing sheet-based to keep.
     ///
-    /// The PNG is written before the JSON so the JSON always describes a sheet that exists. Callers
-    /// treat failures as best effort: a sidecar problem must never fail an already-committed save.
+    /// Returns the disk-backed editing source (`sheetPNGData == nil`) after a successful save so
+    /// callers can drop the in-memory sheet buffer. The PNG is written before the JSON so the JSON
+    /// always describes a sheet that exists. Callers treat failures as best effort: a sidecar problem
+    /// must never fail an already-committed save.
+    @discardableResult
     func writeFrameEditingSource(
         _ source: PetImageEditingSource?,
         manifest: [String: [String]]
-    ) throws {
+    ) throws -> PetImageEditingSource? {
         guard let source, source.editing.mode == .sheet,
-              let sheetPNGData = source.sheetPNGData, !sheetPNGData.isEmpty
+              try persistSourceSheet(for: source)
         else {
             try removeFrameEditingSidecars()
-            return
+            return nil
         }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try sheetPNGData.write(to: sourceSheetURL, options: .atomic)
+        let normalized = source.editing.normalized
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
-        let payload = StoredFrameEdits(frameFiles: manifest, editing: source.editing.normalized)
+        let payload = StoredFrameEdits(frameFiles: manifest, editing: normalized)
         try encoder.encode(payload).write(to: frameEditsURL, options: .atomic)
+        return PetImageEditingSource(
+            editing: normalized,
+            sheetPNGData: nil,
+            sheetFileURL: sourceSheetURL
+        )
     }
 
     private var sourceSheetURL: URL {
@@ -271,8 +279,22 @@ public extension PetImageStorage {
         directory.appendingPathComponent(Self.frameEditsFilename)
     }
 
-    private func sidecarData(_ filename: String) -> Data? {
-        try? Data(contentsOf: directory.appendingPathComponent(filename))
+    private func persistSourceSheet(for source: PetImageEditingSource) throws -> Bool {
+        if source.sheetPNGData?.isEmpty ?? true,
+           let sheetFileURL = source.sheetFileURL,
+           isSameSourceSheetURL(sheetFileURL) {
+            return source.editing.cellSize > 0
+                && Self.sheetPixelSide(at: sourceSheetURL) == source.editing.cellSize * 3
+        }
+        guard let sheetPNGData = source.loadSheetPNGData() else { return false }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try sheetPNGData.write(to: sourceSheetURL, options: .atomic)
+        return true
+    }
+
+    private func isSameSourceSheetURL(_ url: URL) -> Bool {
+        url.resolvingSymlinksInPath().standardizedFileURL
+            == sourceSheetURL.resolvingSymlinksInPath().standardizedFileURL
     }
 
     private func decodeFrameEdits(_ data: Data) -> StoredFrameEdits? {
@@ -294,19 +316,16 @@ public extension PetImageStorage {
         return nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileNoSuchFileError
     }
 
-    private static func hasPNGSignature(_ data: Data) -> Bool {
-        data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-    }
-
-    /// The side of a square PNG read from its header, or `nil` when it is not a readable square.
+    /// The side of a square PNG read from its header at `url`, or `nil` when unreadable or non-square.
     ///
     /// Only metadata is read (`kCGImageSourceShouldCache: false`); the sheet pixels are never decoded
     /// here, so restoring a large sheet stays cheap.
-    private static func sheetPixelSide(_ data: Data) -> Int? {
-        guard let source = CGImageSourceCreateWithData(
-                  data as CFData,
+    private static func sheetPixelSide(at url: URL) -> Int? {
+        guard let source = CGImageSourceCreateWithURL(
+                  url as CFURL,
                   [kCGImageSourceShouldCache: false] as CFDictionary
               ),
+              CGImageSourceGetType(source) as String? == UTType.png.identifier,
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int,

@@ -196,10 +196,16 @@ public final class PetImageStore {
             await discardStagedFiles(storage, staged: newFiles, committed: oldFiles)
             throw error
         }
-        await writeEditingSidecar(updated.editingSource, storage: storage, manifest: newFiles)
+        let persistedEditingSource = await writeEditingSidecar(
+            updated.editingSource,
+            storage: storage,
+            manifest: newFiles
+        )
+        var committedImages = updated
+        committedImages.editingSource = persistedEditingSource
         writeLegacyFiles(newFiles)
         files = newFiles
-        importedImages = updated
+        importedImages = committedImages
         thumbnails = staged.1
         imagesDidChange(resetActivity)
         await cleanup(storage)
@@ -235,16 +241,17 @@ public final class PetImageStore {
     ///
     /// Best effort by design: the manifest commit is durable and the images are displayed, so a
     /// sidecar problem only means the editor reopens from the frames instead of the saved sheet.
+    /// A failed write keeps the source in memory because it did not reach disk.
     private func writeEditingSidecar(
         _ source: PetImageEditingSource?,
         storage: PetImageStorage,
         manifest: ManifestFiles
-    ) async {
+    ) async -> PetImageEditingSource? {
         await Task.detached(priority: .userInitiated) {
             do {
-                try storage.writeFrameEditingSource(source, manifest: manifest)
+                return try storage.writeFrameEditingSource(source, manifest: manifest)
             } catch {
-                return
+                return source
             }
         }.value
     }

@@ -71,7 +71,9 @@ private func spriteSidecarExists(_ name: String, in directory: URL) -> Bool {
 
     let restored = try #require(storage.readFrameEditingSource(manifest: manifest))
     #expect(restored.editing == editing.normalized)
-    #expect(restored.sheetPNGData == sheetPNGData)
+    #expect(restored.sheetPNGData == nil)
+    #expect(restored.sheetFileURL == directory.appendingPathComponent("source-sheet.png"))
+    #expect(restored.loadSheetPNGData() == sheetPNGData)
 
     let editsURL = directory.appendingPathComponent("frame-edits.json")
     let object = try JSONSerialization.jsonObject(with: Data(contentsOf: editsURL)) as? [String: Any]
@@ -283,13 +285,17 @@ private func spriteSidecarExists(_ name: String, in directory: URL) -> Bool {
         #expect(spriteSidecarExists("source-sheet.png", in: directory))
         #expect(spriteSidecarExists("frame-edits.json", in: directory))
         #expect(store.images.editingSource?.editing == candidate.editingSource.editing)
+        #expect(store.images.editingSource?.sheetPNGData == nil)
+        #expect(store.images.editingSource?.loadSheetPNGData() == candidate.sheetPNGData)
 
         let restored = spriteStore(directory: directory)
         try await restored.restore()
         #expect(restored.hasCompleteImageSet)
         let editingSource = try #require(restored.images.editingSource)
         #expect(editingSource.editing == candidate.editingSource.editing)
-        #expect(editingSource.sheetPNGData == candidate.sheetPNGData)
+        #expect(editingSource.sheetPNGData == nil)
+        #expect(editingSource.sheetFileURL == directory.appendingPathComponent("source-sheet.png"))
+        #expect(editingSource.loadSheetPNGData() == candidate.sheetPNGData)
     }
 
     @Test func sidecarFailureDoesNotFailACommittedFrameSave() async throws {
@@ -308,6 +314,8 @@ private func spriteSidecarExists(_ name: String, in directory: URL) -> Bool {
         try await store.persist(updated)
 
         #expect(store.images[.idle].count == 2)
+        #expect(store.images.editingSource?.editing == candidate.editingSource.editing)
+        #expect(store.images.editingSource?.sheetPNGData == nil)
         let storage = PetImageStorage(directory: directory)
         #expect(try storage.readManifest() != nil)
         #expect(spriteSidecarExists("source-sheet.png", in: directory))
